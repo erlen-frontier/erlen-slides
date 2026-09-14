@@ -3,7 +3,7 @@ const SUITE_VISTAS=['inicio','biblioteca','plantillas','herramientas','servicio'
 function suiteVistaValida(v){return SUITE_VISTAS.includes(v)?v:'inicio';}
 function suiteRuta(hash){return hash==='#presentaciones'?'editor':suiteVistaValida(String(hash||'').replace(/^#suite\/?/,''));}
 function suiteUrl(v){const hash=v==='editor'?'#presentaciones':'#suite/'+suiteVistaValida(v);if(location.hash!==hash)history.pushState(null,'',location.pathname+location.search+hash);}
-function suiteDesdeUrl(){const v=suiteRuta(location.hash);v==='editor'?wsCerrar():wsInicio(v);}
+function suiteDesdeUrl(){if(!location.hash)history.replaceState(null,'',location.pathname+location.search+'#suite/inicio');const v=suiteRuta(location.hash);v==='editor'?wsCerrar():wsInicio(v);}
 function suiteEnlace(v,t,i){return h('a',{class:'suite-nav-link',href:'#suite/'+v,'aria-current':wsVista===v?'page':null},cienciaIcono(i),h('span',null,t));}
 function suitePinta(){
  const root=$('#workspaceRoot');root.replaceChildren();root.scrollTop=0;root.setAttribute('aria-label','Erlen Slides');
