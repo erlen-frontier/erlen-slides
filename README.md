@@ -87,3 +87,7 @@ El código original, documentación y ejemplos de este repositorio se publican b
 La interfaz contiene un enlace visible al código fuente. Si modificas y despliegas esta aplicación, conserva el acceso al código fuente correspondiente de tu versión y revisa los términos de la licencia.
 
 [CITATION.cff](CITATION.cff) y [.zenodo.json](.zenodo.json) describen la versión. El depósito de Zenodo se documentará con su DOI **cuando esté confirmado**; no hay un DOI provisional inventado. [Proceso de publicación](docs/publicacion.md).
+
+## Integración continua con Erlen Suite
+
+Cada push a `main`, incluidos los merges, avisa a Suite con `suite-sync.yml`. Suite resuelve el SHA actual, construye y prueba esa revisión, conserva el ZIP intacto identificado por SHA256 y lo despliega después de sus verificaciones. El número de versión puede permanecer igual: el commit distingue las revisiones. Una comprobación horaria recupera avisos perdidos. No se crean tags ni releases automáticamente.
