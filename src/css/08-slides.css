@@ -68,3 +68,13 @@ body{letter-spacing:0;background:var(--bg)}
 @media (min-width:921px) and (max-width:1180px){:root{--w-tira:168px;--w-panel:282px}.canvas-scroll{padding:28px 20px}}
 @media (max-width:920px){.app{border-top-width:2px}.topbar{border-bottom-color:var(--line)}.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:54px}}
 @media (prefers-reduced-motion:reduce){.ins-btn:hover,.ws-card:hover{transform:none}}
+
+/* Tarjeta «Nueva presentación»: hermana de .slides-example, con borde discontinuo
+   para señalar creación en lugar de apertura. Sin estilos hasta 2026-09: el icono,
+   el título y el subtítulo quedaban aplastados en una sola línea. */
+.slides-new-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:120px;padding:24px;border:1px dashed #b9c4b4;border-radius:16px;background:transparent;cursor:pointer;font:inherit;color:inherit;text-align:center;transition:border-color .18s ease,background-color .18s ease}
+.slides-new-card:hover{border-color:#0e4a45;background:#eff4ef55}
+.slides-new-card:focus-visible{outline:3px solid #94621e;outline-offset:3px}
+.slides-new-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#0e4a45;color:#fff;font-size:24px;line-height:1}
+.slides-new-card strong{font-size:20px;color:var(--ink,#1c1c1c)}
+.slides-new-card small{color:var(--tinta2,#6b6b60)}
