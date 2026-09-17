@@ -34,6 +34,8 @@ Usa Presentar o F5. Avanza con las flechas; Esc vuelve al editor. N muestra nota
 | PDF | Compartir una copia visual | Usa Imprimir/Guardar como PDF y revisa tamaño, fondos y recortes |
 | PPTX | Abrir en software de presentaciones | Algunos elementos complejos se convierten en imágenes; revisa tipografías y alineación en el programa destino |
 | Beamer / TEX | Continuar un flujo con LaTeX | Requiere una distribución de LaTeX; temas y elementos especiales pueden diferir de la vista web |
+| SVG científico | Reutilizar una gráfica o función en un artículo | Selecciona una figura científica y usa Exportar → SVG científico; incluye ejes, trazos, etiquetas y `metadata` de procedencia, sin depender del CSS de la app |
+| Informe de exportación (JSON) | Revisar riesgos antes de compartir | Exportar → Informe de exportación lista errores, advertencias e información por diapositiva y por formato |
 | HTML | Imprimir desde el navegador cuando el cuadro de impresión falla | Se ofrece dentro de Exportar → PDF como «Archivo imprimible (.html)»: es una copia paginada para imprimir, no un modo de presentación |
 
 Los paquetes de figura y el **kit de defensa** incluyen `provenance.json` con la versión de Erlen, los identificadores de figuras, las fuentes disponibles y la huella SHA-256 de los datos. Es un registro de trazabilidad, no una copia de los datos que no hayas incluido.

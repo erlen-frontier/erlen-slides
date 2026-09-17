@@ -132,6 +132,8 @@ function initChrome() {
     item('∑', 'Código Beamer (.tex)', null, openTexView);
     item('{}', 'Proyecto (.json)', null, () => exportJSON());
     item('🖼', 'Imagen de esta diapositiva', null, exportPNG);
+    item('⌁', 'SVG científico', null, exportFiguraSVG);
+    item('⚗', 'Informe de exportación', null, exportInformeExportacion);
     menu.append(h('div', { class: 'm-sep' }));
     const ap = S.prefs.tema;
     item(ap === 'claro' ? '☀' : ap === 'oscuro' ? '☾' : '◐', 'Apariencia del editor',

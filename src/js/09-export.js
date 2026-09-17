@@ -1197,6 +1197,8 @@ function openExport(anchor) {
   item('▤', 'Folleto para repartir', '2, 3 o 6 por hoja', () => openFolleto());
   item('📝', 'Guion del orador', 'notas + miniaturas', () => exportGuion());
   item('🖼', 'Imagen de esta diapositiva', 'PNG', () => exportPNG());
+  item('⌁', 'SVG científico', 'gráfica o función seleccionada', () => exportFiguraSVG());
+  item('⚗', 'Informe de exportación', 'advertencias por formato', () => exportInformeExportacion());
   showMenu(menu, anchor);
 }
 
@@ -1319,4 +1321,3 @@ function exportPNG() {
     } catch (e) { wb.innerHTML = ''; toast('No se pudo generar la imagen; usa la exportación a PDF', 'warn'); }
   }, 120);
 }
-

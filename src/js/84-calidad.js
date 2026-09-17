@@ -40,6 +40,96 @@ function calidadCientifica(deck) {
   return fallos;
 }
 
+/* ---------- salidas científicas ----------
+   La diapositiva completa sigue teniendo una salida PNG para compartirla.
+   Cuando se necesita reutilizar una figura en un artículo, el bloque de datos
+   puede viajar como SVG autónomo: conserva trazos, texto y etiquetas, y no
+   depende del CSS de Erlen. */
+function bloqueCientificoActual(deck) {
+  const d = deck || S.deck;
+  const seleccionado = S.selBlock && findBlock(S.selBlock, d);
+  if (seleccionado && ['chart', 'func'].includes(seleccionado.block.type)) return seleccionado.block;
+  const sl = d.slides[S.cur] || d.slides[0];
+  if (!sl) return null;
+  for (const arr of zonas(sl)) {
+    const b = arr.find(x => x && ['chart', 'func'].includes(x.type));
+    if (b) return b;
+  }
+  return null;
+}
+
+function exportFiguraSVG() {
+  flushEdicion();
+  const b = bloqueCientificoActual(S.deck);
+  if (!b) { toast('Selecciona una gráfica o función para exportarla como SVG', 'warn'); return false; }
+  try {
+    const rendered = renderChart(Object.assign({}, b, { capas: false, despues: null }), S.deck, 'export', 1200);
+    const svg = rendered && rendered.matches && rendered.matches('svg') ? rendered : rendered?.querySelector?.('svg');
+    if (!svg) throw new Error('La gráfica no produjo un SVG');
+    /* El namespace de un elemento creado con createElementNS ya lo conserva el
+       serializador; quitar el atributo explícito evita que JSDOM/WebKit lo
+       duplique al convertir el nodo a XML. */
+    svg.removeAttribute('xmlns');
+    svg.setAttribute('version', '1.1');
+    svg.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+    const meta = document.createElementNS(SVGNS, 'metadata');
+    meta.textContent = JSON.stringify({
+      schema: 'erlen-scientific-figure-v1',
+      app: 'Erlen Slides', version: window.ERLEN?.version || 'desconocida',
+      generatedAt: new Date().toISOString(), title: b.title || '',
+      caption: b.caption || '', source: b.fuente || null
+    });
+    svg.insertBefore(meta, svg.firstChild);
+    const xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(svg);
+    const nombre = deckSlug() + '-figura-' + String(b.id || 'grafica').slice(0, 8) + '.svg';
+    downloadFile(nombre, xml, 'image/svg+xml;charset=utf-8');
+    toast('SVG científico descargado');
+    return true;
+  } catch (e) {
+    toast('No se pudo generar el SVG; usa la exportación a PDF', 'warn');
+    window.ErlenDiagnostico?.reportar('exportar-svg');
+    return false;
+  }
+}
+
+function informeExportacion(deck) {
+  const d = deck || S.deck;
+  const warnings = [];
+  const add = (code, severity, message, slides, formats) => warnings.push({ code, severity, message, slides: [...new Set(slides || [])], formats });
+  const figuras = [];
+  d.slides.forEach((sl, i) => zonas(sl).flat().forEach(b => {
+    if (!b) return;
+    if (['chart', 'func', 'image', 'galeria', 'video', 'smart', 'estruct', 'montaje', 'geo'].includes(b.type)) figuras.push({ b, i });
+    if (b.type === 'video') add('video-static-export', 'warning', 'El vídeo se omite en PDF, Beamer y PowerPoint; conserva el enlace para la presentación en vivo.', [i + 1], ['pdf', 'beamer', 'pptx']);
+    if (b.src && /^https?:\/\//i.test(String(b.src))) add('external-resource', 'warning', 'La figura usa un recurso externo; puede no aparecer sin conexión o bloquearse al abrir el archivo.', [i + 1], ['pdf', 'beamer', 'pptx', 'svg']);
+  }));
+  const fallos = calidadCientifica(d);
+  fallos.forEach(f => add('scientific-audit-' + f.grado, f.grado === 'error' ? 'error' : 'warning', f.qué + '. ' + f.cómo, [f.i + 1], ['pdf', 'beamer', 'pptx', 'svg']));
+  const charts = figuras.filter(x => ['chart', 'func'].includes(x.b.type));
+  if (charts.length) add('pptx-rasterized-figures', 'info', 'PowerPoint conserva el texto y las tablas editables, pero las gráficas se insertan como imagen.', charts.map(x => x.i + 1), ['pptx']);
+  if (figuras.some(x => x.b.type === 'image')) add('image-format-dependency', 'info', 'Las imágenes conservan su formato original; comprueba resolución y licencia antes de compartir.', figuras.filter(x => x.b.type === 'image').map(x => x.i + 1), ['pdf', 'beamer', 'pptx']);
+  return {
+    schema: 'erlen-export-report-v1',
+    app: 'Erlen Slides', version: window.ERLEN?.version || 'desconocida',
+    generatedAt: new Date().toISOString(), deck: { title: d.meta?.title || '', slides: d.slides.length },
+    formats: {
+      pdf: 'Vectorial mediante impresión del navegador; revisa fuentes y gráficos de fondo.',
+      beamer: 'Vectorial y editable en Overleaf; las figuras se descargan por separado.',
+      pptx: 'Texto y tablas editables; las gráficas se insertan como imagen.',
+      svg: 'Figura científica independiente para gráficas y funciones seleccionadas.'
+    }, warnings,
+    summary: { errors: warnings.filter(x => x.severity === 'error').length, warnings: warnings.filter(x => x.severity === 'warning').length, info: warnings.filter(x => x.severity === 'info').length }
+  };
+}
+
+function exportInformeExportacion() {
+  flushEdicion();
+  const informe = informeExportacion(S.deck);
+  downloadFile(deckSlug() + '-informe-exportacion.json', JSON.stringify(informe, null, 2), 'application/json');
+  toast('Informe de exportación descargado');
+  return informe;
+}
+
 /* Plantilla ligera basada en afirmación-evidencia: usa zonas existentes para no
    introducir un layout nuevo ni cambiar el formato JSON. */
 function nuevaAfirmacionEvidencia() {
