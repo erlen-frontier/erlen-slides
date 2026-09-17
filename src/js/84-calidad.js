@@ -1,0 +1,64 @@
+/* ==== 84-calidad.js ==== */
+'use strict';
+/* ================= control de calidad científica =================
+   Reglas pequeñas y explicables para que una figura conserve contexto:
+   datos válidos, ejes nombrados, escala compatible, procedencia y un pie.
+   Son avisos locales, no una afirmación sobre la validez del experimento. */
+
+function calidadCientifica(deck) {
+  const d = deck || S.deck;
+  const fallos = [];
+  const add = (grado, i, qué, cómo, bid) => fallos.push({ grado, i, qué, cómo, bid });
+  d.slides.forEach((sl, i) => zonas(sl).flat().forEach(b => {
+    if (!b) return;
+    if (b.type === 'chart') {
+      let series = [];
+      try { series = chartSeries(b); } catch (e) { add('error', i, 'La gráfica no se puede interpretar', 'Revisa las columnas y vuelve a dibujarla.', b.id); return; }
+      const puntos = series.flatMap(s => s.pts || []);
+      if (!puntos.length) add('error', i, 'La gráfica no tiene puntos válidos', 'Conserva al menos dos filas numéricas antes de presentar.', b.id);
+      if (!(b.xlabel || '').trim()) add('aviso', i, 'La gráfica no nombra el eje horizontal', 'Indica magnitud y unidad, por ejemplo «Tiempo (s)».', b.id);
+      if (!(b.ylabel || '').trim()) add('aviso', i, 'La gráfica no nombra el eje vertical', 'Indica magnitud y unidad, por ejemplo «Señal (V)».', b.id);
+      if (!(b.caption || '').trim()) add('sugerencia', i, 'La gráfica no tiene pie', 'Resume qué representa y qué debe mirar la audiencia.', b.id);
+      if (!b.fuente) add('sugerencia', i, 'La gráfica no declara procedencia', 'Añade archivo, fecha, huella o instrumento en Figura viva.', b.id);
+      if (b.logX && puntos.some(p => !isFinite(p[0]) || p[0] <= 0)) add('error', i, 'La escala logarítmica de x contiene valores no positivos', 'Corrige los datos o usa una escala lineal.', b.id);
+      if (b.logY && puntos.some(p => !isFinite(p[1]) || p[1] <= 0)) add('error', i, 'La escala logarítmica de y contiene valores no positivos', 'Corrige los datos o usa una escala lineal.', b.id);
+      const errores = puntos.filter(p => p.length > 2 && p[2] != null);
+      if (errores.some(p => !isFinite(p[2]) || p[2] <= 0)) add('aviso', i, 'Hay barras de error no positivas', 'Usa una incertidumbre numérica mayor que cero o elimina la columna.', b.id);
+    }
+    if (b.type === 'func') {
+      if (!(b.xlabel || '').trim()) add('aviso', i, 'La función no nombra el eje horizontal', 'Indica la variable y su unidad.', b.id);
+      if (!(b.ylabel || '').trim()) add('aviso', i, 'La función no nombra el eje vertical', 'Indica la magnitud y su unidad.', b.id);
+      if (!(b.caption || '').trim()) add('sugerencia', i, 'La función no tiene pie', 'Explica el modelo y sus supuestos en una línea.', b.id);
+    }
+    if (['image', 'galeria', 'video', 'estruct', 'montaje', 'geo'].includes(b.type) && b.src && !b.fuente)
+      add('sugerencia', i, 'La figura no declara procedencia', 'Conserva la fuente original o describe que es una ilustración.', b.id);
+    if (b.type === 'table' && b.header && b.rows?.length > 1 && b.rows[0].some(x => !String(x || '').trim()))
+      add('aviso', i, 'La tabla tiene encabezados vacíos', 'Nombra cada columna y escribe la unidad cuando corresponda.', b.id);
+  }));
+  return fallos;
+}
+
+function openCalidadCientifica() {
+  const cuerpo = h('div', null, h('p', { class: 'hint' }, 'Revisando datos, ejes, escalas y procedencia…'));
+  openModal({ title: 'Calidad científica', size: 'modal-lg', body: cuerpo,
+    foot: [h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Cerrar')] });
+  setTimeout(() => {
+    const fallos = calidadCientifica(S.deck);
+    cuerpo.replaceChildren();
+    const cuenta = g => fallos.filter(x => x.grado === g).length;
+    cuerpo.append(h('div', { class: 'rv-marcador' },
+      h('div', { class: 'rv-m rv-error' }, h('b', null, String(cuenta('error'))), h('span', null, 'errores')), 
+      h('div', { class: 'rv-m rv-aviso' }, h('b', null, String(cuenta('aviso'))), h('span', null, 'avisos')),
+      h('div', { class: 'rv-m rv-sug' }, h('b', null, String(cuenta('sugerencia'))), h('span', null, 'sugerencias'))));
+    if (!fallos.length) {
+      cuerpo.append(h('p', { style: 'margin-top:14px;line-height:1.6' }, 'No encontré problemas de datos, escalas, ejes o procedencia en las figuras revisadas. Esta revisión no sustituye la validación del experimento.'));
+      return;
+    }
+    ['error', 'aviso', 'sugerencia'].forEach(g => {
+      const xs = fallos.filter(x => x.grado === g); if (!xs.length) return;
+      cuerpo.append(h('span', { class: 'sublabel', style: 'margin:16px 0 6px' }, g === 'error' ? 'Hay que arreglarlo' : g === 'aviso' ? 'Conviene revisarlo' : 'Se puede mejorar'));
+      xs.forEach(f => cuerpo.append(h('button', { class: 'rv-fila g-' + g, onclick: () => { closeModal(); S.cur = f.i; S.selBlock = f.bid || null; S.tab = f.bid ? 'bloque' : 'slide'; renderAll(); } },
+        h('span', { class: 'rv-i' }, String(f.i + 1)), h('span', { class: 'rv-tx' }, h('b', null, f.qué), h('span', null, f.cómo)))));
+    });
+  }, 60);
+}

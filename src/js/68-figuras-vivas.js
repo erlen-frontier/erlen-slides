@@ -208,7 +208,17 @@ async function paqueteFigura(b) {
       { nombre: 'LEEME.txt', datos: L.join('\n') + '\n' },
       { nombre: 'datos.csv', datos: csvDe(b) },
       { nombre: 'figura.tex', datos: texSuelto(b) },
-      { nombre: 'figura.png', datos: b64aBytes(png) }
+      { nombre: 'figura.png', datos: b64aBytes(png) },
+      { nombre: 'provenance.json', datos: JSON.stringify({
+        schema: 'erlen-provenance-v1',
+        application: 'Erlen Slides',
+        version: window.ERLEN?.version || 'desconocida',
+        generatedAt: new Date().toISOString(),
+        figure: { id: b.id || null, title: b.title || null, caption: b.caption || null,
+          kind: b.kind || 'linea', xlabel: b.xlabel || null, ylabel: b.ylabel || null },
+        source: b.fuente || null,
+        dataSha256: await huellaDe(b.data || '')
+      }, null, 2) + '\n' }
     ];
     const blob = await armaZip(archivos);
     await downloadFile(nombre + '-paquete.zip', blob, 'application/zip');
@@ -318,5 +328,4 @@ function pideImagen(alTener) {
   });
   inp.click();
 }
-
 

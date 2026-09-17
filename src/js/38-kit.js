@@ -141,6 +141,17 @@ async function kitDefensa() {
     let pgs = 0;
     S.deck.slides.forEach((sl, i) => { pgs += 1 + stepCount(S.deck, i); });
 
+    const figuras = [];
+    for (let i = 0; i < S.deck.slides.length; i++) for (const b of zonas(S.deck.slides[i]).flat()) {
+      if (!['image', 'chart', 'func', 'video', 'galeria', 'estruct', 'montaje', 'geo'].includes(b.type)) continue;
+      figuras.push({ id: b.id || null, slide: i + 1, type: b.type, caption: b.caption || null,
+        source: b.fuente || null, dataSha256: b.data ? await huellaDe(b.data) : null });
+    }
+    const provenance = { schema: 'erlen-provenance-v1', application: 'Erlen Slides',
+      version: window.ERLEN?.version || 'desconocida', generatedAt: new Date().toISOString(),
+      deck: { title: S.deck.meta.title || '', authors: S.deck.meta.authors || '',
+        sourceFormat: 'erlen-json-v1' }, figures };
+
     const otro = deepCopy(S.deck);
     otro.meta.aspect = S.deck.meta.aspect === '43' ? '169' : '43';
     const nombreOtro = 'presentacion-' + (otro.meta.aspect === '43' ? '4-3' : '16-9') + '.tex';
@@ -150,7 +161,8 @@ async function kitDefensa() {
       { nombre: 'presentacion.tex', datos: toBeamer(S.deck) },
       { nombre: nombreOtro, datos: toBeamer(otro) },
       { nombre: 'proyecto.json', datos: JSON.stringify(S.deck, null, 2) },
-      { nombre: 'guion.html', datos: guionHTML() }
+      { nombre: 'guion.html', datos: guionHTML() },
+      { nombre: 'provenance.json', datos: JSON.stringify(provenance, null, 2) + '\n' }
     ];
     const imgs = allImageBlocks().filter(b => b.src);
     if (S.deck.meta.logo) imgs.unshift({ id: 'logo', src: S.deck.meta.logo, caption: 'logo' });
@@ -172,5 +184,3 @@ async function kitDefensa() {
     toast('No se pudo armar el kit: ' + e.message, 'warn');
   }
 }
-
-
