@@ -47,3 +47,33 @@ test('La plantilla afirmación-evidencia crea una diapositiva editable con proce
     assert.deepEqual(errors, []);
   } finally { dom.window.close(); }
 });
+
+test('La exportación SVG entrega una figura vectorial autónoma con metadatos', async () => {
+  const {dom, run, errors} = await editor();
+  try {
+    run(`window.__svgDeck = deckDe({title:'Datos de laboratorio', authors:'Equipo'}, [slidePlantilla('content','Resultados',[[Object.assign(newBlock('chart'), {id:'grafica-svg', data:'x,y\\n1,2\\n2,4', xlabel:'Tiempo (s)', ylabel:'Señal (V)', caption:'Señal frente al tiempo', fuente:{nombre:'datos.csv'}})]])]); S.deck=window.__svgDeck; S.cur=0; S.selBlock='grafica-svg';`);
+    run(`window.__svgDownload = null; window.downloadFile = (filename, text, mime) => { window.__svgDownload = {filename, text, mime}; }; exportFiguraSVG()`);
+    assert.equal(run('window.__svgDownload.mime'), 'image/svg+xml;charset=utf-8');
+    assert.match(run('window.__svgDownload.filename'), /datos-de-laboratorio-figura-grafica-/);
+    assert.match(run('window.__svgDownload.text'), /^<\?xml/);
+    assert.match(run('window.__svgDownload.text'), /<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+    assert.equal((run('window.__svgDownload.text').match(/\sxmlns="http:\/\/www\.w3\.org\/2000\/svg"/g) || []).length, 1);
+    assert.match(run('window.__svgDownload.text'), /erlen-scientific-figure-v1/);
+    assert.doesNotMatch(run('window.__svgDownload.text'), /foreignObject/);
+    assert.deepEqual(errors, []);
+  } finally { dom.window.close(); }
+});
+
+test('El informe de exportación estructura advertencias científicas y por formato', async () => {
+  const {dom, run, errors} = await editor();
+  try {
+    run(`window.__reportDeck = deckDe({title:'Informe'}, [slidePlantilla('content','Resultados',[[Object.assign(newBlock('chart'), {data:'x,y\\n1,2', xlabel:'', ylabel:'', logX:true}), Object.assign(newBlock('video'), {src:'https://example.test/video.mp4'})]])])`);
+    const report = run('informeExportacion(window.__reportDeck)');
+    assert.equal(report.schema, 'erlen-export-report-v1');
+    assert.equal(report.formats.svg.includes('independiente'), true);
+    assert.ok(report.warnings.some(x => x.code === 'scientific-audit-aviso'));
+    assert.ok(report.warnings.some(x => x.code === 'video-static-export'));
+    assert.equal(report.summary.errors, report.warnings.filter(x => x.severity === 'error').length);
+    assert.deepEqual(errors, []);
+  } finally { dom.window.close(); }
+});
