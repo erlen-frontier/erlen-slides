@@ -4,7 +4,7 @@
 
 Escribe ecuaciones, dibuja química, explica datos y prepara tu próxima charla. Erlen Slides reúne edición por bloques, herramientas científicas y modo de presentación en una aplicación local, sin cuenta ni suscripción.
 
-**Versión 0.2.1 · beta · AGPLv3.** Publicación independiente del módulo Presentaciones de Erlen. Interfaz en español.
+**Versión 0.2.1 · beta · AGPLv3.** Publicación independiente del módulo Presentaciones de Erlen, con auditoría científica y paquetes reproducibles. Interfaz en español.
 
 ![Inicio de Erlen Slides](docs/images/inicio.png)
 
