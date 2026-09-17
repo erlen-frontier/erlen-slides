@@ -9,6 +9,7 @@ test('El build incluye el auditor, manifiestos reproducibles y pestañas accesib
   assert.match(html, /provenance\.json/);
   assert.match(html, /role="tab"/);
   assert.match(html, /aria-selected="true"/);
+  assert.match(html, /role="tablist" aria-label="Pestañas de herramientas"/);
 });
 
 test('La auditoría científica detecta ejes, escala logarítmica y procedencia incompletos', async () => {
