@@ -361,6 +361,8 @@ function renderInsertTab(body) {
   body.append(g1);
 
   const g2 = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Nueva diapositiva'));
+  g2.append(h('button', { class: 'btn btn-pri', style: 'width:100%;margin-bottom:9px', onclick: nuevaAfirmacionEvidencia },
+    '＋ Afirmación + evidencia'));
   gruposLayout().forEach(([grupo, items]) => {
     g2.append(h('span', { class: 'sublabel' }, grupo));
     const lg = h('div', { class: 'lay-grid', style: 'grid-template-columns:repeat(2,1fr)' });
@@ -788,5 +790,4 @@ function pickLogo() {
   }
   inp.click();
 }
-
 

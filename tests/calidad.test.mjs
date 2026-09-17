@@ -35,3 +35,15 @@ test('Una gráfica con contexto mínimo no produce errores científicos', async 
     assert.deepEqual(errors, []);
   } finally { dom.window.close(); }
 });
+
+test('La plantilla afirmación-evidencia crea una diapositiva editable con procedencia', async () => {
+  const {dom, run, errors} = await editor();
+  try {
+    run('window.__beforeSlides = S.deck.slides.length; nuevaAfirmacionEvidencia()');
+    assert.equal(run('S.deck.slides.length'), run('window.__beforeSlides') + 1);
+    assert.equal(run('S.deck.slides[S.cur].layout'), 'twocol');
+    assert.equal(run('S.deck.slides[S.cur].blocks[0].text'), 'Escribe aquí una afirmación comprobable.');
+    assert.equal(run('S.deck.slides[S.cur].blocks2[0].fuente.nombre'), 'ilustrativo');
+    assert.deepEqual(errors, []);
+  } finally { dom.window.close(); }
+});

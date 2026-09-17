@@ -18,6 +18,8 @@ function calidadCientifica(deck) {
       if (!puntos.length) add('error', i, 'La gráfica no tiene puntos válidos', 'Conserva al menos dos filas numéricas antes de presentar.', b.id);
       if (!(b.xlabel || '').trim()) add('aviso', i, 'La gráfica no nombra el eje horizontal', 'Indica magnitud y unidad, por ejemplo «Tiempo (s)».', b.id);
       if (!(b.ylabel || '').trim()) add('aviso', i, 'La gráfica no nombra el eje vertical', 'Indica magnitud y unidad, por ejemplo «Señal (V)».', b.id);
+      if ((b.xlabel || '').trim() && !/[([\[{]/.test(b.xlabel)) add('sugerencia', i, 'El eje horizontal no muestra una unidad', 'Añádela si aplica, por ejemplo «Tiempo (s)».', b.id);
+      if ((b.ylabel || '').trim() && !/[([\[{]/.test(b.ylabel)) add('sugerencia', i, 'El eje vertical no muestra una unidad', 'Añádela si aplica, por ejemplo «Señal (V)».', b.id);
       if (!(b.caption || '').trim()) add('sugerencia', i, 'La gráfica no tiene pie', 'Resume qué representa y qué debe mirar la audiencia.', b.id);
       if (!b.fuente) add('sugerencia', i, 'La gráfica no declara procedencia', 'Añade archivo, fecha, huella o instrumento en Figura viva.', b.id);
       if (b.logX && puntos.some(p => !isFinite(p[0]) || p[0] <= 0)) add('error', i, 'La escala logarítmica de x contiene valores no positivos', 'Corrige los datos o usa una escala lineal.', b.id);
@@ -36,6 +38,24 @@ function calidadCientifica(deck) {
       add('aviso', i, 'La tabla tiene encabezados vacíos', 'Nombra cada columna y escribe la unidad cuando corresponda.', b.id);
   }));
   return fallos;
+}
+
+/* Plantilla ligera basada en afirmación-evidencia: usa zonas existentes para no
+   introducir un layout nuevo ni cambiar el formato JSON. */
+function nuevaAfirmacionEvidencia() {
+  const afirmacion = Object.assign(newBlock('text'), {
+    text: 'Escribe aquí una afirmación comprobable.', size: 'l'
+  });
+  const evidencia = Object.assign(newBlock('chart'), {
+    data: 'x,y\n1,2\n2,3\n3,4', xlabel: 'Variable independiente (unidad)',
+    ylabel: 'Resultado (unidad)', title: 'Evidencia ilustrativa',
+    caption: 'Describe qué muestran estos datos y su limitación.',
+    fuente: { nombre: 'ilustrativo', cuando: new Date().toISOString().slice(0, 10), n: 3, huella: 'ilustrativo' }
+  });
+  const slide = slidePlantilla('twocol', 'Escribe la afirmación principal', [[afirmacion], [evidencia]]);
+  slide.notes = 'Explica el resultado, la incertidumbre y el límite de la evidencia.';
+  S.deck.slides.splice(S.cur + 1, 0, slide); S.cur++; S.selBlock = afirmacion.id; S.tab = 'bloque';
+  commit(); renderAll(); toast('Plantilla de afirmación y evidencia añadida');
 }
 
 function openCalidadCientifica() {
