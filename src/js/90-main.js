@@ -102,6 +102,7 @@ function initChrome() {
     menu.append(h('div', { class: 'm-sep' }));
     item('◆', 'Estilos…', 'tema, color, tipografía', openEstilos);
     item('◔', 'Pendientes…', 'F8', openPendientes);
+    item('⚗', 'Calidad científica…', null, openCalidadCientifica);
     item('◷', 'Bitácora del documento…', 'historial por días', openBitacora);
     item('∑', 'Ver el código de esta diapositiva', 'F7', () => alternaCodigo(true));
     item('⛶', 'Modo concentración', 'F9', () => alternaConcentracion());
@@ -125,6 +126,7 @@ function initChrome() {
     item('⌘', 'Ir a / hacer…', 'Ctrl+K', openPaleta);
     item('⌕', 'Buscar y reemplazar…', 'Ctrl+F', () => openBuscar());
     item('◆', 'Estilos…', null, openEstilos);
+    item('⚗', 'Calidad científica…', null, openCalidadCientifica);
     menu.append(h('div', { class: 'm-sep' }));
     item('📄', 'Exportar a PDF', null, openPdfHelp);
     item('∑', 'Código Beamer (.tex)', null, openTexView);
@@ -157,7 +159,11 @@ function initChrome() {
   $('#sorterBtn').addEventListener('click', alternaClasificador);
   $('#prepInd').addEventListener('click', () => openRevision());
   $('#concBtn').addEventListener('click', () => alternaConcentracion());
-  $$('.itab').forEach(t => t.addEventListener('click', () => { S.tab = t.dataset.tab; renderInspector(); openDrawer(true); }));
+  $$('.itab').forEach(t => t.addEventListener('click', () => {
+    S.tab = t.dataset.tab;
+    $$('.itab').forEach(x => { const activo = x === t; x.classList.toggle('on', activo); x.setAttribute('aria-selected', String(activo)); x.tabIndex = activo ? 0 : -1; });
+    renderInspector(); openDrawer(true);
+  }));
   $('.insp-tabs').addEventListener('keydown',e=>{
     const tabs=$$('.itab').filter(t=>!t.hidden),i=tabs.indexOf(document.activeElement);
     if(i<0)return;let next=null;

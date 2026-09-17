@@ -52,10 +52,10 @@
     <div class="inspector" id="inspector" aria-label="Herramientas de edición">
       <div class="drawer-close"><span>Herramientas</span><button class="icon-btn" id="drawerClose" aria-label="Cerrar herramientas">✕</button></div>
       <div class="insp-tabs" role="tablist">
-        <button class="itab on" data-tab="insert">Insertar</button>
-        <button class="itab" data-tab="slide">Diapositiva</button>
-        <button class="itab" data-tab="design">Diseño</button>
-        <button class="itab itab-blk" data-tab="bloque" hidden>Bloque</button>
+        <button class="itab on" role="tab" aria-selected="true" aria-controls="inspBody" tabindex="0" data-tab="insert">Insertar</button>
+        <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="slide">Diapositiva</button>
+        <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="design">Diseño</button>
+        <button class="itab itab-blk" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="bloque" hidden>Bloque</button>
       </div>
       <div class="insp-body" id="inspBody"></div>
     </div>
@@ -78,4 +78,3 @@
     <feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/>
   </filter>
 </svg>
-

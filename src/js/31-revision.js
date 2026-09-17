@@ -138,6 +138,7 @@ function revisaMazo() {
       if (n % 2) add('aviso', i, 'Hay un signo $ sin pareja', 'Las matemáticas van entre $ y $; para un dólar literal, escribe \\$.');
     });
   });
+  if (typeof calidadCientifica === 'function') fallos.push(...calidadCientifica(deck));
   wb.innerHTML = antes;
 
   const conTiempo = deck.slides.filter(sl => minutosDe(sl)).length;
@@ -180,5 +181,4 @@ function openRevision() {
   }, 60);
   return caja;
 }
-
 
