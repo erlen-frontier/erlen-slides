@@ -15,16 +15,31 @@
   --serif:'LM Roman','STIX Two Text',Georgia,serif;
   --mono:'CMU Typewriter','JetBrains Mono',ui-monospace,monospace;
   --w-tira:196px;--w-panel:304px;--h-barra:62px;
+  /* Material Liquid Glass para el chrome flotante (topbar, menús, popovers,
+     modales, toasts y controles del lienzo): fondo translúcido con blur y
+     saturación, canto especular y labio inferior. Nunca sobre .slide ni
+     listas densas. El tema dark solo reajusta alphas; blur y edge se heredan. */
+  --glass-bg:color-mix(in srgb,var(--panel) 78%,transparent);
+  --glass-blur:blur(18px) saturate(160%);
+  --glass-edge:color-mix(in srgb,var(--ink) 10%,transparent);
+  --glass-hi:rgba(255,255,255,.75);
+  --glass-hi-side:rgba(255,255,255,.28);
+  --glass-lip:rgba(9,12,24,.18);
 }
 :root[data-theme="dark"]{
   --bg:#161519;--canvas:#101114;--panel:#1D1B20;--panel2:#252229;--panel3:#302C35;
   --ink:#F2EFE8;--mut:#B8B0BD;--faint:#928B97;--line:#3C3742;--line2:#302C35;
   --acc:#B99AE0;--acc2:#D0B5F1;--accSoft:rgba(185,154,224,.12);--accInk:#17151A;
   --accLine:rgba(185,154,224,.38);--ok:#63C79C;
+  /* Glass dark: solo overrides — blur y edge se heredan del bloque claro. */
+  --glass-bg:color-mix(in srgb,var(--panel) 72%,transparent);
+  --glass-hi:rgba(255,255,255,.14);
+  --glass-hi-side:rgba(255,255,255,.05);
+  --glass-lip:rgba(0,0,0,.35);
 }
 body{letter-spacing:0;background:var(--bg)}
 .app{border-top:3px solid var(--ink);background:var(--panel)}
-.topbar{gap:8px;padding:0 18px;border-bottom-color:var(--line);box-shadow:none}
+.topbar{gap:8px;padding:0 18px;border-bottom-color:var(--glass-edge)}
 .wordmark{font-family:var(--serif);font-size:21px;font-weight:700;gap:8px;padding:3px 5px 3px 0}
 .wordmark .marca-svg{width:23px;height:23px}.wordmark .marca-txt{letter-spacing:0}
 .editor-producto{font:500 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-right:2px}
@@ -47,8 +62,12 @@ body{letter-spacing:0;background:var(--bg)}
 .canvas-scroll{padding:38px}.stage{filter:drop-shadow(0 3px 8px rgba(23,21,26,.09)) drop-shadow(0 22px 46px rgba(23,21,26,.13))}
 .stage::before,.stage::after{content:'';position:absolute;width:12px;height:12px;background:var(--panel);border:1px solid var(--ink);z-index:4;pointer-events:none}
 .stage::before{left:-6px;top:-6px}.stage::after{right:-6px;bottom:-6px}
-.canvas-foot{padding:12px 16px}.slide-pos,.zoombox{border-radius:3px;border-color:var(--line);box-shadow:var(--shadow);background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(10px)}
+.canvas-foot{padding:12px 16px}.slide-pos,.zoombox{border-radius:3px;border-color:var(--glass-edge);background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),inset 0 -1px 2px var(--glass-lip),var(--shadow)}
 .slide-pos{font-family:var(--mono);font-size:10px;text-transform:uppercase}.zoombox .zlabel{font:500 10px var(--mono)}
+/* Degradación del glass inline de .slide-pos/.zoombox (mismos umbrales que
+   .vidrio): fondo opaco sin transparencia; borde sólido con más contraste. */
+@media (prefers-reduced-transparency:reduce){.slide-pos,.zoombox{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow)}}
+@media (prefers-contrast:more){.slide-pos,.zoombox{background:var(--panel);border-color:var(--mut)}}
 .inspector{background:var(--panel)}.insp-tabs{gap:0;padding:0;border-bottom:1px solid var(--line);box-shadow:none;min-height:52px}
 .itab{border-radius:0;padding:0 8px;font:600 10px var(--mono);letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid transparent}
 .itab.on{color:var(--ink);border-bottom-color:var(--acc);background:var(--accSoft)}
@@ -62,11 +81,11 @@ body{letter-spacing:0;background:var(--bg)}
 .g-cab{border-bottom:1px solid var(--line2);border-radius:0}.g-cab .panel-label::before{content:''}
 .modal{border-top:4px solid var(--acc)}.mo-head{background:var(--panel);padding-block:18px}.mo-title{font-family:var(--serif);font-size:20px}
 .menu{border-top:3px solid var(--acc)}.menu button{border-radius:2px}.menu button .mi{color:var(--acc)}
-.blk-toolbar{border-radius:3px;background:var(--ink)}.toast{border-radius:3px;background:var(--ink)}
+.blk-toolbar{border-radius:3px;background:var(--ink)}.toast{border-radius:3px}
 .workspace{background:var(--bg)}.ws-shell{max-width:1320px}.ws-brand,.ws-hero h1,.ws-art h2,.ws-section-head h2,.ws-thumb,.ws-stat strong,.plan-card h3{font-family:var(--serif)}
 .ws-art,.ws-card,.ws-stat,.plan-card,.ws-empty{border-radius:4px}.ws-card:hover{transform:translateY(-4px);box-shadow:5px 6px 0 var(--accSoft)}
 @media (min-width:921px) and (max-width:1180px){:root{--w-tira:168px;--w-panel:282px}.canvas-scroll{padding:28px 20px}}
-@media (max-width:920px){.app{border-top-width:2px}.topbar{border-bottom-color:var(--line)}.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:54px}}
+@media (max-width:920px){.app{border-top-width:2px}.topbar{border-bottom-color:var(--glass-edge)}.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:54px}}
 @media (prefers-reduced-motion:reduce){.ins-btn:hover,.ws-card:hover{transform:none}}
 
 /* Tarjeta «Nueva presentación»: hermana de .slides-example, con borde discontinuo
@@ -78,3 +97,27 @@ body{letter-spacing:0;background:var(--bg)}
 .slides-new-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#0e4a45;color:#fff;font-size:24px;line-height:1}
 .slides-new-card strong{font-size:20px;color:var(--ink,#1c1c1c)}
 .slides-new-card small{color:var(--tinta2,#6b6b60)}
+
+/* Material Liquid Glass (Tier 1, universal): vidrio real con backdrop-filter,
+   canto especular por inset shadows y labio inferior. Solo chrome flotante —
+   nunca .slide, listas densas (.filmstrip/.inspector) ni formularios, y jamás
+   anidado dentro de otro panel glass. Sin backdrop-filter degrada a fondo
+   semitransparente (78% de panel, contraste AA con --ink). */
+.vidrio{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 1px var(--glass-hi),
+    inset 1px 0 0 var(--glass-hi-side),
+    inset -1px 0 0 var(--glass-hi-side),
+    inset 0 -1px 2px var(--glass-lip),
+    var(--shadow);
+}
+@media (prefers-reduced-transparency:reduce){
+  .vidrio{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow)}
+}
+@media (prefers-contrast:more){
+  .vidrio{background:var(--panel);border-color:var(--mut)}
+}

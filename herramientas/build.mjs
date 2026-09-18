@@ -4,10 +4,16 @@ import {fileURLToPath} from 'node:url';
 import {join,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {icons} from 'lucide';
+import {generateGlassMap} from './glass-map.mjs';
 const root=join(dirname(fileURLToPath(import.meta.url)),'..');
 const get=p=>read(join(root,p),'utf8');
 const version=JSON.parse(get('package.json')).version;
 const order=get('src/js/_orden.txt').trim().split('\n');
+/* Mapa de refracción del vidrio (Tier 2, solo-Chromium): se genera en cada
+   build y se escribe como módulo ANTES de unir los de src/js, para que
+   _orden.txt siempre lo encuentre aunque el repositorio esté limpio.
+   El data-URL es base64 (sin comillas); el replace es solo preventivo. */
+write(join(root,'src/js/_glass-map-gen.js'),'// Generado por herramientas/glass-map.mjs — no editar a mano.\nconst ERLEN_GLASS_MAP=\''+generateGlassMap().replace(/'/g,"\\'")+'\';\n');
 const css=get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
 const lib=p=>get('node_modules/'+p);
 const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','Plus','HelpCircle','FlaskConical','Atom','ChartLine','FolderOpen','Download','Play','Settings2','House','Presentation','ArrowUpRight','ArrowRight','LayoutTemplate','Archive','ChevronRight'];
