@@ -47,7 +47,46 @@
   --ui:'Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --serif:'STIX Two Text',Georgia,'Times New Roman',serif;
   --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  /* ---- material vidrio (chrome flotante: topbar, menús, popovers, modales, toasts) ----
+     Fondo translúcido con blur y saturación; el canto especular y el labio inferior
+     se pintan en .vidrio y en las reglas que repiten el material inline. */
+  --glass-bg:color-mix(in srgb,var(--panel) 78%,transparent);
+  --glass-blur:blur(18px) saturate(160%);
+  --glass-edge:color-mix(in srgb,var(--ink) 10%,transparent);
+  --glass-hi:rgba(255,255,255,.75);
+  --glass-hi-side:rgba(255,255,255,.28);
+  --glass-lip:rgba(9,12,24,.18);
+  /* Muelle de apertura de paneles flotantes, con su pequeño rebote. Una sola
+     curva para ambos temas: el material cambia con la luz, el gesto no. */
+  --spring-panel:linear(0,0.0068,0.027,0.06 8.1%,0.153,0.312 18.7%,0.595 27.5%,0.795 34.7%,0.94 41.5%,1.035 48.4%,1.084 55.3%,1.095 60.5%,1.088 66.2%,1.052 74.4%,1.013 82.3%,0.997 89.9%,1);
 }
+/* ---- material vidrio: translúcido con canto especular y labio inferior ----
+   Las superficies que se crean por JS (.pop, .menu, .modal, .toast) no pueden
+   llevar la clase y repiten estas propiedades inline en su regla: mismo
+   material, nunca un fondo sólido en su lugar. */
+.vidrio{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 1px var(--glass-hi),
+    inset 1px 0 0 var(--glass-hi-side),
+    inset -1px 0 0 var(--glass-hi-side),
+    inset 0 -1px 2px var(--glass-lip),
+    var(--shadow);
+}
+@media (prefers-reduced-transparency:reduce){
+  .vidrio{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow)}
+}
+@media (prefers-contrast:more){
+  .vidrio{background:var(--panel);border-color:var(--mut)}
+}
+/* Entrada de los paneles flotantes: showMenu y openModal insertan el elemento
+   nuevo en cada apertura, así que el muelle corre como animation (nace con el
+   nodo, como toastIn); la transition del mismo gesto queda puesta en cada
+   superficie por si algún día el estado cambia sin reinsertar. */
+@keyframes abreGlass{from{transform:scale(.97) translateY(-2px)}}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#14171F; --canvas:#0D1016; --panel:#1B1F29; --panel2:#232733; --panel3:#2B303D;
@@ -58,6 +97,11 @@
     --ok:#54CC92; --warn:#EDA067; --danger:#F4806A; --dangerSoft:rgba(244,128,106,.13);
     --shadow:0 1px 2px rgba(0,0,0,.34),0 6px 22px rgba(0,0,0,.38);
     --shadow-lg:0 2px 8px rgba(0,0,0,.40),0 18px 56px rgba(0,0,0,.50);
+    /* Glass dark: solo overrides; blur y edge se heredan del bloque claro. */
+    --glass-bg:color-mix(in srgb,var(--panel) 72%,transparent);
+    --glass-hi:rgba(255,255,255,.14);
+    --glass-hi-side:rgba(255,255,255,.05);
+    --glass-lip:rgba(0,0,0,.35);
   }
 }
 :root[data-theme="dark"]{
@@ -69,6 +113,11 @@
   --ok:#54CC92; --warn:#EDA067; --danger:#F4806A; --dangerSoft:rgba(244,128,106,.13);
   --shadow:0 1px 2px rgba(0,0,0,.34),0 6px 22px rgba(0,0,0,.38);
   --shadow-lg:0 2px 8px rgba(0,0,0,.40),0 18px 56px rgba(0,0,0,.50);
+  /* Glass dark: solo overrides; blur y edge se heredan del bloque claro. */
+  --glass-bg:color-mix(in srgb,var(--panel) 72%,transparent);
+  --glass-hi:rgba(255,255,255,.14);
+  --glass-hi-side:rgba(255,255,255,.05);
+  --glass-lip:rgba(0,0,0,.35);
 }
 /* Densidad elegible. El interruptor de la barra la cambia sin JavaScript; el
    atributo data-dens queda listo por si algún día se guarda en las preferencias. */
@@ -83,15 +132,19 @@ button{font-family:var(--ui)}
 /* Un solo foco para todo lo que se pulsa: anillo del acento y un halo suave. */
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:var(--r1)}
 button:focus-visible,[role=button]:focus-visible,summary:focus-visible{box-shadow:var(--anillo)}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
 
 /* ---------- shell ---------- */
 .app{display:flex;flex-direction:column;height:100dvh}
 .main{flex:1;display:grid;grid-template-columns:var(--w-tira) minmax(0,1fr) var(--w-panel);min-height:0}
 
-/* ---------- top bar ---------- */
+/* ---------- top bar ----------
+   El material vidrio llega con la clase .vidrio en cuerpo.html; aquí solo queda
+   la geometría y el canto inferior translúcido (una raya opaca no pega con un
+   fondo que se adivina). */
 .topbar{display:flex;align-items:center;gap:var(--e2);height:var(--h-barra);padding:0 var(--e4);
-  background:var(--panel);border-bottom:1px solid var(--line);flex:none;position:relative;z-index:40}
+  border-bottom:1px solid var(--glass-edge);flex:none;position:relative;z-index:40}
 .wordmark{font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.01em;color:var(--ink);
   display:flex;align-items:baseline;user-select:none;white-space:nowrap}
 /* El matraz lleva el color del acento en el líquido; el nombre va en serifa, como antes. */
@@ -284,9 +337,13 @@ select.field{appearance:auto}
 input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 .hint{font-size:var(--t1);color:var(--faint);line-height:1.5;margin-top:var(--e2)}
 
-/* layout picker popover */
-.pop{position:absolute;z-index:80;background:var(--panel);border:1px solid var(--line);border-radius:var(--r4);
-  box-shadow:var(--shadow-lg);padding:var(--e3)}
+/* layout picker popover: vidrio inline, porque showMenu crea el nodo nuevo en
+   cada apertura y no puede llevar la clase .vidrio */
+.pop{position:absolute;z-index:80;background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r4);
+  box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),
+    inset 0 -1px 2px var(--glass-lip),var(--shadow-lg);padding:var(--e3);
+  transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
 .lay-grid{display:grid;grid-template-columns:repeat(3,86px);gap:var(--e2);margin-bottom:var(--e3)}
 /* El rótulo respira por arriba: es lo que abre cada apartado. */
 .sublabel{display:block;font-size:var(--t0);font-weight:700;letter-spacing:var(--ls-rotulo);text-transform:uppercase;
@@ -306,8 +363,15 @@ input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 /* ---------- modals ---------- */
 .mask{position:fixed;inset:0;background:rgba(10,13,24,.48);z-index:100;display:flex;align-items:center;
   justify-content:center;padding:var(--e5);backdrop-filter:blur(3px)}
-.modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--r4);box-shadow:var(--shadow-lg);
-  width:min(760px,100%);max-height:min(88dvh,760px);display:flex;flex-direction:column;overflow:hidden}
+/* Vidrio inline como .pop (openModal también lo crea nuevo). El hilo de acento
+   que la segunda ola añadía al box-shadow queda fusionado aquí para no pisar
+   los cantos especulares. La máscara conserva su propio velado. */
+.modal{background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-edge);border-radius:var(--r4);
+  box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),
+    inset 0 -1px 2px var(--glass-lip),var(--shadow-lg),0 0 0 1px color-mix(in srgb, var(--acc) 12%, transparent);
+  width:min(760px,100%);max-height:min(88dvh,760px);display:flex;flex-direction:column;overflow:hidden;
+  transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
 .modal.modal-sm{width:min(460px,100%)}
 .modal.modal-lg{width:min(880px,100%)}
 /* La cabecera se separa con un cambio de fondo; abajo sí hace falta la raya. */
@@ -358,9 +422,13 @@ input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 /* toast */
 .toasts{position:fixed;bottom:var(--e5);left:50%;transform:translateX(-50%);z-index:200;display:flex;
   flex-direction:column;gap:var(--e2);align-items:center;pointer-events:none}
-.toast{background:#161A26;color:#EDF0FA;font-size:var(--t2);font-weight:500;padding:var(--e3) var(--e5);
-  border-radius:var(--r3);box-shadow:var(--shadow-lg);max-width:min(520px,90vw);text-align:center;animation:toastIn .18s ease}
-.toast.warn{background:#5C3A08;color:#FFE9CF}
+.toast{background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-edge);color:var(--ink);font-size:var(--t2);font-weight:500;padding:var(--e3) var(--e5);
+  border-radius:var(--r3);
+  box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),
+    inset 0 -1px 2px var(--glass-lip),var(--shadow-lg);
+  max-width:min(520px,90vw);text-align:center;animation:toastIn .18s ease}
+.toast.warn{border-color:var(--warn)}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* progress overlay (PDF export) */
@@ -376,9 +444,12 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
 .help-row{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);padding:var(--e2) 0;
   font-size:var(--t2);color:var(--ink)}
 
-/* menu */
-.menu{position:absolute;z-index:90;background:var(--panel);border:1px solid var(--line);border-radius:var(--r3);
-  box-shadow:var(--shadow-lg);padding:var(--e2);min-width:232px}
+/* menu: vidrio inline como .pop (mismo showMenu de nacimiento) */
+.menu{position:absolute;z-index:90;background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r3);
+  box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),
+    inset 0 -1px 2px var(--glass-lip),var(--shadow-lg);padding:var(--e2);min-width:232px;
+  transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
 .menu button{display:flex;align-items:center;gap:var(--e3);width:100%;border:none;background:transparent;
   color:var(--ink);font:500 var(--t2) var(--ui);padding:var(--e2) var(--e3);min-height:var(--h-ctl);
   border-radius:var(--r2);cursor:pointer;text-align:left}
@@ -808,7 +879,8 @@ textarea.field.es-area{min-height:300px;font:var(--t2)/1.6 var(--mono);white-spa
 .blk-props .irow{flex-wrap:wrap;gap:var(--e1)}
 .blk-props .irow > label{flex:1 0 100%}
 .blk-props .irow > div{flex:1 0 100% !important}
-.toast.toast-pista{border-color:var(--acc);background:var(--panel)}
+/* La pista de contexto sigue opaca: vidrio dentro del propio toast sería vidrio sobre vidrio. */
+.toast.toast-pista{border-color:var(--acc);background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none}
 .toast.toast-pista span{color:var(--acc);font-weight:600}
 
 /* ---------- barra de preparación ---------- */
@@ -1482,11 +1554,8 @@ details.zot-arch > div{margin-top:var(--e2)}
 :root[data-theme="dark"] .stage{filter:drop-shadow(0 1px 1px rgba(0,0,0,.5)) drop-shadow(0 12px 30px rgba(0,0,0,.55))}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stage{filter:drop-shadow(0 1px 1px rgba(0,0,0,.5)) drop-shadow(0 12px 30px rgba(0,0,0,.55))}}
 
-/* barra superior: un hilo de luz arriba y el botón de presentar con presencia */
-.topbar{background:linear-gradient(to bottom, color-mix(in srgb, var(--panel) 92%, #fff), var(--panel));
-  box-shadow:0 1px 0 var(--line), 0 1px 12px -6px rgba(20,25,45,.10)}
-:root[data-theme="dark"] .topbar{background:linear-gradient(to bottom, color-mix(in srgb, var(--panel) 88%, #fff 4%), var(--panel))}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .topbar{background:linear-gradient(to bottom, color-mix(in srgb, var(--panel) 88%, #fff 4%), var(--panel))}}
+/* barra superior: el hilo de luz que dibujaba el gradiente lo pone ahora el
+   material vidrio (canto especular de .vidrio); el fondo sólido lo tapaba */
 .btn-pri{box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px -8px var(--acc)}
 .btn-pri:hover{box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 8px 20px -8px var(--acc)}
 .save-ind.on{color:var(--acc)}
@@ -1519,15 +1588,15 @@ details.zot-arch > div{margin-top:var(--e2)}
 .fs-item.sel .fs-num{background:var(--acc);color:var(--accInk);box-shadow:none}
 .fs-sec-n{letter-spacing:.12em}
 
-/* ventanas: fondo velado y un hilo de acento en la cabecera */
+/* ventanas: fondo velado; el hilo de acento del panel vive ahora en .modal (vidrio) */
 .modal-mask{backdrop-filter:blur(6px) saturate(1.1);-webkit-backdrop-filter:blur(6px) saturate(1.1)}
-.modal{box-shadow:var(--shadow-lg), 0 0 0 1px color-mix(in srgb, var(--acc) 12%, transparent)}
 .modal-head{border-bottom:1px solid var(--line2);position:relative}
 .modal-head::after{content:"";position:absolute;left:var(--e5);bottom:-1px;width:44px;height:2px;background:var(--acc);border-radius:1px}
 
-/* avisos: en el verde profundo de la marca */
-.toast{background:#0E4A45;color:#E4F2F0;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
-.toast.warn{background:#5C3A08;color:#FFE9CF}
+/* avisos: los fondos sólidos de la marca dejan paso al vidrio; el acento
+   (y el aviso) viajan en el canto */
+.toast{border-color:var(--acc)}
+.toast.warn{border-color:var(--warn)}
 
 /* barras de desplazamiento finas y del color del tema */
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb, var(--mut) 45%, transparent) transparent}
@@ -1584,3 +1653,12 @@ details.zot-arch > div{margin-top:var(--e2)}
 .nov-cab{display:flex;gap:var(--e2);align-items:baseline;flex-wrap:wrap;margin-bottom:var(--e1)}
 .nov-bloque ul{margin:0;padding-left:1.1em;font-size:var(--t2);color:var(--mut);display:grid;gap:4px}
 .nov-bloque li::marker{color:var(--acc)}
+
+/* ---- retirada del vidrio ----
+   Quien pide menos transparencia o más contraste recibe planas también las
+   superficies que llevan el material inline (.pop, .menu, .modal, .toast):
+   mismas reglas que .vidrio, al final del archivo para ganar la cascada. */
+@media (prefers-reduced-transparency:reduce){
+  .pop,.menu,.modal,.toast{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow-lg)}}
+@media (prefers-contrast:more){
+  .pop,.menu,.modal,.toast{background:var(--panel);border-color:var(--mut)}}
