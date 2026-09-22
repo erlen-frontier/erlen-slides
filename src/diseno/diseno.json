@@ -1,9 +1,9 @@
 {
- "version": "1.3.0",
+ "version": "1.3.1",
  "files": {
-  "VERSION": "64d23f858ef51b0f996e4966d4e27c0371b437e2d2787890b1f7ad22d4ec5663",
+  "VERSION": "10e2e117b01523891ca271a615ae36e9d5e52348fd7d642f66727602c1b8dcbe",
   "base.css": "062953242461543786111836351f885411bac05848acb13a653b6a839e263706",
-  "cinta.css": "ceb169800a2cd8d2ba5df444a77bc161f4e08fed104d5ebb037d11254b3f3d87",
+  "cinta.css": "affce9f68b2b46129f72803cdb5931e74aad527a4c8cbe4014c77a7bbbfb2d33",
   "fuentes.css": "5382f1d211a557d5d825e1a4fdea56f1957c32b9a682b8f58dd67d11c7c3b529",
   "fuentes/cmu-concrete-400-italic.87b60891.woff2": "87b60891a08d17814e0320724fbece9f9bca05ebf50a4dd53b312e5ca96bae02",
   "fuentes/cmu-concrete-400-normal.6e28f64d.woff2": "6e28f64dd35e439c6a9cd58debf3047bdc6a7d5fe4607a90685c0a2aeb670621",
@@ -18,12 +18,12 @@
   "licencias/MIT.txt": "c6efd8524aedfbf769649e36a9bd6a0e95ce353bbd7a0a5eeef31adfdfb5cdad",
   "licencias/OFL.txt": "73273dffdefe2e5f1e138084d4a4b65b1c50df2ab0179f78484f31beefe30d84",
   "motion.css": "70bb03c77d8d903af41594bc902cabee2fbefecfe74d8476687ba245c4bc7cd4",
-  "suite-cinta.js": "05e17f567c678bfe0280e551ebb1c3511a2aaa76d5e66817936f1c09f88555ba",
-  "suite-cinta.mjs": "740b25c7fbb51bb3436b16b4c0b75fe2029432d22e57ef88d543a433ad275f08",
-  "suite-inicio.js": "b8a408f1c7e245ff23585584b02eeeab88e23670a65f056897829c70824468e9",
+  "suite-cinta.js": "fca1e704b12c3f6b531e41449f77ce510b6e54b4955534758defd9edb51b99dc",
+  "suite-cinta.mjs": "40e6e279016ecf70a828e4a13b16cccd85ae2635098ec4975ca1995ac2620402",
+  "suite-inicio.js": "01ff888c3a72babf542e4e25033e61f962acf4c9a6910e5da7be377093d1e590",
   "suite-inicio.mjs": "73b8be57fc2e947d428b4dab881921a7acf8facf0f8b16dbbae349ba7531f7b5",
-  "suite-nav.mjs": "03eb7ef7a6bc81194b2cda9313915b7bdd95d4d540e5abe7900bd671a3b1b3e1",
-  "suite-navigation.js": "ee0f70c43ea9f6967955d5a2e51cbb53b83111fe5a9a6317c3ebc7dcc3ca4c2d",
+  "suite-nav.mjs": "b2e6488d12bf6159acbc76fdc591a8f1ce08f88c4dc09be38d219fea6c539c1e",
+  "suite-navigation.js": "70b994564c6e2d5d19cea1517df06d22326607c21ca9358e6ff935c9917535fd",
   "tokens.css": "d02370b75a69da68f1fe8873486f734d3ec572a5ad87f846473b7a62e294c2cb"
  },
  "modos": [

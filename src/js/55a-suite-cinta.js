@@ -1,4 +1,4 @@
-/* erlen-diseno 1.3.0 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
+/* erlen-diseno 1.3.1 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
 const erlenCinta=(()=>{
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
@@ -56,9 +56,12 @@ function mountCinta(host,config){
  const vivos=new Map();   // botón → control, para refrescar estados sin repintar
 
  const raiz=el('div',{class:'erlen-cinta'});
- const lista=el('div',{class:'erlen-cinta-pestanas',role:'tablist','aria-label':config.etiqueta||'Herramientas'});
+ // La fila de pestañas lleva «Archivo» y «Plegar» fuera del tablist: un tablist solo puede
+ // contener pestañas (ARIA aria-required-children).
+ const fila=el('div',{class:'erlen-cinta-pestanas'});
+ const lista=el('div',{class:'erlen-cinta-lista',role:'tablist','aria-label':config.etiqueta||'Herramientas'});
  const panel=el('div',{class:'erlen-cinta-panel',role:'tabpanel',id:uid+'-panel',tabindex:'-1'});
- raiz.append(lista,panel);
+ raiz.append(fila,panel);
  host.append(raiz);
 
  function el(tag,attrs={},...hijos){
@@ -78,22 +81,23 @@ function mountCinta(host,config){
  const todas=()=>[...config.pestanas,...(typeof config.contextuales==='function'?(config.contextuales()||[]).map(p=>(validarPestana(p),{...p,contextual:true})):[])];
 
  function pintarPestanas(ps){
-  lista.replaceChildren();
+  fila.replaceChildren();lista.replaceChildren();
   if(config.archivo){
    const b=el('button',{type:'button',class:'erlen-cinta-archivo'},config.archivo.etiqueta||'Archivo');
    b.addEventListener('click',()=>config.archivo.accion&&config.archivo.accion(b));
-   lista.append(b);
+   fila.append(b);
   }
+  fila.append(lista);
   for(const p of ps){
    const b=el('button',{type:'button',role:'tab',class:'erlen-cinta-pestana',id:uid+'-tab-'+p.id,'aria-controls':uid+'-panel','aria-selected':'false',tabindex:'-1','data-pestana':p.id,'data-contextual':p.contextual?'true':null},p.etiqueta);
    b.addEventListener('click',()=>{if(plegada)fijarPlegado(false);seleccionar(p.id,true);});
    b.addEventListener('dblclick',()=>fijarPlegado(!plegada));
    lista.append(b);
   }
-  lista.append(el('span',{class:'erlen-cinta-hueco'}));
+  fila.append(el('span',{class:'erlen-cinta-hueco'}));
   const pl=el('button',{type:'button',class:'erlen-cinta-plegar','aria-expanded':String(!plegada),'aria-controls':uid+'-panel',title:'Plegar o desplegar la cinta (Ctrl+F1)'},el('span',{'aria-hidden':'true'},plegada?'⌄':'⌃'),el('span',{class:'erlen-cinta-oculto'},plegada?'Desplegar la cinta':'Plegar la cinta'));
   pl.addEventListener('click',()=>fijarPlegado(!plegada));
-  lista.append(pl);
+  fila.append(pl);
  }
 
  function pintarPanel(p){
