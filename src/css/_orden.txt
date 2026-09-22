@@ -4,5 +4,4 @@
 04-viva.css
 05-workspace.css
 06-ciencia-libre.css
-07-suite.css
 08-slides.css

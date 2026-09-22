@@ -2,9 +2,6 @@
 'use strict';
 /* Herramientas locales completas en todas las ediciones. Sin venta emergente. */
 const LS_BIBLIOTECA = 'erlen-slides.biblioteca.v1';
-let wsVista = 'inicio';
-let wsBusqueda = '';
-let wsOrden = 'reciente';
 const wsPlantillas = () => { const lista=lsGet(LS_BIBLIOTECA,[]); return Array.isArray(lista) ? lista.filter(p=>p && typeof p.nombre==='string' && p.deck && Array.isArray(p.deck.slides)) : []; };
 function wsConservar() {
   flushEdicion();
@@ -20,15 +17,28 @@ function wsConservar() {
   }
   return true;
 }
-function wsCerrar() {
+/* Pantalla de inicio: el componente común de la suite (src/js/87a-suite-inicio.js, copia
+   de src/diseno/suite-inicio.js; docs/COHERENCIA-APPS.md §3 del portal). Aquí solo se
+   declara qué muestra —ejemplos, biblioteca, recursos— y se conservan las rutas por hash
+   de siempre: #suite/<vista> para el inicio y #presentaciones para el editor. */
+let INICIO = null;
+/* Vistas de la URL (históricas, enlazadas desde fuera) ↔ vistas del componente. */
+const SUITE_VISTAS = {inicio:'inicio', biblioteca:'biblioteca', plantillas:'ejemplos', herramientas:'recursos', servicio:'acerca'};
+const SUITE_RUTAS = Object.fromEntries(Object.entries(SUITE_VISTAS).map(([ruta, vista]) => [vista, ruta]));
+function suiteVistaValida(v) { return Object.hasOwn(SUITE_VISTAS, v) ? v : 'inicio'; }
+function suiteRuta(hash) { return hash === '#presentaciones' ? 'editor' : suiteVistaValida(String(hash || '').replace(/^#suite\/?/, '')); }
+function suiteUrl(v) { const hash = v === 'editor' ? '#presentaciones' : '#suite/' + suiteVistaValida(v); if (location.hash !== hash) history.pushState(null, '', location.pathname + location.search + hash); }
+function suiteDesdeUrl() { if (!location.hash) history.replaceState(null, '', location.pathname + location.search + '#suite/inicio'); const v = suiteRuta(location.hash); v === 'editor' ? wsCerrar() : wsInicio(v); }
+const wsAbierto = () => !!(INICIO && INICIO.abierta);
+/* Lo que hace falta al volver al editor, se venga del inicio o de un enlace directo. */
+function wsAlEditor() {
   suiteUrl('editor');
-  document.title = 'Presentaciones · Erlen';
-  $('#workspaceRoot').hidden = true;
-  $('#app').inert = false;
-  document.body.classList.remove('en-inicio');
   S.prefs.sinPrimera = true; guardaPrefs(); ocultaPrimera();
   renderAll();
   $('#deckTitleInput').focus();
+}
+function wsCerrar() {
+  if (wsAbierto()) INICIO.cerrar(); else wsAlEditor();
   return true;
 }
 function wsNueva(deck) {
@@ -36,90 +46,114 @@ function wsNueva(deck) {
   loadDeck(deck || blankDeck(), null);
   wsCerrar();
 }
-function wsAccion(fn) { return () => { if(wsCerrar()!==false)fn(); }; }
-function wsCard(titulo, descripcion, etiqueta, acciones) {
-  return h('article', {class:'ws-card'},
-    h('div', {class:'ws-thumb'}, h('small', null, etiqueta), titulo),
-    h('div', {class:'ws-card-body'}, h('p', null, descripcion), h('div', {class:'ws-actions'}, acciones)));
-}
+/* Recursos que trabajan sobre el editor: primero se cierra el inicio. */
+function wsAccion(fn) { return () => { if (wsCerrar() !== false) fn(); }; }
 function wsBoton(texto, fn, principal) { return h('button', {class:'btn btn-sm' + (principal ? ' btn-pri' : ''),onclick:fn}, texto); }
 function wsInicio(vista) {
-  if ($('#workspaceRoot').hidden && !wsConservar()) return;
-  wsVista = suiteVistaValida(vista || 'inicio');
-  openDrawer(false); closeMenus();
-  $('#workspaceRoot').hidden = false;
-  $('#app').inert = true;
-  document.body.classList.add('en-inicio');
-  suiteUrl(wsVista);
-  suitePinta();
+  const v = suiteVistaValida(vista || 'inicio');
+  if (!wsAbierto() && !wsConservar()) return;
+  INICIO.abrir(SUITE_VISTAS[v]);
+  suiteUrl(v);
 }
-function wsCambiar(vista) {
-  wsVista = suiteVistaValida(vista); wsBusqueda = '';
-  suiteUrl(wsVista); suitePinta();
+const wsCambiar = wsInicio;
+/* Biblioteca: las presentaciones guardadas con nombre en este navegador, de la más reciente a la más antigua. */
+function wsBiblioteca() {
+  const store = decksStore();
+  return Object.keys(store).sort((a, b) => store[b].when - store[a].when).map(n => {
+    const d = store[n], meta = d.deck.meta || {}, total = d.deck.slides.length;
+    return {
+      id: n, titulo: n,
+      detalle: total + ' ' + (total === 1 ? 'diapositiva' : 'diapositivas'),
+      fecha: fmtWhen(d.when),
+      miniatura: [meta.title, meta.subtitle].filter(Boolean).join(' · ') || n,
+      abrir: () => { if (!wsConservar()) return; if (!cargaSegura(d.deck, n)) wsInicio('biblioteca'); },
+      duplicar: async () => wsDuplicar(n),
+      descargar: () => downloadFile(wsNombre(n) + '.json', JSON.stringify(d.deck, null, 2), 'application/json')
+    };
+  });
 }
-function wsPinta() {
-  const body = $('#wsContent'); if (!body) return;
-  body.replaceChildren();
-  if (wsVista==='servicio') { wsServicio(body); return; }
-  if (wsVista==='herramientas') { wsHerramientas(body); return; }
-  const plantillas=wsVista==='plantillas';
-  const busqueda=h('input',{class:'field',type:'search','aria-label':plantillas?'Buscar plantillas':'Buscar presentaciones',placeholder:plantillas?'Buscar una plantilla…':'Buscar en tu biblioteca…',value:wsBusqueda});
-  const orden=h('select',{class:'field','aria-label':'Ordenar presentaciones'},h('option',{value:'reciente'},'Más recientes'),h('option',{value:'nombre'},'Nombre A–Z'));
-  orden.value=wsOrden;
-  const grid=h('div',{class:'ws-grid'}), cuenta=h('p',{class:'ws-note',role:'status'});
-  const actualizar=()=>{
-    wsBusqueda=busqueda.value;wsOrden=orden.value;grid.replaceChildren();
-    const query=wsBusqueda.toLocaleLowerCase('es');
-    let total=0;
-    if(plantillas){
-      const personales=wsPlantillas().map(p=>({n:p.nombre,d:'Tu plantilla reutilizable. Guardada en este navegador.',propia:true,build:()=>deepCopy(p.deck)}));
-      [...personales,...PLANTILLAS].filter(p=>(p.n+' '+p.d).toLocaleLowerCase('es').includes(query)).forEach(p=>{
-        total++;grid.append(wsCard(p.n,p.d,p.propia?'Personal':'Plantilla científica',[
-          wsBoton('Usar plantilla',()=>wsNueva(p.build()),true),
-          p.propia ? wsBoton('Quitar',()=>{const lista=wsPlantillas(), restante=lista.filter(t=>t.nombre!==p.n);if(lsSet(LS_BIBLIOTECA,restante)){actualizar();toast('Plantilla quitada.',null,{t:'Deshacer',fn:()=>{if(lsSet(LS_BIBLIOTECA,lista))actualizar();}});}}) : null
-        ]));
-      });
-    }else{
-      const store=decksStore();
-      Object.keys(store).filter(n=>n.toLocaleLowerCase('es').includes(query)).sort((a,b)=>wsOrden==='nombre'?a.localeCompare(b,'es'):store[b].when-store[a].when).forEach(n=>{
-        total++;const d=store[n];grid.append(wsCard(n,`${d.deck.slides.length} ${d.deck.slides.length===1?'diapositiva':'diapositivas'} · ${fmtWhen(d.when)}`,'En este navegador',[
-          wsBoton('Abrir',()=>{if(!wsConservar())return;if(cargaSegura(d.deck,n))wsCerrar();},true),
-          wsBoton('Duplicar',()=>{const copia=deepCopy(d.deck);copia.meta.title=(copia.meta.title||n)+' · copia';wsNueva(copia);}),
-          wsBoton('Descargar',()=>downloadFile(wsNombre(n)+'.json',JSON.stringify(d.deck,null,2),'application/json'))
-        ]));
-      });
-    }
-    cuenta.textContent=total+' '+(plantillas?(total===1?'plantilla':'plantillas'):(total===1?'presentación':'presentaciones'));
-    if(!total)grid.append(h('div',{class:'ws-empty'},h('h3',null,query?'No hay coincidencias':'Aquí empieza tu próxima charla'),h('p',null,query?'Prueba con otro nombre o limpia la búsqueda.':'Crea una presentación o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'),wsBoton('Nueva presentación',()=>wsNueva(),true)));
+/* Duplicar deja la copia en la biblioteca, junto al original, sin abrirla. */
+function wsDuplicar(n) {
+  const store = decksStore(), d = store[n];
+  if (!d) throw new Error('la presentación ya no está en este navegador.');
+  const copia = deepCopy(d.deck);
+  copia.meta.title = (copia.meta.title || n) + ' · copia';
+  const base = n + ' · copia';
+  let nombre = base, i = 2;
+  while (Object.hasOwn(store, nombre)) nombre = base + ' (' + i++ + ')';
+  Object.defineProperty(store, nombre, {value:{deck:copia,when:Date.now()},enumerable:true,configurable:true,writable:true});
+  if (!lsSet(LS_DECKS, store)) throw new Error('no hay espacio en este navegador. Descarga un respaldo antes de continuar.');
+  toast('Copia creada: «' + nombre + '».');
+}
+/* Los doce ejemplos (87-ejemplos.js), con su disciplina y una fórmula o idea como arte. */
+const WS_ARTE = {
+  calibracion: ['Química analítica', 'A = εlc'],
+  cinetica: ['Cinética', 'c(t) = c₀e⁻ᵏᵗ'],
+  defensa: ['Investigación', 'Pregunta → Evidencia'],
+  'reunion-laboratorio': ['Laboratorio', 'Avance → Decisión'],
+  'journal-club': ['Lectura crítica', 'Afirmación ↔ Evidencia'],
+  'equilibrio-quimico': ['Química', 'HA ⇌ H⁺ + A⁻'],
+  espectroscopia: ['Espectroscopia', 'Señal − línea base'],
+  reproducibilidad: ['Análisis de datos', 'Datos → Código → Figura'],
+  'diseno-experimental': ['Métodos', 'Unidad · Control · Réplica'],
+  congreso: ['Comunicación', 'Un mensaje · una figura'],
+  derivacion: ['Modelización', 'dc/dt = −kc'],
+  'datos-abiertos': ['Ciencia abierta', 'Datos + README + LICENSE']
+};
+function wsEjemplos() {
+  const ejemplos = EJEMPLOS.map(e => ({
+    id: e.id, disciplina: (WS_ARTE[e.id] || ['Ejemplo'])[0], arte: (WS_ARTE[e.id] || [])[1] || e.n,
+    titulo: e.n, descripcion: e.d + ' Datos ilustrativos.', etiqueta: 'Abrir ejemplo',
+    accion: () => wsNueva(e.build())
+  }));
+  const personales = wsPlantillas().map((p, i) => ({
+    id: 'personal-' + i, disciplina: 'Personal', arte: 'Plantilla personal', titulo: p.nombre,
+    descripcion: 'Tu plantilla reutilizable. Guardada en este navegador.', etiqueta: 'Usar plantilla',
+    accion: () => wsNueva(deepCopy(p.deck))
+  }));
+  return [...ejemplos, ...personales];
+}
+/* Las plantillas personales se usan o se quitan aquí (el componente no tiene «Quitar»). */
+function wsMisPlantillas() {
+  const lista = h('div');
+  const pinta = () => {
+    lista.replaceChildren();
+    const todas = wsPlantillas();
+    if (!todas.length) { lista.append(h('p', {class:'hint'}, 'Todavía no tienes plantillas personales. Guarda la presentación actual con «Mi plantilla» o recupéralas de un respaldo.')); return; }
+    todas.forEach(p => lista.append(h('div', {class:'deck-row'},
+      h('div', {class:'dname'}, h('b', null, p.nombre), h('span', {class:'dmeta'}, p.deck.slides.length + ' ' + (p.deck.slides.length === 1 ? 'diapositiva' : 'diapositivas'))),
+      wsBoton('Usar plantilla', () => { closeModal(); wsNueva(deepCopy(p.deck)); }, true),
+      h('button', {class:'btn btn-sm', 'aria-label':'Quitar «' + p.nombre + '»', onclick:() => {
+        const antes = wsPlantillas(), restante = antes.filter(t => t.nombre !== p.nombre);
+        if (!lsSet(LS_BIBLIOTECA, restante)) { toast('No se pudo quitar la plantilla.', 'warn'); return; }
+        pinta(); INICIO?.actualizar();
+        toast('Plantilla quitada.', null, {t:'Deshacer', fn:() => { if (lsSet(LS_BIBLIOTECA, antes)) { pinta(); INICIO?.actualizar(); } }});
+      }}, 'Quitar'))));
   };
-  busqueda.addEventListener('input',actualizar);orden.addEventListener('change',actualizar);
-  body.append(h('div',{class:'ws-section-head'},h('h2',null,plantillas?'Un buen punto de partida':'Tu biblioteca'),h('div',{class:'ws-controls'},busqueda,plantillas?null:orden)),grid,cuenta);
-  if(plantillas)body.append(h('p',{class:'ws-note'},'Las plantillas piloto contienen ejemplos y datos ilustrativos. Sustitúyelos por los de tu investigación.'));
-  else body.append(h('p',{class:'ws-note'},'Los archivos locales son tuyos. Borrar los datos del navegador elimina estas copias: conserva un respaldo descargado.'));
-  actualizar();
-  if(!plantillas&&typeof figBiblioteca==='function')figBiblioteca(body,true);
-  if(!plantillas&&typeof docBiblioteca==='function')docBiblioteca(body);
-  if(!plantillas&&typeof cuBiblioteca==='function')cuBiblioteca(body);
-  if(!plantillas&&typeof daBiblioteca==='function')daBiblioteca(body);
+  pinta();
+  openModal({title:'Mis plantillas personales', size:'modal-sm', body:h('div', null, lista, h('p', {class:'hint'}, 'Se guardan solo en este navegador. «Respaldo de presentaciones» las incluye en el ZIP.'))});
+}
+function wsRecursos() {
+  const recursos = [
+    ['Laboratorio científico', 'Moléculas editables, estructuras 3D y gráficas a partir de tus datos. Procesamiento en este navegador.', 'Abrir laboratorio', wsAccion(openCiencia)],
+    ['Copias y recuperación', 'Versiones automáticas, puntos de recuperación y restauración de respaldos sin reemplazar tus originales.', 'Abrir recuperación', wsAccion(openRecuperacion)],
+    ['Preparar mi charla', 'Revisa contenido, tiempos y pendientes antes de presentar.', 'Abrir revisión', wsAccion(openRevision)],
+    ['Mi plantilla', 'Convierte la presentación actual en un punto de partida reutilizable. Se guarda solo en este navegador.', 'Guardar plantilla', wsGuardarPlantilla],
+    ['Mis plantillas personales', 'Usa o quita las plantillas que guardaste en este navegador.', 'Gestionar plantillas', wsMisPlantillas],
+    ['Identidad institucional', 'Descarga o importa tema, colores, tipografías y logotipo para mantener una identidad común.', 'Abrir identidad', wsIdentidad],
+    ['Respaldo de presentaciones', 'Descarga todas tus presentaciones locales en un ZIP con archivos de proyecto editables.', 'Descargar respaldo', wsRespaldo],
+    ['Recuperar mis plantillas', 'Importa el archivo de plantillas de tu respaldo sin sobrescribir las que ya conservas.', 'Importar plantillas', wsImportarPlantillas],
+    ['Reporte de biblioteca', 'Exporta nombres, número de diapositivas y fechas de tu biblioteca local.', 'Descargar CSV', wsReporte],
+    ['De guion a diapositivas', 'Pega tu índice y crea la estructura de una charla sin empezar de cero.', 'Pegar esquema', wsAccion(openEsquema)]
+  ];
+  /* La versión sin conexión solo existe junto a la web: el archivo suelto ya lo es. */
+  if (location.protocol !== 'file:' && window.ERLEN) recursos.push(['Erlen Slides sin conexión', 'Un solo archivo HTML con el editor completo para trabajar sin red. Los paquetes se comparten como archivos; no sincronizan equipos.', 'Descargar sin conexión', () => {
+    const a = h('a', {href:'erlen-slides-offline.html', download:'erlen-sin-conexion.html', hidden:true});
+    document.body.append(a); a.click(); a.remove();
+  }]);
+  return recursos.map(([titulo, texto, etiqueta, accion]) => ({titulo, texto, etiqueta, accion}));
 }
 const wsNombre = n => String(n).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,70)||'presentacion';
-function wsHerramientas(body) {
-  const grid=h('div',{class:'ws-grid'});
-  const opciones=[
-    ['Laboratorio científico','Moléculas editables, estructuras 3D y gráficas a partir de tus datos. Procesamiento en este navegador.','Gratis','Abrir laboratorio',wsAccion(openCiencia)],
-    ['Copias y recuperación','Versiones automáticas, puntos de recuperación y restauración de respaldos sin reemplazar tus originales.','Incluido gratis','Abrir recuperación',wsAccion(openRecuperacion)],
-    ['Preparar mi charla','Revisa contenido, tiempos y pendientes antes de presentar.','Preparación','Abrir revisión',wsAccion(openRevision)],
-    ['Mi plantilla','Convierte la presentación actual en un punto de partida reutilizable. Se guarda solo en este navegador.','Biblioteca personal','Guardar plantilla',wsGuardarPlantilla],
-    ['Identidad institucional','Descarga o importa tema, colores, tipografías y logotipo para mantener una identidad común.','Docentes y laboratorios','Abrir identidad',wsIdentidad],
-    ['Respaldo de presentaciones','Descarga todas tus presentaciones locales en un ZIP con archivos de proyecto editables.','Tus archivos','Descargar respaldo',wsRespaldo],
-    ['Recuperar mis plantillas','Importa el archivo de plantillas de tu respaldo sin sobrescribir las que ya conservas.','Respaldo personal','Importar plantillas',wsImportarPlantillas],
-    ['Reporte de biblioteca','Exporta nombres, número de diapositivas y fechas de tu biblioteca local.','Organización','Descargar CSV',wsReporte],
-    ['De guion a diapositivas','Pega tu índice y crea la estructura de una charla sin empezar de cero.','Creación','Pegar esquema',wsAccion(openEsquema)]
-  ];
-  opciones.forEach(([t,d,e,b,f])=>grid.append(wsCard(t,d,e,[wsBoton(b,f,true)])));
-  body.append(h('div',{class:'ws-section-head'},h('h2',null,'Más allá de una diapositiva')),grid,
-    location.protocol !== 'file:' && window.ERLEN ? h('p',null,h('a',{class:'btn',href:'erlen-slides-offline.html',download:'erlen-sin-conexion.html'},'Descargar Erlen sin conexión')) : null,h('p',{class:'ws-note'},'Todas estas herramientas locales están incluidas gratis. Los paquetes se comparten como archivos; no sincronizan equipos automáticamente.'));
-}
 function wsImportarPlantillas() {
   const aviso=h('p',{class:'hint',role:'status'});
   const archivo=h('input',{class:'field',type:'file',accept:'.json,application/json','aria-label':'Archivo de plantillas personales'});
@@ -207,16 +241,43 @@ function wsServicio(body) {
  body.append(h('h2',null,'Erlen Slides · Presentaciones científicas'),h('p',{class:'ws-lead'},'Editor científico libre, versión '+edVersion()+'. Tus presentaciones se guardan en este navegador.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:ERLEN_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:ERLEN_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
 }
 function wsInit() {
+  INICIO = erlenInicio($('#inicioRoot'), {
+    nombre: 'Erlen Slides', corto: 'SLIDES', objetos: 'presentaciones',
+    marca: $('#inicioBtn .marca-svg').outerHTML,
+    estado: 'Disponible · beta', subtitulo: 'Presentaciones científicas',
+    eyebrow: 'ARCHIVO CIENTÍFICO · ERLEN SLIDES', titulo: ['Presentaciones ', 'científicas'],
+    lead: 'Crea, explora y conserva historias visuales para comunicar datos, métodos y resultados con precisión.',
+    nuevo: {etiqueta:'Nueva presentación', detalle:'Lienzo científico en blanco', accion:() => wsNueva()},
+    importar: {etiqueta:'Importar proyecto', accion:importJSON},
+    continuar: () => deckEnBlanco() ? null : {etiqueta:'Continuar presentación', accion:() => {}},
+    get ejemplos() { return wsEjemplos(); },
+    biblioteca: {listar:wsBiblioteca, vacio:{titulo:'Aquí empieza tu próxima charla', texto:'Crea una presentación o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'}},
+    recursos: wsRecursos(),
+    acerca: {texto:'Editor científico libre, versión ' + edVersion() + '. Tus presentaciones se guardan en este navegador: descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos. Software libre con licencia AGPLv3.',
+      enlaces:[{etiqueta:'Código fuente · AGPLv3', url:ERLEN_SOURCE_URL}, {etiqueta:'Manual, ejemplos y límites conocidos', url:ERLEN_SOURCE_URL + '/blob/main/docs/uso.md'}]},
+    fuente: {url:ERLEN_SOURCE_URL, licencia:'AGPLv3'},
+    editor: $('#app'),
+    menuSuite: host => erlenSuiteNavigation(host, 'slides'),
+    alAbrir: () => { openDrawer(false); closeMenus(); },
+    alCerrar: wsAlEditor
+  });
+  /* La navegación interna del componente no toca la URL: se refleja aquí, tras cada clic. */
+  INICIO.elemento.addEventListener('click', () => { if (INICIO.abierta) suiteUrl(SUITE_RUTAS[INICIO.vista]); });
   $('#inicioBtn').addEventListener('click',()=>wsInicio());
   window.addEventListener('hashchange',suiteDesdeUrl);
   $('#edicionBadge').addEventListener('click',openEdicion);
   $('#drawerClose').addEventListener('click',()=>cierraDrawer());
   pintaEdicion();
-  const solicitado=new URLSearchParams(location.search).get('plantilla');
+  /* ?plantilla=<id>: el portal enlaza así los ejemplos. Se consume una vez y se retira de la URL. */
+  const params=new URLSearchParams(location.search);
+  const solicitado=params.get('plantilla');
   const plantilla=solicitado && PLANTILLAS.find(p=>p.id===solicitado);
+  if(params.has('plantilla')){const url=new URL(location.href);url.searchParams.delete('plantilla');history.replaceState(null,'',url.pathname+url.search+url.hash);}
   if(plantilla){
-    if(wsConservar()){loadDeck(plantilla.build(),null);S.prefs.sinPrimera=true;guardaPrefs();ocultaPrimera();toast('Ejemplo didáctico: sustituye los datos por los de tu trabajo.');}
-    const url=new URL(location.href);url.searchParams.delete('plantilla');history.replaceState(null,'',url.pathname+url.search+url.hash);
+    if(wsConservar()){loadDeck(plantilla.build(),null);toast('Ejemplo didáctico: sustituye los datos por los de tu trabajo.');}
     wsCerrar();
-  } else suiteDesdeUrl();
+  } else {
+    suiteDesdeUrl();
+    if(solicitado&&wsAbierto())INICIO.avisar('No existe el ejemplo «'+solicitado.slice(0,60)+'». Elige un punto de partida en la colección de inicio.',{error:true});
+  }
 }

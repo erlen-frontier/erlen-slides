@@ -1,22 +1,4 @@
-/* Portada: colección de inicio (patrón de docs/COHERENCIA-APPS.md §3 del portal). */
-.suite-archive-head{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--e5);flex-wrap:wrap}
-.suite-search{display:flex;align-items:center;gap:var(--e2);min-width:min(100%,320px);min-height:var(--erlen-alto-control);padding:0 var(--e3);border:1px solid var(--accLine);border-radius:var(--r1);background:var(--panel);color:var(--mut)}
-.suite-search:focus-within{border-color:var(--acc);box-shadow:var(--anillo)}
-.suite-search svg{width:18px;height:18px;flex:none}
-.suite-search input{flex:1;min-width:0;border:0;background:transparent;font:400 var(--t3) var(--ui);color:var(--ink);outline:0;min-height:calc(var(--erlen-alto-control) - 2px)}
-.suite-archive-meta{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);flex-wrap:wrap;margin-top:var(--e6);padding-top:var(--e4);border-top:1px solid var(--line)}
-.suite-archive-meta h2{font:700 var(--t0) var(--ui);letter-spacing:var(--ls-rotulo);text-transform:uppercase;color:var(--mut);margin:0}
-.suite-archive-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);flex-wrap:wrap;padding-top:var(--e4);border-top:1px solid var(--line)}
-.suite-archive-status{display:inline-flex;align-items:center;gap:6px;font:500 var(--t0) var(--ui);color:var(--ok)}
-.suite-archive-status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
-.slides-showcase{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--e5);margin:var(--e6) 0}
-.slides-example{border:1px solid var(--line);border-radius:var(--r3);background:var(--panel);padding:var(--e5);transition:border-color var(--erlen-dur) var(--erlen-ease),box-shadow var(--erlen-dur) var(--erlen-ease)}
-.slides-example:hover{border-color:var(--accLine);box-shadow:var(--shadow)}
-.slides-example-art{height:120px;display:grid;place-items:center;font:italic 400 24px var(--serif);color:var(--acc);background:var(--accSoft);border-radius:var(--r2);margin:var(--e4) 0}
-.slides-example h2{font:400 24px/1.2 var(--serif);margin:var(--e4) 0 var(--e2)}
-.slides-example p{line-height:1.6;min-height:72px;color:var(--mut)}
-.suite-sidebar-bottom>a{font-size:var(--t1);color:inherit}.suite-primary-actions{display:flex;gap:var(--e2);flex-wrap:wrap}
-@media(max-width:1050px){.slides-showcase{grid-template-columns:1fr}.slides-example p{min-height:0}}
+/* Sin animaciones con movimiento reducido, en toda la interfaz. */
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ==== 09-editorial-scientific-workspace.css ====
@@ -68,23 +50,12 @@ body{letter-spacing:0;background:var(--bg)}
 .mo-head{background:var(--panel);padding-block:18px}.mo-title{font-family:var(--serif);font-size:24px;font-weight:400}
 .menu button{border-radius:var(--r1)}.menu button .mi{color:var(--acc)}
 .blk-toolbar{border-radius:var(--r2);background:var(--ink)}.toast{border-radius:var(--r2)}
-.workspace{background:var(--bg)}.ws-shell{max-width:1320px}.ws-brand,.ws-hero h1,.ws-art h2,.ws-section-head h2,.ws-thumb,.ws-stat strong,.plan-card h3{font-family:var(--serif)}
-.ws-art,.ws-card,.ws-stat,.plan-card,.ws-empty{border-radius:var(--r3)}.ws-card:hover{transform:translateY(-1px);border-color:var(--accLine);box-shadow:var(--shadow)}
 @media (min-width:921px) and (max-width:1180px){:root{--w-tira:168px;--w-panel:282px}.canvas-scroll{padding:28px 20px}}
 @media (max-width:920px){.topbar{border-bottom-color:var(--glass-edge)}.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:54px}
  /* El ajuste de zoom en pantallas estrechas reserva poco aire (01-editor.css): con los 38 px de
     escritorio la diapositiva se salía por la derecha. */
  .canvas-scroll{padding:var(--e3) var(--e2)}}
-@media (prefers-reduced-motion:reduce){.ins-btn:hover,.ws-card:hover{transform:none}}
-
-/* Tarjeta «Nueva presentación»: hermana de .slides-example, con borde discontinuo
-   para señalar creación en lugar de apertura. Sin estilos hasta 2026-09: el icono,
-   el título y el subtítulo quedaban aplastados en una sola línea. */
-.slides-new-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:120px;padding:24px;border:1px dashed var(--accLine);border-radius:var(--r3);background:transparent;cursor:pointer;font:inherit;color:inherit;text-align:center;transition:border-color var(--erlen-dur) var(--erlen-ease),background-color var(--erlen-dur) var(--erlen-ease)}
-.slides-new-card:hover{border-color:var(--acc);background:color-mix(in srgb,var(--accSoft) 55%,transparent)}
-.slides-new-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--acc);color:var(--accInk);font-size:24px;line-height:1}
-.slides-new-card strong{font:400 24px/1.2 var(--serif);color:var(--ink)}
-.slides-new-card small{color:var(--mut)}
+@media (prefers-reduced-motion:reduce){.ins-btn:hover{transform:none}}
 
 /* Material Liquid Glass (Tier 1, universal): vidrio real con backdrop-filter,
    canto especular por inset shadows y labio inferior. Solo chrome flotante —
@@ -109,3 +80,10 @@ body{letter-spacing:0;background:var(--bg)}
 @media (prefers-contrast:more){
   .vidrio{background:var(--panel);border-color:var(--mut)}
 }
+
+/* Opciones avanzadas plegables del panel (06-panels.js). */
+.slides-avanzadas{margin-top:18px;border-top:1px solid var(--line)}
+.slides-avanzadas summary{cursor:pointer;padding:15px 0;font:600 var(--t1) var(--ui);color:var(--mut)}
+.slides-avanzadas-body>.panel-label{display:block;margin:18px 0 9px}
+/* Hasta 1190 px el nombre de la app en la barra queda solo para lectores de pantalla. */
+@media(max-width:1190px){.editor-producto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}}

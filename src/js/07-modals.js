@@ -26,7 +26,7 @@ function openModal(opts) {
   closeModal();
   _focoPrevio = document.activeElement;
   _modalCleanup = opts.onclose || null;
-  _modalFondos = [$('#app'), $('#workspaceRoot')].filter(Boolean).map(el => [el, el.inert]);
+  _modalFondos = [$('#app'), $('#inicioRoot .erlen-inicio')].filter(Boolean).map(el => [el, el.inert]);
   _modalFondos.forEach(([el]) => { el.inert = true; });
   const tid = 'mo-t-' + Math.random().toString(36).slice(2, 8);
   const box = h('div', { class: 'modal ' + (opts.size || ''), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': tid, tabindex: '-1' },

@@ -39,7 +39,7 @@ function panelMuestra(panel,clase){
 }
 function panelOculta(panel,clase){
  if(!panel)return;panel.classList.add(clase);const previo=PANEL_FOCOS.get(panel)?.volver;
- const destino=previo&&document.contains(previo)&&!previo.disabled?previo:document.querySelector('#workspaceRoot nav[aria-label^="Herramientas"] [aria-pressed="true"]');
+ const destino=previo&&document.contains(previo)&&!previo.disabled?previo:null;
  destino?.focus({preventScroll:true});
 }
 function conFocoConservado(pinta,root){
