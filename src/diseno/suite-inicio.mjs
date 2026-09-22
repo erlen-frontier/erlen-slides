@@ -62,14 +62,17 @@ export function mountInicio(host,config){
   n.append(...hijos.flat().filter(h=>h!==null&&h!==undefined&&h!==false));
   return n;
  };
- const boton=(texto,accion,clase='',attrs={})=>{const b=el('button',{type:'button',class:('erlen-inicio-boton '+clase).trim(),...attrs},texto);b.addEventListener('click',accion);return b;};
+ const boton=(texto,accion,clase='',attrs={})=>{const b=el('button',{type:'button',class:('erlen-inicio-boton '+clase).trim(),...attrs},typeof texto==='string'?el('span',{class:'erlen-inicio-boton-texto'},texto):texto);if(typeof texto==='string'&&!attrs.title)b.title=texto;b.addEventListener('click',accion);return b;};
  const marca=()=>{const s=el('span',{class:'erlen-inicio-marca-icono','aria-hidden':'true'});if(config.marca)s.innerHTML=config.marca;return s;};
  const alEditor=fn=>()=>{cerrar();fn();};
 
  const raiz=el('main',{class:'erlen-inicio',hidden:true,'aria-label':config.nombre});
  host.append(raiz);
 
+ // Clave estable del control enfocado, para devolverle el foco tras repintar.
+ const claveFoco=n=>n&&n!==doc.body&&raiz.contains(n)?n.tagName+'|'+(n.getAttribute('aria-label')||n.textContent.trim()):null;
  function pintar(){
+  const foco=claveFoco(doc.activeElement);
   raiz.replaceChildren();
   const nav=el('nav',{class:'erlen-inicio-nav','aria-label':'Navegación del inicio'},
    disponibles.filter(v=>v!=='acerca').map(v=>{const a=el('a',{href:'#',class:'erlen-inicio-enlace','aria-current':v===vista?'page':null},nombres[v]);a.addEventListener('click',e=>{e.preventDefault();abrir(v);});return a;}));
@@ -90,6 +93,7 @@ export function mountInicio(host,config){
   raiz.append(el('div',{class:'erlen-inicio-marco'},lateral,el('div',{class:'erlen-inicio-panel'},cabecera,contenido)));
   if(aviso)contenido.append(el('p',{class:'erlen-inicio-aviso'+(aviso.error?' error':''),role:aviso.error?'alert':'status'},aviso.texto));
   ({inicio:pintarInicio,biblioteca:pintarBiblioteca,ejemplos:pintarEjemplos,recursos:pintarRecursos,acerca:pintarAcerca})[vista](contenido);
+  if(foco){const n=[...raiz.querySelectorAll('button,a,input,select,[tabindex]')].find(x=>claveFoco(x)===foco);if(n)n.focus({preventScroll:true});}
  }
 
  const titulo=(texto,em)=>el('h1',{class:'erlen-inicio-titulo',tabindex:'-1'},texto,em?el('em',null,em):null);
@@ -148,7 +152,7 @@ export function mountInicio(host,config){
     el('div',{class:'erlen-inicio-miniatura','aria-hidden':'true'},el('small',null,'En este navegador'),el('span',null,i.miniatura||i.titulo||'Sin título')),
     el('div',{class:'erlen-inicio-tarjeta-cuerpo'},el('h3',null,i.titulo||'Sin título'),i.detalle||i.fecha?el('p',null,[i.detalle,i.fecha].filter(Boolean).join(' · ')):null,
      el('div',{class:'erlen-inicio-acciones'},boton('Abrir',alEditor(i.abrir),'primario',{'aria-label':'Abrir «'+(i.titulo||'Sin título')+'»'}),
-      i.duplicar?boton('Duplicar',()=>{i.duplicar();repintar();},'secundario',{'aria-label':'Duplicar «'+(i.titulo||'Sin título')+'»'}):null,
+      i.duplicar?boton('Duplicar',()=>{Promise.resolve(i.duplicar()).then(repintar,e=>{aviso={texto:'No se pudo duplicar: '+(e&&e.message||e),error:true};pintar();});},'secundario',{'aria-label':'Duplicar «'+(i.titulo||'Sin título')+'»'}):null,
       i.descargar?boton('Descargar',()=>i.descargar(),'secundario',{'aria-label':'Descargar «'+(i.titulo||'Sin título')+'»'}):null))));
    conteo.textContent=items.length+' de '+total+' '+objetos;
   };
@@ -186,7 +190,7 @@ export function mountInicio(host,config){
  }
  function cerrar(){
   if(!abierta)return;
-  abierta=false;raiz.hidden=true;
+  abierta=false;raiz.hidden=true;aviso=null;
   if(config.editor)config.editor.inert=false;
   doc.body.classList.remove('erlen-inicio-abierto');
   if(tituloPrevio!==null)doc.title=tituloPrevio;

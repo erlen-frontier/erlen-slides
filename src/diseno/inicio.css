@@ -45,7 +45,10 @@
 /* Campos y botones propios (no dependen de base.css). */
 .erlen-inicio .erlen-inicio-campo{width:100%;min-height:var(--erlen-alto-control);padding:0 var(--erlen-esp-3);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);font:400 var(--erlen-texto-ui) var(--erlen-font-ui)}
 .erlen-inicio .erlen-inicio-campo:focus{border-color:var(--erlen-verde)}
-.erlen-inicio .erlen-inicio-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:40px;margin:0;padding:0 var(--erlen-esp-4);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-verde);font:700 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);cursor:pointer;text-decoration:none;box-shadow:none;transition:background-color var(--erlen-dur-micro) var(--erlen-ease),border-color var(--erlen-dur-micro) var(--erlen-ease)}
+.erlen-inicio .erlen-inicio-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:40px;margin:0;padding:0 var(--erlen-esp-4);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-verde);font:700 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);cursor:pointer;text-decoration:none;box-shadow:none;white-space:normal;max-width:100%;min-width:0;transition:background-color var(--erlen-dur-micro) var(--erlen-ease),border-color var(--erlen-dur-micro) var(--erlen-ease)}
+.erlen-inicio-boton-texto{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.erlen-inicio-cabecera-acciones .erlen-inicio-boton-texto{white-space:nowrap}
+.erlen-inicio .erlen-inicio-nueva,.erlen-inicio .erlen-inicio-enlace{white-space:normal}
 .erlen-inicio .erlen-inicio-boton:hover{background:var(--erlen-verde-suave);border-color:var(--erlen-verde)}
 .erlen-inicio .erlen-inicio-boton.primario{background:var(--erlen-verde);border-color:var(--erlen-verde);color:var(--erlen-verde-contraste)}
 .erlen-inicio .erlen-inicio-boton.primario:hover{background:color-mix(in srgb,var(--erlen-verde) 86%,var(--erlen-tinta))}
