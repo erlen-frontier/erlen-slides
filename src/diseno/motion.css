@@ -1,0 +1,8 @@
+/* Erlen Suite · paquete de diseño 1.0.0 · movimiento (docs/GUIA-DISENO.md §6).
+   Se anima lo que orienta: entrada suave del contenido y estados de hover/foco. Nada de texto de lectura ni controles de formulario.
+   Todo se apaga con prefers-reduced-motion. Licencia: licencias/MIT.txt */
+@keyframes erlen-aparecer{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.erlen-enter{animation:erlen-aparecer var(--erlen-dur-entrada,.3s) var(--erlen-ease,cubic-bezier(.2,.7,.2,1)) both}
+button,.erlen-boton,.badge,.erlen-badge,.erlen-panel{transition:background-color var(--erlen-dur,.18s) var(--erlen-ease,ease),border-color var(--erlen-dur,.18s) var(--erlen-ease,ease),color var(--erlen-dur,.18s) var(--erlen-ease,ease),box-shadow var(--erlen-dur,.18s) var(--erlen-ease,ease),transform var(--erlen-dur,.18s) var(--erlen-ease,ease)}
+button.primary:hover,.erlen-boton.primary:hover{transform:translateY(-1px)}
+@media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.erlen-enter{opacity:1;transform:none}}

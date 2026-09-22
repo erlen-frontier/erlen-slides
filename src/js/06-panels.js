@@ -556,7 +556,7 @@ function renderSlideTab(body) {
   g2.append(h('div', { style: 'display:flex;gap:7px;flex-wrap:wrap;margin-top:8px' },
     h('button', { class: 'btn btn-sm', onclick: () => openNotasEditor(S.cur) }, '✎ Editor de notas…'),
     h('button', { class: 'btn btn-sm', title: 'Todas las notas en una lista, para escribir el guion de una sentada', onclick: () => openNotasEditor(S.cur, 'todas') }, '☰ Todas de corrido…'),
-    h('button', { class: 'btn btn-sm', onclick: exportGuion }, '📝 Guion imprimible')));
+    h('button', { class: 'btn btn-sm', onclick: exportGuion }, '¶ Guion imprimible')));
   body.append(g2);
 
   const gPd = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Pendientes de esta diapositiva'));

@@ -1,0 +1,46 @@
+/* Erlen Suite · paquete de diseño 1.0.0 · tokens (docs/DISENO-PAQUETE.md, docs/GUIA-DISENO.md §2–§6).
+   Fuente única en el portal: diseno/tokens.css. Los valores viven aquí y solo aquí; el cromo de cada app usa var(--erlen-*), nunca literales.
+   Claro por defecto; oscuro por prefers-color-scheme (salvo [data-theme="light"]) o por [data-theme="dark"]. Licencia: licencias/MIT.txt */
+:root{color-scheme:light;
+ /* Paleta: papel, tinta, verde, ámbar, peligro, línea, superficie */
+ --erlen-papel:#faf9f5;--erlen-superficie:#fffefa;--erlen-superficie-2:#f7f9f3;
+ --erlen-tinta:#243c32;--erlen-tinta-suave:#54665c;
+ --erlen-verde:#245b43;--erlen-verde-suave:#e9f0e2;--erlen-verde-contraste:#fffefa;
+ --erlen-ambar:#94621e;--erlen-ambar-suave:#fff4d6;
+ --erlen-peligro:#a22d26;--erlen-peligro-suave:#fce8e3;
+ --erlen-linea:#dbe2d8;--erlen-linea-fuerte:#c4d1bf;
+ --erlen-foco:var(--erlen-ambar);
+ /* Sobre oscuro (hero y franjas del portal; en las apps solo si una sección lo pide) */
+ --erlen-espacio-fondo:#070a12;--erlen-espacio-tinta:#e9ecef;--erlen-espacio-acento:#7fc8a9;--erlen-espacio-borde:#ffffff1f;
+ /* Tipografía (familia de Knuth, fuentes.css) */
+ --erlen-font-titulo:"LM Roman",Georgia,"Times New Roman",serif;
+ --erlen-font-cuerpo:"CMU Concrete",Georgia,"Times New Roman",serif;
+ --erlen-font-ui:"LM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+ --erlen-font-mono:"CMU Typewriter",ui-monospace,"JetBrains Mono",monospace;
+ /* Escala */
+ --erlen-texto-xs:12px;--erlen-texto-sm:14px;--erlen-texto-ui:15px;--erlen-texto-base:17px;--erlen-texto-lg:18px;
+ --erlen-h1:clamp(42px,5.3vw,76px);--erlen-h2:clamp(28px,3vw,40px);--erlen-h3:24px;--erlen-h1-app:clamp(24px,2.6vw,30px);
+ --erlen-interlineado:1.7;--erlen-interlineado-ui:1.5;
+ /* Espaciado */
+ --erlen-esp-1:4px;--erlen-esp-2:8px;--erlen-esp-3:12px;--erlen-esp-4:16px;--erlen-esp-5:24px;--erlen-esp-6:32px;--erlen-esp-7:48px;--erlen-esp-8:64px;
+ /* Radios */
+ --erlen-radio-campo:7px;--erlen-radio-pequeno:8px;--erlen-radio-tarjeta:12px;--erlen-radio-panel:18px;--erlen-radio-badge:30px;
+ /* Sombras: solo en paneles destacados y menús flotantes; las tarjetas se separan con --erlen-linea */
+ --erlen-sombra-tarjeta:0 10px 30px #284b3014;--erlen-sombra-menu:0 10px 28px #183b3226;--erlen-sombra-panel:0 20px 55px #284b3010;
+ /* Movimiento: micro 120 ms, estados 180 ms, entradas 300 ms */
+ --erlen-dur-micro:.12s;--erlen-dur:.18s;--erlen-dur-entrada:.3s;--erlen-ease:cubic-bezier(.2,.7,.2,1);
+ /* Controles */
+ --erlen-alto-control:44px;--erlen-ancho-lectura:72ch}
+/* Modo oscuro: solo se redefinen papel, superficie, tinta, línea (GUIA-DISENO §2) y el verde pasa al acento sobre oscuro para conservar contraste. */
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+ --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
+ --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
+ --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
+ --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
+ --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}}
+:root[data-theme="dark"]{color-scheme:dark;
+ --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
+ --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
+ --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
+ --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
+ --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}

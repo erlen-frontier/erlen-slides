@@ -296,7 +296,7 @@ function pintaPrimeraVez() {
       h('p', { class: 'pz-cue' }, 'Todo se edita haciendo clic sobre la diapositiva: el título, el texto y las viñetas. Las ecuaciones y las reacciones se arman con plantillas, sin escribir LaTeX.'),
       h('div', { class: 'pz-vias' },
         via('¶', 'Empezar por el argumento', 'primero las afirmaciones, luego las diapositivas', empiezaPorElArgumento),
-        via('🎙', 'Cuéntamelo primero', 'habla o pega lo que dirías; salen las afirmaciones', openCuentamelo),
+        via('◉', 'Cuéntamelo primero', 'habla o pega lo que dirías; salen las afirmaciones', openCuentamelo),
         via('✦', 'Elegir una plantilla', 'defensa de tesis, avance, congreso', openPlantillas),
         via('☰', 'Pegar tu esquema', 'tu índice se vuelve secciones y diapositivas', openEsquema),
         via('◈', 'Ver el ejemplo', 'una presentación armada, para copiar la idea', () => cargaSegura(demoDeck(), null)),

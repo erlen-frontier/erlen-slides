@@ -82,9 +82,9 @@ function cintaContenido(tab) {
       bg('⊞', 'Tabla', () => addBlockToSlide('table', S.insCol || 1))),
     cintaGrupo('Argumento',
       bg('¶', 'Argumento', alternaArgumento, 'La charla como cadena de afirmaciones · Ctrl+Shift+A'),
-      sm('🎙', 'Cuéntamelo', openCuentamelo, 'Habla o pega lo que dirías y saca las afirmaciones'),
+      sm('◉', 'Cuéntamelo', openCuentamelo, 'Habla o pega lo que dirías y saca las afirmaciones'),
       sm('⌛', 'Tiempo', alternaLineaTiempo, 'La charla como línea de tiempo · Ctrl+Shift+T'),
-      sm('🗂', 'Memoria', () => openMemoria(), 'Buscar en todas tus charlas'),
+      sm('▥', 'Memoria', () => openMemoria(), 'Buscar en todas tus charlas'),
       sm('◔', 'Tutor', openTutor, 'Las reglas que ya son tuyas'),
       sm('◉', 'Mirada', alternaMirada, 'Dónde cae primero el ojo · Ctrl+Shift+M')),
     cintaGrupo('Edición',
@@ -227,7 +227,7 @@ function cintaContenido(tab) {
       sm('⌸', 'Mis presentaciones', openDecks),
       sm('⤒', 'Guardar como…', saveDeckAs, 'Ctrl+S'),
       sm('⤓', 'Proyecto .json', () => exportJSON()),
-      sm('🎒', 'Kit de defensa', kitDefensa, 'Todo lo del día en un .zip'))
+      sm('▦', 'Kit de defensa', kitDefensa, 'Todo lo del día en un .zip'))
   ];
 
   return [];

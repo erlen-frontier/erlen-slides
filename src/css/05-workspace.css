@@ -2,7 +2,7 @@
 :root { --h-ico:36px; --h-ctl:40px; }
 .topbar {gap:6px}
 .wordmark {border:0;background:none;cursor:pointer;padding:4px;color:var(--ink)}
-.ed-badge {font:600 11px var(--ui);border:1px solid var(--accLine);background:var(--accSoft);color:var(--acc);border-radius:6px;padding:5px 8px;cursor:pointer}
+.ed-badge {font:600 var(--t0) var(--ui);border:1px solid var(--accLine);background:var(--accSoft);color:var(--acc);border-radius:6px;padding:5px 8px;cursor:pointer}
 .workspace {position:fixed;inset:0;z-index:90;overflow-y:auto;background:var(--bg);color:var(--ink);overscroll-behavior:contain}
 .ws-shell {max-width:1280px;margin:auto;padding:0 40px 48px}
 .ws-top {display:flex;align-items:center;gap:24px;min-height:80px;border-bottom:1px solid var(--line)}
@@ -10,13 +10,13 @@
 .ws-brand svg {width:28px;height:28px}
 .ws-top .ws-meta {font-size:13px;color:var(--mut)}
 .ws-hero {display:grid;grid-template-columns:1.35fr 1fr;align-items:center;gap:48px;padding:54px 0 40px}
-.ws-eyebrow {display:block;text-transform:uppercase;letter-spacing:.12em;font:700 11px var(--ui);color:var(--acc)}
+.ws-eyebrow {display:block;text-transform:uppercase;letter-spacing:.12em;font:700 var(--t0) var(--ui);color:var(--acc)}
 .ws-hero h1 {font:500 clamp(34px,4vw,54px)/1.12 var(--serif);letter-spacing:-.025em;margin:16px 0;max-width:600px}
 .ws-lead {color:var(--mut);font-size:16px;line-height:1.6;max-width:620px}
 .ws-actions {display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
 .ws-art {position:relative;min-height:232px;padding:30px;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
 .ws-art:after {content:'';position:absolute;right:-38px;bottom:-50px;width:180px;height:180px;border:24px solid var(--accSoft);border-radius:50%;pointer-events:none}
-.ws-art small {font:600 10px var(--ui);letter-spacing:.15em;color:var(--mut)}
+.ws-art small {font:600 var(--t0) var(--ui);letter-spacing:.15em;color:var(--mut)}
 .ws-art h2 {font:500 27px var(--serif);margin:18px 0 10px}
 .ws-formula {font:italic 28px var(--serif);color:var(--acc);padding:14px 0;border-top:1px solid var(--line)}
 .ws-art p {font-size:12px;color:var(--mut);margin:0}
@@ -32,7 +32,7 @@
 .ws-card {min-width:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:border-color .15s}
 .ws-card:hover {border-color:var(--accLine)}
 .ws-thumb {padding:26px 22px;min-height:132px;background:var(--panel2);border-bottom:1px solid var(--line2);font:500 21px/1.25 var(--serif);display:flex;flex-direction:column;justify-content:center;gap:10px;overflow-wrap:anywhere}
-.ws-thumb small {font:600 10px var(--ui);letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.ws-thumb small {font:600 var(--t0) var(--ui);letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
 .ws-card-body {padding:18px;flex:1;display:flex;flex-direction:column;align-items:start;gap:10px}
 .ws-card-body h3 {margin:0;font-size:16px;overflow-wrap:anywhere}
 .ws-card-body p {margin:0;color:var(--mut);font-size:13px;line-height:1.5;flex:1}
@@ -64,11 +64,11 @@
   .topbar {height:auto;min-height:104px;flex-wrap:wrap;padding:8px 12px;gap:4px}
   .topbar .wordmark {display:flex;font-size:20px}
   .topbar .deck-title {order:20;flex:1 0 calc(100% - 140px);width:0;font-size:16px;min-height:40px;padding:4px 0}
-  .topbar .save-ind {display:block;order:21;min-width:0;width:130px;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+  .topbar .save-ind {display:block;order:21;min-width:0;width:130px;overflow:hidden;text-overflow:ellipsis;font-size:var(--t0)}
   .topbar .tb-sep,.topbar #buscarBtn,.topbar #asisBtn {display:none}
   .topbar #presentBtn {margin-left:auto}
   .topbar .icon-btn,.topbar .btn,.topbar .ed-badge {min-width:44px;min-height:44px}
-  .topbar .ed-badge {font-size:10px;padding:4px;max-width:82px;overflow:hidden;text-overflow:ellipsis}
+  .topbar .ed-badge {font-size:var(--t0);padding:4px;max-width:82px;overflow:hidden;text-overflow:ellipsis}
   .topbar #undoBtn,.topbar #redoBtn {width:34px;min-width:34px}
   .inspector {width:min(390px,100vw);visibility:hidden}
   .inspector.open {visibility:visible}
@@ -117,7 +117,7 @@
   .ws-stats {gap:8px}
   .ws-stat {padding:14px 10px}
   .ws-stat strong {font-size:25px}
-  .ws-stat span {font-size:11px}
+  .ws-stat span {font-size:var(--t0)}
   .ws-section-head h2 {font-size:22px}
   .plan-card {padding:20px}
   .topbar {padding:6px 8px}

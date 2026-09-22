@@ -1,5 +1,3 @@
-/* erlen-diseno 1.2.0 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
-const erlenSuiteNavigation=(()=>{
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,7 +19,7 @@ const erlenSuiteNavigation=(()=>{
 // Fuente única del menú de suite: diseno/suite-nav.mjs (docs/DISENO-PAQUETE.md). Colores como var(--erlen-*, valor) de tokens.css; las custom properties atraviesan el shadow DOM.
 // Explicit navigation only: no storage access, transfers or background requests.
 const apps=[['slides','Slides'],['notes','Notes'],['pentagrama','Pentagrama'],['documents','Documents'],['spreadsheets','Spreadsheets'],['figures','Figures'],['ftir','FTIR Studio'],['doe','DoE']];
-function mountSuiteNavigation(parent,current){
+export function mountSuiteNavigation(parent,current){
  if(!parent||!apps.some(([id])=>id===current))throw Error('Aplicación de la suite inválida.');
  // Standalone releases have no sibling apps. Do not create broken file/root links.
  if(!parent.ownerDocument.defaultView.location.pathname.startsWith('/'+current+'/'))return null;
@@ -40,5 +38,3 @@ function mountSuiteNavigation(parent,current){
  host.dispose=()=>{doc.removeEventListener('pointerdown',outside);doc.defaultView.removeEventListener('resize',position);doc.defaultView.removeEventListener('scroll',onScroll);host.remove();};
  parent.append(host);return host;
 }
-
-return mountSuiteNavigation;})();

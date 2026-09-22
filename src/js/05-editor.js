@@ -72,8 +72,8 @@ function mountToolbar() {
   }
   if (f.block.type === 'math') add('ƒ', 'Editar ecuación', () => openEqEditor(f.block));
   if (f.block.type === 'chem') add('⇌', 'Editar reacción', () => openChemEditor(f.block));
-  if (f.block.type === 'image') add('🖼', 'Cambiar imagen', () => pickImage(f.block));
-  if (f.block.type === 'chart') add('📈', 'Editar datos y gráfica', () => openChartEditor(f.block));
+  if (f.block.type === 'image') add('▣', 'Cambiar imagen', () => pickImage(f.block));
+  if (f.block.type === 'chart') add('∿', 'Editar datos y gráfica', () => openChartEditor(f.block));
   if (f.block.type === 'func') add('𝑓', 'Editar fórmulas y parámetros', () => openFuncEditor(f.block));
   if (f.block.type === 'video') add('▶', 'Cambiar video', () => pickVideo(f.block));
   if (f.block.type === 'smart') add('◈', 'Editar diagrama', () => openSmartEditor(f.block));

@@ -1,0 +1,26 @@
+{
+ "version": "1.2.0",
+ "files": {
+  "VERSION": "1e5b51cde515396a9fa762909cf8ca6584ccc564b325d2eebeea76175fe95c4d",
+  "base.css": "062953242461543786111836351f885411bac05848acb13a653b6a839e263706",
+  "fuentes.css": "5382f1d211a557d5d825e1a4fdea56f1957c32b9a682b8f58dd67d11c7c3b529",
+  "fuentes/cmu-concrete-400-italic.87b60891.woff2": "87b60891a08d17814e0320724fbece9f9bca05ebf50a4dd53b312e5ca96bae02",
+  "fuentes/cmu-concrete-400-normal.6e28f64d.woff2": "6e28f64dd35e439c6a9cd58debf3047bdc6a7d5fe4607a90685c0a2aeb670621",
+  "fuentes/cmu-concrete-700-normal.d6d7ddfb.woff2": "d6d7ddfbb0ac7c517b6f07bdff5d3036245971fa4f76b47a7b78b45c799fc814",
+  "fuentes/cmu-typewriter-400-normal.22349150.woff2": "223491505aaa335434fc4f523a1c9ae7cfb1c647d0a4430cb8f25918773007ca",
+  "fuentes/lm-roman-400-normal.90aa86d3.woff2": "90aa86d3f2dad2742fe2d740a4f551b600903284dc29a5982b5d966a3c4cef8f",
+  "fuentes/lm-roman-700-normal.346a6393.woff2": "346a6393ae6eb2216ff74bc5f0db274511b126c1f2614e45e7ea5e7feee6ce3e",
+  "fuentes/lm-sans-400-normal.4876dc5c.woff2": "4876dc5cf7fe2502dd58c1cf8f9daac4a36ba42cfa5144b0b3b61ea48b297142",
+  "fuentes/lm-sans-700-normal.8868f8c7.woff2": "8868f8c7f2688b988677797e426275d3fabe5c9dcb40c6d1fd67f4c04e5b8315",
+  "licencias/GUST-FL.txt": "5eb61bb836bb1845ef668717cb15b382e997748ce2629e4388cc5e4c3fa4e433",
+  "licencias/MIT.txt": "c6efd8524aedfbf769649e36a9bd6a0e95ce353bbd7a0a5eeef31adfdfb5cdad",
+  "licencias/OFL.txt": "73273dffdefe2e5f1e138084d4a4b65b1c50df2ab0179f78484f31beefe30d84",
+  "motion.css": "70bb03c77d8d903af41594bc902cabee2fbefecfe74d8476687ba245c4bc7cd4",
+  "suite-nav.mjs": "03eb7ef7a6bc81194b2cda9313915b7bdd95d4d540e5abe7900bd671a3b1b3e1",
+  "suite-navigation.js": "3d6bd3a8f6dcddec3dc47974de28697c2cd01778e4a76a5c6350540e2498696c",
+  "tokens.css": "916d79d860c82a0575c05f48f32246c67f0aeda4b4e0036edc237053b9c5232b"
+ },
+ "modos": [
+  "iife"
+ ]
+}

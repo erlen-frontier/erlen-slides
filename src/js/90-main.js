@@ -92,7 +92,7 @@ function initChrome() {
   function fileMenu(anchor) {
     const menu = h('div', { class: 'menu' }), item = mkItem(menu);
     item('▤', 'Mis presentaciones…', null, openDecks);
-    item('💾', 'Guardar como…', 'Ctrl+S', saveDeckAs);
+    item('⤓', 'Guardar como…', 'Ctrl+S', saveDeckAs);
     item('↶', 'Copias y recuperación', null, openRecuperacion);
     menu.append(h('div', { class: 'm-sep' }));
     item('✦', 'Nueva presentación…', 'plantillas', openPlantillas);
@@ -116,7 +116,7 @@ function initChrome() {
     item('▶', 'Presentar con vista de presentador', 'o tecla P al presentar', () => { startPresent(false); alternaPresentador(); });
     menu.append(h('div', { class: 'm-sep' }));
     item('▤', 'Mis presentaciones…', null, openDecks);
-    item('💾', 'Guardar como…', null, saveDeckAs);
+    item('⤓', 'Guardar como…', null, saveDeckAs);
     item('↶', 'Copias y recuperación', null, openRecuperacion);
     item('⟲', 'Deshacer', 'Ctrl+Z', doUndo);
     item('⟳', 'Rehacer', 'Ctrl+Shift+Z', doRedo);
@@ -128,10 +128,10 @@ function initChrome() {
     item('◆', 'Estilos…', null, openEstilos);
     item('⚗', 'Calidad científica…', null, openCalidadCientifica);
     menu.append(h('div', { class: 'm-sep' }));
-    item('📄', 'Exportar a PDF', null, openPdfHelp);
+    item('▤', 'Exportar a PDF', null, openPdfHelp);
     item('∑', 'Código Beamer (.tex)', null, openTexView);
     item('{}', 'Proyecto (.json)', null, () => exportJSON());
-    item('🖼', 'Imagen de esta diapositiva', null, exportPNG);
+    item('▣', 'Imagen de esta diapositiva', null, exportPNG);
     item('⌁', 'SVG científico', null, exportFiguraSVG);
     item('⚗', 'Informe de exportación', null, exportInformeExportacion);
     menu.append(h('div', { class: 'm-sep' }));
@@ -259,6 +259,9 @@ function boot() {
   if (rescatado && rescatado.length) setTimeout(() => openAvisosImport(rescatado), 400);
   avisaAutoRoto();
   wsInit();
+  // Menú de la suite también en la barra del editor, junto al nombre de la app
+  // (docs/COHERENCIA-APPS.md §4 del portal); solo se monta bajo /slides/.
+  if (typeof erlenSuiteNavigation === 'function' && $('#tbSuite')) erlenSuiteNavigation($('#tbSuite'), 'slides');
   recInicia();
   cienciaIconos();
 }
