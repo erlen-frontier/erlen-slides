@@ -196,8 +196,8 @@ function comandos() {
   a('Todas las notas de corrido…', 'escribir el guion de una sentada', () => openNotasEditor(S.cur, 'todas'));
   a('Estilos…', null, openEstilos);
   a('Asistente…', 'Ctrl+J · pídele las cosas con tus palabras', () => alternaAsistente());
-  a('Herramientas arriba (cinta)', 'como en PowerPoint', () => ponDisposicion('arriba'));
-  a('Herramientas en el panel de la derecha', 'la disposición de fábrica', () => ponDisposicion('lado'));
+  a('Herramientas arriba (cinta)', 'la disposición de fábrica · Ctrl+Shift+B', () => ponDisposicion('arriba'));
+  a('Herramientas en el panel de la derecha', 'siempre a la vista · Ctrl+Shift+B', () => ponDisposicion('lado'));
   a('Ayuda y atajos', null, openHelp);
   a('Apariencia clara', null, () => cambiaTemaApp('claro'));
   a('Apariencia oscura', null, () => cambiaTemaApp('oscuro'));

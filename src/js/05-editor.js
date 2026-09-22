@@ -9,11 +9,21 @@ function effZoom() {
   const sc = $('#canvasScroll');
   const estrecho = window.matchMedia('(max-width:920px)').matches;
   const pad = estrecho ? 22 : 56;
+  /* En escritorio se reserva al menos el relleno real del lienzo (38 px por lado
+     desde 08-slides.css) más un pequeño margen; si no se puede medir, 56. En
+     pantallas estrechas el relleno es fijo y pequeño (08-slides.css). */
+  let pw = pad, ph = pad;
+  if (!estrecho) {
+    const cs = getComputedStyle(sc), px = k => parseFloat(cs[k]);
+    const padX = px('paddingLeft') + px('paddingRight') + 6, padY = px('paddingTop') + px('paddingBottom') + 6;
+    if (isFinite(padX)) pw = Math.max(padX, pad);
+    if (isFinite(padY)) ph = Math.max(padY, pad);
+  }
   /* En vertical el lienzo se ajusta al alto de la diapositiva, así que medir
      ese alto para decidir la escala sería morderse la cola: manda el ancho. */
   const fit = EN_VERTICAL()
-    ? Math.min((sc.clientWidth - pad) / W, 1.5)
-    : Math.min((sc.clientWidth - pad) / W, (sc.clientHeight - pad) / H, 1.5);
+    ? Math.min((sc.clientWidth - pw) / W, 1.5)
+    : Math.min((sc.clientWidth - pw) / W, (sc.clientHeight - ph) / H, 1.5);
   return S.zoom || Math.max(0.08, fit);
 }
 
@@ -72,8 +82,8 @@ function mountToolbar() {
   }
   if (f.block.type === 'math') add('ƒ', 'Editar ecuación', () => openEqEditor(f.block));
   if (f.block.type === 'chem') add('⇌', 'Editar reacción', () => openChemEditor(f.block));
-  if (f.block.type === 'image') add('🖼', 'Cambiar imagen', () => pickImage(f.block));
-  if (f.block.type === 'chart') add('📈', 'Editar datos y gráfica', () => openChartEditor(f.block));
+  if (f.block.type === 'image') add('▣', 'Cambiar imagen', () => pickImage(f.block));
+  if (f.block.type === 'chart') add('∿', 'Editar datos y gráfica', () => openChartEditor(f.block));
   if (f.block.type === 'func') add('𝑓', 'Editar fórmulas y parámetros', () => openFuncEditor(f.block));
   if (f.block.type === 'video') add('▶', 'Cambiar video', () => pickVideo(f.block));
   if (f.block.type === 'smart') add('◈', 'Editar diagrama', () => openSmartEditor(f.block));
@@ -595,8 +605,8 @@ function renderAll(opts) {
   opts = opts || {};
   renderFilmstrip();
   renderCanvas();
-  if (!opts.skipInsp) renderInspector();
-  if (typeof enCinta === 'function' && enCinta()) pintaCinta();
+  if (!opts.skipInsp) renderInspector();   // también refresca la cinta
+  else actualizaCinta();
   updateChrome();
   pintaPrimeraVez();
   pidePreparacion();

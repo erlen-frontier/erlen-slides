@@ -370,7 +370,7 @@ accion({ id: 'atajos', grp: 'La app', n: 'Ayuda y atajos', d: 'La ayuda con pest
   corre: () => { openHelp(); return 'Ahí está la ayuda completa.'; } });
 
 accion({ id: 'disposicion', grp: 'La app', n: 'Mover las herramientas',
-  d: 'Elige dónde viven los controles: en el panel de la derecha, como de fábrica, o en una cinta de pestañas arriba, como en PowerPoint.',
+  d: 'Elige dónde viven los controles: en una cinta de pestañas arriba, como en las apps de oficina (la de fábrica), o siempre a la vista en el panel de la derecha.',
   clave: 'herramientas cinta arriba panel derecha disposicion barra',
   frases: 'pon las herramientas arriba cinta como powerpoint barra superior panel de la derecha mover controles',
   arg: { n: 'sitio', tipo: 'opcion', ops: () => SITIOS_BARRA.map(x => ({ v: x.id, n: x.n, d: x.d,

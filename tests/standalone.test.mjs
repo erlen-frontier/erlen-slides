@@ -32,12 +32,14 @@ test('The suite menu appears only when mounted at /slides/, and links out withou
  const licencia=readFileSync(new URL('../src/js/88a0-suite-nav.js',import.meta.url),'utf8');
  for(const clausula of ['SPDX-License-Identifier: MIT','Permission is hereby granted','WITHOUT WARRANTY OF ANY KIND'])
   assert.ok(html.includes(clausula)&&licencia.includes(clausula),'Falta parte del aviso MIT: '+clausula);
+ // La copia del menú es la del paquete de diseño sincronizado, sin retoques locales.
+ assert.equal(licencia,readFileSync(new URL('../src/diseno/suite-navigation.js',import.meta.url),'utf8'),'src/js/88a0-suite-nav.js difiere de src/diseno/suite-navigation.js: copia la del paquete.');
  const montado=await editor('http://localhost:8130/slides/');
  try{
   const host=montado.dom.window.document.querySelector('erlen-suite-nav');
   assert.ok(host,'El menú no se montó bajo /slides/.');
   const enlaces=[...host.shadowRoot.querySelectorAll('a')];
-  assert.equal(enlaces.length,7,'Inicio de Erlen y las seis aplicaciones.');
+  assert.equal(enlaces.length,9,'Inicio de Erlen y las ocho aplicaciones del paquete de diseño 1.2.0.');
   assert.equal(host.shadowRoot.querySelector('[aria-current]').getAttribute('href'),'/slides/');
   assert.equal(host.shadowRoot.querySelector('details').open,false,'El menú abre cerrado.');
   for(const a of enlaces.filter(a=>!a.hasAttribute('aria-current')))assert.equal(a.target,'_blank');

@@ -12,7 +12,7 @@ La navegación organiza Inicio, Mis presentaciones, Ejemplos editables y Recurso
 
 ![Editor](images/editor.png)
 
-De izquierda a derecha: secuencia de diapositivas, lienzo y propiedades/herramientas. La barra superior concentra archivo, exportación y presentación. Debajo del lienzo están posición, zoom y vista general. El gráfico del ejemplo conserva sus datos; no es una captura pegada.
+Arriba, la barra con la marca, el título, el guardado y «Presentar»; debajo, la cinta de herramientas común de la suite («Archivo», Inicio, Insertar, Diseño, Diapositiva, Presentar, Vista y la pestaña del bloque seleccionado). Debajo, de izquierda a derecha: secuencia de diapositivas, lienzo y, cuando lo pides desde la cinta, el panel de detalles. Debajo del lienzo están posición, zoom y vista general. El gráfico del ejemplo conserva sus datos; no es una captura pegada.
 
 ## Química y matemáticas
 
@@ -30,7 +30,7 @@ El modo de presentación dedica el espacio al contenido, con navegación por tec
 
 ![Editor móvil](images/movil.png)
 
-Las herramientas se abren desde el botón del panel; el menú de más opciones sustituye acciones que no caben en la barra superior.
+La cinta se desplaza en horizontal dentro de su franja; el panel de detalles se abre como cajón desde la cinta o desde el botón ☰.
 
 ## Reproducir las capturas
 

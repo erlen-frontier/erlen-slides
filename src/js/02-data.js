@@ -221,7 +221,7 @@ const BLOCK_DEFS = [
   { id: 'quote',   name: 'Cita',         ic: '“',  grp: 'base' },
   { id: 'code',    name: 'Código',       ic: '</>',grp: 'base' },
   { id: 'spacer',  name: 'Espacio',      ic: '↕',  grp: 'base' },
-  { id: 'chart',   name: 'Gráfica de datos', ic: '📈', grp: 'viva' },
+  { id: 'chart',   name: 'Gráfica de datos', ic: '∿', grp: 'viva' },
   { id: 'func',    name: 'Gráfica dinámica', ic: '𝑓', grp: 'viva' },
   { id: 'video',   name: 'Video o GIF',      ic: '▶', grp: 'viva' },
   { id: 'smart',   name: 'Diagrama SmartArt', ic: '◈', grp: 'viva' },

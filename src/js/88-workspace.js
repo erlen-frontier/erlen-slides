@@ -204,13 +204,13 @@ function wsReporte() {
   downloadFile('erlen-biblioteca.csv','\ufeff'+filas.map(f=>f.map(csv).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 }
 function wsServicio(body) {
- body.append(h('h2',null,'Erlen Slides · Scientific presentations'),h('p',{class:'ws-lead'},'Editor científico libre, versión '+edVersion()+'. Tus presentaciones se guardan en este navegador.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:ERLEN_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:ERLEN_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
+ body.append(h('h2',null,'Erlen Slides · Presentaciones científicas'),h('p',{class:'ws-lead'},'Editor científico libre, versión '+edVersion()+'. Tus presentaciones se guardan en este navegador.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:ERLEN_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:ERLEN_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
 }
 function wsInit() {
   $('#inicioBtn').addEventListener('click',()=>wsInicio());
   window.addEventListener('hashchange',suiteDesdeUrl);
   $('#edicionBadge').addEventListener('click',openEdicion);
-  $('#drawerClose').addEventListener('click',()=>openDrawer(false));
+  $('#drawerClose').addEventListener('click',()=>cierraDrawer());
   pintaEdicion();
   const solicitado=new URLSearchParams(location.search).get('plantilla');
   const plantilla=solicitado && PLANTILLAS.find(p=>p.id===solicitado);

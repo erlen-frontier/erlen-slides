@@ -38,7 +38,8 @@ function initShortcuts() {
     if (mod && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
     if (mod && e.key === 'y') { e.preventDefault(); doRedo(); return; }
     if (mod && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); dupSlide(S.cur); return; }
-    if (mod && (e.key === 'm' || e.key === 'M')) { e.preventDefault(); addSlide('content'); return; }
+    /* Sin Mayús: Ctrl+Shift+M es la mirada (más abajo). */
+    if (mod && !e.shiftKey && (e.key === 'm' || e.key === 'M')) { e.preventDefault(); addSlide('content'); return; }
     if (mod && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPdfHelp(); return; }
     if (mod && (e.key === 's' || e.key === 'S')) { e.preventDefault(); saveDeckAs(); return; }
     if (mod && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); openPaleta(); return; }
@@ -56,7 +57,12 @@ function initShortcuts() {
     if (inField) return;
     if ($('#modalRoot').firstChild) return;
     if (e.key === 'Delete' && S.selBlock) { e.preventDefault(); delBlock(S.selBlock); return; }
-    if (e.key === 'Escape') { if (S.sel && S.sel.size) limpiaSeleccion(); else selectBlock(null); return; }
+    if (e.key === 'Escape') {
+      if (S.sel && S.sel.size) limpiaSeleccion();
+      else if (S.selBlock) selectBlock(null);
+      else if (document.body.classList.contains('panel-temporal')) cierraPanelDetalles();
+      return;
+    }
     if (e.key === 'PageDown' && S.cur < S.deck.slides.length - 1) { e.preventDefault(); S.cur++; S.selBlock = null; renderAll(); return; }
     if (e.key === 'PageUp' && S.cur > 0) { e.preventDefault(); S.cur--; S.selBlock = null; renderAll(); return; }
   });
@@ -92,7 +98,7 @@ function initChrome() {
   function fileMenu(anchor) {
     const menu = h('div', { class: 'menu' }), item = mkItem(menu);
     item('▤', 'Mis presentaciones…', null, openDecks);
-    item('💾', 'Guardar como…', 'Ctrl+S', saveDeckAs);
+    item('⤓', 'Guardar como…', 'Ctrl+S', saveDeckAs);
     item('↶', 'Copias y recuperación', null, openRecuperacion);
     menu.append(h('div', { class: 'm-sep' }));
     item('✦', 'Nueva presentación…', 'plantillas', openPlantillas);
@@ -116,7 +122,7 @@ function initChrome() {
     item('▶', 'Presentar con vista de presentador', 'o tecla P al presentar', () => { startPresent(false); alternaPresentador(); });
     menu.append(h('div', { class: 'm-sep' }));
     item('▤', 'Mis presentaciones…', null, openDecks);
-    item('💾', 'Guardar como…', null, saveDeckAs);
+    item('⤓', 'Guardar como…', null, saveDeckAs);
     item('↶', 'Copias y recuperación', null, openRecuperacion);
     item('⟲', 'Deshacer', 'Ctrl+Z', doUndo);
     item('⟳', 'Rehacer', 'Ctrl+Shift+Z', doRedo);
@@ -128,10 +134,10 @@ function initChrome() {
     item('◆', 'Estilos…', null, openEstilos);
     item('⚗', 'Calidad científica…', null, openCalidadCientifica);
     menu.append(h('div', { class: 'm-sep' }));
-    item('📄', 'Exportar a PDF', null, openPdfHelp);
+    item('▤', 'Exportar a PDF', null, openPdfHelp);
     item('∑', 'Código Beamer (.tex)', null, openTexView);
     item('{}', 'Proyecto (.json)', null, () => exportJSON());
-    item('🖼', 'Imagen de esta diapositiva', null, exportPNG);
+    item('▣', 'Imagen de esta diapositiva', null, exportPNG);
     item('⌁', 'SVG científico', null, exportFiguraSVG);
     item('⚗', 'Informe de exportación', null, exportInformeExportacion);
     menu.append(h('div', { class: 'm-sep' }));
@@ -174,15 +180,29 @@ function initChrome() {
     if(e.key==='Home')next=tabs[0];if(e.key==='End')next=tabs[tabs.length-1];
     if(next){e.preventDefault();next.click();next.focus();}
   });
-  $('#hambBtn').addEventListener('click', () => openDrawer(!$('#inspector').classList.contains('open')));
-  $('#drawerMask').addEventListener('click', () => openDrawer(false));
+  /* Con la cinta, el botón del cajón abre el panel de detalles en la pestaña actual. */
+  $('#hambBtn').addEventListener('click', () => {
+    if ($('#inspector').classList.contains('open')) cierraDrawer();
+    else if (enCinta()) abrePanelLateral(S.tab);
+    else openDrawer(true);
+  });
+  $('#drawerMask').addEventListener('click', () => cierraDrawer());
   window.addEventListener('resize', deb(() => {
-    if (!matchMedia('(max-width:920px)').matches) openDrawer(false);
+    const movil = matchMedia('(max-width:920px)').matches;
+    if (!movil) openDrawer(false);
+    /* Al pasar a móvil, un panel de detalles abierto en columna no se queda
+       medio visible: se cierra, y el botón del cajón lo vuelve a abrir. */
+    else if (document.body.classList.contains('panel-temporal') && !$('#inspector').classList.contains('open')) cierraPanelDetalles();
     renderFilmstrip(); renderCanvas();
   }, 150));
   window.addEventListener('beforeunload', () => { flushEdicion(); saveInd.now(); });
 }
 let drawerFoco = null;
+/* Cerrar el cajón: con la cinta, también se cierra el panel de detalles. */
+function cierraDrawer() {
+  if (document.body.classList.contains('panel-temporal')) cierraPanelDetalles();
+  else openDrawer(false);
+}
 function openDrawer(on) {
   const movil = window.matchMedia('(max-width:920px)').matches;
   on = !!on && movil;
@@ -191,7 +211,7 @@ function openDrawer(on) {
   panel.classList.toggle('open', on);
   $('#drawerMask').classList.toggle('open', on);
   $('#hambBtn').setAttribute('aria-expanded', String(on));
-  [$('.topbar'),$('.filmstrip'),$('.canvas-wrap')].forEach(el=>{if(el)el.inert=on;});
+  [$('.topbar'),$('#cinta'),$('.filmstrip'),$('.canvas-wrap')].forEach(el=>{if(el)el.inert=on;});
   if (on) {
     if (!antes) drawerFoco = document.activeElement;
     panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true');
@@ -204,7 +224,8 @@ function openDrawer(on) {
 document.addEventListener('keydown', e => {
   const panel = $('#inspector');
   if (!panel?.classList.contains('open') || $('#modalRoot').firstChild) return;
-  if (e.key === 'Escape') { e.preventDefault(); openDrawer(false); }
+  /* Escape cierra solo el cajón: no suelta además el bloque seleccionado. */
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cierraDrawer(); }
   if (e.key === 'Tab') {
     const f = $$(FOCABLES,panel).filter(x=>x.getClientRects().length);
     if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f[f.length-1]?.focus();}
@@ -259,6 +280,9 @@ function boot() {
   if (rescatado && rescatado.length) setTimeout(() => openAvisosImport(rescatado), 400);
   avisaAutoRoto();
   wsInit();
+  // Menú de la suite también en la barra del editor, junto al nombre de la app
+  // (docs/COHERENCIA-APPS.md §4 del portal); solo se monta bajo /slides/.
+  if (typeof erlenSuiteNavigation === 'function' && $('#tbSuite')) erlenSuiteNavigation($('#tbSuite'), 'slides');
   recInicia();
   cienciaIconos();
 }

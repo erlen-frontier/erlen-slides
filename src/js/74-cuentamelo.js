@@ -52,10 +52,10 @@ function openCuentamelo() {
       };
       rec.onerror = ev => { aviso.textContent = 'El micrófono no respondió (' + ev.error + '). Puedes pegar el texto.'; para(); };
       rec.onend = () => para();
-      const para = () => { oyendo = false; bHablar.textContent = '🎙 Hablar'; bHablar.classList.remove('grabando'); };
+      const para = () => { oyendo = false; bHablar.textContent = '◉ Hablar'; bHablar.classList.remove('grabando'); };
       rec.start(); oyendo = true; bHablar.textContent = '■ Parar'; bHablar.classList.add('grabando');
       aviso.textContent = 'Escuchando… habla con naturalidad; las muletillas se quitan solas.';
-    } }, '🎙 Hablar');
+    } }, '◉ Hablar');
   const parte = () => {
     props = afirmacionesDe(area.value);
     lista.innerHTML = '';

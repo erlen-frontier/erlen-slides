@@ -192,8 +192,13 @@ function grupo(id, titulo, hijos, opts) {
 }
 
 function renderInspector() {
-  if (typeof enCinta === 'function' && enCinta() && !document.body.classList.contains('panel-temporal')) { pintaCinta(); return; }
-  if (typeof enCinta === 'function' && enCinta()) pintaCinta();
+  /* La cinta solo se refresca (sin repintar); con la cinta puesta, el panel
+     de la derecha se pinta únicamente cuando está abierto como panel de detalles. */
+  actualizaCinta();
+  if (enCinta() && !document.body.classList.contains('panel-temporal')) return;
+  const tabIns = $('.itab[data-tab=insert]');
+  if (tabIns) tabIns.hidden = enCinta();                   // «Insertar» vive en la cinta
+  if (enCinta() && S.tab === 'insert') S.tab = 'slide';
   const body = $('#inspBody'); body.innerHTML = '';
   const tabBlk = $('.itab-blk');
   const hayBloque = !!(S.selBlock && findBlock(S.selBlock));
@@ -215,11 +220,11 @@ function renderInspector() {
   });
   $('#inspBody').setAttribute('role','tabpanel');
   $('#inspBody').setAttribute('aria-labelledby','insp-tab-'+S.tab);
-  /* Con la cinta puesta, el panel se abre a petición y se puede cerrar. */
+  /* Con la cinta puesta, el panel de detalles se abre a petición y se cierra con ✕ o Escape. */
   if (document.body.classList.contains('panel-temporal')) {
     body.append(h('div', { class: 'cinta-cerrar' },
-      h('span', { style: 'flex:1' }, 'Panel abierto desde la cinta'),
-      h('button', { class: 'btn btn-sm', onclick: () => { document.body.classList.remove('panel-temporal'); pintaCinta(); renderInspector(); } }, '✕ Cerrar')));
+      h('span', null, 'Detalles'),
+      h('button', { type: 'button', class: 'btn btn-sm', id: 'detallesCerrar', title: 'Cerrar el panel de detalles (Escape)', onclick: cierraPanelDetalles }, '✕ Cerrar')));
   }
   if (S.tab === 'bloque') renderBlockTab(body);
   else if (S.tab === 'insert') renderInsertTab(body);
@@ -556,7 +561,7 @@ function renderSlideTab(body) {
   g2.append(h('div', { style: 'display:flex;gap:7px;flex-wrap:wrap;margin-top:8px' },
     h('button', { class: 'btn btn-sm', onclick: () => openNotasEditor(S.cur) }, '✎ Editor de notas…'),
     h('button', { class: 'btn btn-sm', title: 'Todas las notas en una lista, para escribir el guion de una sentada', onclick: () => openNotasEditor(S.cur, 'todas') }, '☰ Todas de corrido…'),
-    h('button', { class: 'btn btn-sm', onclick: exportGuion }, '📝 Guion imprimible')));
+    h('button', { class: 'btn btn-sm', onclick: exportGuion }, '¶ Guion imprimible')));
   body.append(g2);
 
   const gPd = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Pendientes de esta diapositiva'));
@@ -604,10 +609,10 @@ function renderDesignTab(body) {
   /* Dónde viven las herramientas: panel a la derecha o cinta arriba. */
   const g0 = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Dónde están las herramientas'));
   const segD = h('div', { class: 'seg' });
-  SITIOS_BARRA.forEach(x => segD.append(h('button', { class: ((S.prefs && S.prefs.barras) || 'lado') === x.id ? 'on' : '',
+  SITIOS_BARRA.forEach(x => segD.append(h('button', { class: disposicion() === x.id ? 'on' : '', 'aria-pressed': String(disposicion() === x.id),
     title: x.d, onclick: () => ponDisposicion(x.id) }, x.n)));
   g0.append(segD);
-  g0.append(h('p', { class: 'hint' }, 'Con la cinta arriba, los botones se agrupan en pestañas como en PowerPoint y la diapositiva gana el ancho del panel. Los controles que piden un deslizador o un color se abren en una hojita, igual que allá.'));
+  g0.append(h('p', { class: 'hint' }, 'Con la cinta arriba, que es la de fábrica, las herramientas se agrupan en pestañas como en las apps de oficina y la diapositiva gana el ancho del panel. Lo que necesita más sitio se abre en este panel de detalles, que se cierra con ✕ o Escape. Ctrl+Shift+B cambia de una a otra.'));
   body.append(g0);
   const g1 = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Tema Beamer'));
   const tg = h('div', { class: 'theme-grid' });

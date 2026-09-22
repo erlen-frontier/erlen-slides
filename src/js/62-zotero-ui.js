@@ -82,7 +82,7 @@ function zotPanelAlta(pinta) {
       autocomplete: 'off', spellcheck: 'false', placeholder: 'la clave que acabas de crear',
       oninput: e => { cfg.clave = e.target.value.trim(); } });
     const ojo = h('button', { class: 'icon-btn', title: 'Ver la clave',
-      onclick: () => { clave.type = clave.type === 'password' ? 'text' : 'password'; } }, '👁');
+      onclick: () => { clave.type = clave.type === 'password' ? 'text' : 'password'; } }, '◎');
     const recordar = h('input', { type: 'checkbox', checked: cfg.recordar,
       onchange: e => { cfg.recordar = e.target.checked; } });
     caja.append(

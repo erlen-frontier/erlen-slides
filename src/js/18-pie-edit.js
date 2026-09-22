@@ -203,7 +203,7 @@ function openNotasEditor(idx, modo) {
   openModal({
     title: 'Notas del orador', size: 'modal-lg', body: cuerpo,
     onclose: () => commit(),
-    foot: [h('button', { class: 'btn', onclick: () => { closeModal(); commit(); exportGuion(); } }, '📝 Guion imprimible'),
+    foot: [h('button', { class: 'btn', onclick: () => { closeModal(); commit(); exportGuion(); } }, '¶ Guion imprimible'),
       h('button', { class: 'btn btn-pri', onclick: () => { closeModal(); commit(); } }, 'Listo')]
   });
 }

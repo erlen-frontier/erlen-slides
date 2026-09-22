@@ -278,7 +278,7 @@ function panelFigurasVivas(b, refresca) {
         h('p', { class: 'hint' }, 'Los ejes abarcan los dos estados para que la comparación sea honesta. En el PDF salen como dos overlays con el mismo marco.'));
     } else {
       g.append(h('button', { class: 'btn btn-sm', onclick: () => pideImagen(src => { b.despues.src = src; commit(); refresca(); }) },
-        b.despues.src ? '🖼 Cambiar la imagen del después' : '🖼 Elegir la imagen del después'),
+        b.despues.src ? '▣ Cambiar la imagen del después' : '▣ Elegir la imagen del después'),
         h('p', { class: 'hint' }, 'La segunda imagen se funde sobre la primera al avanzar. Sirve para «misma muestra, después del recocido».'));
     }
   }

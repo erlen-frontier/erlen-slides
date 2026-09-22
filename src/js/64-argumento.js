@@ -202,8 +202,8 @@ function abreArgumento() {
   }
   function menuEvidencia(i, ancla) {
     const ops = [
-      { ic: '📈', n: 'Gráfica de datos', fn: () => ponEvidencia(i, 'chart') },
-      { ic: '🖼', n: 'Figura', fn: () => ponEvidencia(i, 'image') },
+      { ic: '∿', n: 'Gráfica de datos', fn: () => ponEvidencia(i, 'chart') },
+      { ic: '▣', n: 'Figura', fn: () => ponEvidencia(i, 'image') },
       { ic: '▦', n: 'Tabla', fn: () => ponEvidencia(i, 'table') },
       { ic: '∑', n: 'Ecuación', fn: () => ponEvidencia(i, 'math') },
       { ic: '⚗', n: 'Montaje o diagrama', fn: () => ponEvidencia(i, 'montaje') },
@@ -273,7 +273,7 @@ function tapaEsqueleto() {
       h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px' },
         h('button', { class: 'btn btn-pri', onclick: abreArgumento }, '☰ Escribir el argumento'),
         h('button', { class: 'btn' + (listo ? ' btn-pri' : ''), disabled: !listo, title: listo ? '' : 'Todavía falta que las afirmaciones se sostengan',
-          onclick: desbloqueaLienzo }, listo ? '🔓 Abrir el lienzo' : '🔒 Abrir el lienzo'),
+          onclick: desbloqueaLienzo }, listo ? '◇ Abrir el lienzo' : '◆ Abrir el lienzo'),
         h('button', { class: 'btn btn-ghost', onclick: desbloqueaLienzo }, 'Saltarme esto'))));
 }
 
