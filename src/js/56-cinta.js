@@ -254,6 +254,7 @@ function abreArchivo(ancla) {
     h('span', { class: 'mi', 'aria-hidden': 'true' }, icNodo(ic)), h('span', null, etiqueta), sub ? h('span', { class: 'msub' }, sub) : null));
   const sep = () => menu.append(h('div', { class: 'm-sep', role: 'separator' }));
   const titulo = t => menu.append(h('div', { class: 'menu-t', role: 'presentation' }, t));
+  item('House', 'Inicio y biblioteca', null, () => wsInicio());
   item('FolderOpen', 'Mis presentaciones…', null, openDecks);
   item('FilePlus', 'Nueva presentación…', 'plantillas', openPlantillas);
   sep();

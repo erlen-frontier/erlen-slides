@@ -2,13 +2,13 @@
 /* ================= Print (PDF vectorial vía imprimir) ================= */
 /* Reset de impresión Liquid Glass: elimina blur, sombras y brillos, y aplana
    los tokens glass para que el PDF salga con colores exactos; el chrome glass
-   (topbar, menús, toasts, workspace…) no es imprimible y se oculta. */
+   (topbar, menús, toasts, pantalla de inicio…) no es imprimible y se oculta. */
 #printArea{display:none}
 @media print{
   #printArea{display:block}
   *,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important;box-shadow:none!important}
   :root{--glass-bg:var(--panel);--glass-edge:var(--line);--glass-hi:transparent;--glass-hi-side:transparent;--glass-lip:transparent}
-  .app,.toasts,.mask,.menu,.pop,.modal-mask,.pv-root,.workspace{display:none!important}
+  .app,.toasts,.mask,.menu,.pop,.modal-mask,.pv-root,.erlen-inicio{display:none!important}
   .pr-page{page-break-after:always;break-after:page;overflow:hidden;page-break-inside:avoid}
   .pr-page:last-child{page-break-after:auto;break-after:auto}
   .pr-page .slide{border-radius:0}

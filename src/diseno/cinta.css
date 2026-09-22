@@ -10,6 +10,7 @@
 /* Pestañas: una fila, subrayado verde en la activa, «Archivo» destacado a la izquierda como en las apps de oficina. */
 .erlen-cinta-pestanas{display:flex;align-items:stretch;gap:var(--erlen-esp-1);padding:0 var(--erlen-esp-3);border-bottom:1px solid var(--erlen-linea);overflow-x:auto;scrollbar-width:none}
 .erlen-cinta-pestanas::-webkit-scrollbar{display:none}
+.erlen-cinta-lista{display:flex;align-items:stretch;gap:var(--erlen-esp-1);flex:none}
 .erlen-cinta .erlen-cinta-pestana{flex:none;min-height:36px;padding:0 var(--erlen-esp-4);border:0;border-bottom:2px solid transparent;border-radius:0;font:600 var(--erlen-texto-sm)/1 var(--erlen-font-ui);color:var(--erlen-tinta-suave);white-space:nowrap}
 .erlen-cinta .erlen-cinta-pestana:hover{color:var(--erlen-tinta);background:var(--erlen-superficie-2)}
 .erlen-cinta .erlen-cinta-pestana[aria-selected=true]{color:var(--erlen-verde);border-bottom-color:var(--erlen-verde)}

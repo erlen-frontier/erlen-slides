@@ -27,7 +27,7 @@ function showMenu(menu, anchor) {
 function initShortcuts() {
   window.addEventListener('keydown', e => {
     if (P.on || CL.on || (typeof AR !== 'undefined' && AR.on) || (typeof TL !== 'undefined' && TL.on)) return;
-    if (!$('#workspaceRoot').hidden) return;
+    if (wsAbierto()) return;   /* con el inicio abierto, los atajos del editor no actúan */
     if ($('#modalRoot').firstChild) { if(e.key === 'Escape') { e.preventDefault(); closeModal(); } return; }
     const inField = e.target.matches('input,textarea,[contenteditable],[contenteditable=true],[contenteditable=plaintext-only]');
     const mod = e.ctrlKey || e.metaKey;

@@ -9,9 +9,9 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 - `src/js/45-estructura.js`, `src/js/45b-estructura-dibujo.js` y `src/js/46-estructura-edit.js`: las estructuras químicas, partidas en modelo, motor y lienzo (ver «Editores de figura»).
 - `src/js/47-lab-catalogo.js`, `src/js/47b-lab.js` y `src/js/48-lab-edit.js`: el montaje de laboratorio, partido en catálogo, motor y editor (ver «Editores de figura»).
 - `src/js/87-ejemplos.js`: doce ejemplos científicos construidos con los bloques reales.
-- `src/js/88-workspace.js`: biblioteca, plantillas y recursos locales.
+- `src/js/87a-suite-inicio.js`: la pantalla de inicio común de Erlen (`erlenInicio`). Copia literal de `src/diseno/suite-inicio.js`, que genera `diseno-sync --modo iife` del portal; una prueba exige que sean iguales. Sus estilos, `src/diseno/inicio.css`, se incrustan en el build tras los de la cinta.
+- `src/js/88-workspace.js`: monta el inicio con la biblioteca, los ejemplos, las plantillas personales y los recursos locales, y mantiene las rutas `#suite/<vista>` y `#presentaciones` y el enlace `?plantilla=<id>`.
 - `src/js/88a0-suite-nav.js`: el menú común de Erlen. Copia literal del auxiliar MIT del repositorio maestro, envuelta para el ámbito compartido porque aquí los módulos se concatenan.
-- `src/js/88a-suite.js`: navegación de la aplicación independiente; el nombre conserva su procedencia histórica.
 - `src/js/88b-recuperacion.js`: historial en IndexedDB, separado del autoguardado.
 - `src/js/88c-ciencia-libre.js`: carga local de bibliotecas científicas.
 - `web/quimica-worker.js`: trabajo RDKit fuera del hilo de la interfaz.

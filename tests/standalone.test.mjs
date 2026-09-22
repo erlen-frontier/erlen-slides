@@ -1,8 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
 test('Slides boots independently; all navigation and resource actions resolve',async()=>{const {dom,errors,run}=await editor();try{
  assert.match(dom.window.document.title,/Erlen Slides/);
- for(const view of ['inicio','plantillas','biblioteca','herramientas','servicio']){run('wsCambiar('+JSON.stringify(view)+')');assert.equal(dom.window.document.querySelector('#workspaceRoot').hidden,false);}
- run('wsNueva()');assert.equal(dom.window.document.querySelector('#workspaceRoot').hidden,true);assert.equal(run('S.deck.slides[0].blocks.length'),0);
+ // La pantalla de inicio es el componente común (87a-suite-inicio.js); cada ruta histórica abre su vista.
+ const inicio=()=>dom.window.document.querySelector('#inicioRoot main.erlen-inicio');
+ const vistas={inicio:'inicio',plantillas:'ejemplos',biblioteca:'biblioteca',herramientas:'recursos',servicio:'acerca'};
+ for(const [view,vista] of Object.entries(vistas)){run('wsCambiar('+JSON.stringify(view)+')');assert.equal(inicio().hidden,false);assert.equal(run('INICIO.vista'),vista);assert.equal(dom.window.location.hash,'#suite/'+view);}
+ run('wsNueva()');assert.equal(inicio().hidden,true);assert.equal(dom.window.location.hash,'#presentaciones');assert.equal(run('S.deck.slides[0].blocks.length'),0);
  run('openDecks()');run('closeModal()');run('openEdicion()');assert.match(dom.window.document.querySelector('#modalRoot').textContent,/AGPLv3/);assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 test('Twelve examples validate and render all 72 slides, with editable blocks and Beamer output',async()=>{const {dom,errors,run}=await editor();try{
@@ -19,7 +22,7 @@ test('Named presentation survives switching to an example and back',async()=>{co
  run("wsNueva();S.deck.meta.title='Original';S.deck.slides[0].title='Original result';wsInicio();wsNueva(EJEMPLOS[0].build());wsInicio('biblioteca')");
  assert.equal(run("decksStore().Original.deck.slides[0].title"),'Original result');assert.ok(run('Object.keys(decksStore()).length>=2'));assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
-test('Direct example link opens the editor after preserving the draft',async()=>{const{dom,run,errors}=await editor('http://localhost:8130/?plantilla=cinetica');try{assert.equal(dom.window.document.querySelector('#workspaceRoot').hidden,true);assert.equal(run('S.deck.meta.title'),'Cinética de primer orden');assert.deepEqual(errors,[]);}finally{dom.window.close();}});
+test('Direct example link opens the editor after preserving the draft',async()=>{const{dom,run,errors}=await editor('http://localhost:8130/?plantilla=cinetica');try{assert.equal(dom.window.document.querySelector('#inicioRoot main.erlen-inicio').hidden,true);assert.equal(dom.window.location.search,'','El parámetro se consume y se retira de la URL');assert.ok(!dom.window.document.querySelector('#app').inert,'El editor no queda inerte');assert.equal(run('S.deck.meta.title'),'Cinética de primer orden');assert.deepEqual(errors,[]);}finally{dom.window.close();}});
 test('Build has no production endpoints, cloud SDK, external font requests or other suite editors',()=>{
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  for(const bad of ['.supabase.co','sentryDsn','window.supabase','fonts.googleapis.com','function docEstudio(','function figEstudio(','function daEstudio('])assert.equal(html.includes(bad),false,bad);
@@ -39,7 +42,7 @@ test('The suite menu appears only when mounted at /slides/, and links out withou
   const host=montado.dom.window.document.querySelector('erlen-suite-nav');
   assert.ok(host,'El menú no se montó bajo /slides/.');
   const enlaces=[...host.shadowRoot.querySelectorAll('a')];
-  assert.equal(enlaces.length,9,'Inicio de Erlen y las ocho aplicaciones del paquete de diseño 1.2.0.');
+  assert.equal(enlaces.length,11,'Inicio de Erlen y las diez aplicaciones del paquete de diseño 1.3.1.');
   assert.equal(host.shadowRoot.querySelector('[aria-current]').getAttribute('href'),'/slides/');
   assert.equal(host.shadowRoot.querySelector('details').open,false,'El menú abre cerrado.');
   for(const a of enlaces.filter(a=>!a.hasAttribute('aria-current')))assert.equal(a.target,'_blank');
