@@ -93,12 +93,10 @@
    superficie por si algún día el estado cambia sin reinsertar. */
 @keyframes abreGlass{from{transform:scale(.97) translateY(-2px)}}
 /* Oscuro: los colores ya cambian solos con el paquete (mismos selectores que
-   diseno/tokens.css). Aquí solo el material vidrio, el ámbar y el peligro, que el
-   paquete no aclara sobre oscuro; todo derivado de tokens, sin literales. */
+   diseno/tokens.css), también el ámbar y el peligro, que el paquete 1.3.0 aclara
+   sobre oscuro (≥ 4,5:1). Aquí solo el material vidrio, derivado de tokens. */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --warn:color-mix(in srgb,var(--erlen-ambar) 55%,var(--erlen-tinta)); --danger:color-mix(in srgb,var(--erlen-peligro) 55%,var(--erlen-tinta));
-    --dangerSoft:color-mix(in srgb,var(--erlen-peligro) 18%,transparent);
     --glass-bg:color-mix(in srgb,var(--panel) 72%,transparent);
     --glass-hi:color-mix(in srgb,var(--erlen-tinta) 14%,transparent);
     --glass-hi-side:color-mix(in srgb,var(--erlen-tinta) 5%,transparent);
@@ -106,8 +104,6 @@
   }
 }
 :root[data-theme="dark"]{
-  --warn:color-mix(in srgb,var(--erlen-ambar) 55%,var(--erlen-tinta)); --danger:color-mix(in srgb,var(--erlen-peligro) 55%,var(--erlen-tinta));
-  --dangerSoft:color-mix(in srgb,var(--erlen-peligro) 18%,transparent);
   --glass-bg:color-mix(in srgb,var(--panel) 72%,transparent);
   --glass-hi:color-mix(in srgb,var(--erlen-tinta) 14%,transparent);
   --glass-hi-side:color-mix(in srgb,var(--erlen-tinta) 5%,transparent);
@@ -195,7 +191,7 @@ button{font-family:var(--ui)}
 /* Pulsación: un escalón de fondo, nunca un salto. Igual en todo lo que se pulsa. */
 .ins-btn:active,.tpl:active,.sym:active,.chip:active,.theme-card:active,.lay-opt:active,
 .fu-card:active,.acc-op:active,.deck-row:active,.itab:active,.menu button:active,
-.cinta-b:active,.asis-chip:active,.dis-tar:active{background:var(--panel3)}
+.asis-chip:active,.dis-tar:active{background:var(--panel3)}
 
 /* Barras de desplazamiento discretas: forman parte del silencio del marco. */
 .insp-body,.fs-list,.mo-body,.asis-hilo,.dis-cuerpo,.cod-pre,.bu-lista,.cp-lista{
@@ -1205,58 +1201,32 @@ body.con-dis .app{width:calc(100% - 372px);transition:width .22s cubic-bezier(.3
 .dis-pie .check{font-size:var(--t1)}
 @media (max-width:640px){ .dis{width:100vw;border-left:none} }
 
-/* ---------- la cinta de arriba ---------- */
-.cinta{border-bottom:1px solid var(--line);background:var(--panel);flex:none}
-.cinta[hidden]{display:none}
-.cinta-tabs{display:flex;align-items:stretch;gap:var(--e1);padding:0 var(--e3);border-bottom:1px solid var(--line2, var(--line))}
-.cinta-tab{border:none;background:none;padding:var(--e2) var(--e4);min-height:var(--h-ctl);
-  font:600 var(--t2) var(--ui);color:var(--mut);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
-.cinta-tab:hover{color:var(--ink)}
-.cinta-tab.on{color:var(--acc);border-bottom-color:var(--acc)}
-.cinta-tab.acc{color:var(--acc)}
-.cinta-tab.acc.on{color:var(--acc)}
-.cinta-lado{font-weight:500;font-size:var(--t1);opacity:.8}
-.cinta-fila{display:flex;align-items:stretch;gap:0;padding:var(--e2) var(--e3) var(--e1);overflow-x:auto;
-  overflow-y:hidden;scrollbar-width:thin}
-.cinta-fila::-webkit-scrollbar{height:6px}
-.cinta-fila::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+/* ---------- la cinta de arriba ----------
+   La cinta es el componente común de la suite (diseno/cinta.css, src/js/55a-suite-cinta.js).
+   Aquí solo su sitio en el editor y el panel de detalles que se abre desde ella. */
+.cinta{flex:none;min-width:0;position:relative;z-index:5}
+.cinta .erlen-cinta{border-bottom-color:var(--line)}
 .cinta-cerrar{display:flex;align-items:center;gap:var(--e2);padding:var(--e2) var(--e3);border-bottom:1px solid var(--line);
-  font-size:var(--t0);color:var(--mut)}
-.cinta-grupo{display:flex;flex-direction:column;align-items:center;gap:var(--e1);padding:0 var(--e3);flex:none;
-  border-right:1px solid var(--line2, var(--line));min-width:0}
-.cinta-grupo:last-child{border-right:none}
-.cinta-items{display:flex;align-items:stretch;gap:var(--e2);flex:1}
-.cinta-bigs{display:flex;align-items:stretch;gap:var(--e1)}
-.cinta-col{display:flex;flex-direction:column;justify-content:center;gap:1px}
-.cinta-gn{font:500 var(--t0) var(--ui);color:var(--faint);letter-spacing:.04em;white-space:nowrap;padding-bottom:1px}
-.cinta-b{display:flex;border:1px solid transparent;background:none;border-radius:var(--r2);cursor:pointer;
-  color:var(--ink);font:inherit;padding:var(--e1) var(--e2);align-items:center;gap:var(--e2);white-space:nowrap;
-  text-align:left;min-width:0}
-.cinta-b:hover{background:var(--accSoft);border-color:var(--line)}
-.cinta-b.bgr{flex-direction:column;justify-content:flex-start;gap:var(--e1);width:70px;
-  padding:var(--e2) var(--e1) var(--e1);white-space:normal}
-.cinta-b.bgr .cinta-ic{font-size:18px;line-height:1;color:var(--acc);flex:none}
-.cinta-b.bgr .cinta-et{font-size:var(--t0);color:var(--mut);line-height:1.2;text-align:center;white-space:normal}
-.cinta-b.chi{font-size:var(--t1);padding:var(--e1) var(--e2);height:24px}
-.cinta-b.chi .cinta-ic{font-size:var(--t1);color:var(--mut);width:14px;text-align:center}
-.cinta-b.chi .cinta-et{font-size:var(--t0)}
-.cinta-b.chi:hover .cinta-ic{color:var(--acc)}
-.cinta-fl{font-size:8px;color:var(--faint);margin-left:-2px}
-.cinta-sep{width:1px;background:var(--line);margin:2px var(--e1)}
-.cinta-col .cinta-b.chi{justify-content:flex-start}
-.cinta-hoja{max-width:340px;padding:var(--e3)}
-.cinta-hoja-t{font:600 var(--t1) var(--ui);color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:var(--e2)}
-.cinta-hoja-c{max-height:min(420px,60vh);overflow:auto}
-.cinta-hoja-c .igroup{margin:0 0 var(--e2)}
-/* con la cinta puesta, el panel lateral se esconde salvo que lo pidas */
-body.con-cinta .main{grid-template-columns:var(--w-tira) minmax(0,1fr) 0}
+  font:600 var(--t1) var(--ui);color:var(--mut)}
+.cinta-cerrar span{flex:1}
+/* Menú «Archivo»: rótulo de sección e iconos del mismo trazo que la cinta. */
+.menu .menu-t{padding:var(--e2) var(--e3) var(--e1);font:600 var(--t0) var(--ui);color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+.menu button .mi svg{width:16px;height:16px;display:block}
+/* Con la cinta (disposición de fábrica) el inspector es un panel de detalles temporal:
+   se abre desde la cinta y se cierra con ✕ o Escape. Lo que ya está en la cinta sale
+   de la barra superior (una herramienta, un sitio). */
 body.con-cinta #inspector{display:none}
-body.con-cinta.panel-temporal .main{grid-template-columns:var(--w-tira) minmax(0,1fr) var(--w-panel)}
 body.con-cinta.panel-temporal #inspector{display:flex}
-@media (max-width:900px){
-  body.con-cinta .main{grid-template-columns:1fr}
-  .cinta-b.bgr{min-width:48px}
+body.con-cinta #decksBtn,body.con-cinta #exportBtn,body.con-cinta #moreBtn,body.con-cinta #temaBtn,
+body.con-cinta #buscarBtn,body.con-cinta #densChk,body.con-cinta .dens-btn{display:none}
+@media (min-width:921px){
+  body.con-cinta .main{grid-template-columns:var(--w-tira) minmax(0,1fr) 0}
+  body.con-cinta.panel-temporal .main{grid-template-columns:var(--w-tira) minmax(0,1fr) var(--w-panel)}
+  body.con-cinta .app.concentrado .main{grid-template-columns:minmax(0,1fr)}
 }
+.app.concentrado .cinta,body.con-cinta .app.concentrado #inspector{display:none}
+/* En el cajón móvil ya está el ✕ de su cabecera. */
+@media (max-width:920px){ body.con-cinta .cinta-cerrar{display:none} }
 
 /* ---------- referencias ---------- */
 .ref-lista{display:flex;flex-direction:column;gap:var(--e1);max-height:min(46vh,360px);overflow:auto}

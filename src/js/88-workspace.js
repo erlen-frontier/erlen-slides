@@ -210,7 +210,7 @@ function wsInit() {
   $('#inicioBtn').addEventListener('click',()=>wsInicio());
   window.addEventListener('hashchange',suiteDesdeUrl);
   $('#edicionBadge').addEventListener('click',openEdicion);
-  $('#drawerClose').addEventListener('click',()=>openDrawer(false));
+  $('#drawerClose').addEventListener('click',()=>cierraDrawer());
   pintaEdicion();
   const solicitado=new URLSearchParams(location.search).get('plantilla');
   const plantilla=solicitado && PLANTILLAS.find(p=>p.id===solicitado);

@@ -55,6 +55,7 @@
 53-imagen-estilo.js
 54-galeria.js
 55-disenador.js
+55a-suite-cinta.js
 56-cinta.js
 57-citas.js
 58-respaldo.js

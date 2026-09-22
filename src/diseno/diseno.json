@@ -1,8 +1,9 @@
 {
- "version": "1.2.0",
+ "version": "1.3.0",
  "files": {
-  "VERSION": "1e5b51cde515396a9fa762909cf8ca6584ccc564b325d2eebeea76175fe95c4d",
+  "VERSION": "64d23f858ef51b0f996e4966d4e27c0371b437e2d2787890b1f7ad22d4ec5663",
   "base.css": "062953242461543786111836351f885411bac05848acb13a653b6a839e263706",
+  "cinta.css": "ceb169800a2cd8d2ba5df444a77bc161f4e08fed104d5ebb037d11254b3f3d87",
   "fuentes.css": "5382f1d211a557d5d825e1a4fdea56f1957c32b9a682b8f58dd67d11c7c3b529",
   "fuentes/cmu-concrete-400-italic.87b60891.woff2": "87b60891a08d17814e0320724fbece9f9bca05ebf50a4dd53b312e5ca96bae02",
   "fuentes/cmu-concrete-400-normal.6e28f64d.woff2": "6e28f64dd35e439c6a9cd58debf3047bdc6a7d5fe4607a90685c0a2aeb670621",
@@ -12,13 +13,18 @@
   "fuentes/lm-roman-700-normal.346a6393.woff2": "346a6393ae6eb2216ff74bc5f0db274511b126c1f2614e45e7ea5e7feee6ce3e",
   "fuentes/lm-sans-400-normal.4876dc5c.woff2": "4876dc5cf7fe2502dd58c1cf8f9daac4a36ba42cfa5144b0b3b61ea48b297142",
   "fuentes/lm-sans-700-normal.8868f8c7.woff2": "8868f8c7f2688b988677797e426275d3fabe5c9dcb40c6d1fd67f4c04e5b8315",
+  "inicio.css": "76cd228aeb41c0984f2e01453b1bc1dae9637e4f5a38a1df9d754396c907cfb3",
   "licencias/GUST-FL.txt": "5eb61bb836bb1845ef668717cb15b382e997748ce2629e4388cc5e4c3fa4e433",
   "licencias/MIT.txt": "c6efd8524aedfbf769649e36a9bd6a0e95ce353bbd7a0a5eeef31adfdfb5cdad",
   "licencias/OFL.txt": "73273dffdefe2e5f1e138084d4a4b65b1c50df2ab0179f78484f31beefe30d84",
   "motion.css": "70bb03c77d8d903af41594bc902cabee2fbefecfe74d8476687ba245c4bc7cd4",
+  "suite-cinta.js": "05e17f567c678bfe0280e551ebb1c3511a2aaa76d5e66817936f1c09f88555ba",
+  "suite-cinta.mjs": "740b25c7fbb51bb3436b16b4c0b75fe2029432d22e57ef88d543a433ad275f08",
+  "suite-inicio.js": "581a2fc0997bd1e0ebcf9701888769b87c19944c47be8e382156a5aaf1b39564",
+  "suite-inicio.mjs": "53c3a19c67b123936cc0580bdb463d05704f5491d2eb1f853a056eee7f1f39b4",
   "suite-nav.mjs": "03eb7ef7a6bc81194b2cda9313915b7bdd95d4d540e5abe7900bd671a3b1b3e1",
-  "suite-navigation.js": "3d6bd3a8f6dcddec3dc47974de28697c2cd01778e4a76a5c6350540e2498696c",
-  "tokens.css": "916d79d860c82a0575c05f48f32246c67f0aeda4b4e0036edc237053b9c5232b"
+  "suite-navigation.js": "ee0f70c43ea9f6967955d5a2e51cbb53b83111fe5a9a6317c3ebc7dcc3ca4c2d",
+  "tokens.css": "d02370b75a69da68f1fe8873486f734d3ec572a5ad87f846473b7a62e294c2cb"
  },
  "modos": [
   "iife"

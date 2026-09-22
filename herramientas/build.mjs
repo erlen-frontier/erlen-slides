@@ -26,9 +26,15 @@ const fuentesSuite=get('src/diseno/fuentes.css').split('\n').filter(l=>l.startsW
 if(fuentesSuite.split('\n').length!==CARAS_CROMO.length)throw new Error('src/diseno/fuentes.css no declara todas las caras del cromo: vuelve a sincronizar el paquete');
 const tokensSuite=get('src/diseno/tokens.css');
 const token=n=>{const m=tokensSuite.match(new RegExp('--erlen-'+n+':(#[0-9a-fA-F]{3,8})'));if(!m)throw new Error('falta --erlen-'+n+' en src/diseno/tokens.css');return m[1];};
-const css=tokensSuite+'\n'+fuentesSuite+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
+/* La cinta común de la suite (diseno/cinta.css) va justo tras los tokens: solo
+   usa --erlen-* y sus reglas van con prefijo .erlen-cinta, así que no toca las
+   diapositivas. Su JS es src/js/55a-suite-cinta.js, copia de src/diseno/suite-cinta.js. */
+const css=tokensSuite+'\n'+get('src/diseno/cinta.css')+'\n'+fuentesSuite+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
 const lib=p=>get('node_modules/'+p);
-const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','Plus','HelpCircle','FlaskConical','Atom','ChartLine','FolderOpen','Download','Play','Settings2','House','Presentation','ArrowUpRight','ArrowRight','LayoutTemplate','Archive','ChevronRight'];
+const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','Plus','HelpCircle','FlaskConical','Atom','ChartLine','FolderOpen','Download','Play','Settings2','House','Presentation','ArrowUpRight','ArrowRight','LayoutTemplate','Archive','ChevronRight',
+ /* Iconos de la cinta (src/js/56-cinta.js): uno por significado, sin repetir. */
+ 'SquarePlus','Copy','Trash2','ListTree','Command','Route','Mic','ChartGantt','Library','GraduationCap','Columns3','Type','List','Sigma','ArrowRightLeft','Image','Table','Blocks','Pi','BookMarked','LibraryBig','Superscript','BookOpen','Palette','Droplet','CaseSensitive','Sparkles','MoveRight','Users','BookA','PanelBottom','Shield','Bookmark','PanelRight','LayoutDashboard','ALargeSmall','Scaling','NotebookPen','ScrollText','Clock','MessageCircleQuestion','Lightbulb','GitBranch','SquareCheck','ListTodo','StickyNote','Brain','Eye','StepForward','Timer','Hourglass','CircleCheckBig','Projector','Accessibility','FileCheck','Microscope','LayoutGrid','Code','SunMoon','Rows3','PanelTop','Pencil','ImageUp','SlidersHorizontal','Scissors','Crop','Ruler','Footprints','WandSparkles','Gauge','ArrowUp','ArrowDown','CopyPlus','Delete','ArrowRightToLine','FilePlus','Save','HardDrive','Upload','History','CalendarDays','FileText','FileSliders','FileCode','FilePen','Printer','NotebookText','FileJson','Package','FileImage','PenTool','ClipboardList','Info'];
+if(names.some(n=>!icons[n]))throw new Error('Icono de lucide inexistente: '+names.filter(n=>!icons[n]).join(', '));
 const licenses=['@floating-ui/core','@floating-ui/dom','lucide'];
 const ui='/*\n'+licenses.map(p=>lib(p+'/LICENSE')).join('\n').replace(/\*\//g,'* /')+'\n*/\n'+lib('@floating-ui/core/dist/floating-ui.core.umd.min.js')+'\n'+lib('@floating-ui/dom/dist/floating-ui.dom.umd.min.js')+'\nwindow.ERLEN_ICONOS='+JSON.stringify(Object.fromEntries(names.map(n=>[n,icons[n]])))+';';
 /* El matraz de la marca como icono de pestaña, incrustado: sin petición al

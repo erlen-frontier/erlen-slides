@@ -71,7 +71,10 @@ body{letter-spacing:0;background:var(--bg)}
 .workspace{background:var(--bg)}.ws-shell{max-width:1320px}.ws-brand,.ws-hero h1,.ws-art h2,.ws-section-head h2,.ws-thumb,.ws-stat strong,.plan-card h3{font-family:var(--serif)}
 .ws-art,.ws-card,.ws-stat,.plan-card,.ws-empty{border-radius:var(--r3)}.ws-card:hover{transform:translateY(-1px);border-color:var(--accLine);box-shadow:var(--shadow)}
 @media (min-width:921px) and (max-width:1180px){:root{--w-tira:168px;--w-panel:282px}.canvas-scroll{padding:28px 20px}}
-@media (max-width:920px){.topbar{border-bottom-color:var(--glass-edge)}.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:54px}}
+@media (max-width:920px){.topbar{border-bottom-color:var(--glass-edge)}.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:54px}
+ /* El ajuste de zoom en pantallas estrechas reserva poco aire (01-editor.css): con los 38 px de
+    escritorio la diapositiva se salía por la derecha. */
+ .canvas-scroll{padding:var(--e3) var(--e2)}}
 @media (prefers-reduced-motion:reduce){.ins-btn:hover,.ws-card:hover{transform:none}}
 
 /* Tarjeta «Nueva presentación»: hermana de .slides-example, con borde discontinuo

@@ -31,16 +31,18 @@
  --erlen-dur-micro:.12s;--erlen-dur:.18s;--erlen-dur-entrada:.3s;--erlen-ease:cubic-bezier(.2,.7,.2,1);
  /* Controles */
  --erlen-alto-control:44px;--erlen-ancho-lectura:72ch}
-/* Modo oscuro: solo se redefinen papel, superficie, tinta, línea (GUIA-DISENO §2) y el verde pasa al acento sobre oscuro para conservar contraste. */
+/* Modo oscuro: se redefinen papel, superficie, tinta, línea y sombras (GUIA-DISENO §2); el verde pasa al acento sobre oscuro, y el ámbar y el peligro (con sus fondos suaves) se aclaran para superar 4,5:1 como texto (autorizado por Jorge el 2026-09-22), para conservar contraste. */
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
  --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
  --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
  --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
+ --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
  --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}}
 :root[data-theme="dark"]{color-scheme:dark;
  --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
  --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
  --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
+ --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
  --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}
