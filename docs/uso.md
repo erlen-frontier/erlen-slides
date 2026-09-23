@@ -16,6 +16,25 @@ Para empezar una lámina con una idea clara, usa **Afirmación + evidencia** en 
 
 Antes de compartir, abre Archivo → Calidad científica. La revisión comprueba datos, ejes, unidades indicadas, escalas logarítmicas, barras de error, pies y procedencia. Sus avisos ayudan a revisar el archivo; no certifican la validez del experimento.
 
+## Un informe de Erlen DoE, como presentación
+
+Erlen DoE puede enviar su informe (tipo `informe-v1` del [contrato de copias de la suite](https://github.com/jorgegonzalezsevilla/erlen-suite/blob/main/docs/intercambio-doe.md)) para contarlo en una reunión de grupo. Dentro de la suite, la página de recursos del portal o el propio DoE abren `/slides/#copy=<id>`: Slides lee la copia al arrancar, la retira de la dirección sin dejar entrada en el historial y enseña una **vista previa** con las diapositivas que va a crear, los recortes que hizo falta hacer y, si el informe lo declara, el aviso **DATOS SIMULADOS**. Fuera de la suite, DoE descarga la copia como `erlen-copia-slides-<id8>.json`; ábrela con **Importar proyecto** y pasa por la misma vista previa.
+
+Solo al pulsar **Crear presentación** aparece una presentación nueva en tu biblioteca, con el título del informe (y « (2)», « (3)»… si el nombre ya existe: nunca se sobrescribe otra). La presentación que tenías abierta se conserva. **Cancelar** no crea ni cambia nada, y la copia de intercambio sigue en la página de recursos, que es donde se borra.
+
+| En el informe | En la presentación |
+|---|---|
+| Título, subtítulo y fecha | La portada; con datos simulados, el subtítulo termina en «DATOS SIMULADOS» |
+| Cada sección | Una o más diapositivas con su título; las que siguen dicen «continuación» |
+| Párrafos y listas | Texto y viñetas, sin pasar de unas 55 palabras ni de siete viñetas por diapositiva; un párrafo largo se parte por frases y, si hace falta, a media frase con «…» |
+| Tablas | Tablas de Slides con las filas que caben (y hasta siete columnas); el pie dice cuántas filas y columnas se omitieron, y las celdas largas acaban en «…». Los números se muestran con hasta seis cifras significativas |
+| Figuras | Gráficas de datos editables: de dispersión si todas las series son de puntos, de líneas si no; conservan el eje invertido del FTIR. Una serie de más de unos miles de puntos se aligera guardando el mínimo y el máximo de cada tramo, y el pie lo dice. Las marcas y regiones van a las notas. Una figura sin puntos se muestra como tabla de sus series; nunca como una imagen inventada |
+| Procedencia | La última diapositiva: aplicación, proyecto, título, fechas, identificador de la copia y su SHA-256. También queda en el proyecto (`meta.origen`) y en las notas de cada diapositiva |
+
+El reparto está calculado para el tema Metropolis en 16:9, con el que nace la presentación. Si cambias de tema o de proporción cambian las letras: **Preparar mi charla** avisa entonces de lo que no quepa. El texto llega tal cual lo escribió DoE; un «$» se muestra como signo, no abre matemáticas.
+
+Se rechazan, con el motivo en español y sin tocar nada, las copias de otro tipo o de otra aplicación de origen, las dirigidas a otra aplicación, las que cambiaron después de enviarse (su SHA-256 ya no coincide), las que no están en este navegador y los informes que se salen de los límites del tipo (30 secciones, 200 bloques, 2 MiB, tablas de 50 columnas y 500 filas, figuras de 8 series y 20 000 puntos por serie).
+
 ## Guardar y recuperar
 
 El indicador superior informa del autoguardado. Archivo permite conservar varias presentaciones con nombre. En Recursos hay copias de recuperación, respaldo ZIP, plantillas e identidad institucional. Un respaldo ZIP contiene proyectos JSON y un archivo de plantillas: importa cada presentación desde Inicio y las plantillas desde su opción específica.

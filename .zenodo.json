@@ -2,7 +2,7 @@
   "title": "Erlen Slides: Scientific presentations",
   "description": "<p>Open-source scientific presentation editor running in the browser. Includes LaTeX equations, chemistry, editable charts, local project storage, presenter tools and export workflows. Spanish interface. This first standalone beta release includes twelve worked examples (72 slides) with explicitly illustrative data, editable JSON and Beamer sources, interface screenshots, documentation and third-party license notices. No production credentials, private research data or cloud service configuration are included.</p>",
   "creators": [{"name": "González Sevilla, Jorge"}],
-  "version": "0.2.1",
+  "version": "0.3.0",
   "upload_type": "software",
   "access_right": "open",
   "license": "AGPL-3.0-only",

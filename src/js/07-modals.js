@@ -490,6 +490,9 @@ function importJSON() {
       let bruto = null;
       try { bruto = JSON.parse(rd.result); }
       catch (e) { toast('Ese archivo no es un .json válido', 'warn'); inp.remove(); return; }
+      /* Una copia de la suite descargada fuera del portal (erlen-copia-slides-<id8>.json):
+         no es un proyecto, se abre con la vista previa del informe (88e-informe.js). */
+      if (bruto && bruto.version === 2 && typeof bruto.payloadJSON === 'string') { recibeArchivoCopia(bruto); inp.remove(); return; }
       cargaSegura(bruto, null);
       inp.remove();
     };

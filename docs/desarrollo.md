@@ -14,6 +14,8 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 - `src/js/88a0-suite-nav.js`: el menú común de Erlen. Copia literal del auxiliar MIT del repositorio maestro, envuelta para el ámbito compartido porque aquí los módulos se concatenan.
 - `src/js/88b-recuperacion.js`: historial en IndexedDB, separado del autoguardado.
 - `src/js/88c-ciencia-libre.js`: carga local de bibliotecas científicas.
+- `src/js/88d-intercambio.js`: el transporte de copias de la suite. Copia literal de `web/exchange-v2.mjs` (a su vez copia literal del archivo MIT del portal), envuelta para el ámbito compartido y sin sus `export`; `tests/intercambio.test.mjs` exige que no se aparten.
+- `src/js/88e-informe.js`: recibe de Erlen DoE un informe `informe-v1`: lo valida (`leeInforme`), lo convierte (`informeADeck`), lo enseña y solo tras confirmarlo lo guarda como presentación nueva. El reparto por diapositiva usa medidas tomadas en Chromium, anotadas en el propio módulo.
 - `web/quimica-worker.js`: trabajo RDKit fuera del hilo de la interfaz.
 - `herramientas/build.mjs`: HTML, recursos locales y manifiestos; no lee credenciales ni configuración de nube.
 - `herramientas/examples.mjs`: regenera los JSON y TEX documentados después de construir.
@@ -21,7 +23,9 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 
 Los nombres históricos internos no implican que la suite completa esté incluida. Esta distribución contiene Presentaciones. Evita introducir dependencias a sus otros editores.
 
-El menú común es la única excepción, y no es una dependencia: `88a0-suite-nav.js` no importa ni ejecuta código de los otros editores, sólo pinta una lista de enlaces, y comprueba `location.pathname` para no aparecer siquiera cuando la aplicación se sirve suelta. La 0.1.2 ya lo llevaba, inyectado fuera del repositorio; desde la 0.2.1 vive aquí, con su aviso MIT íntegro, para que el paquete que despliega la suite se pueda reconstruir desde esta fuente.
+El menú común y el intercambio de copias son las excepciones, y ninguno es una dependencia. El intercambio (`88d-intercambio.js`) solo lee de IndexedDB del navegador la copia cuyo identificador trae la URL; no ejecuta código de otras apps ni hace peticiones de red.
+
+El menú común no es una dependencia: `88a0-suite-nav.js` no importa ni ejecuta código de los otros editores, sólo pinta una lista de enlaces, y comprueba `location.pathname` para no aparecer siquiera cuando la aplicación se sirve suelta. La 0.1.2 ya lo llevaba, inyectado fuera del repositorio; desde la 0.2.1 vive aquí, con su aviso MIT íntegro, para que el paquete que despliega la suite se pueda reconstruir desde esta fuente.
 
 ## Contratos a preservar
 
