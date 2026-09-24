@@ -18,7 +18,7 @@
  */
 // Fuente única del menú de suite: diseno/suite-nav.mjs (docs/DISENO-PAQUETE.md). Colores como var(--erlen-*, valor) de tokens.css; las custom properties atraviesan el shadow DOM.
 // Explicit navigation only: no storage access, transfers or background requests.
-const apps=[['slides','Slides'],['notes','Notes'],['lens','Lens'],['pentagrama','Pentagrama'],['documents','Documents'],['spreadsheets','Spreadsheets'],['figures','Figures'],['ftir','FTIR Studio'],['doe','DoE'],['xrd','XRD Studio']];
+const apps=[['slides','Slides'],['notes','Notes'],['lens','Lens'],['pentagrama','Pentagrama'],['documents','Documents'],['spreadsheets','Spreadsheets'],['figures','Figures'],['ftir','FTIR Studio'],['doe','DoE'],['xrd','XRD Studio'],['methods','Methods'],['dft','DFT Studio']];
 export function mountSuiteNavigation(parent,current){
  if(!parent||!apps.some(([id])=>id===current))throw Error('Aplicación de la suite inválida.');
  // Standalone releases have no sibling apps. Do not create broken file/root links.
