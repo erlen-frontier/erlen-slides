@@ -82,6 +82,9 @@
 .erlen-inicio-tarjeta-cuerpo{display:flex;flex-direction:column;gap:var(--erlen-esp-2);padding:var(--erlen-esp-4)}
 .erlen-inicio-tarjeta h3{font:700 var(--erlen-texto-ui)/1.3 var(--erlen-font-ui);overflow-wrap:anywhere}
 .erlen-inicio-vacio{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:var(--erlen-esp-3);padding:var(--erlen-esp-7) var(--erlen-esp-5);border:1px dashed var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-tarjeta);text-align:center}
+/* Mey (diseno/mey.mjs) en un hueco de 96 px: <erlen-mey> elige 6 px por celda (96×108). */
+.erlen-inicio-mey{display:block;width:96px}
+.erlen-inicio-mey svg{display:block;width:100%;height:auto}
 .erlen-inicio-vacio h3{font:400 24px/1.2 var(--erlen-font-titulo)}
 .erlen-inicio-vacio p{max-width:52ch;color:var(--erlen-tinta-suave)}
 .erlen-inicio-recientes{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--erlen-esp-2);margin-top:var(--erlen-esp-4)!important}
