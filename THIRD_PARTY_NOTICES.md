@@ -12,6 +12,7 @@ La licencia AGPL-3.0-only cubre el trabajo original de Erlen Slides. Las bibliot
 | 3Dmol.js | Estructuras tridimensionales | BSD-3-Clause y avisos de dependencias · https://github.com/3dmol/3Dmol.js |
 | Plotly.js basic | Gráficas desde datos | MIT · https://github.com/plotly/plotly.js |
 | Floating UI | Posicionamiento de interfaz | MIT · https://github.com/floating-ui/floating-ui |
+| Intercambio de copias de Erlen Suite (`web/exchange-v2.mjs`) | Leer la copia que DoE envía a Slides | MIT · Erlen contributors; aviso íntegro en el propio archivo y en `src/js/88d-intercambio.js` |
 | Lucide | Iconos de interfaz | ISC; ver texto que incluye atribuciones adicionales · https://github.com/lucide-icons/lucide |
 
 `licenses/components.json` registra las versiones npm utilizadas. `licenses/embedded-assets.json` identifica con SHA-256 los archivos tipográficos y KaTeX heredados. Las fuentes WOFF2 están incrustadas en CSS; el build las conserva, no las recompila. Sus creadores incluyen Bogusław Jackowski, Janusz M. Nowacki y los colaboradores de GUST e-foundry; los derivados TeX Gyre conservan los créditos de las familias originales.

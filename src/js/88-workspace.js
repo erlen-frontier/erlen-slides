@@ -28,7 +28,9 @@ const SUITE_RUTAS = Object.fromEntries(Object.entries(SUITE_VISTAS).map(([ruta, 
 function suiteVistaValida(v) { return Object.hasOwn(SUITE_VISTAS, v) ? v : 'inicio'; }
 function suiteRuta(hash) { return hash === '#presentaciones' ? 'editor' : suiteVistaValida(String(hash || '').replace(/^#suite\/?/, '')); }
 function suiteUrl(v) { const hash = v === 'editor' ? '#presentaciones' : '#suite/' + suiteVistaValida(v); if (location.hash !== hash) history.pushState(null, '', location.pathname + location.search + hash); }
-function suiteDesdeUrl() { if (!location.hash) history.replaceState(null, '', location.pathname + location.search + '#suite/inicio'); const v = suiteRuta(location.hash); v === 'editor' ? wsCerrar() : wsInicio(v); }
+/* #copy=<id> no es una vista: es una copia de la suite que llega (88e-informe.js). Se retira
+   de la URL antes de decidir la vista, que queda en el inicio, y se enseña encima su vista previa. */
+function suiteDesdeUrl() { const copia = copiaEnUrl(); if (!location.hash) history.replaceState(null, '', location.pathname + location.search + '#suite/inicio'); const v = suiteRuta(location.hash); v === 'editor' ? wsCerrar() : wsInicio(v); if (copia !== null) recibeCopiaSuite(copia); }
 const wsAbierto = () => !!(INICIO && INICIO.abierta);
 /* Lo que hace falta al volver al editor, se venga del inicio o de un enlace directo. */
 function wsAlEditor() {

@@ -4,7 +4,7 @@
 
 Escribe ecuaciones, dibuja química, explica datos y prepara tu próxima charla. Erlen Slides reúne edición por bloques, herramientas científicas y modo de presentación en una aplicación local, sin cuenta ni suscripción.
 
-**Versión 0.2.1 · beta · AGPLv3.** Publicación independiente del módulo Presentaciones de Erlen, con auditoría científica y paquetes reproducibles. Interfaz en español.
+**Versión 0.3.0 · beta · AGPLv3.** Publicación independiente del módulo Presentaciones de Erlen, con auditoría científica y paquetes reproducibles. Interfaz en español.
 
 ![Inicio de Erlen Slides](docs/images/inicio.png)
 
@@ -17,6 +17,7 @@ Escribe ecuaciones, dibuja química, explica datos y prepara tu próxima charla.
 - **Comunicación científica:** ecuaciones LaTeX, reacciones, estructuras químicas, tablas, gráficas con datos editables —con barras de error y ejes logarítmicos—, diagramas y montajes de laboratorio.
 - **Preparación:** notas del orador, tiempos, revisión del contenido, orden de diapositivas y modos de ensayo/presentación.
 - **Archivos propios:** biblioteca local, proyecto JSON, plantillas personales, identidad institucional y copias de recuperación.
+- **Desde Erlen DoE:** el informe de un análisis llega como presentación nueva para la reunión de grupo, con vista previa, tablas recortadas a lo que cabe, gráficas editables y la procedencia en la última diapositiva. [Cómo funciona](docs/uso.md#un-informe-de-erlen-doe-como-presentación).
 - **Exportaciones:** PDF mediante impresión, PowerPoint, fuente Beamer, SVG científico, informe JSON de advertencias y HTML imprimible. Cada formato tiene [límites documentados](docs/uso.md#exportaciones).
 - **Herramientas libres:** KaTeX, RDKit, Kekule.js, 3Dmol.js y Plotly. Los componentes científicos adicionales se cargan desde los archivos de la propia aplicación.
 
@@ -24,7 +25,7 @@ El asistente integrado localiza herramientas mediante reglas; **no es un modelo 
 
 ## Empezar
 
-Descarga el paquete `erlen-slides-0.2.1-web.zip` desde [Releases](https://github.com/jorgegonzalezsevilla/erlen-slides/releases). Incluye la aplicación ya construida:
+Descarga el paquete `erlen-slides-0.3.0-web.zip` desde [Releases](https://github.com/jorgegonzalezsevilla/erlen-slides/releases). Incluye la aplicación ya construida:
 
 1. Descomprime el ZIP.
 2. Para el editor básico, abre `erlen-slides-offline.html`.
@@ -74,7 +75,7 @@ Cada ejemplo contiene **seis diapositivas**, notas, archivo JSON editable, fuent
 
 El autoguardado usa el almacenamiento de **este navegador y este origen web**. Borrar los datos del sitio, cambiar de navegador o moverlo a otra dirección no traslada tu biblioteca. Descarga proyectos JSON y respaldos ZIP. El historial de recuperación local no sustituye una copia externa.
 
-Erlen Slides usa claves de almacenamiento propias. Para traer una presentación de Erlen, expórtala como JSON e impórtala aquí; no lee automáticamente sus bibliotecas. No contiene configuración de producción, telemetría automática ni claves de servicios.
+Erlen Slides usa claves de almacenamiento propias. Para traer una presentación de Erlen, expórtala como JSON e impórtala aquí; no lee automáticamente sus bibliotecas. La única excepción es explícita: una copia que Erlen DoE envía a Slides por la suite, que se abre solo desde su enlace y solo se guarda tras confirmarla. No contiene configuración de producción, telemetría automática ni claves de servicios.
 
 ## Desarrollo y validación
 

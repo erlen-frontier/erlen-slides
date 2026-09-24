@@ -35,7 +35,9 @@ function texInline(s) {
   if (s.indexOf('{{') >= 0 && typeof RE_GLOSA !== 'undefined') s = s.replace(RE_GLOSA, (m, t) => '\u0001' + t + '\u0002');
   while (i < s.length) {
     const c = s[i];
-    if (c === '\\' && s[i + 1] === '$') { buf += '\\$'; i += 2; continue; }
+    /* «\$» es un signo de dólar escrito, como en inlineRich: fuera de las
+       matemáticas lo escapa texEscape (sumarle otra barra la imprimía). */
+    if (c === '\\' && s[i + 1] === '$') { buf += inM ? '\\$' : '$'; i += 2; continue; }
     if (c === '$') {
       out += inM ? '$' + texMate(buf) + '$' : texEscapeNota(buf);
       buf = ''; inM = !inM; i++; continue;

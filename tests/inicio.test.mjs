@@ -77,7 +77,7 @@ test('Hash routes keep their historical names and follow the component navigatio
  w.location.hash='#presentaciones';await espera();
  assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('#app').inert);
  w.location.hash='#suite/servicio';await espera();
- assert.equal(run('INICIO.vista'),'acerca');assert.match(raiz(d).textContent,/versión 0\.2\.1/);assert.match(raiz(d).textContent,/AGPLv3/);
+ assert.equal(run('INICIO.vista'),'acerca');assert.match(raiz(d).textContent,/versión 0\.3\.0/);assert.match(raiz(d).textContent,/AGPLv3/);
  w.location.hash='#suite/nada';await espera();assert.equal(run('INICIO.vista'),'inicio','Una vista desconocida cae en Inicio');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});

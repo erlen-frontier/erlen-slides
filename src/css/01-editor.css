@@ -769,6 +769,10 @@ textarea.field.es-area{min-height:300px;font:var(--t2)/1.6 var(--mono);white-spa
 .es-c{flex:none;font:var(--t0) var(--mono);color:var(--faint)}
 .pl-card.pl-esquema{border-style:dashed}
 
+/* ---------- informe de DoE: vista previa ---------- */
+.inf-preview .hint{word-break:break-all}
+.inf-simulado{margin:0 0 var(--e3);padding:var(--e2) var(--e3);border-left:3px solid var(--warn);background:var(--panel2);font-weight:600;color:var(--ink)}
+
 /* ---------- revisión ---------- */
 .rv-marcador{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--e2)}
 .rv-m{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r2);padding:var(--e3);text-align:center}

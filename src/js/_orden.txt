@@ -88,6 +88,8 @@
 88a0-suite-nav.js
 88b-recuperacion.js
 88c-ciencia-libre.js
+88d-intercambio.js
+88e-informe.js
 _glass-map-gen.js
 89-glass.js
 90-main.js
