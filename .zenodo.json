@@ -8,5 +8,5 @@
   "license": "AGPL-3.0-only",
   "keywords": ["scientific presentations", "chemistry", "LaTeX", "open science", "browser-based editor"],
   "language": "spa",
-  "related_identifiers": [{"identifier": "https://github.com/jorgegonzalezsevilla/erlen-slides", "relation": "isSupplementTo", "resource_type": "software"}]
+  "related_identifiers": [{"identifier": "https://github.com/erlen-frontier/erlen-slides", "relation": "isSupplementTo", "resource_type": "software"}]
 }

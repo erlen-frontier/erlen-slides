@@ -11,16 +11,24 @@ concurrency:
   cancel-in-progress: false
 # Publicación hacia Erlen Suite (docs/CONTRATO-APP.md §5 y docs/actualizacion-automatica.md del
 # portal): tras crear la release, el último paso envía un repository_dispatch «app-publicada» a
-# erlen-suite con el ZIP de la release. Requiere el secreto ERLEN_SUITE_TOKEN (token fino con
+# erlen-suite con el ZIP de la release. Requiere el secreto ERLEN_SYNC_APP_KEY (llave de la App erlen-suite-sync con
 # contents: write + pull_requests: write + issues: write en erlen-suite y contents: read aquí).
 env:
   APP_ID: slides
   APP_STATUS: beta
-  SUITE_REPO: jorgegonzalezsevilla/erlen-suite
+  SUITE_REPO: erlen-frontier-ops/erlen-suite
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Token de erlen-suite-sync (GitHub App de la organización)
+        id: sync-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: Iv23likF5myNB8YmIKwP
+          private-key: ${{ secrets.ERLEN_SYNC_APP_KEY }}
+          owner: erlen-frontier-ops
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.release.tag_name || github.ref }}
@@ -75,7 +83,7 @@ jobs:
           fi
       - name: Avisar al portal (repository_dispatch app-publicada)
         env:
-          GH_TOKEN: ${{ secrets.ERLEN_SUITE_TOKEN }}
+          GH_TOKEN: ${{ steps.sync-token.outputs.token }}
           TAG: ${{ github.event.release.tag_name || github.ref_name }}
         run: |
           set -euo pipefail

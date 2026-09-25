@@ -7,8 +7,8 @@ date-released: 2026-09-23
 authors:
   - family-names: "González Sevilla"
     given-names: "Jorge"
-repository-code: "https://github.com/jorgegonzalezsevilla/erlen-slides"
-url: "https://github.com/jorgegonzalezsevilla/erlen-slides"
+repository-code: "https://github.com/erlen-frontier/erlen-slides"
+url: "https://github.com/erlen-frontier/erlen-slides"
 license: AGPL-3.0-only
 abstract: "Editor libre de presentaciones científicas en el navegador, con ecuaciones, química, gráficas, exportaciones y ejemplos editables."
 keywords:

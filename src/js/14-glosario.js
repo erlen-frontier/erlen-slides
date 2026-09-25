@@ -1,7 +1,7 @@
 /* ==== 14-glosario.js ==== */
 'use strict';
 /* ================= glosario propio de la app ================= */
-const GUIA_URL = 'https://github.com/jorgegonzalezsevilla/erlen-slides/blob/main/docs/uso.md';
+const GUIA_URL = 'https://github.com/erlen-frontier/erlen-slides/blob/main/docs/uso.md';
 
 const GLOSARIO = [
   { g:'Acomodo del texto', items:[

@@ -25,7 +25,7 @@ El asistente integrado localiza herramientas mediante reglas; **no es un modelo 
 
 ## Empezar
 
-Descarga el paquete `erlen-slides-0.3.0-web.zip` desde [Releases](https://github.com/jorgegonzalezsevilla/erlen-slides/releases). Incluye la aplicación ya construida:
+Descarga el paquete `erlen-slides-0.3.0-web.zip` desde [Releases](https://github.com/erlen-frontier/erlen-slides/releases). Incluye la aplicación ya construida:
 
 1. Descomprime el ZIP.
 2. Para el editor básico, abre `erlen-slides-offline.html`.
@@ -40,7 +40,7 @@ Abre `http://127.0.0.1:8130`. Una vez descargado el paquete, este servidor local
 Desde el código fuente, necesitas Node.js 22 o superior y npm:
 
 ```sh
-git clone https://github.com/jorgegonzalezsevilla/erlen-slides.git
+git clone https://github.com/erlen-frontier-ops/erlen-slides.git
 cd erlen-slides
 npm ci
 npm run build

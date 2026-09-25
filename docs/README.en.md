@@ -4,7 +4,7 @@ An open-source, browser-based scientific presentation editor. Spanish interface;
 
 ![Editor](images/editor.png)
 
-Download the ready-to-use web archive from [Releases](https://github.com/jorgegonzalezsevilla/erlen-slides/releases), or run `npm ci`, `npm run build`, `npm test`, and `npm start` with Node.js 22+. Open `http://127.0.0.1:8130`.
+Download the ready-to-use web archive from [Releases](https://github.com/erlen-frontier/erlen-slides/releases), or run `npm ci`, `npm run build`, `npm test`, and `npm start` with Node.js 22+. Open `http://127.0.0.1:8130`.
 
 The standalone offline HTML supports core editing. The optional RDKit/Kekule/3Dmol/Plotly tools need the full archive served through HTTP, which may be entirely local. Crossref and Zotero Web are optional network actions. There is no bundled production account, telemetry configuration, billing or real-time collaboration.
 
