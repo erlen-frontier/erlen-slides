@@ -12,7 +12,15 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - name: Token de erlen-suite-sync (GitHub App de la organización)
+        id: sync-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: Iv23likF5myNB8YmIKwP
+          private-key: ${{ secrets.ERLEN_SYNC_APP_KEY }}
+          owner: erlen-frontier-ops
       - name: Queue integration of current Slides main
         env:
-          GH_TOKEN: ${{ secrets.ERLEN_SUITE_TOKEN }}
-        run: gh api repos/jorgegonzalezsevilla/erlen-suite/dispatches -f event_type=slides-changed
+          GH_TOKEN: ${{ steps.sync-token.outputs.token }}
+        run: gh api repos/erlen-frontier-ops/erlen-suite/dispatches -f event_type=slides-changed

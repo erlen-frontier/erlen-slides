@@ -1,6 +1,6 @@
 # Publicar versiones y conservarlas en Zenodo
 
-Repositorio público previsto: `jorgegonzalezsevilla/erlen-slides`. El repositorio privado `project-memories` no forma parte de esta distribución ni debe enviarse a Zenodo.
+Repositorio público previsto: `erlen-frontier/erlen-slides`. El repositorio privado `project-memories` no forma parte de esta distribución ni debe enviarse a Zenodo.
 
 ## Crear una versión revisable
 
