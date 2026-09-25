@@ -1,0 +1,46 @@
+/* Erlen Suite · paquete de diseño 2.0.0 · material: vidrio líquido × Frutiger Aero (docs/GUIA-DISENO.md §4–§5, docs/COHERENCIA-APPS.md §4).
+   Dos capas: el vidrio vive solo en la capa de controles que flota sobre el contenido (cinta, barras, menús, diálogos, cabeceras);
+   el contenido del usuario (documento, hoja, diapositiva, figura, espectro, partitura) es siempre opaco. Nunca vidrio sobre vidrio.
+   Sin literales: todo sale de tokens.css. Con prefers-reduced-transparency o [data-material="solido"] el relleno pasa a opaco;
+   con prefers-contrast:more el vidrio se vuelve Canvas/CanvasText con borde y sin reflejos. Licencia: licencias/MIT.txt */
+
+/* Vidrio regular: relleno ≥ 72 %, desenfoque y saturación, borde especular arriba, sombra azulada. */
+.erlen-vidrio{position:relative;isolation:isolate;background:var(--erlen-vidrio);border:1px solid var(--erlen-vidrio-borde);box-shadow:inset 0 1px 0 var(--erlen-vidrio-brillo),inset 0 -1px 0 var(--erlen-vidrio-borde),0 8px 28px var(--erlen-vidrio-sombra)}
+.erlen-vidrio.fuerte,.erlen-vidrio-fuerte{background:var(--erlen-vidrio-fuerte)}
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+ .erlen-vidrio,.erlen-vidrio-fuerte,.erlen-capsula{-webkit-backdrop-filter:blur(var(--erlen-desenfoque)) saturate(var(--erlen-saturacion));backdrop-filter:blur(var(--erlen-desenfoque)) saturate(var(--erlen-saturacion))}
+}
+/* Reflejo especular: media luz en la mitad superior; no recibe eventos y hereda la forma. */
+.erlen-vidrio::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:var(--erlen-vidrio-reflejo);pointer-events:none}
+
+/* Cápsula: navegación, filtros, acciones secundarias grandes. */
+.erlen-capsula{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:var(--erlen-alto-control);padding:0 var(--erlen-esp-4);border:1px solid var(--erlen-vidrio-borde);border-radius:var(--erlen-radio-capsula);background:var(--erlen-vidrio);color:var(--erlen-tinta);font:600 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);box-shadow:inset 0 1px 0 var(--erlen-vidrio-brillo);text-decoration:none;cursor:pointer}
+.erlen-capsula:hover{background:var(--erlen-vidrio-fuerte);text-decoration:none}
+.erlen-capsula[aria-pressed=true],.erlen-capsula[aria-current]{background:var(--erlen-acento-suave);color:var(--erlen-acento)}
+
+/* Gel Aero: una sola acción principal por bloque. Brillo en la mitad superior, resplandor inferior, borde oscuro. */
+.erlen-gel{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:var(--erlen-alto-control);padding:0 var(--erlen-esp-5);border:1px solid var(--erlen-gel-borde);border-radius:var(--erlen-radio-capsula);background:var(--erlen-gel);color:var(--erlen-gel-tinta);font:700 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);text-shadow:0 1px 1px var(--erlen-vidrio-sombra);text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 var(--erlen-vidrio-brillo),inset 0 -8px 14px var(--erlen-gel-resplandor),0 4px 12px var(--erlen-vidrio-sombra)}
+.erlen-gel::after{content:"";position:absolute;inset:1px 8% 52% 8%;z-index:-1;border-radius:var(--erlen-radio-capsula) var(--erlen-radio-capsula) 40% 40%;background:var(--erlen-gel-brillo);pointer-events:none}
+.erlen-gel:hover{background:var(--erlen-gel-hover);color:var(--erlen-gel-tinta);text-decoration:none}
+.erlen-gel:active{transform:translateY(1px)}
+
+/* Atmósfera: cielo → agua detrás del cromo (inicio de las apps, portada). Nunca detrás del contenido. */
+.erlen-fondo-cielo{background:var(--erlen-cielo) var(--erlen-papel);background-attachment:fixed}
+
+/* Borde de desplazamiento duro bajo barras fijadas (macOS): separa sin línea visible cuando el contenido pasa por debajo. */
+.erlen-borde-scroll{position:sticky;top:0;z-index:1;height:var(--erlen-esp-3);margin-bottom:calc(-1 * var(--erlen-esp-3));background:linear-gradient(180deg,var(--erlen-papel),transparent);pointer-events:none}
+
+/* Accesibilidad */
+@media (prefers-reduced-transparency:reduce){
+ .erlen-vidrio,.erlen-vidrio-fuerte,.erlen-capsula{-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+:root[data-material="solido"] :is(.erlen-vidrio,.erlen-vidrio-fuerte,.erlen-capsula){-webkit-backdrop-filter:none;backdrop-filter:none}
+@media (prefers-contrast:more){
+ .erlen-vidrio,.erlen-vidrio-fuerte,.erlen-capsula{background:Canvas;color:CanvasText;border-color:CanvasText;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+ .erlen-vidrio::before,.erlen-gel::after{display:none}
+ .erlen-gel{background:var(--erlen-gel-borde);text-shadow:none;box-shadow:none}
+ .erlen-fondo-cielo{background:var(--erlen-papel)}
+}
+@media (forced-colors:active){.erlen-vidrio::before,.erlen-gel::after{display:none}.erlen-gel{border-color:ButtonText}}
+@media (prefers-reduced-motion:reduce){.erlen-gel:active{transform:none}.erlen-fondo-cielo{background-attachment:scroll}}
+@media print{.erlen-vidrio,.erlen-capsula{-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}.erlen-fondo-cielo{background:none}}

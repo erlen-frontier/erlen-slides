@@ -42,7 +42,7 @@ test('The suite menu appears only when mounted at /slides/, and links out withou
   const host=montado.dom.window.document.querySelector('erlen-suite-nav');
   assert.ok(host,'El menú no se montó bajo /slides/.');
   const enlaces=[...host.shadowRoot.querySelectorAll('a')];
-  assert.equal(enlaces.length,11,'Inicio de Erlen y las diez aplicaciones del paquete de diseño 1.3.1.');
+  assert.equal(enlaces.length,11,'Inicio de Erlen y las diez aplicaciones del paquete de diseño 2.0.0.');
   assert.equal(host.shadowRoot.querySelector('[aria-current]').getAttribute('href'),'/slides/');
   assert.equal(host.shadowRoot.querySelector('details').open,false,'El menú abre cerrado.');
   for(const a of enlaces.filter(a=>!a.hasAttribute('aria-current')))assert.equal(a.target,'_blank');
