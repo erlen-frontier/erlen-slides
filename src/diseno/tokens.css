@@ -1,86 +1,48 @@
-/* Erlen Suite · paquete de diseño 2.0.0 · tokens (docs/DISENO-PAQUETE.md, docs/GUIA-DISENO.md §2–§6).
+/* Erlen Suite · paquete de diseño 1.0.0 · tokens (docs/DISENO-PAQUETE.md, docs/GUIA-DISENO.md §2–§6).
    Fuente única en el portal: diseno/tokens.css. Los valores viven aquí y solo aquí; el cromo de cada app usa var(--erlen-*), nunca literales.
-   Identidad 2.0 «vidrio líquido × Frutiger Aero»: cielo, agua y vidrio claro; acento azul gel; sin verde (autorizado por Jorge el 2026-09-23).
    Claro por defecto; oscuro por prefers-color-scheme (salvo [data-theme="light"]) o por [data-theme="dark"]. Licencia: licencias/MIT.txt */
 :root{color-scheme:light;
- /* Paleta: papel (cielo muy claro), superficie (blanco nube), tinta (azul noche), acento (azul gel), ámbar (foco), peligro, línea */
- --erlen-papel:#eef6ff;--erlen-superficie:#fbfdff;--erlen-superficie-2:#e4f0fd;
- --erlen-tinta:#0f1e33;--erlen-tinta-suave:#3d5470;
- --erlen-acento:#1a5fd0;--erlen-acento-suave:#dcecff;--erlen-acento-contraste:#ffffff;
- /* Nombres de 1.x: alias del acento para que el cromo existente de las apps no se rompa (obsoletos; usa --erlen-acento*). */
- --erlen-verde:var(--erlen-acento);--erlen-verde-suave:var(--erlen-acento-suave);--erlen-verde-contraste:var(--erlen-acento-contraste);
- --erlen-aqua:#2fc4dc;--erlen-naranja:#ff9a2e;
+ /* Paleta: papel, tinta, verde, ámbar, peligro, línea, superficie */
+ --erlen-papel:#faf9f5;--erlen-superficie:#fffefa;--erlen-superficie-2:#f7f9f3;
+ --erlen-tinta:#243c32;--erlen-tinta-suave:#54665c;
+ --erlen-verde:#245b43;--erlen-verde-suave:#e9f0e2;--erlen-verde-contraste:#fffefa;
  --erlen-ambar:#94621e;--erlen-ambar-suave:#fff4d6;
- --erlen-peligro:#b3261e;--erlen-peligro-suave:#fde8e6;
- --erlen-linea:#c9dcf2;--erlen-linea-fuerte:#a9c4e4;
+ --erlen-peligro:#a22d26;--erlen-peligro-suave:#fce8e3;
+ --erlen-linea:#dbe2d8;--erlen-linea-fuerte:#c4d1bf;
  --erlen-foco:var(--erlen-ambar);
- /* Sobre oscuro (hero y franjas del portal; en las apps solo si una sección lo pide): agua profunda */
- --erlen-espacio-fondo:#061a33;--erlen-espacio-tinta:#e8f1ff;--erlen-espacio-acento:#7cc0ff;--erlen-espacio-borde:#ffffff26;
- /* Atmósfera Aero: degradado cielo → agua detrás del cromo (nunca detrás del contenido del usuario) */
- --erlen-cielo-1:#8fcfff;--erlen-cielo-2:#cfe9ff;--erlen-cielo-3:#f3faff;--erlen-cielo-agua:#5bb8f5;
- --erlen-cielo:radial-gradient(120% 70% at 85% -10%,#ffffffcc 0,#ffffff00 55%),radial-gradient(90% 60% at 0% 110%,#2fc4dc33 0,#2fc4dc00 60%),linear-gradient(180deg,var(--erlen-cielo-1) 0,var(--erlen-cielo-2) 38%,var(--erlen-cielo-3) 100%);
- /* Vidrio líquido (capa de controles): relleno ≥ 72 % para garantizar 4,5:1; «fuerte» sobre contenido cambiante */
- --erlen-vidrio:color-mix(in srgb,var(--erlen-superficie) 76%,transparent);
- --erlen-vidrio-fuerte:color-mix(in srgb,var(--erlen-superficie) 88%,transparent);
- --erlen-vidrio-borde:#0f3f9e24;--erlen-vidrio-brillo:#ffffffd9;--erlen-vidrio-sombra:#0b3a7a1f;
- --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff8c 0,#ffffff00 46%);
- --erlen-desenfoque:20px;--erlen-saturacion:170%;
- /* Botón gel Aero: brillo arriba, cuerpo azul, resplandor abajo; texto blanco ≥ 4,5:1 sobre la parada central */
- --erlen-gel:linear-gradient(180deg,#5aa6ff 0,#2f7fea 48%,#1f6fe0 52%,#1558c4 100%);
- --erlen-gel-hover:linear-gradient(180deg,#6fb3ff 0,#3a88f0 48%,#2476e6 52%,#1a5fd0 100%);
- --erlen-gel-borde:#0f3f9e;--erlen-gel-tinta:#ffffff;
- --erlen-gel-brillo:linear-gradient(180deg,#ffffffd9 0,#ffffff26 100%);
- --erlen-gel-resplandor:#8fe3ff66;
- /* Tipografía: interfaz en la sans humanista del sistema (SF Pro / Segoe UI Variable); Knuth en titulares y contenido */
+ /* Sobre oscuro (hero y franjas del portal; en las apps solo si una sección lo pide) */
+ --erlen-espacio-fondo:#070a12;--erlen-espacio-tinta:#e9ecef;--erlen-espacio-acento:#7fc8a9;--erlen-espacio-borde:#ffffff1f;
+ /* Tipografía (familia de Knuth, fuentes.css) */
  --erlen-font-titulo:"LM Roman",Georgia,"Times New Roman",serif;
  --erlen-font-cuerpo:"CMU Concrete",Georgia,"Times New Roman",serif;
- --erlen-font-ui:"SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",system-ui,"Noto Sans",Ubuntu,sans-serif;
- --erlen-font-mono:"CMU Typewriter",ui-monospace,"SF Mono","Cascadia Mono",monospace;
+ --erlen-font-ui:"LM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+ --erlen-font-mono:"CMU Typewriter",ui-monospace,"JetBrains Mono",monospace;
  /* Escala */
  --erlen-texto-xs:12px;--erlen-texto-sm:14px;--erlen-texto-ui:15px;--erlen-texto-base:17px;--erlen-texto-lg:18px;
  --erlen-h1:clamp(42px,5.3vw,76px);--erlen-h2:clamp(28px,3vw,40px);--erlen-h3:24px;--erlen-h1-app:clamp(24px,2.6vw,30px);
  --erlen-interlineado:1.7;--erlen-interlineado-ui:1.5;
  /* Espaciado */
  --erlen-esp-1:4px;--erlen-esp-2:8px;--erlen-esp-3:12px;--erlen-esp-4:16px;--erlen-esp-5:24px;--erlen-esp-6:32px;--erlen-esp-7:48px;--erlen-esp-8:64px;
- /* Radios concéntricos: interior = exterior − relleno. Cápsula para acciones grandes y navegación. */
- --erlen-radio-campo:10px;--erlen-radio-pequeno:8px;--erlen-radio-tarjeta:20px;--erlen-radio-panel:28px;--erlen-radio-badge:999px;--erlen-radio-capsula:999px;
- --erlen-relleno-grupo:6px;--erlen-radio-interior:calc(var(--erlen-radio-panel) - var(--erlen-relleno-grupo));
- /* Sombras: profundidad azulada suave; el borde especular vive en --erlen-vidrio-brillo */
- --erlen-sombra-tarjeta:0 12px 32px #0b3a7a1f;--erlen-sombra-menu:0 14px 36px #0b3a7a33;--erlen-sombra-panel:0 24px 60px #0b3a7a26;
- /* Movimiento: micro 120 ms, estados 180 ms, entradas 300 ms; muelle suave para pulsaciones */
- --erlen-dur-micro:.12s;--erlen-dur:.18s;--erlen-dur-entrada:.3s;--erlen-ease:cubic-bezier(.2,.7,.2,1);--erlen-ease-muelle:cubic-bezier(.34,1.4,.64,1);
+ /* Radios */
+ --erlen-radio-campo:7px;--erlen-radio-pequeno:8px;--erlen-radio-tarjeta:12px;--erlen-radio-panel:18px;--erlen-radio-badge:30px;
+ /* Sombras: solo en paneles destacados y menús flotantes; las tarjetas se separan con --erlen-linea */
+ --erlen-sombra-tarjeta:0 10px 30px #284b3014;--erlen-sombra-menu:0 10px 28px #183b3226;--erlen-sombra-panel:0 20px 55px #284b3010;
+ /* Movimiento: micro 120 ms, estados 180 ms, entradas 300 ms */
+ --erlen-dur-micro:.12s;--erlen-dur:.18s;--erlen-dur-entrada:.3s;--erlen-ease:cubic-bezier(.2,.7,.2,1);
  /* Controles */
  --erlen-alto-control:44px;--erlen-ancho-lectura:72ch}
-/* Modo oscuro: noche de agua profunda. Se redefinen papel, superficie, tinta, acento, línea, cielo, vidrio y sombras; el ámbar y el peligro
-   (con sus fondos suaves) se aclaran para superar 4,5:1 como texto (autorizado por Jorge el 2026-09-22). */
+/* Modo oscuro: se redefinen papel, superficie, tinta, línea y sombras (GUIA-DISENO §2); el verde pasa al acento sobre oscuro, y el ámbar y el peligro (con sus fondos suaves) se aclaran para superar 4,5:1 como texto (autorizado por Jorge el 2026-09-22), para conservar contraste. */
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
- --erlen-papel:#07121f;--erlen-superficie:#0e1c2e;--erlen-superficie-2:#14263d;
- --erlen-tinta:#e8f1ff;--erlen-tinta-suave:#a9bdd6;
- --erlen-acento:#7cc0ff;--erlen-acento-suave:#12304f;--erlen-acento-contraste:#07121f;
+ --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
+ --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
+ --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
  --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
- --erlen-cielo-1:#0d3a66;--erlen-cielo-2:#0a2440;--erlen-cielo-3:#07121f;--erlen-cielo-agua:#1d6fb8;
- --erlen-cielo:radial-gradient(120% 70% at 85% -10%,#5bb8f540 0,#5bb8f500 55%),radial-gradient(90% 60% at 0% 110%,#2fc4dc26 0,#2fc4dc00 60%),linear-gradient(180deg,var(--erlen-cielo-1) 0,var(--erlen-cielo-2) 40%,var(--erlen-cielo-3) 100%);
- --erlen-vidrio:color-mix(in srgb,var(--erlen-superficie) 66%,transparent);
- --erlen-vidrio-fuerte:color-mix(in srgb,var(--erlen-superficie) 84%,transparent);
- --erlen-vidrio-borde:#ffffff1f;--erlen-vidrio-brillo:#ffffff29;--erlen-vidrio-sombra:#00000066;
- --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff1a 0,#ffffff00 46%);
- --erlen-gel-resplandor:#5bb8f559;
- --erlen-sombra-tarjeta:0 12px 32px #00000059;--erlen-sombra-menu:0 14px 36px #00000080;--erlen-sombra-panel:0 24px 60px #00000066}}
+ --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}}
 :root[data-theme="dark"]{color-scheme:dark;
- --erlen-papel:#07121f;--erlen-superficie:#0e1c2e;--erlen-superficie-2:#14263d;
- --erlen-tinta:#e8f1ff;--erlen-tinta-suave:#a9bdd6;
- --erlen-acento:#7cc0ff;--erlen-acento-suave:#12304f;--erlen-acento-contraste:#07121f;
+ --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
+ --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
+ --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
  --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
- --erlen-cielo-1:#0d3a66;--erlen-cielo-2:#0a2440;--erlen-cielo-3:#07121f;--erlen-cielo-agua:#1d6fb8;
- --erlen-cielo:radial-gradient(120% 70% at 85% -10%,#5bb8f540 0,#5bb8f500 55%),radial-gradient(90% 60% at 0% 110%,#2fc4dc26 0,#2fc4dc00 60%),linear-gradient(180deg,var(--erlen-cielo-1) 0,var(--erlen-cielo-2) 40%,var(--erlen-cielo-3) 100%);
- --erlen-vidrio:color-mix(in srgb,var(--erlen-superficie) 66%,transparent);
- --erlen-vidrio-fuerte:color-mix(in srgb,var(--erlen-superficie) 84%,transparent);
- --erlen-vidrio-borde:#ffffff1f;--erlen-vidrio-brillo:#ffffff29;--erlen-vidrio-sombra:#00000066;
- --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff1a 0,#ffffff00 46%);
- --erlen-gel-resplandor:#5bb8f559;
- --erlen-sombra-tarjeta:0 12px 32px #00000059;--erlen-sombra-menu:0 14px 36px #00000080;--erlen-sombra-panel:0 24px 60px #00000066}
-/* Interfaz sólida: sin transparencias (preferencia del sistema o elección del usuario con [data-material="solido"]). */
-@media(prefers-reduced-transparency:reduce){:root:not([data-material="vidrio"]){--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-desenfoque:0px;--erlen-saturacion:100%}}
-:root[data-material="solido"]{--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-desenfoque:0px;--erlen-saturacion:100%}
+ --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}

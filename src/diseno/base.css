@@ -1,40 +1,38 @@
-/* Erlen Suite · paquete de diseño 2.0.0 · base del cromo de las apps (docs/GUIA-DISENO.md §3–§5, docs/CONTRATO-APP.md §2).
+/* Erlen Suite · paquete de diseño 1.0.0 · base del cromo de las apps (docs/GUIA-DISENO.md §3–§5, docs/CONTRATO-APP.md §2).
    Solo cromo: cabecera, controles, estado, pie. El contenido del usuario (documento, hoja, figura, diapositiva) no se toca.
    Ningún color literal aquí: todo es var(--erlen-*) de tokens.css. Licencia: licencias/MIT.txt */
 *,::before,::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--erlen-cielo) var(--erlen-papel) fixed;color:var(--erlen-tinta);font:var(--erlen-texto-ui)/var(--erlen-interlineado-ui) var(--erlen-font-ui);-webkit-font-smoothing:antialiased}
-/* Títulos en LM Roman solo a partir de 24 px; por debajo, la sans del sistema (--erlen-font-ui). */
+body{margin:0;background:var(--erlen-papel);color:var(--erlen-tinta);font:var(--erlen-texto-ui)/var(--erlen-interlineado-ui) var(--erlen-font-ui);-webkit-font-smoothing:antialiased}
+/* Títulos en LM Roman solo a partir de 24 px; por debajo, LM Sans. */
 h1,h2,h3,h4,p{margin:0}
 h1,h2{font-family:var(--erlen-font-titulo);font-weight:400;line-height:1.12;letter-spacing:-.5px}
 h1{font-size:var(--erlen-h1-app)}
 h2{font-size:var(--erlen-h3);font-weight:700}
 h3,h4{font-family:var(--erlen-font-ui);font-size:var(--erlen-texto-base);font-weight:700;line-height:1.3}
-a{color:var(--erlen-acento);text-decoration:none}a:hover{text-decoration:underline}
+a{color:var(--erlen-verde);text-decoration:none}a:hover{text-decoration:underline}
 code,kbd,pre,samp{font-family:var(--erlen-font-mono);font-size:.94em}
 /* Texto de lectura (párrafos largos, vistas previas): cuerpo de la familia a 17 px / 1,7. */
 .erlen-lectura{font:var(--erlen-texto-base)/var(--erlen-interlineado) var(--erlen-font-cuerpo);max-width:var(--erlen-ancho-lectura)}
 /* Foco ámbar visible en todo lo enfocable. */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px;border-radius:4px}
 /* Cabecera común: marca, título, badge y hueco para el menú de suite (erlen-suite-nav se monta dentro, a la derecha). */
-.erlen-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:64px;padding:var(--erlen-esp-3) 4%;background:var(--erlen-vidrio-fuerte);border-bottom:1px solid var(--erlen-vidrio-borde);box-shadow:inset 0 -1px 0 var(--erlen-vidrio-brillo),0 4px 18px var(--erlen-vidrio-sombra);-webkit-backdrop-filter:blur(var(--erlen-desenfoque)) saturate(var(--erlen-saturacion));backdrop-filter:blur(var(--erlen-desenfoque)) saturate(var(--erlen-saturacion))}
+.erlen-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:64px;padding:var(--erlen-esp-3) 4%;background:var(--erlen-superficie);border-bottom:1px solid var(--erlen-linea)}
 .erlen-app-header h1{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 .erlen-app-header .erlen-marca{font-weight:700;white-space:nowrap}
 .erlen-app-header>erlen-suite-nav,.erlen-app-header .erlen-menu{margin-left:auto;flex:0 0 auto;min-height:40px;display:flex;align-items:center}
 .erlen-app-header .erlen-menu:empty{min-width:88px}
 .erlen-app-header .erlen-menu>erlen-suite-nav{margin-left:0}
-.badge,.erlen-badge{display:inline-block;font:700 var(--erlen-texto-xs)/1 var(--erlen-font-ui);color:var(--erlen-tinta);background:var(--erlen-acento-suave);border-radius:var(--erlen-radio-badge);padding:6px 10px;white-space:nowrap;box-shadow:inset 0 1px 0 var(--erlen-vidrio-brillo)}
-/* Controles: 44 px de alto; secundarios en cápsula de vidrio, el .primary en gel Aero (uno por bloque). */
+.badge,.erlen-badge{display:inline-block;font:700 var(--erlen-texto-xs)/1 var(--erlen-font-ui);color:var(--erlen-tinta);background:var(--erlen-verde-suave);border-radius:var(--erlen-radio-badge);padding:6px 10px;white-space:nowrap}
+/* Controles: 44 px de alto, radio de campo, borde de línea; un solo .primary por bloque. */
 button,input,select,textarea{font:inherit;color:inherit;margin:0}
-button,.erlen-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-4);border:1px solid var(--erlen-vidrio-borde);border-radius:var(--erlen-radio-capsula);background:var(--erlen-vidrio-fuerte);color:var(--erlen-acento);font-weight:700;line-height:1.2;cursor:pointer;text-decoration:none;box-shadow:inset 0 1px 0 var(--erlen-vidrio-brillo),0 2px 8px var(--erlen-vidrio-sombra)}
-button:hover,.erlen-boton:hover{background:var(--erlen-superficie);border-color:var(--erlen-acento);text-decoration:none}
-button.primary,.erlen-boton.primary{position:relative;isolation:isolate;background:var(--erlen-gel);border-color:var(--erlen-gel-borde);color:var(--erlen-gel-tinta);text-shadow:0 1px 1px var(--erlen-vidrio-sombra);box-shadow:inset 0 1px 0 var(--erlen-vidrio-brillo),inset 0 -8px 14px var(--erlen-gel-resplandor),0 4px 12px var(--erlen-vidrio-sombra)}
-button.primary::after,.erlen-boton.primary::after{content:"";position:absolute;inset:1px 8% 52% 8%;z-index:-1;border-radius:var(--erlen-radio-capsula) var(--erlen-radio-capsula) 40% 40%;background:var(--erlen-gel-brillo);pointer-events:none}
-button.primary:hover,.erlen-boton.primary:hover{background:var(--erlen-gel-hover);border-color:var(--erlen-gel-borde)}
+button,.erlen-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-4);border:1px solid var(--erlen-verde);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-verde);font-weight:700;line-height:1.2;cursor:pointer;text-decoration:none}
+button:hover,.erlen-boton:hover{background:var(--erlen-verde-suave);text-decoration:none}
+button.primary,.erlen-boton.primary{background:var(--erlen-verde);color:var(--erlen-verde-contraste)}
 button:disabled,.erlen-boton[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
 button.compact,.erlen-boton.compact{min-height:36px;padding:var(--erlen-esp-1) var(--erlen-esp-3);font-size:var(--erlen-texto-sm)}
-input,select,textarea{min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-3);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);box-shadow:inset 0 1px 2px var(--erlen-vidrio-sombra)}
-input[type="checkbox"],input[type="radio"],input[type="range"],input[type="color"],input[type="file"]{min-height:0;padding:0;border:0;background:none;accent-color:var(--erlen-acento)}
+input,select,textarea{min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-3);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta)}
+input[type="checkbox"],input[type="radio"],input[type="range"],input[type="color"],input[type="file"]{min-height:0;padding:0;border:0;background:none;accent-color:var(--erlen-verde)}
 input::placeholder,textarea::placeholder{color:var(--erlen-tinta-suave);opacity:1}
 input[data-error="true"],.erlen-campo-error{border-color:var(--erlen-peligro);background:var(--erlen-peligro-suave)}
 textarea{line-height:1.6;resize:vertical}
@@ -43,16 +41,11 @@ label,small,.erlen-nota{font-size:var(--erlen-texto-sm)}
 #status,.erlen-status{min-height:26px;margin:var(--erlen-esp-2) 0 var(--erlen-esp-4);font-size:var(--erlen-texto-sm);color:var(--erlen-tinta-suave)}
 #status[data-error="true"],.erlen-status.error,.erlen-error{color:var(--erlen-peligro);font-weight:700}
 .erlen-aviso{padding:var(--erlen-esp-3) var(--erlen-esp-4);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-pequeno);background:var(--erlen-ambar-suave);color:var(--erlen-tinta)}
-/* Paneles: vidrio de la capa de controles (nunca contienen el documento del usuario). */
-.erlen-panel{background:var(--erlen-vidrio-fuerte);border:1px solid var(--erlen-vidrio-borde);border-radius:var(--erlen-radio-tarjeta);padding:var(--erlen-esp-4);box-shadow:inset 0 1px 0 var(--erlen-vidrio-brillo)}
+/* Paneles y tarjetas: se separan con línea, no con sombra. */
+.erlen-panel{background:var(--erlen-superficie);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-tarjeta);padding:var(--erlen-esp-4)}
 .erlen-panel.destacado{border-radius:var(--erlen-radio-panel);box-shadow:var(--erlen-sombra-panel)}
 /* Pie de app: enlaces al portal, código y licencia. */
 .erlen-app-footer{padding:var(--erlen-esp-5) 4%;border-top:1px solid var(--erlen-linea);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
 .visualmente-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media(max-width:760px){.erlen-app-header{padding:var(--erlen-esp-3) var(--erlen-esp-4)}.erlen-app-footer{padding:var(--erlen-esp-5) var(--erlen-esp-4)}}
-/* Interfaz sólida y más contraste. */
-@media (prefers-reduced-transparency:reduce){.erlen-app-header{-webkit-backdrop-filter:none;backdrop-filter:none}}
-:root[data-material="solido"] .erlen-app-header{-webkit-backdrop-filter:none;backdrop-filter:none}
-@media (prefers-contrast:more){body{background:var(--erlen-papel)}.erlen-app-header,.erlen-panel,button:not(.primary),.erlen-boton:not(.primary){background:Canvas;color:CanvasText;border-color:CanvasText;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}button.primary,.erlen-boton.primary{background:var(--erlen-gel-borde);text-shadow:none;box-shadow:none}button.primary::after,.erlen-boton.primary::after{display:none}}
-@media (forced-colors:active){button.primary::after,.erlen-boton.primary::after{display:none}}
-@media print{body{background:none}.erlen-app-header,.erlen-app-footer,erlen-suite-nav{display:none}}
+@media print{.erlen-app-header,.erlen-app-footer,erlen-suite-nav{display:none}}
