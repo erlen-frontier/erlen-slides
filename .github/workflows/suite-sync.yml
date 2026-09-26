@@ -11,6 +11,7 @@ concurrency:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Token de erlen-suite-sync (GitHub App de la organización)
         id: sync-token
