@@ -133,7 +133,10 @@
  .erlen-inicio-marco{display:block}
  .erlen-inicio-lateral{position:static;height:auto;padding:var(--erlen-esp-4) var(--erlen-esp-4) var(--erlen-esp-2);border-right:0;border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 -1px 0 var(--erlen-vidrio-borde)}
  .erlen-inicio-marca{padding:0 0 var(--erlen-esp-2)}
- .erlen-inicio-nav{flex-direction:row;overflow-x:auto;scrollbar-width:none}
+ /* La fila de navegación se desplaza en horizontal y recorta lo que sobresale: un poco de margen interior y un relieve
+    corto en la lente para que su sombra no se corte en un rectángulo. */
+ .erlen-inicio-nav{flex-direction:row;overflow-x:auto;scrollbar-width:none;padding:var(--erlen-esp-1);margin:calc(-1 * var(--erlen-esp-1))}
+ .erlen-inicio .erlen-inicio-enlace[aria-current=page]{box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 1px 3px var(--erlen-vidrio-contorno)}
  .erlen-inicio .erlen-inicio-enlace{flex:none;white-space:nowrap}
  .erlen-inicio-lateral-pie{flex-direction:row;flex-wrap:wrap;align-items:center;padding-top:0;margin-top:0}
  .erlen-inicio-estado{display:none}
@@ -141,6 +144,9 @@
  .erlen-inicio-controles{grid-template-columns:1fr}
  .erlen-inicio-cabecera{position:relative;min-height:56px;padding-block:var(--erlen-esp-2)}
  .erlen-inicio-cabecera>span{display:none}
+ /* Sin menú de suite ni «Continuar» (app fuera del portal, file://) la cabecera no tendría nada visible: se retira en
+    vez de dejar una franja de cristal vacía entre la barra lateral y el contenido (2.0.1). */
+ .erlen-inicio-cabecera:not(:has(.erlen-inicio-cabecera-acciones>:not(.erlen-inicio-local,.erlen-inicio-suite:empty))){display:none}
  .erlen-inicio-cabecera-acciones{width:100%;justify-content:flex-end;gap:var(--erlen-esp-2)}
 }
 .erlen-inicio-cabecera-acciones{min-width:0;flex-wrap:wrap;justify-content:flex-end}
