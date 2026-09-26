@@ -61,7 +61,7 @@ function renderFilmstrip() {
     if (sl.layout === 'section') {
       const plegada = S.plegadas.has(sl.id);
       const n = cuenta[sl.id] || 0;
-      const cabS = h('div', { class: 'fs-sec' + (plegada ? ' plegada' : ''), title: plegada ? 'Mostrar las diapositivas de esta sección' : 'Plegar esta sección' });
+      const cabS = h('div', { class: 'fs-sec' + (plegada ? ' plegada' : ''), role: 'listitem', title: plegada ? 'Mostrar las diapositivas de esta sección' : 'Plegar esta sección' });
       cabS.append(h('button', { class: 'fs-caret', 'aria-label': plegada ? 'Desplegar' : 'Plegar',
         onclick: e => { e.stopPropagation(); plegada ? S.plegadas.delete(sl.id) : S.plegadas.add(sl.id); renderFilmstrip(); } }, plegada ? '▸' : '▾'));
       cabS.append(h('span', { class: 'fs-sec-n' }, (sl.title || 'Sección').trim() || 'Sección'));
@@ -71,14 +71,22 @@ function renderFilmstrip() {
     } else if (secs[i] && S.plegadas.has(secs[i])) {
       return;
     }
-    const clip = h('div', { style: `width:${tw}px;height:${th}px;overflow:hidden;position:relative` });
+    /* La miniatura es una imagen de la diapositiva: decorativa para los lectores de
+       pantalla, que reciben el número y el título en aria-label del elemento. */
+    const clip = h('div', { 'aria-hidden': 'true', style: `width:${tw}px;height:${th}px;overflow:hidden;position:relative` });
     const mini = renderSlide(S.deck, i, 'thumb');
     mini.style.transform = `scale(${k})`; mini.style.transformOrigin = 'top left';
     clip.append(mini);
     const marcada = S.sel.has(i);
     const fuera = typeof fueraDeRama === 'function' && fueraDeRama(sl);
+    const nombre = sl.title || (LAY[sl.layout] || {}).name || 'Diapositiva';
+    /* Elemento de lista enfocable: la actual entra en el orden de tabulación
+       (Tab la alcanza), flechas arriba/abajo recorren la tira y Intro o
+       Espacio la abren, igual que un clic. */
     const item = h('div', { class: 'fs-item' + (i === S.cur ? ' sel' : '') + (marcada ? ' multi' : '') + (fuera ? ' fuera-rama' : ''), draggable: 'true', 'data-i': i,
-      title: sl.title || (LAY[sl.layout] || {}).name || 'Diapositiva' },
+      role: 'listitem', tabindex: i === S.cur ? '0' : '-1', 'aria-current': i === S.cur ? 'true' : null,
+      'aria-label': 'Diapositiva ' + (i + 1) + ': ' + nombre,
+      title: nombre },
       h('div', { class: 'fs-thumb' }, clip,
         h('span', { class: 'fs-num' }, String(i + 1)),
         fuera ? h('span', { class: 'fs-rama', title: 'No va en la rama activa' }, '⊘') : null,
@@ -103,6 +111,17 @@ function renderFilmstrip() {
       }
       S.sel.clear();
       if (S.cur !== i) { S.cur = i; S.selBlock = null; renderAll(); } else renderFilmstrip();
+    });
+    item.addEventListener('keydown', e => {
+      if (e.target !== item) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        item.click();
+        const actual = $('#fsList .fs-item[aria-current="true"]'); if (actual) actual.focus();
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const todos = $$('#fsList .fs-item'), k = todos.indexOf(item) + (e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : -1);
+        if (todos[k]) { e.preventDefault(); e.stopPropagation(); todos[k].focus(); }
+      }
     });
     item.addEventListener('dragstart', e => { dragFrom = i; e.dataTransfer.effectAllowed = 'move'; });
     item.addEventListener('dragover', e => {
