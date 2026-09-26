@@ -55,7 +55,7 @@
 53-imagen-estilo.js
 54-galeria.js
 55-disenador.js
-55a-suite-cinta.js
+../diseno/suite-cinta.js
 56-cinta.js
 57-citas.js
 58-respaldo.js
@@ -83,9 +83,9 @@
 83-edicion.js
 84-calidad.js
 87-ejemplos.js
-87a-suite-inicio.js
+../diseno/suite-inicio.js
 88-workspace.js
-88a0-suite-nav.js
+../diseno/suite-navigation.js
 88b-recuperacion.js
 88c-ciencia-libre.js
 88d-intercambio.js

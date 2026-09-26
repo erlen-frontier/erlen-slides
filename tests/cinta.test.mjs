@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
-/* La cinta de arriba: el componente común de la suite (src/js/55a-suite-cinta.js)
+/* La cinta de arriba: el componente común de la suite (src/diseno/suite-cinta.js)
    montado por src/js/56-cinta.js. JSDOM no mide geometría: aquí se comprueban
    estructura, estados, teclado y ARIA; la vista se revisa en un navegador real. */
 const FIJAS=['Inicio','Insertar','Diseño','Diapositiva','Presentar','Vista'];
@@ -118,10 +118,9 @@ test('Long properties open in a temporary details panel that closes with the but
 }finally{dom.window.close();}});
 
 test('The ribbon script is the synced suite package copy and its stylesheet is inlined in the build',()=>{
- const copia=readFileSync(new URL('../src/js/55a-suite-cinta.js',import.meta.url),'utf8');
- assert.equal(copia,readFileSync(new URL('../src/diseno/suite-cinta.js',import.meta.url),'utf8'),'src/js/55a-suite-cinta.js difiere de src/diseno/suite-cinta.js: copia la del paquete.');
+ // El build carga el script directamente del paquete sincronizado: sin copias que se desfasen.
  const orden=readFileSync(new URL('../src/js/_orden.txt',import.meta.url),'utf8').trim().split('\n');
- assert.ok(orden.indexOf('55a-suite-cinta.js')>=0&&orden.indexOf('55a-suite-cinta.js')===orden.indexOf('56-cinta.js')-1,'El componente va justo antes de 56-cinta.js');
+ assert.ok(orden.indexOf('../diseno/suite-cinta.js')>=0&&orden.indexOf('../diseno/suite-cinta.js')===orden.indexOf('56-cinta.js')-1,'El componente va justo antes de 56-cinta.js');
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  assert.ok(html.includes(readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8')),'cinta.css del paquete, íntegro en el build');
  assert.ok(html.includes('const erlenCinta=(()=>{'));

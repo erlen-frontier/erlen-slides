@@ -3,7 +3,7 @@
 /* ================= la cinta de arriba =================
    Las herramientas del editor en una cinta con pestañas, como en las apps de
    oficina. Es la disposición de fábrica. La cinta la pinta el componente común
-   de la suite (src/js/55a-suite-cinta.js, copia de src/diseno/suite-cinta.js;
+   de la suite (src/diseno/suite-cinta.js, cargado tal cual por _orden.txt;
    erlen-suite docs/COHERENCIA-APPS.md §5): aquí solo se declara qué hay en
    cada pestaña y se llama a las mismas funciones que el panel de la derecha.
    Lo que necesita un formulario largo (un deslizador, un color, todas las

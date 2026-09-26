@@ -28,10 +28,10 @@ const tokensSuite=get('src/diseno/tokens.css');
 const token=n=>{const m=tokensSuite.match(new RegExp('--erlen-'+n+':(#[0-9a-fA-F]{3,8})'));if(!m)throw new Error('falta --erlen-'+n+' en src/diseno/tokens.css');return m[1];};
 /* La cinta común de la suite (diseno/cinta.css) va justo tras los tokens: solo
    usa --erlen-* y sus reglas van con prefijo .erlen-cinta, así que no toca las
-   diapositivas. Su JS es src/js/55a-suite-cinta.js, copia de src/diseno/suite-cinta.js.
+   diapositivas. Su JS se carga de src/diseno/suite-cinta.js (en src/js/_orden.txt).
    La pantalla de inicio común (diseno/inicio.css) va tras la cinta, con la misma regla:
-   solo --erlen-* y prefijo .erlen-inicio. Su JS es src/js/87a-suite-inicio.js, copia de
-   src/diseno/suite-inicio.js. */
+   solo --erlen-* y prefijo .erlen-inicio. Su JS se carga de
+   src/diseno/suite-inicio.js (en src/js/_orden.txt). */
 const css=tokensSuite+'\n'+get('src/diseno/cinta.css')+'\n'+get('src/diseno/inicio.css')+'\n'+fuentesSuite+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
 const lib=p=>get('node_modules/'+p);
 const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','Plus','HelpCircle','FlaskConical','Atom','ChartLine','FolderOpen','Download','Play','Settings2','House','Presentation','ArrowUpRight','ArrowRight','Archive','ChevronRight',
