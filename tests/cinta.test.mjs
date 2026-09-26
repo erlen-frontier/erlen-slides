@@ -15,7 +15,7 @@ test('The ribbon is the default layout, with Archivo and the fixed tabs in order
  assert.deepEqual(pestanas(d).map(t=>t.textContent),FIJAS);
  assert.equal(pestanas(d)[0].getAttribute('aria-selected'),'true');
  assert.equal(d.querySelector('#cinta .erlen-cinta-pestanas > .erlen-cinta-archivo').textContent,'Archivo','«Archivo» a la izquierda de las pestañas');
- assert.equal(lista.querySelector('.erlen-cinta-archivo, .erlen-cinta-plegar'),null,'El tablist solo contiene pestañas (paquete 2.0.0)');
+ assert.equal(lista.querySelector('.erlen-cinta-archivo, .erlen-cinta-plegar'),null,'El tablist solo contiene pestañas (paquete 1.7.0)');
  assert.deepEqual([...lista.children].map(c=>c.getAttribute('role')),FIJAS.map(()=>'tab'));
  const panel=d.querySelector('#cinta [role=tabpanel]');assert.equal(panel.getAttribute('aria-labelledby'),pestanas(d)[0].id);
  assert.ok(panel.querySelector('[role=toolbar] [role=group][aria-label=Historial]'));

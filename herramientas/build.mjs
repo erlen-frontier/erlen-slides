@@ -18,26 +18,21 @@ write(join(root,'src/js/_glass-map-gen.js'),'// Generado por herramientas/glass-
    portal): tokens --erlen-* y, del paquete de fuentes, solo las caras que usa
    el cromo, incrustadas para que el archivo suelto siga funcionando y el HTML
    quede bajo los 3 MB del contrato. CMU Concrete (texto de lectura largo) no
-   se incrusta: el cromo de Slides no tiene lectura larga. Desde el paquete
-   2.0.0 la interfaz usa la sans del sistema (--erlen-font-ui), así que LM Sans
-   tampoco se incrusta: solo LM Roman (titulares) y CMU Typewriter. base.css y
+   se incrusta: el cromo de Slides no tiene lectura larga. base.css y
    motion.css no se cargan: sus reglas de elemento tocarían las diapositivas. */
-const CARAS_CROMO=['lm-roman-400-normal','lm-roman-700-normal','cmu-typewriter-400-normal'];
+const CARAS_CROMO=['lm-roman-400-normal','lm-roman-700-normal','lm-sans-400-normal','lm-sans-700-normal','cmu-typewriter-400-normal'];
 const fuentesSuite=get('src/diseno/fuentes.css').split('\n').filter(l=>l.startsWith('@font-face')&&CARAS_CROMO.some(c=>l.includes('fuentes/'+c+'.')))
  .map(l=>l.replace(/url\((fuentes\/[^)]+\.woff2)\)/,(_,f)=>'url(data:font/woff2;base64,'+read(join(root,'src/diseno',f)).toString('base64')+')')).join('\n');
 if(fuentesSuite.split('\n').length!==CARAS_CROMO.length)throw new Error('src/diseno/fuentes.css no declara todas las caras del cromo: vuelve a sincronizar el paquete');
 const tokensSuite=get('src/diseno/tokens.css');
 const token=n=>{const m=tokensSuite.match(new RegExp('--erlen-'+n+':(#[0-9a-fA-F]{3,8})'));if(!m)throw new Error('falta --erlen-'+n+' en src/diseno/tokens.css');return m[1];};
-/* El material común (diseno/vidrio.css: clases .erlen-vidrio, .erlen-capsula,
-   .erlen-gel, .erlen-fondo-cielo) va justo tras los tokens; todas sus reglas
-   llevan prefijo .erlen-, así que tampoco toca las diapositivas.
-   La cinta común de la suite (diseno/cinta.css) va tras el material: solo
+/* La cinta común de la suite (diseno/cinta.css) va justo tras los tokens: solo
    usa --erlen-* y sus reglas van con prefijo .erlen-cinta, así que no toca las
    diapositivas. Su JS es src/js/55a-suite-cinta.js, copia de src/diseno/suite-cinta.js.
    La pantalla de inicio común (diseno/inicio.css) va tras la cinta, con la misma regla:
    solo --erlen-* y prefijo .erlen-inicio. Su JS es src/js/87a-suite-inicio.js, copia de
    src/diseno/suite-inicio.js. */
-const css=tokensSuite+'\n'+get('src/diseno/vidrio.css')+'\n'+get('src/diseno/cinta.css')+'\n'+get('src/diseno/inicio.css')+'\n'+fuentesSuite+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
+const css=tokensSuite+'\n'+get('src/diseno/cinta.css')+'\n'+get('src/diseno/inicio.css')+'\n'+fuentesSuite+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
 const lib=p=>get('node_modules/'+p);
 const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','Plus','HelpCircle','FlaskConical','Atom','ChartLine','FolderOpen','Download','Play','Settings2','House','Presentation','ArrowUpRight','ArrowRight','Archive','ChevronRight',
  /* Iconos de la cinta (src/js/56-cinta.js): uno por significado, sin repetir. */
@@ -50,7 +45,7 @@ const ui='/*\n'+licenses.map(p=>lib(p+'/LICENSE')).join('\n').replace(/\*\//g,'*
 const FAVICON='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
  +'<rect width="64" height="64" rx="12" fill="'+token('papel')+'"/>'
  +'<path d="M25 10h14v15l13 24a4 4 0 0 1-3.5 6H15.5a4 4 0 0 1-3.5-6l13-24z" fill="none" stroke="'+token('tinta')+'" stroke-width="4" stroke-linejoin="round"/>'
- +'<path d="M20 42h24l5 9H15z" fill="'+token('acento')+'"/></svg>';
+ +'<path d="M20 42h24l5 9H15z" fill="'+token('verde')+'"/></svg>';
 const ICONO='<link rel="icon" href="data:image/svg+xml,'+encodeURIComponent(FAVICON).replace(/'/g,'%27')+'">';
 const script=s=>'<script>'+s.replace(/<\/script/gi,'<\\/script')+'</script>';
 const html='<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Erlen Slides · Presentaciones científicas</title>'+ICONO+'<meta name="description" content="Presentaciones científicas libres con ecuaciones, química, datos y exportación. Sin cuenta."><style>body{margin:0;font:14px system-ui,sans-serif;background:'+token('papel')+';color:'+token('tinta')+'}img{max-width:100%}[hidden]{display:none!important}</style><style>'+get('src/css/fuentes-katex.css')+get('src/css/fuentes-tx.css')+css+'</style></head><body>'+get('src/cuerpo.html')+script(get('vendor/katex.min.js'))+script(get('vendor/mhchem.min.js'))+script('window.ERLEN={version:'+JSON.stringify(version)+',telemetria:false};window.ERLEN_LIBRE=true;')+script(ui)+script(get('src/preludio.js')+order.map(n=>get('src/js/'+n)).join('\n'))+'</body></html>\n';
