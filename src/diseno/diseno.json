@@ -1,7 +1,7 @@
 {
- "version": "1.8.0",
+ "version": "1.8.1",
  "files": {
-  "VERSION": "3eb1ef94b5890ca727158b106142685c8733b0ace5bcb4cf3f0ac14f9f0643f4",
+  "VERSION": "25cec9739d3218e48acc5d8c3d4333e1d624121c5b7ab3bcddc71d0fa0134b83",
   "base.css": "a13899b58c03a0a28d4d20f667c577e62fb80c9016869838f56402761e3c1f29",
   "cinta.css": "affce9f68b2b46129f72803cdb5931e74aad527a4c8cbe4014c77a7bbbfb2d33",
   "fuentes.css": "5382f1d211a557d5d825e1a4fdea56f1957c32b9a682b8f58dd67d11c7c3b529",
@@ -18,17 +18,17 @@
   "licencias/GUST-FL.txt": "5eb61bb836bb1845ef668717cb15b382e997748ce2629e4388cc5e4c3fa4e433",
   "licencias/MIT.txt": "c6efd8524aedfbf769649e36a9bd6a0e95ce353bbd7a0a5eeef31adfdfb5cdad",
   "licencias/OFL.txt": "73273dffdefe2e5f1e138084d4a4b65b1c50df2ab0179f78484f31beefe30d84",
-  "mey.js": "762e9f4242d01c685fa574ee582ca2327aec72e640c4a4b69df21a29bf8dc5fe",
+  "mey.js": "7a8734fc0e9ff150832d559d0f710405f30735a78d0e4fae11e8edb77a10b7b2",
   "mey.mjs": "719223ee53bba00820eb5ce2cf8fa622d65ffeb0ee51400b533681e803b78ec0",
   "motion.css": "70bb03c77d8d903af41594bc902cabee2fbefecfe74d8476687ba245c4bc7cd4",
-  "suite-cinta.js": "c34b5f6ce08ca137d0198f871dce4ddecb7c25100d9b6e56de13474748f04d60",
+  "suite-cinta.js": "22e3dffb831b9845b7984593982ab356540f2ff0c4dda3b392377038f412b4a4",
   "suite-cinta.mjs": "40e6e279016ecf70a828e4a13b16cccd85ae2635098ec4975ca1995ac2620402",
   "suite-color.mjs": "4242160b9802a3b972059fec83e2a00e6980fb2d6c9db75e882487707985c56c",
-  "suite-iconos.js": "f4206e93de23476e668e9caddd9a8e3b8878454e8b6d0ab12bc117ce49341117",
-  "suite-inicio.js": "186b95fe1075c86a5c77de3ef4b905380e48d0474f5d3c34bf20edbc61499133",
-  "suite-inicio.mjs": "41053abfb209087dd1c9c9bd969e32177d984ef3bd2a4c79145bde683de38884",
+  "suite-iconos.js": "9501b0d7017db02d09b66f30bd3dfead5aaa175cdfc4835eea935a5b38f8670a",
+  "suite-inicio.js": "6028fd42360a22865346b5890d971cd6df2e70c904ad2f16ca2044c49e89c1fe",
+  "suite-inicio.mjs": "c9c16690debb6483fa937afa752da92b7f9bc16c0e553a930bfb1343c91026fa",
   "suite-nav.mjs": "b022e691afc58681954539c89e9c24ea33d1bb9de6ea3399f575b190e2371184",
-  "suite-navigation.js": "62c204ee2df060cec289195d5d142451e39244f30b988a7084adebd006e26c14",
+  "suite-navigation.js": "531a87bd62ebbde5c1a6e7a6dbd1d9b2703442fca4dccfc3ba3d41529bc2b35b",
   "tokens.css": "a071fee65055de0fe6c9c2a48af407dc591606f0354f6afd41267ce537fdfa46"
  },
  "modos": [
