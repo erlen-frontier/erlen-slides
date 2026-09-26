@@ -509,7 +509,7 @@ function openHelp(pestana) {
   const cuerpo = h('div');
   const tabs = h('div', { class: 'help-tabs' });
   let activa = ['uso', 'glosario', 'atajos', 'privacidad'].includes(pestana) ? pestana : 'uso';
-  const caja = (titulo, ...hijos) => h('div', { style: 'background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin:0 0 12px' },
+  const caja = (titulo, ...hijos) => h('div', { style: 'background:var(--panel2);border:1px solid var(--line);border-radius:var(--r3);padding:10px 12px;margin:0 0 12px' },
     h('span', { class: 'panel-label', style: 'display:block;margin-bottom:6px' }, titulo), ...hijos);
 
   function panelUso() {

@@ -15,7 +15,7 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 - `src/js/88b-recuperacion.js`: historial en IndexedDB, separado del autoguardado.
 - `src/js/88c-ciencia-libre.js`: carga local de bibliotecas científicas.
 - `src/js/88d-intercambio.js`: el transporte de copias de la suite. Copia literal de `web/exchange-v2.mjs` (a su vez copia literal del archivo MIT del portal), envuelta para el ámbito compartido y sin sus `export`; `tests/intercambio.test.mjs` exige que no se aparten.
-- `src/js/88e-informe.js`: recibe de Erlen DoE un informe `informe-v1`: lo valida (`leeInforme`), lo convierte (`informeADeck`), lo enseña y solo tras confirmarlo lo guarda como presentación nueva. El reparto por diapositiva usa medidas tomadas en Chromium, anotadas en el propio módulo.
+- `src/js/88e-informe.js`: recibe de Erlen DoE un informe `informe-v1`: lo valida (`leeInforme`), lo convierte (`informeADeck`), lo enseña y solo tras confirmarlo lo guarda como presentación nueva. El reparto por diapositiva usa medidas tomadas en Chromium, anotadas en el propio módulo. Sus límites (`INFORME_LIMITES`) no se escriben en el módulo: ver «Límites de informe-v1».
 - `web/quimica-worker.js`: trabajo RDKit fuera del hilo de la interfaz.
 - `herramientas/build.mjs`: HTML, recursos locales y manifiestos; no lee credenciales ni configuración de nube.
 - `herramientas/examples.mjs`: regenera los JSON y TEX documentados después de construir.
@@ -33,11 +33,20 @@ Conserva el formato JSON v1 y las claves `erlen-slides.*`. No migres ni sobrescr
 
 La fuente del código es accesible desde la interfaz. Un despliegue derivado debe apuntar al código de esa versión: modifica `ERLEN_SOURCE_URL` cuando corresponda. Las licencias de terceros están en `licenses/`; las bibliotecas opcionales se cargan desde rutas relativas, compatibles con un subdirectorio.
 
+### Límites de informe-v1
+
+La única fuente de los límites del tipo `informe-v1` en Slides es `src/contratos/informe-v1-limites.json`, copia literal de `contratos/informe-v1/limites.json` del repositorio `erlen-contratos`. `herramientas/build.mjs` la convierte en `src/js/_informe-limites-gen.js` (generado, ignorado por git), que define `INFORME_LIMITES` antes de `88e-informe.js`. `tests/informe-limites.test.mjs` comprueba que la constante del build es la del archivo y que el módulo no copia números a mano; con `ERLEN_CONTRATOS_DIR=<checkout de erlen-contratos>` (o un `../erlen-contratos` al lado) la compara además con el contrato. Ese repositorio es privado y la CI no lo ve; la puerta de contratos de erlen-suite compara la constante del build en cada publicación. Si el contrato cambia sus límites, se vuelve a copiar el archivo.
+
+## Cristal (paquete de diseño 2.0.0)
+
+El cromo usa el material de cristal del paquete (`docs/COHERENCIA-APPS.md` §0.1 del portal) con los alias de `src/css/01-editor.css`: `--glass-fondo` (menús, popovers, diálogos, toasts y la barra del lienzo, con `--glass-blur`), `--glass-flujo` (barra superior y pestañas, sin desenfoque), `--glass-edge` y `--glass-relieve`. Todos apuntan a `--erlen-vidrio*`: los respaldos opacos (menos transparencia, más contraste, colores forzados, `data-erlen-material="solido"`, impresión y navegadores sin `backdrop-filter`) llegan de `src/diseno/tokens.css` y no se repiten aquí. No escribas `backdrop-filter` literal, no lo pongas en la barra superior (contiene el menú de la suite) ni sobre el lienzo; la diapositiva y la tira quedan opacas.
+
 ## Comprobar un cambio
 
 1. Ejecuta build y los tests afectados.
 2. Si cambias ejemplos, ejecuta `npm run examples` y revisa los archivos generados.
 3. Comprueba visualmente escritorio y móvil cuando cambie el diseño.
+4. Accesibilidad: `npx playwright-core install chromium` una vez y `npm run accesibilidad` (axe en inicio, editor y ayuda, claro y oscuro; falla con violaciones serias o críticas). La CI lo ejecuta en el job `accesibilidad`.
 4. Si modificas un exportador, inspecciona el archivo exportado, no solo su nombre o extensión.
 
 Para el PowerPoint, «inspeccionar» significa abrirlo con algo que no sea la propia rutina que lo escribió: un paquete puede tener el ZIP intacto, el XML bien formado y las partes declaradas, y aun así llegar con una diapositiva en blanco. Un lector OOXML independiente (`python-pptx`) dice si las formas están; convertirlo a PDF con LibreOffice Impress (`soffice --headless --convert-to pdf`) dice si además se ven. Así se encontraron las dos averías que documenta `docs/validacion.md`: el SmartArt sin cajas y la diapositiva que se vaciaba en dos de cada cinco exportaciones.

@@ -1,0 +1,12 @@
+{
+  "$comment": "Límites de informe-v1 (docs/intercambio-doe.md §4). Hoy cada consumidor los copia a mano (ver «Incumplimientos conocidos»); la prueba de límites compara esas copias con estos valores.",
+  "secciones": 30,
+  "bloques": 200,
+  "bytes": 2097152,
+  "columnas": 50,
+  "filas": 500,
+  "series": 8,
+  "puntos": 20000,
+  "marcas": 40,
+  "regiones": 20
+}

@@ -52,63 +52,43 @@
   --ui:var(--erlen-font-ui);
   --serif:var(--erlen-font-titulo);
   --mono:var(--erlen-font-mono);
-  /* ---- material vidrio (chrome flotante: topbar, menús, popovers, modales, toasts) ----
-     Fondo translúcido con blur y saturación; el canto especular y el labio inferior
-     se pintan en .vidrio y en las reglas que repiten el material inline. */
-  --glass-bg:color-mix(in srgb,var(--panel) 78%,transparent);
-  --glass-blur:blur(18px) saturate(160%);
-  --glass-edge:color-mix(in srgb,var(--ink) 10%,transparent);
-  --glass-hi:color-mix(in srgb,var(--erlen-superficie) 75%,transparent);
-  --glass-hi-side:color-mix(in srgb,var(--erlen-superficie) 28%,transparent);
-  --glass-lip:color-mix(in srgb,var(--erlen-tinta) 18%,transparent);
+  /* ---- material cristal (paquete 2.0.0, COHERENCIA-APPS §0.1) ----
+     Alias cortos de los tokens --erlen-vidrio* del paquete: el material, el
+     desenfoque y TODOS sus respaldos opacos (menos transparencia, más contraste,
+     colores forzados, material sólido, impresión y navegadores sin
+     backdrop-filter) vienen de diseno/tokens.css; aquí no se repiten.
+     --glass-fondo: capa de controles que flota sobre contenido que cambia
+     (menús, popovers, diálogos, toasts, barra del lienzo); --glass-flujo: la
+     misma capa en flujo (barra superior, pestañas, paneles), sin desenfoque. */
+  --glass-bg:var(--erlen-vidrio-fuerte);
+  --glass-fondo:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);
+  --glass-flujo:var(--erlen-vidrio-reflejo),var(--erlen-vidrio);
+  --glass-blur:var(--erlen-vidrio-filtro);
+  --glass-edge:var(--erlen-vidrio-contorno);
+  --glass-relieve:var(--erlen-vidrio-relieve);
   /* Muelle de apertura de paneles flotantes, con su pequeño rebote. Una sola
      curva para ambos temas: el material cambia con la luz, el gesto no. */
   --spring-panel:linear(0,0.0068,0.027,0.06 8.1%,0.153,0.312 18.7%,0.595 27.5%,0.795 34.7%,0.94 41.5%,1.035 48.4%,1.084 55.3%,1.095 60.5%,1.088 66.2%,1.052 74.4%,1.013 82.3%,0.997 89.9%,1);
 }
-/* ---- material vidrio: translúcido con canto especular y labio inferior ----
-   Las superficies que se crean por JS (.pop, .menu, .modal, .toast) no pueden
-   llevar la clase y repiten estas propiedades inline en su regla: mismo
-   material, nunca un fondo sólido en su lugar. */
+/* ---- material cristal: el patrón de COHERENCIA-APPS §0.1 ----
+   .vidrio es la capa en flujo (barra superior): reflejo, relieve y contorno,
+   sin desenfoque, porque nada se desplaza por debajo y porque contiene el menú
+   de la suite (<erlen-suite-nav> se recoloca mal bajo un backdrop-filter).
+   Las superficies que crea el JS (.pop, .menu, .modal, .toast) repiten el
+   material flotante en su regla, con desenfoque. Los respaldos opacos los
+   dan los tokens del paquete. */
 .vidrio{
-  background:var(--glass-bg);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
+  background:var(--glass-flujo);
   border:1px solid var(--glass-edge);
-  box-shadow:
-    inset 0 1px 1px var(--glass-hi),
-    inset 1px 0 0 var(--glass-hi-side),
-    inset -1px 0 0 var(--glass-hi-side),
-    inset 0 -1px 2px var(--glass-lip),
-    var(--shadow);
-}
-@media (prefers-reduced-transparency:reduce){
-  .vidrio{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow)}
-}
-@media (prefers-contrast:more){
-  .vidrio{background:var(--panel);border-color:var(--mut)}
+  box-shadow:var(--glass-relieve);
 }
 /* Entrada de los paneles flotantes: showMenu y openModal insertan el elemento
    nuevo en cada apertura, así que el muelle corre como animation (nace con el
    nodo, como toastIn); la transition del mismo gesto queda puesta en cada
    superficie por si algún día el estado cambia sin reinsertar. */
 @keyframes abreGlass{from{transform:scale(.97) translateY(-2px)}}
-/* Oscuro: los colores ya cambian solos con el paquete (mismos selectores que
-   diseno/tokens.css), también el ámbar y el peligro, que el paquete 1.3.0 aclara
-   sobre oscuro (≥ 4,5:1). Aquí solo el material vidrio, derivado de tokens. */
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --glass-bg:color-mix(in srgb,var(--panel) 72%,transparent);
-    --glass-hi:color-mix(in srgb,var(--erlen-tinta) 14%,transparent);
-    --glass-hi-side:color-mix(in srgb,var(--erlen-tinta) 5%,transparent);
-    --glass-lip:color-mix(in srgb,var(--erlen-papel) 60%,transparent);
-  }
-}
-:root[data-theme="dark"]{
-  --glass-bg:color-mix(in srgb,var(--panel) 72%,transparent);
-  --glass-hi:color-mix(in srgb,var(--erlen-tinta) 14%,transparent);
-  --glass-hi-side:color-mix(in srgb,var(--erlen-tinta) 5%,transparent);
-  --glass-lip:color-mix(in srgb,var(--erlen-papel) 60%,transparent);
-}
+/* Oscuro: colores y material cambian solos con el paquete (diseno/tokens.css),
+   también el ámbar y el peligro, que el paquete aclara sobre oscuro (≥ 4,5:1). */
 /* Densidad elegible. El interruptor de la barra la cambia sin JavaScript; el
    atributo data-dens queda listo por si algún día se guarda en las preferencias. */
 :root:has(#densChk:checked){ --dens:.75; --holg:0 }
@@ -129,9 +109,9 @@ button{font-family:var(--ui)}
 .main{flex:1;display:grid;grid-template-columns:var(--w-tira) minmax(0,1fr) var(--w-panel);min-height:0}
 
 /* ---------- top bar ----------
-   El material vidrio llega con la clase .vidrio en cuerpo.html; aquí solo queda
-   la geometría y el canto inferior translúcido (una raya opaca no pega con un
-   fondo que se adivina). */
+   El cristal en flujo llega con la clase .vidrio en cuerpo.html (sin
+   desenfoque: contiene el menú de la suite); aquí solo queda la geometría y
+   el canto inferior del contorno del cristal. */
 .topbar{display:flex;align-items:center;gap:var(--e2);height:var(--h-barra);padding:0 var(--e4);
   border-bottom:1px solid var(--glass-edge);flex:none;position:relative;z-index:40}
 .wordmark{font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.01em;color:var(--ink);
@@ -328,10 +308,9 @@ input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 
 /* layout picker popover: vidrio inline, porque showMenu crea el nodo nuevo en
    cada apertura y no puede llevar la clase .vidrio */
-.pop{position:absolute;z-index:80;background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r4);
-  box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),
-    inset 0 -1px 2px var(--glass-lip),var(--shadow-lg);padding:var(--e3);
+.pop{position:absolute;z-index:80;background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r3);
+  box-shadow:var(--glass-relieve),var(--shadow-lg);padding:var(--e3);
   transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
 .lay-grid{display:grid;grid-template-columns:repeat(3,86px);gap:var(--e2);margin-bottom:var(--e3)}
 /* El rótulo respira por arriba: es lo que abre cada apartado. */
@@ -350,15 +329,14 @@ input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 .lp i{position:absolute;background:var(--accLine);border-radius:1px}
 
 /* ---------- modals ---------- */
-.mask{position:fixed;inset:0;background:rgba(10,13,24,.48);z-index:100;display:flex;align-items:center;
-  justify-content:center;padding:var(--e5);backdrop-filter:blur(3px)}
-/* Vidrio inline como .pop (openModal también lo crea nuevo). El hilo de acento
-   que la segunda ola añadía al box-shadow queda fusionado aquí para no pisar
-   los cantos especulares. La máscara conserva su propio velado. */
-.modal{background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+.mask{position:fixed;inset:0;background:color-mix(in srgb,var(--erlen-espacio-fondo) 48%,transparent);z-index:100;display:flex;align-items:center;
+  justify-content:center;padding:var(--e5)}
+/* Cristal inline como .pop (openModal también lo crea nuevo), el de
+   dialog.erlen-dialogo del paquete. La máscara solo vela: el único
+   desenfoque es el del propio diálogo (pocas capas, §0.1). */
+.modal{background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
   border:1px solid var(--glass-edge);border-radius:var(--r4);
-  box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),
-    inset 0 -1px 2px var(--glass-lip),var(--shadow-lg),0 0 0 1px color-mix(in srgb, var(--acc) 12%, transparent);
+  box-shadow:var(--glass-relieve),var(--erlen-sombra-panel);
   width:min(760px,100%);max-height:min(88dvh,760px);display:flex;flex-direction:column;overflow:hidden;
   transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
 .modal.modal-sm{width:min(460px,100%)}
@@ -411,11 +389,10 @@ input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 /* toast */
 .toasts{position:fixed;bottom:var(--e5);left:50%;transform:translateX(-50%);z-index:200;display:flex;
   flex-direction:column;gap:var(--e2);align-items:center;pointer-events:none}
-.toast{background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+.toast{background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
   border:1px solid var(--glass-edge);color:var(--ink);font-size:var(--t2);font-weight:500;padding:var(--e3) var(--e5);
   border-radius:var(--r3);
-  box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),
-    inset 0 -1px 2px var(--glass-lip),var(--shadow-lg);
+  box-shadow:var(--glass-relieve),var(--shadow-lg);
   max-width:min(520px,90vw);text-align:center;animation:toastIn .18s ease}
 .toast.warn{border-color:var(--warn)}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -433,11 +410,10 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
 .help-row{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);padding:var(--e2) 0;
   font-size:var(--t2);color:var(--ink)}
 
-/* menu: vidrio inline como .pop (mismo showMenu de nacimiento) */
-.menu{position:absolute;z-index:90;background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);
+/* menu: cristal inline como .pop (mismo showMenu de nacimiento) */
+.menu{position:absolute;z-index:90;background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);
   backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r3);
-  box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),
-    inset 0 -1px 2px var(--glass-lip),var(--shadow-lg);padding:var(--e2);min-width:232px;
+  box-shadow:var(--glass-relieve),var(--shadow-lg);padding:var(--e2);min-width:232px;
   transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
 .menu button{display:flex;align-items:center;gap:var(--e3);width:100%;border:none;background:transparent;
   color:var(--ink);font:500 var(--t2) var(--ui);padding:var(--e2) var(--e3);min-height:var(--h-ctl);
@@ -493,11 +469,13 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
 }
 
 /* ---------- glosario de la ayuda ---------- */
-.help-tabs{display:flex;gap:2px;border-bottom:1px solid var(--line2);margin:-4px 0 var(--e4)}
-.help-tabs button{border:none;background:transparent;color:var(--mut);font:600 var(--t1) var(--ui);
-  padding:var(--e2) var(--e3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
-.help-tabs button:hover{color:var(--ink)}
-.help-tabs button.on{color:var(--acc);border-bottom-color:var(--acc)}
+/* Pestañas en cápsula (GUIA-DISENO §0); en móvil pasan a otra fila en vez de
+   partir las palabras. */
+.help-tabs{display:flex;flex-wrap:wrap;gap:var(--e1);margin:-4px 0 var(--e4)}
+.help-tabs button{border:1px solid transparent;background:transparent;color:var(--mut);font:600 var(--t1) var(--ui);
+  padding:var(--e2) var(--e3);cursor:pointer;border-radius:var(--erlen-radio-capsula);white-space:nowrap}
+.help-tabs button:hover{color:var(--ink);background:var(--erlen-vidrio-tinte)}
+.help-tabs button.on{color:var(--acc);background:var(--glass-fondo);border-color:var(--glass-edge);box-shadow:var(--glass-relieve)}
 .glo{padding:var(--e3) 0 var(--e3);border-bottom:1px solid var(--line2)}
 .glo:last-child{border-bottom:none}
 .glo b{display:block;font-size:var(--t2);color:var(--ink);margin-bottom:3px}
@@ -849,7 +827,7 @@ textarea.field.es-area{min-height:300px;font:var(--t2)/1.6 var(--mono);white-spa
 
 /* ---------- la primera vez ---------- */
 .primera-vez{position:absolute;inset:0;display:grid;place-items:center;padding:var(--e4);z-index:6;
-  background:color-mix(in srgb, var(--bg) 78%, transparent);backdrop-filter:blur(2px)}
+  background:color-mix(in srgb, var(--bg) 86%, transparent)}
 .pz-caja{max-width:560px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r4);
   padding:var(--e5) var(--e5) var(--e4);box-shadow:0 18px 50px rgba(0,0,0,.16)}
 .pz-est{display:inline-block;font:600 var(--t0) var(--ui);text-transform:uppercase;letter-spacing:.06em;
@@ -1370,7 +1348,7 @@ details.zot-arch > div{margin-top:var(--e2)}
 
 /* ---------- modo esqueleto ---------- */
 .esq-tapa{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
-  background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(3px)}
+  background:color-mix(in srgb,var(--bg) 86%,transparent)}
 .esq-caja{max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r4);padding:var(--e5);
   box-shadow:var(--shadow);text-align:center}
 .esq-tit{font:600 var(--t4) var(--ui);color:var(--ink);margin-bottom:var(--e2)}
@@ -1555,8 +1533,6 @@ details.zot-arch > div{margin-top:var(--e2)}
 .fs-item.sel .fs-num{background:var(--acc);color:var(--accInk);box-shadow:none}
 .fs-sec-n{letter-spacing:.12em}
 
-/* ventanas: fondo velado; el hilo de acento del panel vive ahora en .modal (vidrio) */
-.modal-mask{backdrop-filter:blur(6px) saturate(1.1);-webkit-backdrop-filter:blur(6px) saturate(1.1)}
 .modal-head{border-bottom:1px solid var(--line2);position:relative}
 .modal-head::after{content:"";position:absolute;left:var(--e5);bottom:-1px;width:44px;height:2px;background:var(--acc);border-radius:1px}
 
@@ -1621,11 +1597,3 @@ details.zot-arch > div{margin-top:var(--e2)}
 .nov-bloque ul{margin:0;padding-left:1.1em;font-size:var(--t2);color:var(--mut);display:grid;gap:4px}
 .nov-bloque li::marker{color:var(--acc)}
 
-/* ---- retirada del vidrio ----
-   Quien pide menos transparencia o más contraste recibe planas también las
-   superficies que llevan el material inline (.pop, .menu, .modal, .toast):
-   mismas reglas que .vidrio, al final del archivo para ganar la cascada. */
-@media (prefers-reduced-transparency:reduce){
-  .pop,.menu,.modal,.toast{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow-lg)}}
-@media (prefers-contrast:more){
-  .pop,.menu,.modal,.toast{background:var(--panel);border-color:var(--mut)}}
