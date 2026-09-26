@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync,existsSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
-/* La pantalla de inicio: el componente común de la suite (src/js/87a-suite-inicio.js) montado
+/* La pantalla de inicio: el componente común de la suite (src/diseno/suite-inicio.js) montado
    por src/js/88-workspace.js con las rutas por hash de siempre. JSDOM no mide geometría: aquí se
    comprueban estructura, rutas, foco, inercia del editor y datos; la vista se revisa en un navegador real. */
 const raiz=d=>d.querySelector('#inicioRoot main.erlen-inicio');
@@ -8,10 +8,9 @@ const boton=(d,texto)=>[...raiz(d).querySelectorAll('button')].find(b=>b.textCon
 const espera=()=>new Promise(r=>setTimeout(r,0));
 
 test('The home screen is the synced suite component and its stylesheet is inlined in the build; the old portada is gone',()=>{
- const copia=readFileSync(new URL('../src/js/87a-suite-inicio.js',import.meta.url),'utf8');
- assert.equal(copia,readFileSync(new URL('../src/diseno/suite-inicio.js',import.meta.url),'utf8'),'src/js/87a-suite-inicio.js difiere de src/diseno/suite-inicio.js: copia la del paquete.');
+ // El build carga el script directamente del paquete sincronizado: sin copias que se desfasen.
  const orden=readFileSync(new URL('../src/js/_orden.txt',import.meta.url),'utf8').trim().split('\n');
- assert.ok(orden.indexOf('87a-suite-inicio.js')>=0&&orden.indexOf('87a-suite-inicio.js')===orden.indexOf('88-workspace.js')-1,'El componente va justo antes de 88-workspace.js');
+ assert.ok(orden.indexOf('../diseno/suite-inicio.js')>=0&&orden.indexOf('../diseno/suite-inicio.js')===orden.indexOf('88-workspace.js')-1,'El componente va justo antes de 88-workspace.js');
  assert.equal(orden.includes('88a-suite.js'),false,'La portada propia ya no se carga');
  assert.equal(existsSync(new URL('../src/js/88a-suite.js',import.meta.url)),false);
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');

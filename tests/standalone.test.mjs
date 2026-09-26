@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
 test('Slides boots independently; all navigation and resource actions resolve',async()=>{const {dom,errors,run}=await editor();try{
  assert.match(dom.window.document.title,/Erlen Slides/);
- // La pantalla de inicio es el componente común (87a-suite-inicio.js); cada ruta histórica abre su vista.
+ // La pantalla de inicio es el componente común (src/diseno/suite-inicio.js); cada ruta histórica abre su vista.
  const inicio=()=>dom.window.document.querySelector('#inicioRoot main.erlen-inicio');
  const vistas={inicio:'inicio',plantillas:'ejemplos',biblioteca:'biblioteca',herramientas:'recursos',servicio:'acerca'};
  for(const [view,vista] of Object.entries(vistas)){run('wsCambiar('+JSON.stringify(view)+')');assert.equal(inicio().hidden,false);assert.equal(run('INICIO.vista'),vista);assert.equal(dom.window.location.hash,'#suite/'+view);}
@@ -32,11 +32,10 @@ test('Build has no production endpoints, cloud SDK, external font requests or ot
 test('The suite menu appears only when mounted at /slides/, and links out without importing other editors',async()=>{
  // Montado en la suite: el menú común, con su aviso MIT íntegro en el build.
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
- const licencia=readFileSync(new URL('../src/js/88a0-suite-nav.js',import.meta.url),'utf8');
+ const licencia=readFileSync(new URL('../src/diseno/suite-navigation.js',import.meta.url),'utf8');
  for(const clausula of ['SPDX-License-Identifier: MIT','Permission is hereby granted','WITHOUT WARRANTY OF ANY KIND'])
   assert.ok(html.includes(clausula)&&licencia.includes(clausula),'Falta parte del aviso MIT: '+clausula);
- // La copia del menú es la del paquete de diseño sincronizado, sin retoques locales.
- assert.equal(licencia,readFileSync(new URL('../src/diseno/suite-navigation.js',import.meta.url),'utf8'),'src/js/88a0-suite-nav.js difiere de src/diseno/suite-navigation.js: copia la del paquete.');
+ // El menú se carga directamente del paquete de diseño sincronizado (sin copia local).
  const montado=await editor('http://localhost:8130/slides/');
  try{
   const host=montado.dom.window.document.querySelector('erlen-suite-nav');

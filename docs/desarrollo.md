@@ -9,9 +9,9 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 - `src/js/45-estructura.js`, `src/js/45b-estructura-dibujo.js` y `src/js/46-estructura-edit.js`: las estructuras químicas, partidas en modelo, motor y lienzo (ver «Editores de figura»).
 - `src/js/47-lab-catalogo.js`, `src/js/47b-lab.js` y `src/js/48-lab-edit.js`: el montaje de laboratorio, partido en catálogo, motor y editor (ver «Editores de figura»).
 - `src/js/87-ejemplos.js`: doce ejemplos científicos construidos con los bloques reales.
-- `src/js/87a-suite-inicio.js`: la pantalla de inicio común de Erlen (`erlenInicio`). Copia literal de `src/diseno/suite-inicio.js`, que genera `diseno-sync --modo iife` del portal; una prueba exige que sean iguales. Sus estilos, `src/diseno/inicio.css`, se incrustan en el build tras los de la cinta.
+- `src/diseno/suite-inicio.js`: la pantalla de inicio común de Erlen (`erlenInicio`), que genera `diseno-sync --modo iife` del portal; `src/js/_orden.txt` la carga directamente, sin copia local. Sus estilos, `src/diseno/inicio.css`, se incrustan en el build tras los de la cinta.
 - `src/js/88-workspace.js`: monta el inicio con la biblioteca, los ejemplos, las plantillas personales y los recursos locales, y mantiene las rutas `#suite/<vista>` y `#presentaciones` y el enlace `?plantilla=<id>`.
-- `src/js/88a0-suite-nav.js`: el menú común de Erlen. Copia literal del auxiliar MIT del repositorio maestro, envuelta para el ámbito compartido porque aquí los módulos se concatenan.
+- `src/diseno/suite-navigation.js`: el menú común de Erlen (auxiliar MIT del repositorio maestro, envuelto para el ámbito compartido porque aquí los módulos se concatenan); `src/js/_orden.txt` lo carga directamente. Lo mismo vale para la cinta, `src/diseno/suite-cinta.js`.
 - `src/js/88b-recuperacion.js`: historial en IndexedDB, separado del autoguardado.
 - `src/js/88c-ciencia-libre.js`: carga local de bibliotecas científicas.
 - `src/js/88d-intercambio.js`: el transporte de copias de la suite. Copia literal de `web/exchange-v2.mjs` (a su vez copia literal del archivo MIT del portal), envuelta para el ámbito compartido y sin sus `export`; `tests/intercambio.test.mjs` exige que no se aparten.
@@ -25,7 +25,7 @@ Los nombres históricos internos no implican que la suite completa esté incluid
 
 El menú común y el intercambio de copias son las excepciones, y ninguno es una dependencia. El intercambio (`88d-intercambio.js`) solo lee de IndexedDB del navegador la copia cuyo identificador trae la URL; no ejecuta código de otras apps ni hace peticiones de red.
 
-El menú común no es una dependencia: `88a0-suite-nav.js` no importa ni ejecuta código de los otros editores, sólo pinta una lista de enlaces, y comprueba `location.pathname` para no aparecer siquiera cuando la aplicación se sirve suelta. La 0.1.2 ya lo llevaba, inyectado fuera del repositorio; desde la 0.2.1 vive aquí, con su aviso MIT íntegro, para que el paquete que despliega la suite se pueda reconstruir desde esta fuente.
+El menú común no es una dependencia: `src/diseno/suite-navigation.js` no importa ni ejecuta código de los otros editores, sólo pinta una lista de enlaces, y comprueba `location.pathname` para no aparecer siquiera cuando la aplicación se sirve suelta. La 0.1.2 ya lo llevaba, inyectado fuera del repositorio; desde la 0.2.1 vive aquí, con su aviso MIT íntegro, para que el paquete que despliega la suite se pueda reconstruir desde esta fuente.
 
 ## Contratos a preservar
 
