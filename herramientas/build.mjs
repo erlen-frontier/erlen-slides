@@ -13,6 +13,13 @@ const order=get('src/js/_orden.txt').trim().split('\n');
    build y se escribe como módulo ANTES de unir los de src/js, para que
    _orden.txt siempre lo encuentre aunque el repositorio esté limpio.
    El data-URL es base64 (sin comillas); el replace es solo preventivo. */
+/* Límites del tipo informe-v1: fuente única, la copia literal del contrato
+   (erlen-contratos, contratos/informe-v1/limites.json) en src/contratos/. El
+   build la convierte en la constante INFORME_LIMITES que usa 88e-informe.js;
+   tests/informe-limites.test.mjs comprueba que coinciden (docs/desarrollo.md). */
+const limitesInforme=Object.fromEntries(Object.entries(JSON.parse(get('src/contratos/informe-v1-limites.json'))).filter(([k])=>!k.startsWith('$')));
+if(!Object.keys(limitesInforme).length||Object.values(limitesInforme).some(v=>!Number.isInteger(v)||v<1))throw new Error('src/contratos/informe-v1-limites.json no trae límites enteros positivos');
+write(join(root,'src/js/_informe-limites-gen.js'),'// Generado por herramientas/build.mjs desde src/contratos/informe-v1-limites.json — no editar a mano.\nconst INFORME_LIMITES=Object.freeze('+JSON.stringify(limitesInforme)+');\n');
 write(join(root,'src/js/_glass-map-gen.js'),'// Generado por herramientas/glass-map.mjs — no editar a mano.\nconst ERLEN_GLASS_MAP=\''+generateGlassMap().replace(/'/g,"\\'")+'\';\n');
 /* Paquete de diseño de la suite (src/diseno, sincronizado por diseno-sync del
    portal): tokens --erlen-* y, del paquete de fuentes, solo las caras que usa

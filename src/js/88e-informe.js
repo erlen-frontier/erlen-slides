@@ -14,8 +14,11 @@
    las figuras pasan a gráficas de datos editables. Todo recorte se dice en el
    pie de la tabla o de la figura y en las notas; nada se inventa. */
 
-/* Límites del tipo, tal como los fija el contrato. */
-const INFORME_LIMITES = { secciones: 30, bloques: 200, bytes: 2 * 1024 * 1024, columnas: 50, filas: 500, series: 8, puntos: 20000, marcas: 40, regiones: 20 };
+/* Límites del tipo: INFORME_LIMITES (secciones, bloques, bytes, columnas, filas,
+   series, puntos, marcas y regiones) no se escribe aquí. Lo genera el build
+   (_informe-limites-gen.js) desde src/contratos/informe-v1-limites.json, la
+   copia literal de los límites del contrato; ver docs/desarrollo.md. */
+const infMiB = n => (n / (1024 * 1024)).toLocaleString('es') + ' MiB';
 /* Lo que cabe en una diapositiva. Las palabras siguen el umbral «media» de
    66-carga.js: más de 60 ya es mucho para una diapositiva hablada. El alto se
    mide, no se adivina: en Chromium, una diapositiva de contenido 16:9 con
@@ -54,7 +57,7 @@ function leeInforme(payload) {
   if (!infObjeto(payload.source) || payload.source.tool !== 'doe') infFalla('Esta copia viene de «' + String(infObjeto(payload.source) ? payload.source.tool : '?').slice(0, 40) + '». Slides solo abre como presentación los informes de Erlen DoE.');
   const s = payload.snapshot;
   if (!infObjeto(s)) infFalla('La copia no trae el informe.');
-  if (new TextEncoder().encode(JSON.stringify(s)).length > INFORME_LIMITES.bytes) infFalla('El informe supera 2 MiB, el límite del tipo informe-v1.');
+  if (new TextEncoder().encode(JSON.stringify(s)).length > INFORME_LIMITES.bytes) infFalla('El informe supera ' + infMiB(INFORME_LIMITES.bytes) + ', el límite del tipo informe-v1.');
   const titulo = infCadena(s.titulo, 'El título del informe', 300).trim();
   if (!titulo) infFalla('El informe no tiene título.');
   if (!Array.isArray(s.secciones) || !s.secciones.length) infFalla('El informe no trae secciones.');
