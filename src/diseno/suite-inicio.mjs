@@ -33,8 +33,12 @@ import {mey} from './mey.mjs';
      nuevo: {etiqueta:'Nueva página', detalle:'Página en blanco', accion},
      importar?: {etiqueta:'Importar…', accion},
      continuar?: () => ({etiqueta:'Seguir con «X»', accion}) | null,
-     ejemplos?: [{id, disciplina, arte, titulo, descripcion, accion, etiqueta?}],
-     biblioteca?: {listar: () => [{id, titulo, detalle?, fecha?, miniatura?, abrir, duplicar?, descargar?}],
+     ejemplos?: [{id, disciplina, arte?, imagen?, titulo, descripcion?, accion, etiqueta?}],
+     // arte: SVG del contenido o texto; imagen: archivo local relativo a la raíz de la app
+     // (p. ej. 'ejemplos/muestra.webp'). Nunca URLs externas, absolutas ni data:.
+     biblioteca?: {listar: () => [{id, titulo, detalle?, fecha?, miniatura?, abrir, duplicar?, descargar?,
+                                    renombrar?: (nuevoTitulo) => void | Promise<void>,
+                                    eliminar?: () => void | Promise<void>}],
                    vacio?: {titulo, texto}},
      recursos?: [{titulo, texto, etiqueta, accion}],
      acerca?: {texto, enlaces:[{etiqueta, url}]},
@@ -115,25 +119,33 @@ export function mountInicio(host,config){
  const titulo=(texto,em)=>el('h1',{class:'erlen-inicio-titulo',tabindex:'-1'},texto,em?el('em',null,em):null);
  const cabeceraVista=(c,nombre)=>c.append(el('header',{class:'erlen-inicio-vista-cabecera'},el('span',{class:'erlen-inicio-eyebrow'},(config.corto?'ERLEN '+config.corto:config.nombre.toUpperCase())),titulo(nombre)));
  function tarjetaNueva(){
-  const b=el('button',{type:'button',class:'erlen-inicio-nueva'},el('span',{class:'erlen-inicio-mas','aria-hidden':'true'},'+'),el('strong',null,config.nuevo.etiqueta),config.nuevo.detalle?el('small',null,config.nuevo.detalle):null);
+  const b=el('button',{type:'button',class:'erlen-inicio-nueva'},el('span',{class:'erlen-inicio-mas','aria-hidden':'true'},'+'),el('span',{class:'erlen-inicio-nueva-datos'},el('strong',null,config.nuevo.etiqueta),config.nuevo.detalle?el('small',null,config.nuevo.detalle):null));
   b.addEventListener('click',alEditor(config.nuevo.accion));
   return b;
  }
  function tarjetaEjemplo(e){
   const arte=el('div',{class:'erlen-inicio-arte','aria-hidden':'true'});
-  if(typeof e.arte==='string'&&e.arte.trim().startsWith('<svg'))arte.innerHTML=e.arte;else arte.textContent=e.arte||'';
-  return el('article',{class:'erlen-inicio-ejemplo','data-busqueda':[e.disciplina,e.titulo,e.descripcion].join(' ').toLowerCase()},
-   e.disciplina?el('span',{class:'erlen-inicio-eyebrow'},e.disciplina):null,arte,el('h2',null,e.titulo),e.descripcion?el('p',null,e.descripcion):null,
-   boton(e.etiqueta||'Abrir ejemplo',alEditor(e.accion),'primario'));
+  // La ruta debe quedar dentro de la app incluso tras normalizar segmentos codificados.
+  const base=new URL('.',doc.baseURI);
+  const imagen=typeof e.imagen==='string'&&e.imagen.trim()&&!/^[\\/]|[?#:]|\\/.test(e.imagen)?new URL(e.imagen,base):null;
+  if(imagen&&imagen.origin===base.origin&&imagen.pathname.startsWith(base.pathname))
+   arte.append(el('img',{src:e.imagen,alt:'',loading:'lazy',decoding:'async'}));
+  else if(typeof e.arte==='string'&&e.arte.trim().startsWith('<svg'))arte.innerHTML=e.arte;
+  else arte.textContent=e.arte||'';
+  return el('article',{class:'erlen-inicio-ejemplo con-arte','data-busqueda':[e.disciplina,e.titulo,e.descripcion].join(' ').toLowerCase()},
+   arte,el('div',{class:'erlen-inicio-ejemplo-datos'},e.disciplina?el('span',{class:'erlen-inicio-eyebrow'},e.disciplina):null,el('h2',null,e.titulo),e.descripcion?el('p',{class:'erlen-inicio-solo-lectura'},e.descripcion):null),
+   boton(e.etiqueta||'Abrir ejemplo',alEditor(e.accion),'primario',{'aria-label':(e.etiqueta||'Abrir ejemplo')+' · '+e.titulo}));
  }
  function pintarInicio(c){
   const buscar=el('input',{type:'search',class:'erlen-inicio-campo',placeholder:'Buscar un ejemplo…','aria-label':'Buscar ejemplos'});
-  const rejilla=el('section',{class:'erlen-inicio-rejilla','aria-label':'Colección de inicio'},tarjetaNueva(),(config.ejemplos||[]).slice(0,3).map(tarjetaEjemplo));
+  const rejilla=el('section',{class:'erlen-inicio-rejilla erlen-inicio-coleccion','aria-label':'Colección de inicio'},tarjetaNueva(),(config.ejemplos||[]).map(tarjetaEjemplo));
   buscar.addEventListener('input',()=>{const q=buscar.value.trim().toLowerCase();for(const t of rejilla.querySelectorAll('.erlen-inicio-ejemplo'))t.hidden=!!q&&!t.dataset.busqueda.includes(q);});
   const [texto,em]=Array.isArray(config.titulo)?config.titulo:[config.titulo||config.nombre];
   c.append(el('div',{class:'erlen-inicio-bienvenida'},
    el('div',null,config.eyebrow?el('span',{class:'erlen-inicio-eyebrow'},config.eyebrow):null,titulo(texto,em),config.lead?el('p',{class:'erlen-inicio-lead'},config.lead):null),
    config.ejemplos&&config.ejemplos.length?el('label',{class:'erlen-inicio-buscar'},buscar):null));
+  if(config.mey!==false&&typeof config.mey!=='function'&&mey.definir(doc.defaultView))
+   c.append(el('div',{class:'erlen-inicio-recreo','aria-hidden':'true'},el('erlen-mey',{lugar:'recreo',app:config.app||(config.corto||'').toLowerCase()||null})));
   const accionesMeta=el('div',{class:'erlen-inicio-acciones'});
   if(config.ejemplos&&config.ejemplos.length>3)accionesMeta.append(boton('Explorar ejemplos',()=>abrir('ejemplos'),'secundario'));
   if(config.importar)accionesMeta.append(boton(config.importar.etiqueta||'Importar…',alEditor(config.importar.accion),'secundario'));
@@ -150,8 +162,9 @@ export function mountInicio(host,config){
   const buscar=el('input',{type:'search',class:'erlen-inicio-campo',placeholder:'Buscar en tu biblioteca…','aria-label':'Buscar en tu biblioteca',value:busqueda});
   const ordenar=el('select',{class:'erlen-inicio-campo','aria-label':'Ordenar'},el('option',{value:'recientes'},'Más recientes'),el('option',{value:'nombre'},'Nombre A–Z'));
   ordenar.value=orden;
-  const rejilla=el('section',{class:'erlen-inicio-rejilla','aria-label':nombres.biblioteca});
+  const rejilla=el('section',{class:'erlen-inicio-rejilla erlen-inicio-biblioteca','aria-label':nombres.biblioteca});
   const conteo=el('p',{class:'erlen-inicio-nota',role:'status'});
+  const fallo=(verbo,e)=>{aviso={texto:'No se pudo '+verbo+': '+(e&&e.message||e),error:true};pintar();};
   const repintar=()=>{
    const q=busqueda.trim().toLowerCase();
    let items=config.biblioteca.listar();
@@ -164,12 +177,26 @@ export function mountInicio(host,config){
     rejilla.append(total?el('div',{class:'erlen-inicio-vacio'},ilustracion('pensando'),el('h3',null,'No hay coincidencias'),el('p',null,'Prueba con otro nombre o limpia la búsqueda.'))
      :el('div',{class:'erlen-inicio-vacio'},ilustracion('dormido'),el('h3',null,v.titulo||'Aquí empieza tu trabajo'),el('p',null,v.texto||'Crea uno nuevo o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'),boton(config.nuevo.etiqueta,alEditor(config.nuevo.accion),'primario')));
    }
-   for(const i of items)rejilla.append(el('article',{class:'erlen-inicio-tarjeta'},
+   for(const i of items){
+    const nombre=i.titulo||'Sin título';
+    rejilla.append(el('article',{class:'erlen-inicio-tarjeta'},
     el('div',{class:'erlen-inicio-miniatura','aria-hidden':'true'},el('small',null,'En este navegador'),el('span',null,i.miniatura||i.titulo||'Sin título')),
     el('div',{class:'erlen-inicio-tarjeta-cuerpo'},el('h3',null,i.titulo||'Sin título'),i.detalle||i.fecha?el('p',null,[i.detalle,i.fecha].filter(Boolean).join(' · ')):null,
      el('div',{class:'erlen-inicio-acciones'},boton('Abrir',alEditor(i.abrir),'primario',{'aria-label':'Abrir «'+(i.titulo||'Sin título')+'»'}),
-      i.duplicar?boton('Duplicar',()=>{Promise.resolve(i.duplicar()).then(repintar,e=>{aviso={texto:'No se pudo duplicar: '+(e&&e.message||e),error:true};pintar();});},'secundario',{'aria-label':'Duplicar «'+(i.titulo||'Sin título')+'»'}):null,
-      i.descargar?boton('Descargar',()=>i.descargar(),'secundario',{'aria-label':'Descargar «'+(i.titulo||'Sin título')+'»'}):null))));
+      i.duplicar?boton('Duplicar',()=>{Promise.resolve().then(()=>i.duplicar()).then(repintar,e=>fallo('duplicar',e));},'secundario',{'aria-label':'Duplicar «'+nombre+'»'}):null,
+      i.descargar?boton('Descargar',()=>i.descargar(),'secundario',{'aria-label':'Descargar «'+nombre+'»'}):null,
+      typeof i.renombrar==='function'?boton('Renombrar',()=>{
+       const respuesta=doc.defaultView.prompt('Nuevo nombre para «'+nombre+'»',nombre);
+       if(respuesta===null)return;
+       const nuevo=respuesta.trim();
+       if(!nuevo){fallo('renombrar','el nombre no puede estar vacío');return;}
+       if(nuevo!==nombre)Promise.resolve().then(()=>i.renombrar(nuevo)).then(repintar,e=>fallo('renombrar',e));
+      },'secundario',{'aria-label':'Renombrar «'+nombre+'»'}):null,
+      typeof i.eliminar==='function'?boton('Eliminar',()=>{
+       if(doc.defaultView.confirm('¿Eliminar «'+nombre+'»? Esta acción no se puede deshacer.'))
+        Promise.resolve().then(()=>i.eliminar()).then(repintar,e=>fallo('eliminar',e));
+      },'peligro',{'aria-label':'Eliminar «'+nombre+'»'}):null))));
+   }
    conteo.textContent=items.length+' de '+total+' '+objetos;
   };
   buscar.addEventListener('input',()=>{busqueda=buscar.value;repintar();});
@@ -181,7 +208,7 @@ export function mountInicio(host,config){
  function pintarEjemplos(c){
   cabeceraVista(c,nombres.ejemplos);
   c.append(el('p',{class:'erlen-inicio-lead'},'Puntos de partida editables. Los datos son ilustrativos: sustitúyelos por los de tu investigación.'),
-   el('section',{class:'erlen-inicio-rejilla','aria-label':nombres.ejemplos},tarjetaNueva(),config.ejemplos.map(tarjetaEjemplo)));
+   el('section',{class:'erlen-inicio-rejilla erlen-inicio-coleccion','aria-label':nombres.ejemplos},tarjetaNueva(),config.ejemplos.map(tarjetaEjemplo)));
  }
  function pintarRecursos(c){
   cabeceraVista(c,nombres.recursos);

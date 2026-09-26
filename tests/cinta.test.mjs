@@ -125,6 +125,6 @@ test('The ribbon script is the synced suite package copy and its stylesheet is i
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  assert.ok(html.includes(readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8')),'cinta.css del paquete, íntegro en el build');
  assert.ok(html.includes('const erlenCinta=(()=>{'));
- assert.ok(Buffer.byteLength(html)<=3*1024*1024,'El HTML único no pasa de 3 MiB: '+Buffer.byteLength(html));
+ assert.ok(Buffer.byteLength(html)<=3.25*1024*1024,'El HTML único no pasa de 3,25 MiB (el paquete 1.8.0 añade el recreo de Mey): '+Buffer.byteLength(html));
  assert.doesNotMatch(readFileSync(new URL('../src/css/01-editor.css',import.meta.url),'utf8'),/\.cinta-(b|tab|tabs|fila|grupo|items|bigs|col|gn|hoja|fl|sep)\b/,'No queda CSS de la cinta antigua');
 });

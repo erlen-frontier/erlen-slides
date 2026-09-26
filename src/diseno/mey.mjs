@@ -26,10 +26,10 @@
    mey.poses                      → ['hola', 'pensando', …]
 
    Cada pose es una cuadrícula de 16×14 celdas. Leyenda: g vidrio · w líquido, brazos y patas
-   · e ojos y trazos en tinta · x acento · p papel · . vacío. La boca es el menisco: el
-   líquido sube por las paredes y deja una sonrisa; en «aviso» sube por el centro (ceño).
-   Los colores son los de la marca, fijos en claro y en oscuro: con tokens, en oscuro el
-   líquido tomaría el color del vidrio y Mey perdería la boca. Se muestra en múltiplos de
+   · e ojos y trazos en tinta · x acento · p papel · . vacío. El líquido sube por los
+   bordes del matraz como agua por capilaridad y se divide abajo en dos perneras: no es una boca.
+   Los colores son los de la marca, fijos en claro y en oscuro para distinguir el líquido
+   del vidrio. Se muestra en múltiplos de
    16 px de ancho para que los píxeles salgan parejos. */
 const COLOR_MEY={g:'#83d4ad',w:'#177451',e:'#18171b',x:'#59368b',p:'#fdfdfd',r:'#e4007c',n:'#f29d0a',a:'#94621e'};
 const TILE_MEY='#59368b';
@@ -45,9 +45,9 @@ const POSES_MEY={
 ....geggggeg.ww.
 ...ggeggggeggw..
 ...ggggggggggw..
-.wwwwggggggww...
-...wwwwggwwww...
+.wwwwwwggwwww...
 ...wwwwwwwwww...
+...wwww..wwww...
 ....ww....ww....`,
  pensando: `
 .............g..
@@ -60,9 +60,9 @@ const POSES_MEY={
 ....ggegggeg....
 ...gggggggggg...
 ...ggggggggggw..
-.wwwwggwwggwwww.
+.wwwwwwggwwwwww.
 ...wwwwwwwwww...
-...wwwwwwwwww...
+...wwww..wwww...
 ....ww....ww....`,
  exito: `
 ..............x.
@@ -74,9 +74,9 @@ xxx...gggg....x.
 ..w.geggggeg.w..
 ..wgegeggegegw..
 ...gggggggggg...
-...wwggggggww...
 ...wwwwggwwww...
 ...wwwwwwwwww...
+...wwww..wwww...
 .....w....w.....
 ................`,
  aviso: `
@@ -90,9 +90,9 @@ xxx...gggg....x.
 .w..geggggeg..w.
 .wwggeggggeggww.
 ...gggggggggg...
-...gggwwwwggg...
-...gwwwwwwwwg...
+...wwwwggwwww...
 ...wwwwwwwwww...
+...wwww..wwww...
 ....ww....ww....`,
  dormido: `
 ............xxx.
@@ -106,8 +106,8 @@ xxx...gggg....x.
 ...geeggggeeg...
 ...gggggggggg...
 ...gggggggggg...
-.wwwwwwwwwwwwww.
-...wwwwwwwwww...
+.wwwwwwggwwwwww.
+...wwww..wwww...
 ...www....www...`,
 
  leyendo: `
@@ -123,7 +123,7 @@ xxx...gggg....x.
 ...ggeggggegg...
 .wxppppxxppppxw.
 ..xxxxxxxxxxxx..
-...wwwwwwwwww...
+...wwww..wwww...
 ....ww....ww....`,
  midiendo: `
 ............xxx.
@@ -136,9 +136,9 @@ xxx...gggg....x.
 ....ggegggeg.w..
 ...ggggggggggw..
 ...gggggggggg...
-.wwwwggggggww...
-...wwwwggwwww...
+.wwwwwwggwwww...
 ...wwwwwwwwww...
+...wwww..wwww...
 ....ww....ww....`,
  graficando: `
 ................
@@ -151,9 +151,9 @@ xxx...gggg....x.
 ....geggggeg..w.
 ...ggeggggeggw..
 ...gggggggggg...
-.wwwwggggggww...
-...wwwwggwwww...
+.wwwwwwggwwww...
 ...wwwwwwwwww...
+...wwww..wwww...
 ....ww....ww....`
 };
 
@@ -186,6 +186,36 @@ function celdasMey(filas,dy){
  return r;
 }
 
+// El contorno gana pasos conectados de 1/2 y 1/4 de celda en tamaños grandes.
+// El favicon de 16 px conserva la cuadrícula simple para no emborronarse.
+function detallesMey(filas,dy){
+ let r='';
+ const punto=(x,y,c,t=.5)=>{r+='<rect x="'+x+'" y="'+(y+dy)+'" width="'+t+'" height="'+t+'" fill="'+COLOR_MEY[c]+'"/>';};
+ // Capilaridad en tres alturas: junto al vidrio, en el cuerpo y en el centro.
+ // No hay línea de tinta ni rasgos faciales nuevos.
+ for(let y=ALTO_MEY+8;y<filas.length-2;y++){
+  if(filas[y].slice(3,13).join('')==='wwwwggwwww'&&filas[y+1].slice(3,13).every(c=>c==='w')){
+   for(const x of [3,3.5,12,12.5])if(filas[y-1][Math.floor(x)]==='g')punto(x,y-.5,'w');
+   for(const x of [7,7.5,8,8.5])punto(x,y+.5,'w');
+  }
+ }
+ // Transiciones de vidrio: cada escalón toca la fila anterior y la siguiente.
+ // No se añaden reflejos en la cabeza ni fragmentos flotantes fuera de los brazos.
+ for(let y=ALTO_MEY+2;y<ALTO_MEY+9;y++){
+  const bordes=f=>[f.findIndex(c=>c==='g'),f.lastIndexOf('g')];
+  const [izq,der]=bordes(filas[y]),[sigIzq,sigDer]=bordes(filas[y+1]);
+  if(izq>=3&&izq<=6&&sigIzq>=3&&sigIzq<=6){
+   if(sigIzq===izq-1){punto(izq-.25,y+.25,'g',.25);punto(izq-.5,y+.5,'g');}
+   if(sigIzq===izq+1){punto(sigIzq-.5,y+1,'g');punto(sigIzq-.25,y+1.5,'g',.25);}
+  }
+  if(der>=9&&der<=12&&sigDer>=9&&sigDer<=12){
+   if(sigDer===der+1){punto(der+1,y+.25,'g',.25);punto(der+1,y+.5,'g');}
+   if(sigDer===der-1){punto(sigDer+1,y+1,'g');punto(sigDer+1,y+1.5,'g',.25);}
+  }
+ }
+ return r;
+}
+
 function accesibleMey(opciones){
  const titulo=opciones.titulo?String(opciones.titulo).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])):'';
  return titulo?'role="img" aria-label="'+titulo+'"><title>'+titulo+'</title>':'aria-hidden="true" focusable="false">';
@@ -199,15 +229,15 @@ function svgMey(filas,pose,atuendo,opciones,alto){
  // Con opciones.celda, tamaño en píxeles enteros por celda (el pixel art no se emborrona).
  const tam=(opciones.celda?' width="'+16*opciones.celda+'" height="'+(arriba?14+ALTO_MEY:14)*opciones.celda+'"':'')+(opciones.estilo?' style="'+opciones.estilo+'"':'');
  const celdas=arriba?celdasMey(filas,-ALTO_MEY):celdasMey(filas.slice(ALTO_MEY),0);
- return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+vista+'"'+tam+' shape-rendering="crispEdges" class="erlen-mey" data-pose="'+pose+'"'+(atuendo!=='ninguno'?' data-atuendo="'+atuendo+'"':'')+' '+accesibleMey(opciones)+celdas+'</svg>';
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+vista+'"'+tam+' shape-rendering="crispEdges" class="erlen-mey" data-pose="'+pose+'"'+(atuendo!=='ninguno'?' data-atuendo="'+atuendo+'"':'')+' '+accesibleMey(opciones)+celdas+(opciones.detalle!==false&&(!opciones.celda||opciones.celda>=2)?detallesMey(filas,arriba?-ALTO_MEY:0):'')+'</svg>';
 }
 
 /* ---------- Atuendos ----------
-   Mey se viste con un toque mexicano. «rebozo» es su ropa de todos los días; los demás son
+   Mey se viste con un toque mexicano. Parte sin atuendo; los demás son
    disfraces para ocasiones. Cada prenda se coloca buscando en la pose el tapón (corrida de 6
    celdas de vidrio sobre un cuello de 4), el paso del cuello al cuerpo y los ojos, así sirve
    para todas las poses. Solo pinta sobre vidrio o vacío: nunca tapa ojos ni utilería. */
-const ATUENDOS_MEY=['rebozo','gala','charro','luchador','ninguno'];
+const ATUENDOS_MEY=['rebozo','gala','charro','luchador','astronauta','cientifica','exploradora','artista','invierno','ninguno'];
 const PAPEL_PICADO_MEY=['eeeeeeeeeeeeeeee','rrr.nnn.xxx.rrr.','r.r.n.n.x.x.r.r.','.r...n...x...r..'];
 
 function corridaMey(fila,patron=/g+/){const m=fila.join('').match(patron);return m?{a:m.index,b:m.index+m[0].length-1,n:m[0].length}:null;}
@@ -252,13 +282,6 @@ function vestirMey(f,atuendo,e,ojos){
   for(let x=t.a+1;x<=t.b-1;x++)pon(x,t.y-4,'e','.');
   for(let x=t.a+2;x<=t.b-2;x++)pon(x,t.y-5,'e','.');
   if(k){['r','r','n','n','r','r'].forEach((c,i)=>pon(k.a+i,k.y,c,'g'));pon(k.a,k.y+1,'r','g');pon(k.a+5,k.y+1,'r','g');}
-  // Bigote de charro: una fila de aire bajo los ojos, sobre el menisco, con las puntas hacia arriba.
-  const cara=k?caraMey(f,k.y,k.y+5):[];
-  if(cara.length){
-   const lx=Math.min(...cara.map(o=>o.x)),rx=Math.max(...cara.map(o=>o.x)),yb=Math.max(...cara.map(o=>o.y));
-   for(let x=lx;x<=rx;x++)pon(x,yb+2,'e','g');
-   pon(lx-1,yb+1,'e','g');pon(rx+1,yb+1,'e','g');
-  }
  }
  if(atuendo==='luchador'&&k){
   // Máscara de luchador: rosa mexicano del cuello a debajo de los ojos, ribete cempasúchil
@@ -268,27 +291,99 @@ function vestirMey(f,atuendo,e,ojos){
   const cercaDeOjo=(x,y)=>cara.some(o=>Math.abs(o.x-x)+Math.abs(o.y-y)===1);
   for(let y=k.y;y<=yb;y++)for(let x=0;x<16;x++)if(f[y][x]==='g')f[y][x]=cercaDeOjo(x,y)?'n':(y<arriba&&(x===k.a+2||x===k.a+3)?'p':'r');
  }
+ if(atuendo==='astronauta'){
+  // Aro de escafandra con borde violeta visible también sobre papel claro.
+  for(let x=t.a-1;x<=t.b+1;x++)pon(x,t.y-1,'x','.');
+  for(let y=t.y;y<=t.y+2;y++){
+   pon(t.a-2,y,'x','.');pon(t.b+2,y,'x','.');
+  }
+  if(k){pon(k.a,k.y,'p','g');pon(k.a+5,k.y,'p','g');pon(k.a-1,k.y+1,'x','g.');pon(k.a+6,k.y+1,'x','g.');}
+ }
+ if(atuendo==='cientifica'&&k){
+  pon(k.a,k.y,'x','g');pon(k.a+5,k.y,'x','g');
+  const cara=caraMey(f,k.y,k.y+5);
+  const debajo=cara.length?Math.max(...cara.map(o=>o.y))+1:k.y+4;
+  for(let y=debajo;y<=debajo+2;y++){
+   for(let x=k.a-1;x<=k.a+1;x++)pon(x,y,'p','g');
+   for(let x=k.a+4;x<=k.a+6;x++)pon(x,y,'p','g');
+   pon(k.a-2,y,'x','g.');pon(k.a+7,y,'x','g.');
+  }
+  pon(k.a+2,debajo,'x','g');
+ }
+ if(atuendo==='exploradora'){
+  // Sombrero de campo de ala ancha, galón dorado y chaleco claro con bolsillos.
+  for(let x=t.a-2;x<=t.b+2;x++)pon(x,t.y-1,'x','.');
+  for(let x=t.a;x<=t.b;x++){pon(x,t.y-2,'n','.');pon(x,t.y-3,'x','.');}
+  if(k){
+   const cara=caraMey(f,k.y,k.y+5),debajo=cara.length?Math.max(...cara.map(o=>o.y))+1:k.y+4;
+   for(let y=debajo;y<=debajo+1;y++)for(const x of [k.a-1,k.a,k.a+5,k.a+6])pon(x,y,'p','g');
+   pon(k.a,debajo+1,'n','p');pon(k.a+5,debajo+1,'n','p');
+  }
+ }
+ if(atuendo==='artista'){
+  // Boina ladeada, delantal violeta: la cara y el nivel del líquido quedan a la vista.
+  for(let x=t.a-1;x<=t.b+1;x++)pon(x,t.y-1,'r','.');
+  for(let x=t.a-2;x<=t.b;x++)pon(x,t.y-2,'r','.');
+  pon(t.a,t.y-3,'r','.');
+  if(k){
+   const cara=caraMey(f,k.y,k.y+5),debajo=cara.length?Math.max(...cara.map(o=>o.y))+1:k.y+4;
+   for(let y=debajo-3;y<debajo;y++){pon(k.a-1,y,'x','g');pon(k.a+6,y,'x','g');}
+   for(let y=debajo;y<=debajo+2;y++)for(let x=k.a;x<=k.a+5;x++)pon(x,y,'x','g');
+   pon(k.a+1,debajo,'p','x');pon(k.a+4,debajo,'p','x');
+   pon(k.a+2,debajo+1,'n','x');pon(k.a+3,debajo+1,'r','x');
+  }
+ }
+ if(atuendo==='invierno'){
+  // Gorro de punto con pompón y bufanda al cuello, sin cubrir los ojos.
+  for(let x=t.a-1;x<=t.b+1;x++)pon(x,t.y-1,x%2?'r':'x','.');
+  for(let x=t.a;x<=t.b;x++)pon(x,t.y-2,'x','.');
+  pon(t.a+2,t.y-3,'r','.');pon(t.a+3,t.y-3,'r','.');
+  if(k){
+   for(let x=k.a;x<=k.a+5;x++)pon(x,k.y,'p','g');
+   pon(k.a+1,k.y,'n','p');pon(k.a+4,k.y,'n','p');
+   for(let y=k.y+1;y<=k.y+3;y++)pon(k.a-1,y,'p','g.');
+   pon(k.a-1,k.y+4,'n','g.');
+  }
+ }
 }
 
 function papelPicadoMey(f){PAPEL_PICADO_MEY.forEach((fila,y)=>{for(let x=0;x<16;x++)if(fila[x]!=='.'&&f[y][x]==='.')f[y][x]=fila[x];});}
 
 export function mey(pose='hola',opciones={}){
  if(opciones.tile)return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="erlen-mey" data-pose="'+pose+'" '+accesibleMey(opciones)+'<rect width="16" height="16" rx="3.5" fill="'+TILE_MEY+'"/><g shape-rendering="crispEdges">'+celdasMey(filasMey(pose),1)+'</g></svg>';
- const atuendo=opciones.atuendo||'rebozo';
+ const atuendo=opciones.atuendo||'ninguno';
  const fiesta=pose==='exito'&&opciones.papelPicado!==false;
  return svgMey(cuadroMey(pose,{},atuendo,fiesta),pose,atuendo,opciones,false);
 }
 mey.poses=Object.keys(POSES_MEY);
 mey.atuendos=ATUENDOS_MEY;
+/* El vestidor solo guarda el atuendo. No altera el favicon ni las poses semánticas de las apps.
+   Si localStorage está bloqueado, la elección dura hasta salir de esta página. */
+const aparienciasEnMemoria=new WeakMap();
+mey.aparienciaLocal=function(ventana){
+ const clave='erlen-mey-apariencia';
+ return {
+  leer(){
+   try{const almacen=ventana?.localStorage;if(almacen){const valor=almacen.getItem(clave);return ATUENDOS_MEY.includes(valor)?valor:'ninguno';}}catch{}
+   return aparienciasEnMemoria.get(ventana)||'ninguno';
+  },
+  guardar(atuendo){
+   if(!ATUENDOS_MEY.includes(atuendo))throw new Error('mey: atuendo desconocido: '+atuendo);
+   aparienciasEnMemoria.set(ventana,atuendo);
+   try{ventana?.localStorage?.setItem(clave,atuendo);}catch{}
+   ventana?.dispatchEvent?.(new ventana.Event('erlen-mey-apariencia'));
+  }
+ };
+};
 
 /* ---------- Mey viva ----------
    Cada cuadro sale de la pose por transformaciones de la cuadrícula, no de dibujos aparte:
    mirar (los ojos de 1×2 se mueven una celda dentro del vidrio), parpadear o guiñar (el ojo
-   pierde su celda de arriba), saltar (todo sube una fila), chapotear (el menisco se inclina),
+   pierde su celda de arriba), saltar (todo sube una fila), chapotear (se mueven las perneras),
    saludar (la mano sube), soltar una burbuja por el cuello y, al celebrar, papel picado.
    Pixel art de verdad: cambios de cuadro, sin interpolar. Filas en coordenadas de la pose. */
-const CHAPOTEO_MEY={hola:{izq:{10:'.wwwwwggggggw...',11:'...wwwwwggwww...'},der:{10:'.wwwggggggwww...',11:'...wwwggwwwww...'}}};
-const SALUDO_MEY={hola:[[14,7,'.'],[14,6,'w']]};
+const CHAPOTEO_MEY={hola:{izq:{12:'...wwwww.wwww...'},der:{12:'...wwww.wwwww...'}}};
+const SALUDO_MEY={hola:{1:[[14,7,'.'],[14,6,'w']],2:[[14,7,'.'],[14,6,'w'],[14,5,'w']]}};
 
 function ojosMey(filas){
  const ojos=[];
@@ -298,9 +393,17 @@ function ojosMey(filas){
 
 function cuadroMey(pose,e,atuendo,fiesta){
  const f=[...Array.from({length:ALTO_MEY},vacia),...filasMey(pose)];
- if(e.saludo)for(const [x,y,c] of SALUDO_MEY[pose]||[])f[y+ALTO_MEY][x]=c;
+ if(e.saludo)for(const [x,y,c] of SALUDO_MEY[pose]?.[e.saludo===true?1:e.saludo]||[])f[y+ALTO_MEY][x]=c;
  const ch=e.chapoteo&&CHAPOTEO_MEY[pose]?.[e.chapoteo];
  if(ch)for(const [y,fila] of Object.entries(ch))f[+y+ALTO_MEY]=fila.split('');
+ // Evaporarse: las filas de líquido del cuerpo (6 celdas o más, sin las patas) se vuelven vidrio
+ // de arriba abajo. El borde del líquido desaparece sin modificar la cara.
+ if(e.seca){
+  // Solo dentro del cuerpo (el ancho de la fila de encima de las patas): los brazos no se evaporan.
+  const base=f[f.length-2],a=base.findIndex(c=>c!=='.'),b=15-[...base].reverse().findIndex(c=>c!=='.');
+  const filas=[];for(let y=ALTO_MEY;y<f.length-1;y++)if(f[y].filter(c=>c==='w').length>=6)filas.push(y);
+  for(const y of filas.slice(0,e.seca))for(let x=a;x<=b;x++)if(f[y][x]==='w')f[y][x]='g';
+ }
  const ojos=ojosMey(f);
  if(e.mirada&&(e.mirada.dx||e.mirada.dy)){
   const {dx,dy}=e.mirada;
@@ -313,13 +416,22 @@ function cuadroMey(pose,e,atuendo,fiesta){
  if(e.parpadeo){
   const orden=[...ojos].sort((a,b)=>a.x-b.x);
   for(const [i,o] of orden.entries())if(e.parpadeo==='ambos'||(e.parpadeo==='guino'&&i===orden.length-1))f[o.y][o.x]='g';
+ }else if(e.ojos==='grandes'){
+  // Sorpresa: cada ojo crece a 2×2 hacia el centro de la cara (sin comerse la pared del vidrio).
+  const centro=ojos.reduce((s,o)=>s+o.x,0)/(ojos.length||1);
+  for(const o of ojos){const lado=o.x<centro?1:-1;for(const y of [o.y,o.y+1])if(f[y][o.x+lado]==='g')f[y][o.x+lado]='e';}
  }
  vestirMey(f,atuendo,e,ojos);
+ // Inclinarse (tropiezo, mareo, estornudo): la cabeza y los hombros se corren una celda.
+ if(e.inclinar){const n=Math.sign(e.inclinar);for(let y=0;y<ALTO_MEY+6;y++)f[y]=n>0?['.',...f[y].slice(0,15)]:[...f[y].slice(1),'.'];}
  if(fiesta||e.fiesta)papelPicadoMey(f);
  if(e.burbuja!==null&&e.burbuja!==undefined){
   const y=ALTO_MEY+1-e.burbuja;
   if(y>=0&&f[y][9]==='.')f[y][9]='g';
  }
+ // Burbujas sueltas en coordenadas del lienzo de 16×18 y un destello (idea, burbuja que revienta).
+ for(const [x,y] of e.burbujas||[])if(f[y]?.[x]==='.')f[y][x]='g';
+ if(e.destello){const [x,y]=e.destello;for(const [dx,dy,c] of [[0,0,'p'],[1,0,'x'],[-1,0,'x'],[0,1,'x'],[0,-1,'x']])if(f[y+dy]?.[x+dx]==='.')f[y+dy][x+dx]=c;}
  // Caminar: una pata se levanta en cada paso (se borra de la fila de abajo). Sentarse: patas
  // recogidas, el cuerpo baja una fila.
  if(e.caminando||e.sentada){
@@ -327,10 +439,13 @@ function cuadroMey(pose,e,atuendo,fiesta){
   if(y>=0){
    // La fila de abajo son siempre las patas.
    if(e.sentada){f.splice(y,1);f.unshift(vacia());}
-   else for(let x=0;x<16;x++)if(f[y][x]==='w'&&(e.caminando===1?x<8:x>=8))f[y][x]='.';
+   else for(let x=0;x<16;x++)if(f[y][x]==='w'&&([1,3].includes(e.caminando)?x<8:x>=8))f[y][x]='.';
+   if(!e.sentada&&e.caminando>=3){const z=e.caminando===3?5:10;if(f[y-1][z]==='w')f[y][z]='w';}
   }
  }
  if(e.salto){f.shift();f.push(vacia());}
+ // Flotar: sube hasta ALTO_MEY filas (se le olvidó la gravedad).
+ if(e.flotar){const n=Math.min(ALTO_MEY,e.flotar);f.splice(0,n);for(let i=0;i<n;i++)f.push(vacia());}
  return f;
 }
 
@@ -346,7 +461,9 @@ const LUGARES_MEY={
  carga:{pose:'pensando',energia:'calma',min:2,max:6,defecto:4},
  exito:{pose:'exito',energia:'calma',min:2,max:8,defecto:4},
  error:{pose:'aviso',energia:'calma',min:2,max:8,defecto:4},
- barra:{pose:'hola',energia:'calma',min:1,max:3,defecto:2,eje:'alto'}
+ barra:{pose:'hola',energia:'calma',min:1,max:3,defecto:2,eje:'alto'},
+ // Recreo: un escenario ancho donde Mey juega (la portada del portal). Ver «Juegos» abajo.
+ recreo:{pose:'hola',energia:'completa',min:3,max:5,defecto:4,juegos:true}
 };
 const PERFILES_MEY={
  slides:{trabajo:'hola'},notes:{trabajo:'leyendo'},documents:{trabajo:'leyendo'},lens:{trabajo:'leyendo'},
@@ -364,7 +481,7 @@ mey.resolver=function({lugar='bienvenida',app,pose,atuendo}={}){
  const perfil=PERFILES_MEY[app]||{};
  const final=pose||l.pose||perfil.trabajo||'hola';
  filasMey(final);
- return {lugar,pose:final,atuendo:atuendo||perfil.atuendo||'rebozo',energia:l.energia,min:l.min,max:l.max,defecto:l.defecto,eje:l.eje||'ancho'};
+ return {lugar,pose:final,atuendo:atuendo||perfil.atuendo||'ninguno',energia:l.energia,min:l.min,max:l.max,defecto:l.defecto,eje:l.eje||'ancho',juegos:!!l.juegos};
 };
 mey.lugares=Object.keys(LUGARES_MEY);
 mey.perfiles=Object.keys(PERFILES_MEY);
@@ -376,7 +493,37 @@ function celdaMey(espacio,filas,r){
  return c>0?Math.max(r.min,Math.min(r.max,c)):r.defecto;
 }
 
-/* mey.montar(host, {lugar, app, pose, atuendo, energia, celda, vivo, ventana, reloj, aleatorio})
+/* ---------- Juegos (lugar «recreo») ----------
+   En el recreo Mey no repite travesuras: juega. Cada juego es una escena cómica corta (una
+   siesta con ronquidos, las escondidillas, el hipo…) con lado, velocidad, disfraz y tiempos al
+   azar, así que ni el mismo juego sale igual dos veces. El orden sale de un mazo por persona:
+   mey.siguienteJuego no repite un juego hasta haberlos jugado todos, ni empieza una vuelta con
+   el último de la anterior. La memoria es {leer(), guardar(dato)}; mey.memoriaLocal(ventana) la
+   guarda en localStorage y, si no se puede, en memoria (nunca falla). */
+const JUEGOS_MEY=['siesta','escondidillas','burbuja','probador','baile','hipo','mareo','carrera','estornudo','lectura','idea','estatuas','gransalto','resbalon','perseguida','gravedad','evaporacion','techo'];
+
+function barajarMey(lista,azar){const a=[...lista];for(let i=a.length-1;i>0;i--){const j=Math.floor(azar()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+mey.siguienteJuego=function(memoria,azar=Math.random,nombres=JUEGOS_MEY){
+ let dato=null;try{dato=memoria?.leer?.();}catch{}
+ const ultimo=nombres.includes(dato?.ultimo)?dato.ultimo:null;
+ let vistos=Array.isArray(dato?.vistos)?dato.vistos.filter(n=>nombres.includes(n)):[];
+ let quedan=nombres.filter(n=>!vistos.includes(n));
+ if(!quedan.length){vistos=[];quedan=nombres.filter(n=>n!==ultimo||nombres.length===1);}
+ const juego=barajarMey(quedan,azar)[0];
+ try{memoria?.guardar?.({vistos:[...vistos,juego],ultimo:juego});}catch{}
+ return juego;
+};
+
+mey.memoriaLocal=function(ventana,clave='erlen-mey-recreo'){
+ let respaldo=null;
+ return {
+  leer(){try{const v=ventana?.localStorage?.getItem(clave);if(v)return JSON.parse(v);}catch{}return respaldo;},
+  guardar(dato){respaldo=dato;try{ventana?.localStorage?.setItem(clave,JSON.stringify(dato));}catch{}}
+ };
+};
+
+/* mey.montar(host, {lugar, app, pose, atuendo, energia, celda, vivo, ventana, reloj, aleatorio, memoria})
    pinta a Mey dentro de host (lienzo fijo de 16×18) y la anima según su energía:
    - completa: curiosa (parpadea, mira alrededor, sigue al puntero con los ojos) y traviesa
      (guiña, chapotea, saluda, suelta burbujas); al clic brinca y celebra con papel picado.
@@ -384,14 +531,18 @@ function celdaMey(espacio,filas,r){
    - quieta: no se mueve.
    Sin celda fija mide el host (ResizeObserver) y elige el tamaño que cabe; por debajo de 3 px
    por celda la energía baja a calma. Con prefers-reduced-motion: reduce, fuera de la vista o
-   con la pestaña oculta no se mueve. Devuelve {pose(), atuendo(), reaccionar(), ajustar(),
-   cuadro(), celda, activa, detener()}. */
+   con la pestaña oculta no se mueve (tampoco con saveData). En el lugar «recreo» juega (ver
+   «Juegos»): opciones.memoria recuerda qué juegos vio la persona (por defecto localStorage) y
+   opciones.juego fuerza el primero. Si no puede moverse, se queda en la foto de su juego: aun
+   quieta, cada visita la encuentra distinta. Devuelve {pose(), atuendo(), reaccionar(), ajustar(),
+   cuadro(), celda, activa, juego, detener()}. */
 mey.montar=function(host,opciones={}){
  const ventana=opciones.ventana||host.ownerDocument.defaultView;
  const doc=host.ownerDocument;
  const reloj=opciones.reloj||ventana;
  const azar=opciones.aleatorio||Math.random;
- const r=mey.resolver(opciones);
+ const apariencia=mey.aparienciaLocal(ventana);
+ const r=mey.resolver({...opciones,atuendo:opciones.atuendo||apariencia.leer()});
  let pose=r.pose,atuendo=r.atuendo;
  vestirMey(Array.from({length:18},vacia),atuendo,{},[]);
  const energiaPedida=opciones.energia||r.energia;
@@ -399,7 +550,7 @@ mey.montar=function(host,opciones={}){
  const medir=()=>opciones.celda||celdaMey(r.eje==='alto'?host.clientHeight:host.clientWidth,14+ALTO_MEY,r);
  let celda=medir();
  const energia=()=>energiaPedida==='completa'&&celda<3?'calma':energiaPedida;
- const neutro=()=>({mirada:{dx:0,dy:0},parpadeo:false,salto:false,chapoteo:null,burbuja:null,saludo:false,fiesta:false,caminando:0,sentada:false});
+ const neutro=()=>({mirada:{dx:0,dy:0},parpadeo:false,salto:false,chapoteo:null,burbuja:null,saludo:false,fiesta:false,caminando:0,sentada:false,ojos:null,inclinar:0,burbujas:null,destello:null,seca:0,flotar:0,deCabeza:false});
  // Paseo: con energía completa y un espacio más ancho que ella, Mey camina por él. x en píxeles
  // (múltiplo de la celda), rumbo 1 a la derecha y -1 a la izquierda (se voltea en espejo).
  let x=0,rumbo=1,punteroX=null;
@@ -407,26 +558,34 @@ mey.montar=function(host,opciones={}){
  const conPaseo=()=>opciones.paseo!==false&&energia()==='completa'&&holgura()>=8*celda;
  let e=neutro();
  let pintado='',temporizadores=new Set(),activo=false,ultimoPuntero=-Infinity,ocupada=false,visible=true;
+ const recreo=opciones.juegos??r.juegos;
+ // La memoria de la persona y, si no guarda nada (bloqueada o de prueba), la de esta visita.
+ const guardada=opciones.memoria||(recreo?mey.memoriaLocal(ventana):null);
+ let deLaVisita=null;
+ const memoria={leer(){let d=null;try{d=guardada?.leer?.();}catch{}return d||deLaVisita;},guardar(d){deLaVisita=d;try{guardada?.guardar?.(d);}catch{}}};
+ let jugando=null,pendiente=null,jugados=0,ultimaReaccion=null,ultimoJuego=null;
  const ahora=()=>ventana.performance?.now?.()??Date.now();
- const estilo=()=>conPaseo()?'display:block;transform:translateX('+x+'px)'+(rumbo<0?' scaleX(-1)':''):'';
+ // De cabeza (camina por el techo) es un espejo vertical del mismo dibujo.
+ const estilo=()=>{const t=[];if(conPaseo())t.push('translateX('+x+'px)'+(rumbo<0?' scaleX(-1)':''));if(e.deCabeza)t.push('scaleY(-1)');return t.length?'display:block;transform:'+t.join(' '):'';};
  const pintar=()=>{
   if(conPaseo()){if(!host.style.position)host.style.position='relative';host.style.overflow='hidden';}
-  const svg=svgMey(cuadroMey(pose,e,atuendo,false),pose,atuendo,{...opciones,celda,estilo:estilo()},true);if(svg!==pintado){host.innerHTML=svg;pintado=svg;}
+  const svg=svgMey(cuadroMey(pose,e,atuendo,false),pose,atuendo,{...opciones,celda,detalle:true,estilo:estilo()},true);if(svg!==pintado){host.innerHTML=svg;pintado=svg;}
  };
  const poner=cambios=>{e={...e,...cambios};pintar();};
  const despues=(ms,fn)=>{const id=reloj.setTimeout(()=>{temporizadores.delete(id);if(activo)fn();},ms);temporizadores.add(id);return id;};
  const entre=(a,b)=>a+Math.floor(azar()*(b-a));
- const secuencia=(pasos,fin)=>{ocupada=true;let t=0;for(const [ms,cambios] of pasos){t+=ms;despues(t,()=>poner(cambios));}despues(t+1,()=>{ocupada=false;fin&&fin();});};
+ // Un paso es [ms, cambios] o [ms, función] (cambia pose, lugar o disfraz entre cuadros).
+ const secuencia=(pasos,fin)=>{ocupada=true;let t=0;for(const [ms,cambios] of pasos){t+=ms;despues(t,()=>typeof cambios==='function'?cambios():poner(cambios));}despues(t+1,()=>{ocupada=false;fin&&fin();});};
  const parpadeo=()=>{if(!ocupada)secuencia([[0,{parpadeo:'ambos'}],[140,{parpadeo:false}]]);despues(entre(2400,5200),parpadeo);};
  const curiosa=()=>{
-  if(!ocupada&&ahora()-ultimoPuntero>2000)secuencia([[0,{mirada:{dx:-1,dy:0}}],[700,{mirada:{dx:1,dy:0}}],[700,{mirada:{dx:0,dy:-1}}],[500,{mirada:{dx:0,dy:0}}]]);
+  if(!ocupada&&!jugando&&ahora()-ultimoPuntero>2000)secuencia([[0,{mirada:{dx:-1,dy:0}}],[700,{mirada:{dx:1,dy:0}}],[700,{mirada:{dx:0,dy:-1}}],[500,{mirada:{dx:0,dy:0}}]]);
   despues(entre(3500,7000),curiosa);
  };
  const TRAVESURAS={
-  guino:[[0,{parpadeo:'guino'}],[120,{salto:true}],[120,{salto:false}],[260,{parpadeo:false}]],
-  chapoteo:[[0,{chapoteo:'izq'}],[160,{chapoteo:'der'}],[160,{chapoteo:'izq'}],[160,{chapoteo:'der'}],[160,{chapoteo:null}]],
+  guino:[[0,{parpadeo:'guino'}],[90,{inclinar:-1}],[90,{salto:true,inclinar:0}],[120,{salto:false,inclinar:1}],[120,{inclinar:0}],[180,{parpadeo:false}]],
+  chapoteo:[[0,{chapoteo:'izq'}],[120,{chapoteo:null}],[120,{chapoteo:'der'}],[120,{chapoteo:null}],[120,{chapoteo:'izq'}],[120,{chapoteo:'der'}],[120,{chapoteo:null}]],
   burbuja:[[0,{mirada:{dx:0,dy:-1},burbuja:0}],[220,{burbuja:1}],[220,{burbuja:2}],[220,{burbuja:3}],[220,{burbuja:4}],[260,{burbuja:null,mirada:{dx:0,dy:0}}]],
-  saludo:[[0,{saludo:true}],[180,{saludo:false}],[180,{saludo:true}],[180,{saludo:false}],[180,{saludo:true}],[180,{saludo:false}]]
+  saludo:[[0,{saludo:1}],[120,{saludo:2}],[120,{saludo:1}],[120,{saludo:false}],[120,{saludo:1}],[120,{saludo:2}],[120,{saludo:1}],[120,{saludo:false}]]
  };
  const traviesa=()=>{
   if(!ocupada){const nombres=Object.keys(TRAVESURAS);secuencia(TRAVESURAS[nombres[Math.floor(azar()*nombres.length)]]);}
@@ -435,11 +594,11 @@ mey.montar=function(host,opciones={}){
  const alPuntero=ev=>{
   const b=host.getBoundingClientRect();if(!b.width)return;
   if(ev.clientY>=b.top&&ev.clientY<=b.bottom&&ev.clientX>=b.left&&ev.clientX<=b.right)punteroX=ev.clientX-b.left;
+  ultimoPuntero=ahora();
   if(ocupada)return;
   const cx=b.left+(conPaseo()?x+8*celda:b.width/2),cy=b.top+b.height/2;
   const dx=ev.clientX<cx-b.width*.6?-1:ev.clientX>cx+b.width*.6?1:0;
   const dy=ev.clientY<cy-b.height*.6?-1:0;
-  ultimoPuntero=ahora();
   const dxv=conPaseo()&&rumbo<0?-dx:dx; // volteada en espejo, su izquierda es nuestra derecha
   if(dxv!==e.mirada.dx||dy!==e.mirada.dy)poner({mirada:{dx:dxv,dy}});
  };
@@ -451,16 +610,35 @@ mey.montar=function(host,opciones={}){
    despues(1200,()=>{pose=antes;ocupada=false;poner({fiesta:false});});
   });
  };
- // Camina hasta destino (px) a un paso por cuadro, alternando las patas; al llegar, a veces se sienta.
- const caminar=(destino,alLlegar)=>{
-  const meta=Math.max(0,Math.min(holgura(),Math.round(destino/celda)*celda));
+ /* Camina hasta destino (px) alternando las patas. ms por paso, zancada en celdas, brinco (salta
+    a cada paso), libre (puede salir del escenario: se esconde tras el borde) y pausa() → ms que
+    se queda congelada antes del siguiente paso (0 sigue). En el recreo es torpe: a veces se
+    tropieza a medio camino (y a veces hasta se cae sentada). Sin paseo llega en el acto. */
+ const caminar=(destino,alLlegar,{ms=140,zancada=1,brinco=false,libre=false,pausa=null,torpe=recreo}={})=>{
+  if(!conPaseo()){alLlegar&&alLlegar();return;}
+  const borde=libre?17*celda:0;
+  const meta=Math.max(-borde,Math.min(holgura()+borde,Math.round(destino/celda)*celda));
   if(meta===x){alLlegar&&alLlegar();return;}
   ocupada=true;rumbo=meta>x?1:-1;
+  const total=Math.ceil(Math.abs(meta-x)/(zancada*celda));
+  let tropiezo=torpe&&total>3&&azar()<.18?1+Math.floor(azar()*(total-2)):-1;
   const paso=n=>{
    if(!activo)return;
-   x+=rumbo*celda;poner({caminando:n%2?1:2,sentada:false});
-   if(x!==meta)despues(140,()=>paso(n+1));
-   else despues(140,()=>{poner({caminando:0});ocupada=false;alLlegar&&alLlegar();});
+   if(n===tropiezo){
+    tropiezo=-1;poner({inclinar:1,ojos:'grandes',caminando:1});
+    if(azar()<.35)despues(160,()=>{poner({inclinar:0,sentada:true});despues(entre(600,1000),()=>{poner({sentada:false,ojos:null,mirada:{dx:-1,dy:0}});despues(250,()=>{poner({mirada:{dx:0,dy:0}});paso(n);});});});
+    else despues(180,()=>{poner({inclinar:0,ojos:null});despues(ms,()=>paso(n));});
+    return;
+   }
+   const espera=pausa?pausa():0;
+   if(espera){despues(espera,()=>paso(n));return;}
+   poner({caminando:n%2?3:4,sentada:false,salto:brinco&&n%2===0});
+   despues(Math.floor(ms/2),()=>{
+    x=rumbo>0?Math.min(meta,x+zancada*celda):Math.max(meta,x-zancada*celda);
+    poner({caminando:n%2?1:2});
+    if(x!==meta)despues(Math.ceil(ms/2),()=>paso(n+1));
+    else despues(Math.ceil(ms/2),()=>{poner({caminando:0,salto:false});ocupada=false;alLlegar&&alLlegar();});
+   });
   };
   despues(0,()=>paso(0));
  };
@@ -472,25 +650,287 @@ mey.montar=function(host,opciones={}){
   }
   despues(entre(4000,9000),pasear);
  };
- const alClic=()=>{if(energia()==='completa')celebrar();};
+ /* ---------- Recreo: los juegos ----------
+    Cada juego tiene foto (cómo se ve quieta), inicio opcional (dónde y cómo la encuentras;
+    primero = la persona recién llega) y correr(fin). Las direcciones de la mirada y de inclinarse
+    son de Mey: al voltearse en espejo, el navegador las voltea con ella. */
+ const uno=lista=>lista[Math.floor(azar()*lista.length)];
+ const lado=()=>azar()<.5?-1:1;
+ const fuera=s=>s<0?-17*celda:holgura()+17*celda;
+ const asomo=s=>s<0?-9*celda:holgura()+9*celda;
+ const alAzar=()=>Math.floor(azar()*(holgura()/celda+1))*celda;
+ const aDistancia=n=>{const h=holgura(),d=n*celda,ops=[x+d,x-d].filter(v=>v>=0&&v<=h);return ops.length?uno(ops):(x>h/2?0:h);};
+ const ponerX=(px,r)=>{x=px;if(r)rumbo=r;pintar();};
+ const voltear=()=>{rumbo=-rumbo;pintar();};
+ const risa=()=>[[0,{chapoteo:'izq',parpadeo:'ambos'}],[100,{chapoteo:null}],[100,{chapoteo:'der',parpadeo:false}],[100,{chapoteo:null,parpadeo:'ambos'}],[100,{chapoteo:'izq'}],[100,{chapoteo:'der',parpadeo:false}],[100,{chapoteo:null}]];
+ // Saluda; a veces con tanto entusiasmo que se va de lado y se cae sentada.
+ const saludo=()=>[[0,{saludo:1}],[110,{saludo:2}],[110,{saludo:1}],[110,{saludo:false}],[110,{saludo:1}],[110,{saludo:2}],[110,{saludo:1}],[110,{saludo:false}],...(azar()<.2?[[0,{saludo:2}],[150,{inclinar:1,saludo:false}],[150,{inclinar:-1}],[150,{inclinar:0,sentada:true,ojos:'grandes'}],[700,{ojos:null,parpadeo:'guino'}],[300,{parpadeo:false,sentada:false}]]:[])];
+ const hipido=(t=0)=>[[t,{salto:true,ojos:'grandes',burbujas:[[9,3]]}],[110,{salto:false}],[200,{ojos:null,burbujas:[[9,2]]}],[200,{burbujas:[[9,1]]}],[200,{burbujas:[[9,0]]}],[200,{burbujas:null}]];
+ const fiesta=()=>[[0,()=>{pose='exito';poner({fiesta:true});}],[1200,()=>{pose=r.pose;poner({fiesta:false});}]];
+ // Sale corriendo por el borde más cercano (si ya jugaba) o aparece ya escondida (si recién llegas).
+ const esconderse=(primero,s,listo)=>{if(!conPaseo())return listo();if(primero){ponerX(fuera(s),-s);return listo();}caminar(fuera(s),()=>{rumbo=-s;pintar();listo();},{ms:60,zancada:2,libre:true});};
+ const cerca=()=>x>holgura()/2?1:-1;
+ let lado0=1;
+ const JUEGOS={
+  // La encuentras dormida y roncando burbujas; la despiertas acercándote (o se despierta sola).
+  siesta:{
+   foto:()=>({pose:'dormido',e:{sentada:true}}),
+   inicio(primero,listo){pose='dormido';if(primero&&conPaseo())x=alAzar();poner({sentada:true});listo();},
+   correr(fin){
+    const ronquidos=2+Math.floor(azar()*3);
+    const despertar=()=>{pose=r.pose;secuencia([[0,{sentada:false,burbuja:null,ojos:'grandes',salto:true}],[160,{salto:false}],[520,{ojos:null,mirada:{dx:-1,dy:0}}],[420,{mirada:{dx:1,dy:0}}],[420,{mirada:{dx:0,dy:0},parpadeo:'guino'}],[300,{parpadeo:false}],...saludo()],fin);};
+    const roncar=k=>{
+     if(k>=ronquidos||ahora()-ultimoPuntero<1200)return despertar();
+     secuencia([[0,{burbuja:0}],[300,{burbuja:1}],[300,{burbuja:2}],[300,{burbuja:3}],[300,{burbuja:4}],[300,{burbuja:null}]],()=>despues(entre(300,900),()=>roncar(k+1)));
+    };
+    roncar(0);
+   }
+  },
+  // Escondidillas: se asoma por un borde, se esconde y reaparece por el otro.
+  escondidillas:{
+   foto:()=>({pose:'hola',e:{mirada:{dx:1,dy:0}}}),
+   inicio(primero,listo){lado0=primero?lado():cerca();esconderse(primero,lado0,listo);},
+   correr(fin){
+    // Sin espacio para esconderse: juega «¿dónde está Mey?… ¡bu!» en su lugar.
+    if(!conPaseo()){const pasos=[];for(let i=0,n=2+Math.floor(azar()*2);i<n;i++)pasos.push([i?entre(300,600):0,{parpadeo:'ambos',mirada:{dx:0,dy:0}}],[entre(700,1300),{parpadeo:false,ojos:'grandes',salto:true}],[150,{salto:false}],[400,{ojos:null,mirada:{dx:i%2?1:-1,dy:0}}],[350,{mirada:{dx:0,dy:0}}]);return secuencia([...pasos,...saludo(),...risa()],fin);}
+    const s=lado0,o=azar()<.7?-s:s;
+    secuencia([[0,()=>ponerX(asomo(s),-s)],[0,{mirada:{dx:1,dy:0}}],[entre(600,1000),{mirada:{dx:0,dy:0},ojos:'grandes'}],[450,()=>{ponerX(fuera(s));poner({ojos:null});}],[entre(700,1500),()=>ponerX(asomo(o),-o)],[0,{mirada:{dx:1,dy:-1}}],[entre(600,900),{mirada:{dx:0,dy:0},parpadeo:'guino'}],[300,{parpadeo:false}]],
+     ()=>caminar(o<0?entre(4,24)*celda:holgura()-entre(4,24)*celda,()=>secuencia([...saludo(),...risa()],fin),{ms:70,zancada:2,libre:true,brinco:true}));
+   }
+  },
+  // Persigue una burbuja que suelta, la burbuja revienta y ella se queda chiquita.
+  burbuja:{
+   foto:()=>({pose:'hola',e:{burbujas:[[11,2],[13,0]],mirada:{dx:1,dy:0}}}),
+   correr(fin){
+    const volar=[[0,{mirada:{dx:0,dy:-1},burbujas:[[9,4]]}],[260,{burbujas:[[10,3]]}],[260,{burbujas:[[12,2]],mirada:{dx:1,dy:-1}}],[260,{burbujas:[[13,1]]}],[260,{burbujas:[[14,1]],mirada:{dx:1,dy:0}}]];
+    const reventar=[[0,{burbujas:[[14,0]]}],[260,{burbujas:null,destello:[14,1],ojos:'grandes',mirada:{dx:0,dy:0}}],[220,{destello:null}],[400,()=>{pose='aviso';poner({ojos:null});}],[900,()=>{pose=r.pose;pintar();}],...risa()];
+    secuencia(volar,()=>caminar(aDistancia(entre(8,24)),()=>secuencia(reventar,fin),{ms:entre(90,150),brinco:azar()<.5}));
+   }
+  },
+  // Probador: se cambia de disfraz de un brinco en otro y se queda con el que más le gusta.
+  probador:{
+   foto:()=>({pose:'hola',atuendo:uno(['gala','charro','luchador']),e:{parpadeo:'guino'}}),
+   correr(fin){
+    const lista=barajarMey(ATUENDOS_MEY.filter(a=>a!==atuendo&&a!=='ninguno'),azar);
+    const pasos=[];
+    for(const a of lista)pasos.push([0,{salto:true}],[110,()=>{atuendo=a;poner({salto:false});}],[entre(500,900),{mirada:{dx:uno([-1,1]),dy:0}}],[entre(350,600),{mirada:{dx:0,dy:0}}]);
+    const final=uno([...lista,'rebozo']);
+    pasos.push([0,{salto:true}],[110,()=>{atuendo=final;poner({salto:false,parpadeo:'guino'});}],[400,{parpadeo:false}],...saludo());
+    secuencia(pasos,fin);
+   }
+  },
+  // Baile: pasos al azar sin repetir el anterior y papel picado al final.
+  baile:{
+   foto:()=>({pose:'exito',e:{fiesta:true}}),
+   correr(fin){
+    const movs=[()=>[[0,{chapoteo:'izq'}],[170,{chapoteo:'der'}],[170,{chapoteo:null}]],()=>[[0,{salto:true}],[150,{salto:false}]],()=>[[0,voltear]],()=>[[0,{inclinar:1}],[180,{inclinar:-1}],[180,{inclinar:0}]],()=>[[0,{saludo:true}],[170,{saludo:false}]],()=>[[0,{parpadeo:'guino',salto:true}],[150,{salto:false,parpadeo:false}]]];
+    const pasos=[],n=6+Math.floor(azar()*6);let previo=-1;
+    for(let i=0;i<n;i++){let k=Math.floor(azar()*movs.length);if(k===previo)k=(k+1)%movs.length;previo=k;const m=movs[k]();m[0][0]=i?entre(160,300):0;pasos.push(...m);}
+    secuencia([...pasos,[250,{sentada:true,parpadeo:'ambos'}],[140,{sentada:false,parpadeo:false,ojos:'grandes'}],[140,{ojos:null}],...saludo(),...fiesta()],fin);
+   }
+  },
+  // Hipo: brinquitos con burbuja y cara de «perdón».
+  hipo:{
+   foto:()=>({pose:'hola',e:{burbujas:[[9,2]],ojos:'grandes'}}),
+   correr(fin){
+    const pasos=[],n=3+Math.floor(azar()*3);
+    for(let i=0;i<n;i++)pasos.push(...hipido(i?entre(700,1600):300),[0,{mirada:{dx:uno([-1,0,1]),dy:0}}]);
+    secuencia([...pasos,[500,{mirada:{dx:0,dy:0},parpadeo:'guino'}],[350,{parpadeo:false}],...risa()],fin);
+   }
+  },
+  // Da vueltas cada vez más rápido, se marea, se sienta y sacude la cabeza.
+  mareo:{
+   foto:()=>({pose:'hola',e:{sentada:true,inclinar:uno([-1,1]),mirada:{dx:1,dy:-1}}}),
+   correr(fin){
+    const pasos=[],vueltas=6+Math.floor(azar()*5);
+    for(let i=0;i<vueltas;i++)pasos.push([Math.max(70,240-i*22),voltear]);
+    const circulo=[{dx:1,dy:0},{dx:1,dy:-1},{dx:0,dy:-1},{dx:-1,dy:-1},{dx:-1,dy:0},{dx:0,dy:0}];
+    for(let i=0;i<12;i++)pasos.push([140,{mirada:circulo[i%6],inclinar:i%4<2?1:-1}]);
+    secuencia([...pasos,[200,{sentada:true,inclinar:0,mirada:{dx:0,dy:0}}],[entre(1200,2000),{mirada:{dx:-1,dy:0}}],[200,{mirada:{dx:1,dy:0}}],[200,{mirada:{dx:-1,dy:0}}],[200,{mirada:{dx:0,dy:0},sentada:false}],[300,{parpadeo:'guino'}],[300,{parpadeo:false}]],fin);
+   }
+  },
+  // Llega corriendo, se tropieza, se ríe de sí misma y saluda.
+  carrera:{
+   foto:()=>({pose:'hola',e:{sentada:true,ojos:'grandes'}}),
+   inicio(primero,listo){lado0=primero?lado():cerca();esconderse(primero,lado0,listo);},
+   correr(fin){
+    const tropiezo=[[0,{inclinar:1,caminando:1,ojos:'grandes'}],[180,{inclinar:0,caminando:0,sentada:true}],[700,{ojos:null,mirada:{dx:-1,dy:0}}],[350,{mirada:{dx:1,dy:0}}],[350,{mirada:{dx:0,dy:0}}],...risa(),[200,{sentada:false}],...saludo()];
+    caminar(lado0<0?entre(6,30)*celda:holgura()-entre(6,30)*celda,()=>secuencia(tropiezo,fin),{ms:60,zancada:2,libre:true});
+   }
+  },
+  // Estornudo (a veces falsa alarma primero): ¡achú! de burbujas.
+  estornudo:{
+   foto:()=>({pose:'hola',e:{parpadeo:'ambos',inclinar:-1}}),
+   correr(fin){
+    const nube=()=>Array.from({length:5+Math.floor(azar()*4)},()=>[entre(1,15),entre(0,6)]);
+    const aguantar=[[0,{parpadeo:'ambos',inclinar:-1}],[entre(400,700),{inclinar:0}],[250,{inclinar:-1}]];
+    const falsa=azar()<.5?[[entre(500,800),{inclinar:0,parpadeo:false,ojos:'grandes'}],[entre(600,1100),{ojos:null,mirada:{dx:0,dy:-1}}],[entre(500,900),{mirada:{dx:0,dy:0}}],[entre(300,700),{inclinar:-1,parpadeo:'ambos'}]]:[];
+    secuencia([...aguantar,...falsa,[entre(300,600),{inclinar:1,salto:true,parpadeo:false,ojos:'grandes',burbujas:nube()}],[150,{salto:false}],[250,{burbujas:nube()}],[250,{burbujas:nube()}],[300,{burbujas:null,inclinar:0,ojos:null}],[350,{mirada:{dx:-1,dy:0}}],[300,{mirada:{dx:1,dy:0}}],[300,{mirada:{dx:0,dy:0}}],...risa()],fin);
+   }
+  },
+  // Lee mientras camina, choca con algo invisible, se voltea y sigue leyendo.
+  lectura:{
+   foto:()=>({pose:'leyendo'}),
+   inicio(primero,listo){pose='leyendo';pintar();listo();},
+   correr(fin){
+    // Lee renglón por renglón (los ojos van de un lado a otro); sin espacio, cabecea y despierta de golpe.
+    const leer=[];for(let i=0,n=2+Math.floor(azar()*3);i<n;i++)leer.push([i?300:0,{mirada:{dx:-1,dy:0}}],[entre(500,800),{mirada:{dx:0,dy:0}}],[entre(400,700),{mirada:{dx:1,dy:0}}]);
+    if(!conPaseo())return secuencia([...leer,[400,{mirada:{dx:0,dy:0},parpadeo:'ambos'}],[600,{inclinar:1}],[entre(700,1200),{inclinar:0,parpadeo:false,ojos:'grandes',salto:true}],[150,{salto:false}],[400,()=>{pose=r.pose;poner({ojos:null});}],...risa()],fin);
+    const choque=[[0,()=>{pose=r.pose;poner({salto:true,ojos:'grandes',inclinar:-1});}],[150,{salto:false}],[500,{inclinar:0,ojos:null,mirada:{dx:-1,dy:0}}],[400,{mirada:{dx:0,dy:0}}],[300,()=>{voltear();pose='leyendo';pintar();}],[entre(500,1000),()=>{}]];
+    secuencia([...leer,[300,{mirada:{dx:0,dy:0}}]],()=>caminar(aDistancia(entre(8,20)),()=>secuencia(choque,()=>caminar(aDistancia(entre(5,14)),()=>{pose=r.pose;pintar();fin();},{ms:260})),{ms:260}));
+   }
+  },
+  // Piensa con la mirada arriba, se le prende el foco, corre brincando y celebra.
+  idea:{
+   foto:()=>({pose:'pensando'}),
+   inicio(primero,listo){pose='pensando';pintar();listo();},
+   correr(fin){
+    secuencia([[0,{mirada:{dx:0,dy:-1}}],[entre(900,1500),{mirada:{dx:1,dy:-1}}],[entre(700,1200),{mirada:{dx:-1,dy:-1}}],[entre(700,1200),()=>{pose=r.pose;poner({destello:[13,1],salto:true,ojos:'grandes',mirada:{dx:0,dy:0}});}],[160,{salto:false}],[450,{destello:null,ojos:null}]],
+     ()=>caminar(aDistancia(entre(6,20)),()=>secuencia([[0,{parpadeo:'guino',salto:true}],[150,{salto:false}],[150,{parpadeo:false,saludo:true}],[200,{saludo:false}],...fiesta()],fin),{ms:90,brinco:true}));
+   }
+  },
+  // El gran salto (ironía): se prepara muchísimo, tiembla de concentración… y el salto es de una
+  // celda. Aterriza orgullosa y saluda como si nada.
+  gransalto:{
+   foto:()=>({pose:'hola',e:{sentada:true,parpadeo:'ambos'}}),
+   correr(fin){
+    const temblor=[];for(let i=0,n=6+Math.floor(azar()*6);i<n;i++)temblor.push([i?90:entre(500,900),{inclinar:i%2?1:-1}]);
+    secuencia([[0,{sentada:true,parpadeo:'ambos'}],...temblor,[200,{inclinar:0,parpadeo:false,ojos:'grandes'}],[500,{sentada:false,salto:true,ojos:null}],[90,{salto:false}],[entre(500,900),{mirada:{dx:-1,dy:0}}],[400,{mirada:{dx:1,dy:0}}],[400,{mirada:{dx:0,dy:0},parpadeo:'guino'}],[300,{parpadeo:false}],...saludo()],fin);
+   }
+  },
+  // Resbalón: de tanto jugar le escurre una gota de sudor, la gota llega al piso y ella la pisa.
+  // Después mira a los lados: «¿nadie vio?».
+  resbalon:{
+   foto:()=>({pose:'hola',e:{sentada:true,inclinar:-1,ojos:'grandes'}}),
+   correr(fin){
+    const gota=[[14,8],[14,9],[14,11],[14,13],[14,15],[14,17]];
+    secuencia([...gota.map(([x,y],i)=>[i?entre(160,240):0,{burbujas:[[x,y]]}]),[entre(500,900),{mirada:{dx:1,dy:0}}],[400,{mirada:{dx:0,dy:0},caminando:2}],[160,{caminando:1,burbujas:null,inclinar:-1,salto:true,ojos:'grandes'}],[140,{salto:false,caminando:0,inclinar:0,sentada:true}],[700,{mirada:{dx:-1,dy:0}}],[220,{mirada:{dx:1,dy:0}}],[220,{mirada:{dx:-1,dy:0}}],[220,{mirada:{dx:0,dy:0},ojos:null}],[400,{sentada:false,parpadeo:'guino'}],[300,{parpadeo:false}],...saludo()],fin);
+   }
+  },
+  // La burbuja la persigue a ella: huye mirando atrás y la burbuja le revienta en la cara.
+  perseguida:{
+   foto:()=>({pose:'hola',e:{burbujas:[[1,5]],ojos:'grandes',mirada:{dx:-1,dy:0}}}),
+   correr(fin){
+    secuencia([[0,{burbujas:[[9,4]],mirada:{dx:0,dy:-1}}],[300,{burbujas:[[7,3]]}],[300,{burbujas:[[4,3]],mirada:{dx:-1,dy:0}}],[300,{burbujas:[[2,5]],ojos:'grandes'}],[400,()=>{}]],
+     ()=>caminar(aDistancia(entre(10,26)),()=>secuencia([[0,{burbujas:[[3,4]],mirada:{dx:0,dy:0}}],[200,{burbujas:[[5,5]]}],[200,{burbujas:null,destello:[6,4],parpadeo:'ambos',ojos:null}],[300,{destello:null}],[400,{parpadeo:false}],...risa()],fin),{ms:80}));
+   }
+  },
+  // Se le olvida la gravedad: flota, patalea en el aire, se acuerda… y cae de sentón.
+  gravedad:{
+   foto:()=>({pose:'hola',e:{flotar:2,ojos:'grandes',caminando:1}}),
+   correr(fin){
+    const pasos=[[0,{ojos:'grandes'}]];
+    for(let k=1;k<=4;k++)pasos.push([entre(350,550),{flotar:k,caminando:k%2?1:2}]);
+    for(let i=0,n=3+Math.floor(azar()*4);i<n;i++)pasos.push([200,{caminando:i%2?1:2,mirada:{dx:i%2?1:-1,dy:0}}]);
+    secuencia([...pasos,[entre(500,900),{caminando:0,mirada:{dx:0,dy:0},ojos:null,parpadeo:'guino'}],[350,{parpadeo:false,ojos:'grandes'}],[120,{flotar:2}],[80,{flotar:0,inclinar:1}],[140,{inclinar:0,sentada:true}],[600,{ojos:null,mirada:{dx:-1,dy:0}}],[300,{mirada:{dx:1,dy:0}}],[300,{mirada:{dx:0,dy:0},sentada:false}],...risa()],fin);
+   }
+  },
+  // Se evapora (química pura): pierde el líquido de las perneras fila por fila, se preocupa,
+  // se junta una nube arriba y le llueve adentro hasta quedar llena otra vez.
+  evaporacion:{
+   foto:()=>({pose:'hola',e:{seca:2,mirada:{dx:0,dy:-1},burbujas:[[5,1],[10,0]]}}),
+   correr(fin){
+    const vapor=k=>[entre(500,800),{seca:k,burbujas:[[entre(3,13),entre(0,3)],[entre(3,13),entre(0,3)]]}];
+    const nube=[[6,0],[7,0],[8,0],[9,0],[5,1],[10,1]];
+    secuencia([[0,{mirada:{dx:0,dy:-1}}],vapor(1),vapor(2),vapor(3),[500,{ojos:'grandes',burbujas:null}],[700,{ojos:null,mirada:{dx:-1,dy:0}}],[500,{mirada:{dx:1,dy:0}}],[500,{mirada:{dx:0,dy:-1},burbujas:nube}],[600,{burbujas:[...nube,[7,2],[9,1]]}],[250,{burbujas:[...nube,[7,3],[9,2],[6,1]],seca:2}],[250,{burbujas:[...nube,[9,3],[6,2],[8,1]],seca:1}],[250,{burbujas:[...nube,[6,3],[8,2]],seca:0}],[300,{burbujas:null,mirada:{dx:0,dy:0}}],...risa()],fin);
+   }
+  },
+  // Camina por el techo: de un brinco queda de cabeza, pasea así tan campante y se cae.
+  techo:{
+   foto:()=>({pose:'hola',e:{deCabeza:true}}),
+   correr(fin){
+    const caida=[[300,{mirada:{dx:0,dy:-1}}],[600,{ojos:'grandes'}],[300,{deCabeza:false,inclinar:1}],[140,{inclinar:0,sentada:true}],[600,{ojos:null,mirada:{dx:-1,dy:-1}}],[200,{mirada:{dx:1,dy:-1}}],[200,{mirada:{dx:0,dy:0},sentada:false}],...risa()];
+    secuencia([[0,{salto:true}],[120,{salto:false}],[150,{salto:true}],[120,{deCabeza:true,salto:false,ojos:'grandes'}],[600,{ojos:null}]],
+     ()=>caminar(aDistancia(entre(5,14)),()=>secuencia(caida,fin),{ms:200,torpe:false}));
+   }
+  },
+  // Estatuas de marfil: avanza de puntitas y se congela si mueves el puntero (o cuando se le antoja).
+  estatuas:{
+   foto:()=>({pose:'hola',e:{caminando:1,ojos:'grandes'}}),
+   correr(fin){
+    let congelada=0;
+    const pausa=()=>{
+     if(congelada<25&&(ahora()-ultimoPuntero<700||azar()<.08)){congelada++;if(!e.ojos)poner({ojos:'grandes'});return 450;}
+     if(e.ojos)poner({ojos:null});return 0;
+    };
+    // Sin espacio: baila en su lugar y se congela en poses chistosas, con ojos de «¿me viste?».
+    if(!conPaseo()){
+     const quieta={chapoteo:null,saludo:false,inclinar:0,salto:false},poses=[{chapoteo:'izq'},{chapoteo:'der'},{saludo:true},{inclinar:1},{inclinar:-1},{salto:true}];
+     const pasos=[];for(let i=0,n=8+Math.floor(azar()*5);i<n;i++){pasos.push([entre(220,380),{...quieta,...uno(poses)}]);if(azar()<.3)pasos.push([0,{ojos:'grandes'}],[entre(700,1100),{ojos:null}]);}
+     return secuencia([...pasos,[250,quieta],...risa()],fin);
+    }
+    const tramos=2+Math.floor(azar()*2);
+    const tramo=k=>{
+     if(k>=tramos)return secuencia([[0,{ojos:null,caminando:0,parpadeo:'guino'}],[350,{parpadeo:false}],...risa()],fin);
+     caminar(aDistancia(entre(5,14)),()=>despues(entre(300,700),()=>tramo(k+1)),{ms:240,pausa});
+    };
+    tramo(0);
+   }
+  }
+ };
+ const empezar=nombre=>{
+  let n=nombre||pendiente||mey.siguienteJuego(memoria,azar);
+  // Nunca el mismo juego dos veces seguidas, aunque el primero haya venido forzado.
+  if(!nombre&&!pendiente&&n===ultimoJuego&&JUEGOS_MEY.length>1)n=mey.siguienteJuego(memoria,azar);
+  pendiente=null;jugando=n;ultimoJuego=n;
+  const primero=!jugados++;
+  pose=r.pose;atuendo=opciones.atuendo||apariencia.leer();e=neutro();
+  // Recién llegas: también el lugar y hacia dónde mira cambian (el juego puede moverla después).
+  if(primero&&conPaseo()){x=alAzar();rumbo=lado();}
+  pintar();
+  const listo=()=>despues(primero?entre(500,1200):entre(300,700),()=>JUEGOS[n].correr(terminar));
+  JUEGOS[n].inicio?JUEGOS[n].inicio(primero,listo):listo();
+ };
+ const otroJuego=()=>ocupada?despues(800,otroJuego):empezar();
+ const terminar=()=>{jugando=null;pose=r.pose;atuendo=opciones.atuendo||apariencia.leer();e=neutro();pintar();despues(entre(3500,8000),otroJuego);};
+ const foto=n=>{const f=JUEGOS[n].foto();pose=f.pose;if(f.atuendo)atuendo=f.atuendo;e={...neutro(),...f.e};if(conPaseo()){x=alAzar();rumbo=lado();}};
+ // Al clic, en el recreo reacciona distinto cada vez (nunca dos veces seguidas lo mismo).
+ const REACCIONES={celebrar:null,risa,tropiezo:()=>[[0,{inclinar:1,ojos:'grandes'}],[160,{inclinar:0,sentada:true}],[700,{ojos:null,parpadeo:'guino'}],[300,{parpadeo:false,sentada:false}]],guino:()=>TRAVESURAS.guino,hipo:()=>hipido(),sorpresa:()=>[[0,{ojos:'grandes',salto:true,inclinar:-1}],[150,{salto:false}],[450,{ojos:null,inclinar:0}]]};
+ const alClic=()=>{
+  ultimoPuntero=ahora();
+  if(energia()!=='completa')return;
+  if(!recreo)return celebrar();
+  if(!activo||ocupada)return;
+  const n=uno(Object.keys(REACCIONES).filter(k=>k!==ultimaReaccion));ultimaReaccion=n;
+  n==='celebrar'?celebrar():secuencia(REACCIONES[n]());
+ };
  const reducido=ventana.matchMedia?ventana.matchMedia('(prefers-reduced-motion: reduce)'):null;
- const puedeMoverse=()=>opciones.vivo!==false&&energia()!=='quieta'&&!(reducido&&reducido.matches)&&visible&&!doc.hidden;
- const parar=()=>{activo=false;ocupada=false;for(const id of temporizadores)reloj.clearTimeout(id);temporizadores.clear();ventana.removeEventListener('pointermove',alPuntero);e=neutro();pintar();};
+ const puedeMoverse=()=>opciones.vivo!==false&&energia()!=='quieta'&&!(reducido&&reducido.matches)&&!ventana.navigator?.connection?.saveData&&visible&&!doc.hidden;
+ const parar=()=>{
+  const estaba=activo;
+  activo=false;ocupada=false;for(const id of temporizadores)reloj.clearTimeout(id);temporizadores.clear();ventana.removeEventListener('pointermove',alPuntero);
+  // En el recreo, quieta desde el principio conserva la foto de su juego. Si deja un juego a
+  // medias (sale de la vista), lo retoma desde el principio al volver.
+  if(!recreo||estaba)e=neutro();
+  if(recreo){if(jugando){pendiente=jugando;jugados=0;jugando=null;pose=r.pose;}x=Math.max(0,Math.min(holgura(),x));}
+  pintar();
+ };
  const arrancar=()=>{
   if(activo||!puedeMoverse())return;
   activo=true;
   despues(entre(1200,2600),parpadeo);
-  if(energia()==='completa'){ventana.addEventListener('pointermove',alPuntero,{passive:true});despues(entre(2000,4000),curiosa);despues(entre(5000,9000),traviesa);despues(entre(1500,3500),pasear);}
+  if(energia()!=='completa')return;
+  ventana.addEventListener('pointermove',alPuntero,{passive:true});despues(entre(2000,4000),curiosa);
+  if(recreo)empezar();else{despues(entre(5000,9000),traviesa);despues(entre(1500,3500),pasear);}
  };
  const revisar=()=>puedeMoverse()?arrancar():parar();
  const ajustar=()=>{const nueva=medir();if(nueva!==celda){const antes=energia();celda=nueva;x=Math.round(x/celda)*celda;if(energia()!==antes){parar();revisar();return;}}x=Math.min(x,holgura());pintar();};
+ const alCambiarApariencia=()=>{if(!opciones.atuendo&&jugando!=='probador'){atuendo=apariencia.leer();pintar();}};
  host.addEventListener('click',alClic);
  doc.addEventListener('visibilitychange',revisar);
  reducido?.addEventListener?.('change',revisar);
+ ventana.addEventListener('erlen-mey-apariencia',alCambiarApariencia);
+ ventana.addEventListener('storage',alCambiarApariencia);
  let observador=null,medidor=null;
  if(ventana.IntersectionObserver){observador=new ventana.IntersectionObserver(entradas=>{visible=entradas.some(x=>x.isIntersecting);revisar();});observador.observe(host);}
- if(!opciones.celda&&ventana.ResizeObserver){medidor=new ventana.ResizeObserver(()=>ajustar());medidor.observe(r.eje==='alto'?host:(host.parentElement||host));}
+ // Con celda fija también observa: el hueco para pasear cambia con el ancho.
+ if(ventana.ResizeObserver){medidor=new ventana.ResizeObserver(()=>ajustar());medidor.observe(r.eje==='alto'?host:(host.parentElement||host));}
  host.dataset.meyViva='';
+ if(recreo){
+  if(opciones.juego&&!JUEGOS[opciones.juego])throw new Error('mey: juego desconocido: '+opciones.juego);
+  pendiente=opciones.juego||mey.siguienteJuego(memoria,azar);
+  if(!puedeMoverse()||energia()!=='completa')foto(pendiente);
+ }
  pintar();arrancar();
  return {
   pose(nombre){filasMey(nombre);pose=nombre;pintar();},
@@ -503,10 +943,13 @@ mey.montar=function(host,opciones={}){
   caminar(destino){if(activo&&!ocupada&&conPaseo())caminar(destino);},
   get energia(){return energia();},
   get activa(){return activo;},
-  detener(){parar();host.removeEventListener('click',alClic);doc.removeEventListener('visibilitychange',revisar);reducido?.removeEventListener?.('change',revisar);observador?.disconnect();medidor?.disconnect();delete host.dataset.meyViva;}
+  get juego(){return jugando||pendiente;},
+  get reaccion(){return ultimaReaccion;},
+  detener(){parar();host.removeEventListener('click',alClic);doc.removeEventListener('visibilitychange',revisar);reducido?.removeEventListener?.('change',revisar);ventana.removeEventListener('erlen-mey-apariencia',alCambiarApariencia);ventana.removeEventListener('storage',alCambiarApariencia);observador?.disconnect();medidor?.disconnect();delete host.dataset.meyViva;}
  };
 };
 mey.travesuras=['guino','chapoteo','burbuja','saludo','celebrar'];
+mey.juegos=JUEGOS_MEY;
 
 /* ---------- <erlen-mey> ----------
    La forma más simple de poner a Mey en una app: <erlen-mey lugar="vacio"></erlen-mey>.

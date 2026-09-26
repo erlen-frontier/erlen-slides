@@ -1,4 +1,4 @@
-/* erlen-diseno 1.7.0 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
+/* erlen-diseno 1.8.0 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
 const erlenCinta=(()=>{
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
