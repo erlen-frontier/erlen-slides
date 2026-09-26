@@ -26,7 +26,7 @@ test('Direct example link opens the editor after preserving the draft',async()=>
 test('Build has no production endpoints, cloud SDK, external font requests or other suite editors',()=>{
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  for(const bad of ['.supabase.co','sentryDsn','window.supabase','fonts.googleapis.com','function docEstudio(','function figEstudio(','function daEstudio('])assert.equal(html.includes(bad),false,bad);
- assert.match(html,/github.com\/jorgegonzalezsevilla\/erlen-slides/);
+ assert.match(html,/github.com\/erlen-frontier\/erlen-slides/);
 });
 
 test('The suite menu appears only when mounted at /slides/, and links out without importing other editors',async()=>{
