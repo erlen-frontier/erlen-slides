@@ -26,7 +26,7 @@ test('Direct example link opens the editor after preserving the draft',async()=>
 test('Build has no production endpoints, cloud SDK, external font requests or other suite editors',()=>{
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  for(const bad of ['.supabase.co','sentryDsn','window.supabase','fonts.googleapis.com','function docEstudio(','function figEstudio(','function daEstudio('])assert.equal(html.includes(bad),false,bad);
- assert.match(html,/github.com\/jorgegonzalezsevilla\/erlen-slides/);
+ assert.match(html,/github.com\/erlen-frontier\/erlen-slides/);
 });
 
 test('The suite menu appears only when mounted at /slides/, and links out without importing other editors',async()=>{
@@ -42,7 +42,7 @@ test('The suite menu appears only when mounted at /slides/, and links out withou
   const host=montado.dom.window.document.querySelector('erlen-suite-nav');
   assert.ok(host,'El menú no se montó bajo /slides/.');
   const enlaces=[...host.shadowRoot.querySelectorAll('a')];
-  assert.equal(enlaces.length,11,'Inicio de Erlen y las diez aplicaciones del paquete de diseño 2.0.0.');
+  assert.equal(enlaces.length,14,'Inicio de Erlen y las trece aplicaciones del paquete de diseño 1.7.0.');
   assert.equal(host.shadowRoot.querySelector('[aria-current]').getAttribute('href'),'/slides/');
   assert.equal(host.shadowRoot.querySelector('details').open,false,'El menú abre cerrado.');
   for(const a of enlaces.filter(a=>!a.hasAttribute('aria-current')))assert.equal(a.target,'_blank');

@@ -16,11 +16,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import {mey} from './mey.mjs';
 /* Pantalla de inicio común de Erlen Suite (docs/COHERENCIA-APPS.md §3 del portal), el
    patrón de Erlen Slides convertido en componente. La app declara textos, «Nuevo…»,
    ejemplos, su biblioteca y recursos; este módulo pinta la barra lateral, la colección de
    inicio y las vistas, filtra, deja el editor inerte y lleva el foco y el título de la
-   pestaña. No importa nada y no guarda datos: la biblioteca la da la app.
+   pestaña. Solo importa a Mey (diseno/mey.mjs; en el IIFE va incrustada) y no guarda datos:
+   la biblioteca la da la app.
    Estilos en diseno/inicio.css, solo con tokens --erlen-*.
 
    mountInicio(host, {
@@ -39,6 +41,10 @@
      fuente?: {url, licencia:'AGPLv3'},
      editor?: Element,            // se vuelve inert mientras el inicio está abierto
      menuSuite?: contenedor => {}, // monta <erlen-suite-nav> en la cabecera
+     app?: 'notes',                // perfil de Mey; por defecto, corto en minúsculas
+     mey?: false | pose => '<svg…>', // por defecto Mey viva (<erlen-mey lugar="vacio">): dormida
+                                   // en la biblioteca vacía y pensando si la búsqueda no encuentra;
+                                   // false la quita; una función (paquete 1.4–1.5) pinta ese SVG quieto
      alAbrir?, alCerrar?
    })
    Devuelve {elemento, abrir(vista), cerrar(), actualizar(), avisar(texto,{error}), abierta, vista, destruir()}.
@@ -64,6 +70,16 @@ export function mountInicio(host,config){
  };
  const boton=(texto,accion,clase='',attrs={})=>{const b=el('button',{type:'button',class:('erlen-inicio-boton '+clase).trim(),...attrs},typeof texto==='string'?el('span',{class:'erlen-inicio-boton-texto'},texto):texto);if(typeof texto==='string'&&!attrs.title)b.title=texto;b.addEventListener('click',accion);return b;};
  const marca=()=>{const s=el('span',{class:'erlen-inicio-marca-icono','aria-hidden':'true'});if(config.marca)s.innerHTML=config.marca;return s;};
+ // Mey solo si la app la pasa (config.mey): este módulo no importa nada para seguir sirviendo como IIFE.
+ const ilustracion=pose=>{
+  if(config.mey===false)return null;
+  const s=el('span',{class:'erlen-inicio-mey','aria-hidden':'true'});
+  if(typeof config.mey==='function'){s.innerHTML=config.mey(pose);return s;}
+  // Mey viva del paquete: se adapta sola al hueco y al perfil de la app, y toma cada mejora de diseno/mey.mjs.
+  if(mey.definir(doc.defaultView))s.append(el('erlen-mey',{lugar:'vacio',pose,app:config.app||(config.corto||'').toLowerCase()||null}));
+  else s.innerHTML=mey(pose);
+  return s;
+ };
  const alEditor=fn=>()=>{cerrar();fn();};
 
  const raiz=el('main',{class:'erlen-inicio',hidden:true,'aria-label':config.nombre});
@@ -145,8 +161,8 @@ export function mountInicio(host,config){
    rejilla.replaceChildren();
    if(!items.length){
     const v=config.biblioteca.vacio||{};
-    rejilla.append(total?el('div',{class:'erlen-inicio-vacio'},el('h3',null,'No hay coincidencias'),el('p',null,'Prueba con otro nombre o limpia la búsqueda.'))
-     :el('div',{class:'erlen-inicio-vacio'},el('h3',null,v.titulo||'Aquí empieza tu trabajo'),el('p',null,v.texto||'Crea uno nuevo o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'),boton(config.nuevo.etiqueta,alEditor(config.nuevo.accion),'primario')));
+    rejilla.append(total?el('div',{class:'erlen-inicio-vacio'},ilustracion('pensando'),el('h3',null,'No hay coincidencias'),el('p',null,'Prueba con otro nombre o limpia la búsqueda.'))
+     :el('div',{class:'erlen-inicio-vacio'},ilustracion('dormido'),el('h3',null,v.titulo||'Aquí empieza tu trabajo'),el('p',null,v.texto||'Crea uno nuevo o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'),boton(config.nuevo.etiqueta,alEditor(config.nuevo.accion),'primario')));
    }
    for(const i of items)rejilla.append(el('article',{class:'erlen-inicio-tarjeta'},
     el('div',{class:'erlen-inicio-miniatura','aria-hidden':'true'},el('small',null,'En este navegador'),el('span',null,i.miniatura||i.titulo||'Sin título')),
