@@ -17,8 +17,8 @@ function wsConservar() {
   }
   return true;
 }
-/* Pantalla de inicio: el componente común de la suite (src/js/87a-suite-inicio.js, copia
-   de src/diseno/suite-inicio.js; docs/COHERENCIA-APPS.md §3 del portal). Aquí solo se
+/* Pantalla de inicio: el componente común de la suite (src/diseno/suite-inicio.js,
+   cargado tal cual por _orden.txt; docs/COHERENCIA-APPS.md §3 del portal). Aquí solo se
    declara qué muestra —ejemplos, biblioteca, recursos— y se conservan las rutas por hash
    de siempre: #suite/<vista> para el inicio y #presentaciones para el editor. */
 let INICIO = null;
