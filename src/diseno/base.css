@@ -20,6 +20,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .erlen-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:64px;padding:var(--erlen-esp-3) 4%;background:var(--erlen-superficie);border-bottom:1px solid var(--erlen-linea)}
 .erlen-app-header h1{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 .erlen-app-header .erlen-marca{font-weight:700;white-space:nowrap}
+:root[data-erlen-color] .erlen-app-header .erlen-marca{color:var(--erlen-verde)}
 .erlen-app-header>erlen-suite-nav,.erlen-app-header .erlen-menu{margin-left:auto;flex:0 0 auto;min-height:40px;display:flex;align-items:center}
 .erlen-app-header .erlen-menu:empty{min-width:88px}
 .erlen-app-header .erlen-menu>erlen-suite-nav{margin-left:0}

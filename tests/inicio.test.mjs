@@ -19,7 +19,7 @@ test('The home screen is the synced suite component and its stylesheet is inline
  assert.ok(html.includes(inicioCss),'inicio.css del paquete, íntegro en el build');
  assert.ok(html.indexOf(inicioCss)>html.indexOf(cinta),'inicio.css va tras cinta.css');
  assert.ok(html.includes('const erlenInicio=(()=>{'));
- assert.ok(Buffer.byteLength(html)<=3*1024*1024,'El HTML único no pasa de 3 MiB: '+Buffer.byteLength(html));
+ assert.ok(Buffer.byteLength(html)<=3.25*1024*1024,'El HTML único no pasa de 3,25 MiB (el paquete 1.8.0 añade el recreo de Mey): '+Buffer.byteLength(html));
  const css=readFileSync(new URL('../src/css/_orden.txt',import.meta.url),'utf8').trim().split('\n').map(n=>readFileSync(new URL('../src/css/'+n,import.meta.url),'utf8')).join('\n');
  assert.doesNotMatch(css,/\.(suite-(shell|sidebar|brand|topbar|content|welcome|archive-[a-z]+|search|page-heading)|slides-(showcase|example|new-card)|ws-(shell|hero|card|grid|thumb|empty|section-head|controls|eyebrow|note)|workspace)\b/,'No queda CSS de la portada antigua');
  assert.doesNotMatch(readFileSync(new URL('../src/cuerpo.html',import.meta.url),'utf8'),/workspaceRoot/);
@@ -41,14 +41,17 @@ test('Slides opens on its home screen: inert editor, focus on the h1, frozen sta
  const rejilla=raiz(d).querySelector('[aria-label="Colección de inicio"]');
  assert.equal(rejilla.querySelector('.erlen-inicio-nueva strong').textContent,'Nueva presentación');
  const ejemplos=[...rejilla.querySelectorAll('.erlen-inicio-ejemplo')];
- assert.deepEqual(ejemplos.map(e=>e.querySelector('h2').textContent),['Calibración UV–Vis','Cinética de primer orden','Defensa de tesis']);
+ // Desde el paquete 1.8.0 el inicio muestra todos los ejemplos, no solo los tres primeros.
+ const titulos=ejemplos.map(e=>e.querySelector('h2').textContent);
+ assert.deepEqual(titulos.slice(0,3),['Calibración UV–Vis','Cinética de primer orden','Defensa de tesis']);
+ assert.equal(titulos.length,run('EJEMPLOS.length'));
  for(const e of ejemplos)assert.match(e.querySelector('p').textContent,/Datos ilustrativos\.$/,'Cada ejemplo declara sus datos ilustrativos');
  assert.match(raiz(d).querySelector('.erlen-inicio-pie').textContent,/Ejemplos didácticos · sustituye los datos/);
  assert.ok(boton(d,'Explorar ejemplos')&&boton(d,'Importar proyecto'));
  assert.equal(boton(d,'Continuar presentación'),undefined,'Sin nada empezado no se ofrece continuar');
  // Buscar filtra la colección.
  const buscar=raiz(d).querySelector('input[type=search]');buscar.value='cinética';buscar.dispatchEvent(new w.Event('input'));
- assert.deepEqual(ejemplos.map(e=>e.hidden),[true,false,true]);
+ assert.deepEqual(ejemplos.filter(e=>!e.hidden).map(e=>e.querySelector('h2').textContent),['Cinética de primer orden']);
  // Con el inicio abierto no actúan los atajos del editor.
  const n=run('S.deck.slides.length');
  d.body.dispatchEvent(new w.KeyboardEvent('keydown',{key:'m',ctrlKey:true,bubbles:true}));

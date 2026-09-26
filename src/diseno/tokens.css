@@ -46,3 +46,16 @@
  --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
  --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}
+/* La preferencia de color solo toca el acento del cromo, no documentos, Mey, iconos o
+   --erlen-foco. Contraste mínimo 4,5:1 en ambas superficies de las apps. */
+:root[data-erlen-color="violeta"]{--erlen-verde:#59368b;--erlen-verde-suave:#eee8f6}
+:root[data-erlen-color="azul"]{--erlen-verde:#24559c;--erlen-verde-suave:#e6effb}
+:root[data-erlen-color="cobre"]{--erlen-verde:#85502e;--erlen-verde-suave:#f5ebe2}
+@media(prefers-color-scheme:dark){
+ :root:not([data-theme="light"])[data-erlen-color="violeta"]{--erlen-verde:#bea4ed;--erlen-verde-suave:#31273d}
+ :root:not([data-theme="light"])[data-erlen-color="azul"]{--erlen-verde:#94bcf0;--erlen-verde-suave:#203047}
+ :root:not([data-theme="light"])[data-erlen-color="cobre"]{--erlen-verde:#e8ad7d;--erlen-verde-suave:#37291f}
+}
+:root[data-theme="dark"][data-erlen-color="violeta"]{--erlen-verde:#bea4ed;--erlen-verde-suave:#31273d}
+:root[data-theme="dark"][data-erlen-color="azul"]{--erlen-verde:#94bcf0;--erlen-verde-suave:#203047}
+:root[data-theme="dark"][data-erlen-color="cobre"]{--erlen-verde:#e8ad7d;--erlen-verde-suave:#37291f}
