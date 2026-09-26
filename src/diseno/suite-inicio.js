@@ -1,4 +1,4 @@
-/* erlen-diseno 1.8.0 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
+/* erlen-diseno 1.8.1 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
 const erlenInicio=(()=>{
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
@@ -1113,11 +1113,15 @@ function mountInicio(host,config){
  }
  function tarjetaEjemplo(e){
   const arte=el('div',{class:'erlen-inicio-arte','aria-hidden':'true'});
-  // La ruta debe quedar dentro de la app incluso tras normalizar segmentos codificados.
-  const base=new URL('.',doc.baseURI);
-  const imagen=typeof e.imagen==='string'&&e.imagen.trim()&&!/^[\\/]|[?#:]|\\/.test(e.imagen)?new URL(e.imagen,base):null;
-  if(imagen&&imagen.origin===base.origin&&imagen.pathname.startsWith(base.pathname))
-   arte.append(el('img',{src:e.imagen,alt:'',loading:'lazy',decoding:'async'}));
+  // La ruta debe quedar dentro de la app incluso tras normalizar segmentos codificados. Solo se
+  // resuelve si hay `imagen`: en about:blank, data: o blob: `new URL('.',baseURI)` lanza y, sin
+  // este cuidado, una sola tarjeta tumbaba toda la pantalla de inicio; entonces queda `arte`.
+  let imagen=null;
+  if(typeof e.imagen==='string'&&e.imagen.trim()&&!/^[\\/]|[?#:]|\\/.test(e.imagen))try{
+   const base=new URL('.',doc.baseURI),url=new URL(e.imagen,base);
+   if(url.origin===base.origin&&url.pathname.startsWith(base.pathname))imagen=e.imagen;
+  }catch{imagen=null;}
+  if(imagen)arte.append(el('img',{src:imagen,alt:'',loading:'lazy',decoding:'async'}));
   else if(typeof e.arte==='string'&&e.arte.trim().startsWith('<svg'))arte.innerHTML=e.arte;
   else arte.textContent=e.arte||'';
   return el('article',{class:'erlen-inicio-ejemplo con-arte','data-busqueda':[e.disciplina,e.titulo,e.descripcion].join(' ').toLowerCase()},
