@@ -7,7 +7,6 @@
 @media print{
   #printArea{display:block}
   *,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important;box-shadow:none!important}
-  :root{--glass-bg:var(--panel);--glass-edge:var(--line);--glass-hi:transparent;--glass-hi-side:transparent;--glass-lip:transparent}
   .app,.toasts,.mask,.menu,.pop,.modal-mask,.pv-root,.erlen-inicio{display:none!important}
   .pr-page{page-break-after:always;break-after:page;overflow:hidden;page-break-inside:avoid}
   .pr-page:last-child{page-break-after:auto;break-after:auto}

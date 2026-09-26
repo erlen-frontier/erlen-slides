@@ -30,56 +30,31 @@ body{letter-spacing:0;background:var(--bg)}
 .canvas-scroll{padding:38px}.stage{filter:drop-shadow(0 3px 8px color-mix(in srgb,var(--ink) 9%,transparent)) drop-shadow(0 22px 46px color-mix(in srgb,var(--ink) 13%,transparent))}
 .stage::before,.stage::after{content:'';position:absolute;width:12px;height:12px;background:var(--panel);border:1px solid var(--ink);z-index:4;pointer-events:none}
 .stage::before{left:-6px;top:-6px}.stage::after{right:-6px;bottom:-6px}
-.canvas-foot{padding:12px 16px}.slide-pos,.zoombox{border-radius:var(--r2);border-color:var(--glass-edge);background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:inset 0 1px 1px var(--glass-hi),inset 1px 0 0 var(--glass-hi-side),inset -1px 0 0 var(--glass-hi-side),inset 0 -1px 2px var(--glass-lip),var(--shadow)}
+.canvas-foot{padding:12px 16px}.slide-pos,.zoombox{border-radius:var(--erlen-radio-capsula);border-color:var(--glass-edge);background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-relieve)}
 .slide-pos{font:500 var(--t0) var(--ui);font-variant-numeric:tabular-nums}.zoombox .zlabel{font:500 var(--t0) var(--ui);font-variant-numeric:tabular-nums}
-/* Degradación del glass inline de .slide-pos/.zoombox (mismos umbrales que
-   .vidrio): fondo opaco sin transparencia; borde sólido con más contraste. */
-@media (prefers-reduced-transparency:reduce){.slide-pos,.zoombox{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow)}}
-@media (prefers-contrast:more){.slide-pos,.zoombox{background:var(--panel);border-color:var(--mut)}}
-.inspector{background:var(--panel)}.insp-tabs{gap:0;padding:0;border-bottom:1px solid var(--line);box-shadow:none;min-height:52px}
-.itab{border-radius:0;padding:0 8px;font:700 var(--t0) var(--ui);letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid transparent}
-.itab.on{color:var(--ink);border-bottom-color:var(--acc);background:var(--accSoft)}
+/* Pestañas del panel en cápsula; la actual es la «lente» del paquete (.erlen-capsula,
+   GUIA-DISENO §0): cápsula de cristal con relieve y texto en el acento. */
+.inspector{background:var(--panel)}.insp-tabs{gap:2px;padding:4px;margin:var(--e3) var(--e3) 0;border:1px solid var(--glass-edge);border-radius:var(--erlen-radio-capsula);background:var(--glass-flujo);box-shadow:none;min-height:0}
+.itab{border-radius:var(--erlen-radio-capsula);padding:7px 8px;font:600 var(--t1) var(--ui);letter-spacing:0;border:1px solid transparent}
+.itab:hover{background:var(--erlen-vidrio-tinte);color:var(--ink)}
+.itab.on{color:var(--acc);border-color:var(--glass-edge);background:var(--glass-fondo);box-shadow:var(--glass-relieve)}
 .insp-body{padding:20px 16px 48px}.igroup{margin-bottom:26px}.igroup>.panel-label{margin:26px 0 12px!important}
 .insert-grid{gap:7px}.ins-btn{min-height:76px;border-radius:var(--r2);background:var(--panel);position:relative;overflow:hidden}
 .ins-btn::after{content:'';position:absolute;left:0;top:0;width:3px;height:100%;background:var(--line2);transition:background .14s}
 .ins-btn:hover{transform:translateY(-1px);border-color:var(--acc);background:var(--panel);box-shadow:var(--shadow)}
 .ins-btn:hover::after{background:var(--acc)}.ins-btn .ic{font-family:var(--serif);font-size:24px;color:var(--acc)}
 .ins-btn .lb{font:500 var(--t0) var(--ui);color:var(--ink)}
-.field,.seg,.theme-card,.lay-opt,.blk-cab{border-radius:var(--r1)}.menu,.pop{border-radius:var(--r2)}.modal{border-radius:var(--r4)}.field{background:var(--panel);font-family:var(--ui)}
+.field,.seg,.theme-card,.lay-opt,.blk-cab{border-radius:var(--r1)}.menu,.pop{border-radius:var(--r3)}.modal{border-radius:var(--r4)}.field{background:var(--panel);font-family:var(--ui)}
 .g-cab{border-bottom:1px solid var(--line2);border-radius:0}.g-cab .panel-label::before{display:none}
 .mo-head{background:var(--panel);padding-block:18px}.mo-title{font-family:var(--serif);font-size:24px;font-weight:400}
 .menu button{border-radius:var(--r1)}.menu button .mi{color:var(--acc)}
-.blk-toolbar{border-radius:var(--r2);background:var(--ink)}.toast{border-radius:var(--r2)}
+.blk-toolbar{border-radius:var(--r2);background:var(--ink)}.toast{border-radius:var(--erlen-radio-capsula)}
 @media (min-width:921px) and (max-width:1180px){:root{--w-tira:168px;--w-panel:282px}.canvas-scroll{padding:28px 20px}}
-@media (max-width:920px){.topbar{border-bottom-color:var(--glass-edge)}.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:54px}
+@media (max-width:920px){.topbar{border-bottom-color:var(--glass-edge)}.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:0}
  /* El ajuste de zoom en pantallas estrechas reserva poco aire (01-editor.css): con los 38 px de
     escritorio la diapositiva se salía por la derecha. */
  .canvas-scroll{padding:var(--e3) var(--e2)}}
 @media (prefers-reduced-motion:reduce){.ins-btn:hover{transform:none}}
-
-/* Material Liquid Glass (Tier 1, universal): vidrio real con backdrop-filter,
-   canto especular por inset shadows y labio inferior. Solo chrome flotante —
-   nunca .slide, listas densas (.filmstrip/.inspector) ni formularios, y jamás
-   anidado dentro de otro panel glass. Sin backdrop-filter degrada a fondo
-   semitransparente (78% de panel, contraste AA con --ink). */
-.vidrio{
-  background:var(--glass-bg);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-edge);
-  box-shadow:
-    inset 0 1px 1px var(--glass-hi),
-    inset 1px 0 0 var(--glass-hi-side),
-    inset -1px 0 0 var(--glass-hi-side),
-    inset 0 -1px 2px var(--glass-lip),
-    var(--shadow);
-}
-@media (prefers-reduced-transparency:reduce){
-  .vidrio{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow)}
-}
-@media (prefers-contrast:more){
-  .vidrio{background:var(--panel);border-color:var(--mut)}
-}
 
 /* Opciones avanzadas plegables del panel (06-panels.js). */
 .slides-avanzadas{margin-top:18px;border-top:1px solid var(--line)}
