@@ -1,4 +1,4 @@
-/* erlen-diseno 1.8.1 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
+/* erlen-diseno 2.0.1 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
 const erlenMey=(()=>{
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors

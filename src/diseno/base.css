@@ -1,5 +1,6 @@
-/* Erlen Suite · paquete de diseño 1.0.0 · base del cromo de las apps (docs/GUIA-DISENO.md §3–§5, docs/CONTRATO-APP.md §2).
-   Solo cromo: cabecera, controles, estado, pie. El contenido del usuario (documento, hoja, figura, diapositiva) no se toca.
+/* Erlen Suite · paquete de diseño 2.0.0 · base del cromo de las apps (docs/GUIA-DISENO.md §0 y §3–§5, docs/CONTRATO-APP.md §2).
+   Solo cromo: cabecera, controles, estado, pie. El contenido del usuario (documento, hoja, figura, diapositiva) no se toca y sigue opaco.
+   Cristal (2.0.0): cabecera, paneles, diálogos y .erlen-vidrio usan los tokens --erlen-vidrio* de tokens.css, que ya traen sus respaldos.
    Ningún color literal aquí: todo es var(--erlen-*) de tokens.css. Licencia: licencias/MIT.txt */
 *,::before,::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -17,7 +18,9 @@ code,kbd,pre,samp{font-family:var(--erlen-font-mono);font-size:.94em}
 /* Foco ámbar visible en todo lo enfocable. */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px;border-radius:4px}
 /* Cabecera común: marca, título, badge y hueco para el menú de suite (erlen-suite-nav se monta dentro, a la derecha). */
-.erlen-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:64px;padding:var(--erlen-esp-3) 4%;background:var(--erlen-superficie);border-bottom:1px solid var(--erlen-linea)}
+/* Sin backdrop-filter en la propia cabecera: crearía un bloque contenedor para el menú fijo de erlen-suite-nav que vive dentro.
+   Si una app la fija arriba (sticky), añade el desenfoque en un ::before (ver docs/COHERENCIA-APPS.md §0). */
+.erlen-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:64px;padding:var(--erlen-esp-3) 4%;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 -1px 0 var(--erlen-vidrio-borde)}
 .erlen-app-header h1{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 .erlen-app-header .erlen-marca{font-weight:700;white-space:nowrap}
 :root[data-erlen-color] .erlen-app-header .erlen-marca{color:var(--erlen-verde)}
@@ -25,11 +28,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .erlen-app-header .erlen-menu:empty{min-width:88px}
 .erlen-app-header .erlen-menu>erlen-suite-nav{margin-left:0}
 .badge,.erlen-badge{display:inline-block;font:700 var(--erlen-texto-xs)/1 var(--erlen-font-ui);color:var(--erlen-tinta);background:var(--erlen-verde-suave);border-radius:var(--erlen-radio-badge);padding:6px 10px;white-space:nowrap}
-/* Controles: 44 px de alto, radio de campo, borde de línea; un solo .primary por bloque. */
+/* Controles: 44 px de alto, radio de campo, borde de línea; un solo .primary por bloque. El primario lleva el brillo especular del cristal. */
 button,input,select,textarea{font:inherit;color:inherit;margin:0}
 button,.erlen-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-4);border:1px solid var(--erlen-verde);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-verde);font-weight:700;line-height:1.2;cursor:pointer;text-decoration:none}
 button:hover,.erlen-boton:hover{background:var(--erlen-verde-suave);text-decoration:none}
-button.primary,.erlen-boton.primary{background:var(--erlen-verde);color:var(--erlen-verde-contraste)}
+button.primary,.erlen-boton.primary{background:var(--erlen-vidrio-reflejo-acento),var(--erlen-verde);color:var(--erlen-verde-contraste);box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 2px 8px var(--erlen-vidrio-contorno)}
+button.primary:hover,.erlen-boton.primary:hover{background:var(--erlen-vidrio-reflejo-acento),color-mix(in srgb,var(--erlen-verde) 88%,var(--erlen-tinta))}
 button:disabled,.erlen-boton[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
 button.compact,.erlen-boton.compact{min-height:36px;padding:var(--erlen-esp-1) var(--erlen-esp-3);font-size:var(--erlen-texto-sm)}
 input,select,textarea{min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-3);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta)}
@@ -42,9 +46,21 @@ label,small,.erlen-nota{font-size:var(--erlen-texto-sm)}
 #status,.erlen-status{min-height:26px;margin:var(--erlen-esp-2) 0 var(--erlen-esp-4);font-size:var(--erlen-texto-sm);color:var(--erlen-tinta-suave)}
 #status[data-error="true"],.erlen-status.error,.erlen-error{color:var(--erlen-peligro);font-weight:700}
 .erlen-aviso{padding:var(--erlen-esp-3) var(--erlen-esp-4);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-pequeno);background:var(--erlen-ambar-suave);color:var(--erlen-tinta)}
-/* Paneles y tarjetas: se separan con línea, no con sombra. */
-.erlen-panel{background:var(--erlen-superficie);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-tarjeta);padding:var(--erlen-esp-4)}
-.erlen-panel.destacado{border-radius:var(--erlen-radio-panel);box-shadow:var(--erlen-sombra-panel)}
+/* Paneles: cristal fuerte sin desenfoque (están en el flujo, no flotan); .destacado con más relieve. */
+.erlen-panel{background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-tarjeta);padding:var(--erlen-esp-4);box-shadow:var(--erlen-vidrio-relieve)}
+.erlen-panel.destacado{border-radius:var(--erlen-radio-panel);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-panel)}
+/* Cristal flotante (menús, paletas, barras y paneles que se superponen al contenido): una sola capa de desenfoque por pantalla visible.
+   Nunca sobre el área de trabajo que se desplaza ni como fondo de un editor, hoja o lienzo. */
+.erlen-vidrio{background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-tarjeta);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-menu);color:var(--erlen-tinta);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro)}
+/* Diálogo de cristal: <dialog class="erlen-dialogo">; el fondo se atenúa sin desenfocar (un desenfoque a pantalla completa cuesta). */
+dialog.erlen-dialogo{max-width:min(560px,calc(100vw - 32px));padding:var(--erlen-esp-5);background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-panel);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-panel);color:var(--erlen-tinta);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro)}
+dialog.erlen-dialogo::backdrop{background:color-mix(in srgb,var(--erlen-tinta) 22%,transparent)}
+/* Cápsula: navegación, filtros y conmutadores; la activa (aria-pressed, aria-current o aria-selected) se eleva como una lente. */
+.erlen-capsula{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:36px;padding:0 var(--erlen-esp-4);border:1px solid transparent;border-radius:var(--erlen-radio-capsula);background:transparent;color:var(--erlen-tinta-suave);font:600 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);text-decoration:none;cursor:pointer}
+.erlen-capsula:hover{background:var(--erlen-vidrio-tinte);color:var(--erlen-tinta);text-decoration:none}
+.erlen-capsula:is([aria-pressed="true"],[aria-current],[aria-selected="true"]){background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-vidrio-relieve);color:var(--erlen-verde)}
+/* Atmósfera detrás del cromo (pantallas de bienvenida, vacíos, ajustes); nunca detrás del documento del usuario. */
+.erlen-atmosfera{background:var(--erlen-atmosfera)}
 /* Pie de app: enlaces al portal, código y licencia. */
 .erlen-app-footer{padding:var(--erlen-esp-5) 4%;border-top:1px solid var(--erlen-linea);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
 .visualmente-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

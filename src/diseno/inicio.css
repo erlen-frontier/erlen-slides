@@ -1,7 +1,13 @@
-/* Erlen Suite · paquete de diseño · pantalla de inicio (diseno/suite-inicio.mjs; docs/COHERENCIA-APPS.md §3).
+/* Erlen Suite · paquete de diseño 2.0.0 · pantalla de inicio (diseno/suite-inicio.mjs; docs/COHERENCIA-APPS.md §3).
    Solo tokens --erlen-*. Autónoma: no depende de base.css (Slides no lo carga) y neutraliza sus reglas de
-   elemento sobre <button>, <h1>, <p> y campos. Licencia: licencias/MIT.txt */
-.erlen-inicio{position:fixed;inset:0;z-index:300;overflow:auto;overscroll-behavior:contain;background:var(--erlen-papel);color:var(--erlen-tinta);font:400 var(--erlen-texto-ui)/var(--erlen-interlineado-ui) var(--erlen-font-ui);-webkit-font-smoothing:antialiased}
+   elemento sobre <button>, <h1>, <p> y campos.
+   Cristal (2.0.0): atmósfera de color detrás, barra lateral y tarjetas de cristal sin desenfoque (sobre un degradado liso
+   no aporta nada y costaría una capa por tarjeta); solo la cabecera fija desenfoca lo que pasa por debajo, en un ::before
+   para no romper el menú fijo de erlen-suite-nav que vive dentro. Miniaturas y campos, opacos. Licencia: licencias/MIT.txt */
+.erlen-inicio{position:fixed;inset:0;z-index:300;isolation:isolate;overflow:auto;overscroll-behavior:contain;background:var(--erlen-papel);color:var(--erlen-tinta);font:400 var(--erlen-texto-ui)/var(--erlen-interlineado-ui) var(--erlen-font-ui);-webkit-font-smoothing:antialiased}
+/* Atmósfera en su propia capa fija: se rasteriza una vez; desplazar el inicio o pasar por una tarjeta translúcida no
+   obliga a repintar sus degradados. */
+.erlen-inicio::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--erlen-atmosfera);pointer-events:none}
 .erlen-inicio[hidden]{display:none}
 .erlen-inicio *{box-sizing:border-box}
 .erlen-inicio h1,.erlen-inicio h2,.erlen-inicio h3,.erlen-inicio p,.erlen-inicio ul{margin:0}
@@ -12,24 +18,25 @@
 .erlen-inicio-marco{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100%}
 
 /* Barra lateral: marca, navegación y pie con licencia y estado. */
-.erlen-inicio-lateral{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:var(--erlen-esp-3);padding:var(--erlen-esp-6) var(--erlen-esp-4) var(--erlen-esp-5);background:var(--erlen-superficie);border-right:1px solid var(--erlen-linea);overflow-y:auto}
+.erlen-inicio-lateral{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:var(--erlen-esp-3);padding:var(--erlen-esp-6) var(--erlen-esp-4) var(--erlen-esp-5);background:var(--erlen-vidrio);border-right:1px solid var(--erlen-vidrio-contorno);box-shadow:inset -1px 0 0 var(--erlen-vidrio-borde);overflow-y:auto}
 .erlen-inicio-marca{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-1) var(--erlen-esp-2);min-width:0;padding:0 var(--erlen-esp-3) var(--erlen-esp-6);font:400 32px/1 var(--erlen-font-titulo);color:var(--erlen-tinta)}
 .erlen-inicio-marca-icono{display:inline-grid;flex:none;width:28px;height:28px;color:var(--erlen-verde)}
 .erlen-inicio-marca-icono:empty{display:none}
 .erlen-inicio-marca-icono svg{width:100%;height:100%}
 .erlen-inicio-marca small{align-self:flex-end;margin-bottom:6px;max-width:100%;overflow-wrap:anywhere;font:700 var(--erlen-texto-xs)/1 var(--erlen-font-ui);letter-spacing:.13em;color:var(--erlen-tinta-suave)}
 .erlen-inicio-nav{display:flex;flex-direction:column;gap:var(--erlen-esp-1)}
-.erlen-inicio .erlen-inicio-enlace{display:flex;align-items:center;min-height:44px;padding:var(--erlen-esp-2) var(--erlen-esp-3);border-radius:var(--erlen-radio-pequeno);color:var(--erlen-tinta-suave);text-decoration:none;font-size:var(--erlen-texto-sm);transition:background-color var(--erlen-dur) var(--erlen-ease),color var(--erlen-dur) var(--erlen-ease)}
-.erlen-inicio .erlen-inicio-enlace:hover{background:var(--erlen-superficie-2);color:var(--erlen-tinta)}
-.erlen-inicio .erlen-inicio-enlace[aria-current=page]{background:var(--erlen-verde-suave);color:var(--erlen-verde);font-weight:700}
+.erlen-inicio .erlen-inicio-enlace{display:flex;align-items:center;min-height:44px;padding:var(--erlen-esp-2) var(--erlen-esp-4);border:1px solid transparent;border-radius:var(--erlen-radio-capsula);color:var(--erlen-tinta-suave);text-decoration:none;font-size:var(--erlen-texto-sm);transition:background-color var(--erlen-dur) var(--erlen-ease),color var(--erlen-dur) var(--erlen-ease),box-shadow var(--erlen-dur) var(--erlen-ease)}
+.erlen-inicio .erlen-inicio-enlace:hover{background:var(--erlen-vidrio-tinte);color:var(--erlen-tinta)}
+.erlen-inicio .erlen-inicio-enlace[aria-current=page]{background:var(--erlen-vidrio-reflejo),var(--erlen-superficie);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-vidrio-relieve);color:var(--erlen-verde);font-weight:700}
 .erlen-inicio-lateral-pie{margin-top:auto;display:flex;flex-direction:column;gap:var(--erlen-esp-2);padding-top:var(--erlen-esp-6)}
 .erlen-inicio .erlen-inicio-fuente{padding:0 var(--erlen-esp-3);font-size:var(--erlen-texto-xs)}
-.erlen-inicio-estado{margin-top:var(--erlen-esp-3)!important;padding:var(--erlen-esp-4) var(--erlen-esp-3) 0;border-top:1px solid var(--erlen-linea);font:700 var(--erlen-texto-xs)/1.4 var(--erlen-font-ui)}
+.erlen-inicio-estado{margin-top:var(--erlen-esp-3)!important;padding:var(--erlen-esp-4) var(--erlen-esp-3) 0;border-top:1px solid var(--erlen-vidrio-contorno);font:700 var(--erlen-texto-xs)/1.4 var(--erlen-font-ui)}
 .erlen-inicio-estado span{display:block;margin-top:var(--erlen-esp-1);font-weight:400;color:var(--erlen-tinta-suave)}
 
 /* Panel: cabecera fina y contenido con ancho máximo. */
 .erlen-inicio-panel{min-width:0}
-.erlen-inicio-cabecera{display:flex;align-items:center;justify-content:space-between;gap:var(--erlen-esp-4);min-height:72px;padding:0 var(--erlen-esp-6);border-bottom:1px solid var(--erlen-linea);color:var(--erlen-tinta-suave);font-size:var(--erlen-texto-sm)}
+.erlen-inicio-cabecera{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:var(--erlen-esp-4);min-height:72px;padding:0 var(--erlen-esp-6);border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 -1px 0 var(--erlen-vidrio-borde);color:var(--erlen-tinta-suave);font-size:var(--erlen-texto-sm)}
+.erlen-inicio-cabecera::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro);pointer-events:none}
 .erlen-inicio-cabecera-acciones{display:flex;align-items:center;gap:var(--erlen-esp-4)}
 .erlen-inicio-local{font-size:var(--erlen-texto-xs)}
 .erlen-inicio-contenido{max-width:1350px;margin:0 auto;padding:var(--erlen-esp-7) var(--erlen-esp-6) var(--erlen-esp-8)}
@@ -41,40 +48,40 @@
 .erlen-inicio-vista-cabecera .erlen-inicio-titulo{font-size:42px}
 .erlen-inicio .erlen-inicio-lead{max-width:60ch;color:var(--erlen-tinta-suave);line-height:1.65}
 .erlen-inicio-buscar{display:flex;min-width:min(100%,320px)}
-.erlen-inicio-recreo{min-height:115px;margin:var(--erlen-esp-4) 0 var(--erlen-esp-6);padding:var(--erlen-esp-2) var(--erlen-esp-4) var(--erlen-esp-4);border-bottom:1px solid var(--erlen-linea)}
+.erlen-inicio-recreo{min-height:115px;margin:var(--erlen-esp-4) 0 var(--erlen-esp-6);padding:var(--erlen-esp-2) var(--erlen-esp-4) var(--erlen-esp-4);border-bottom:1px solid var(--erlen-vidrio-contorno)}
 .erlen-inicio-recreo erlen-mey{display:block;height:90px}
 
 /* Campos y botones propios (no dependen de base.css). */
-.erlen-inicio .erlen-inicio-campo{width:100%;min-height:var(--erlen-alto-control);padding:0 var(--erlen-esp-3);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);font:400 var(--erlen-texto-ui) var(--erlen-font-ui)}
+.erlen-inicio .erlen-inicio-campo{width:100%;min-height:var(--erlen-alto-control);padding:0 var(--erlen-esp-4);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-capsula);background:var(--erlen-superficie);color:var(--erlen-tinta);font:400 var(--erlen-texto-ui) var(--erlen-font-ui);box-shadow:inset 0 1px 2px var(--erlen-vidrio-contorno)}
 .erlen-inicio .erlen-inicio-campo:focus{border-color:var(--erlen-verde)}
-.erlen-inicio .erlen-inicio-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:40px;margin:0;padding:0 var(--erlen-esp-4);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-verde);font:700 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);cursor:pointer;text-decoration:none;box-shadow:none;white-space:normal;max-width:100%;min-width:0;transition:background-color var(--erlen-dur-micro) var(--erlen-ease),border-color var(--erlen-dur-micro) var(--erlen-ease)}
+.erlen-inicio .erlen-inicio-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:40px;margin:0;padding:0 var(--erlen-esp-4);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-capsula);background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);color:var(--erlen-verde);font:700 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);cursor:pointer;text-decoration:none;box-shadow:var(--erlen-vidrio-relieve);white-space:normal;max-width:100%;min-width:0;transition:background-color var(--erlen-dur-micro) var(--erlen-ease),border-color var(--erlen-dur-micro) var(--erlen-ease),box-shadow var(--erlen-dur-micro) var(--erlen-ease)}
 .erlen-inicio-boton-texto{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .erlen-inicio-cabecera-acciones .erlen-inicio-boton-texto{white-space:nowrap}
 .erlen-inicio .erlen-inicio-nueva,.erlen-inicio .erlen-inicio-enlace{white-space:normal}
-.erlen-inicio .erlen-inicio-boton:hover{background:var(--erlen-verde-suave);border-color:var(--erlen-verde)}
-.erlen-inicio .erlen-inicio-boton.primario{background:var(--erlen-verde);border-color:var(--erlen-verde);color:var(--erlen-verde-contraste)}
-.erlen-inicio .erlen-inicio-boton.primario:hover{background:color-mix(in srgb,var(--erlen-verde) 86%,var(--erlen-tinta))}
+.erlen-inicio .erlen-inicio-boton:hover{background:var(--erlen-vidrio-reflejo),var(--erlen-verde-suave);border-color:var(--erlen-verde)}
+.erlen-inicio .erlen-inicio-boton.primario{background:var(--erlen-vidrio-reflejo-acento),var(--erlen-verde);border-color:var(--erlen-verde);color:var(--erlen-verde-contraste);box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 2px 8px var(--erlen-vidrio-contorno)}
+.erlen-inicio .erlen-inicio-boton.primario:hover{background:var(--erlen-vidrio-reflejo-acento),color-mix(in srgb,var(--erlen-verde) 86%,var(--erlen-tinta))}
 .erlen-inicio .erlen-inicio-boton.peligro{color:var(--erlen-peligro);border-color:var(--erlen-peligro)}
 .erlen-inicio .erlen-inicio-boton.peligro:hover{background:var(--erlen-peligro-suave)}
 
 /* Colección de inicio: tarjeta «Nuevo…» y ejemplos. */
-.erlen-inicio-meta{display:flex;align-items:center;justify-content:space-between;gap:var(--erlen-esp-3);flex-wrap:wrap;margin-top:var(--erlen-esp-6);padding-top:var(--erlen-esp-4);border-top:1px solid var(--erlen-linea)}
+.erlen-inicio-meta{display:flex;align-items:center;justify-content:space-between;gap:var(--erlen-esp-3);flex-wrap:wrap;margin-top:var(--erlen-esp-6);padding-top:var(--erlen-esp-4);border-top:1px solid var(--erlen-vidrio-contorno)}
 .erlen-inicio-meta h2{font:700 var(--erlen-texto-xs)/1.2 var(--erlen-font-ui);letter-spacing:.13em;text-transform:uppercase;color:var(--erlen-tinta-suave)}
 .erlen-inicio-acciones{display:flex;gap:var(--erlen-esp-2);flex-wrap:wrap}
 .erlen-inicio-rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--erlen-esp-5);margin:var(--erlen-esp-5) 0}
 .erlen-inicio-coleccion{grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:var(--erlen-esp-4)}
-.erlen-inicio .erlen-inicio-nueva{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:0;margin:0;padding:var(--erlen-esp-4);border:1px dashed var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-tarjeta);background:transparent;color:var(--erlen-tinta);font:inherit;cursor:pointer;text-align:center;transition:border-color var(--erlen-dur) var(--erlen-ease),background-color var(--erlen-dur) var(--erlen-ease)}
-.erlen-inicio .erlen-inicio-nueva:hover{border-color:var(--erlen-verde);background:color-mix(in srgb,var(--erlen-verde-suave) 55%,transparent)}
-.erlen-inicio-mas{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--erlen-verde);color:var(--erlen-verde-contraste);font-size:24px;line-height:1}
+.erlen-inicio .erlen-inicio-nueva{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:0;margin:0;padding:var(--erlen-esp-4);border:1.5px dashed color-mix(in srgb,var(--erlen-verde) 45%,transparent);border-radius:var(--erlen-radio-tarjeta);background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio);color:var(--erlen-tinta);font:inherit;cursor:pointer;text-align:center;transition:border-color var(--erlen-dur) var(--erlen-ease),background-color var(--erlen-dur) var(--erlen-ease),box-shadow var(--erlen-dur) var(--erlen-ease)}
+.erlen-inicio .erlen-inicio-nueva:hover{border-color:var(--erlen-verde);border-style:solid;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);box-shadow:var(--erlen-vidrio-relieve)}
+.erlen-inicio-mas{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--erlen-vidrio-reflejo-acento),var(--erlen-verde);color:var(--erlen-verde-contraste);font-size:24px;line-height:1;box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 4px 12px var(--erlen-vidrio-contorno)}
 .erlen-inicio-nueva-datos{display:flex;flex-direction:column;gap:var(--erlen-esp-1)}
 .erlen-inicio-nueva strong{font:400 24px/1.2 var(--erlen-font-titulo)}
 .erlen-inicio-nueva small{font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
-.erlen-inicio-ejemplo,.erlen-inicio-tarjeta{display:flex;flex-direction:column;gap:var(--erlen-esp-3);padding:var(--erlen-esp-5);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-tarjeta);background:var(--erlen-superficie);transition:border-color var(--erlen-dur) var(--erlen-ease),box-shadow var(--erlen-dur) var(--erlen-ease)}
-.erlen-inicio-ejemplo:hover,.erlen-inicio-tarjeta:hover{border-color:var(--erlen-linea-fuerte);box-shadow:var(--erlen-sombra-tarjeta)}
+.erlen-inicio-ejemplo,.erlen-inicio-tarjeta{display:flex;flex-direction:column;gap:var(--erlen-esp-3);padding:var(--erlen-esp-5);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-tarjeta);background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio);box-shadow:var(--erlen-vidrio-relieve);transition:border-color var(--erlen-dur) var(--erlen-ease),box-shadow var(--erlen-dur) var(--erlen-ease),background-color var(--erlen-dur) var(--erlen-ease)}
+.erlen-inicio-ejemplo:hover,.erlen-inicio-tarjeta:hover{border-color:color-mix(in srgb,var(--erlen-verde) 35%,transparent);background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-tarjeta)}
 .erlen-inicio-ejemplo[hidden]{display:none}
 .erlen-inicio-ejemplo.con-arte{gap:var(--erlen-esp-2);padding:var(--erlen-esp-2);min-width:0}
 .erlen-inicio-ejemplo-datos{display:flex;flex-direction:column;gap:var(--erlen-esp-1);min-width:0;padding:0 var(--erlen-esp-2)}
-.erlen-inicio-arte{display:grid;place-items:center;height:120px;padding:var(--erlen-esp-3);border-radius:var(--erlen-radio-pequeno);background:var(--erlen-verde-suave);color:var(--erlen-verde);font:italic 400 24px/1.2 var(--erlen-font-titulo);text-align:center}
+.erlen-inicio-arte{display:grid;place-items:center;height:120px;padding:var(--erlen-esp-3);border-radius:calc(var(--erlen-radio-tarjeta) - var(--erlen-esp-2));background:var(--erlen-verde-suave);box-shadow:inset 0 0 0 1px var(--erlen-vidrio-contorno);color:var(--erlen-verde);font:italic 400 24px/1.2 var(--erlen-font-titulo);text-align:center}
 .erlen-inicio-arte svg{max-width:100%;max-height:100%}
 .erlen-inicio-ejemplo.con-arte .erlen-inicio-arte{width:100%;height:auto;aspect-ratio:16/9;padding:var(--erlen-esp-2);overflow:hidden}
 .erlen-inicio-arte img{display:block;width:100%;height:100%;object-fit:contain}
@@ -90,14 +97,14 @@
 .erlen-inicio-nota{margin-top:var(--erlen-esp-3)!important;font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
 .erlen-inicio-biblioteca{grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:var(--erlen-esp-4)}
 .erlen-inicio-tarjeta{display:grid;grid-template-columns:88px minmax(0,1fr);gap:var(--erlen-esp-3);min-width:0;padding:var(--erlen-esp-2);overflow:hidden}
-.erlen-inicio-miniatura{display:flex;flex-direction:column;justify-content:space-between;gap:var(--erlen-esp-2);min-width:0;padding:var(--erlen-esp-2);border-radius:var(--erlen-radio-pequeno);background:var(--erlen-superficie-2)}
+.erlen-inicio-miniatura{display:flex;flex-direction:column;justify-content:space-between;gap:var(--erlen-esp-2);min-width:0;padding:var(--erlen-esp-2);border-radius:calc(var(--erlen-radio-tarjeta) - var(--erlen-esp-2));background:var(--erlen-superficie-2);box-shadow:inset 0 0 0 1px var(--erlen-vidrio-contorno)}
 .erlen-inicio-miniatura small{font:700 var(--erlen-texto-xs)/1 var(--erlen-font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--erlen-tinta-suave)}
 .erlen-inicio-miniatura span{font:700 var(--erlen-texto-sm)/1.25 var(--erlen-font-ui);color:var(--erlen-tinta);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .erlen-inicio-tarjeta-cuerpo{display:flex;flex-direction:column;justify-content:center;gap:var(--erlen-esp-1);min-width:0}
 .erlen-inicio-tarjeta h3{font:700 var(--erlen-texto-ui)/1.3 var(--erlen-font-ui);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .erlen-inicio-tarjeta .erlen-inicio-acciones{gap:var(--erlen-esp-1)}
 .erlen-inicio-tarjeta .erlen-inicio-boton{min-height:36px;padding:0 var(--erlen-esp-2);font-size:var(--erlen-texto-xs)}
-.erlen-inicio-vacio{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:var(--erlen-esp-3);padding:var(--erlen-esp-7) var(--erlen-esp-5);border:1px dashed var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-tarjeta);text-align:center}
+.erlen-inicio-vacio{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:var(--erlen-esp-3);padding:var(--erlen-esp-7) var(--erlen-esp-5);border:1px dashed var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-tarjeta);background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio);box-shadow:var(--erlen-vidrio-relieve);text-align:center}
 /* Mey (diseno/mey.mjs) en un hueco de 96 px: <erlen-mey> elige 6 px por celda (96×108). */
 .erlen-inicio-mey{display:block;width:96px}
 .erlen-inicio-mey svg{display:block;width:100%;height:auto}
@@ -108,7 +115,7 @@
 .erlen-inicio-boton.reciente strong{font-weight:700;overflow-wrap:anywhere}
 .erlen-inicio-boton.reciente small{font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
 .erlen-inicio-enlace-texto{font-size:var(--erlen-texto-sm)}
-.erlen-inicio-pie{display:flex;align-items:center;justify-content:space-between;gap:var(--erlen-esp-3);flex-wrap:wrap;margin-top:var(--erlen-esp-6);padding-top:var(--erlen-esp-4);border-top:1px solid var(--erlen-linea);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
+.erlen-inicio-pie{display:flex;align-items:center;justify-content:space-between;gap:var(--erlen-esp-3);flex-wrap:wrap;margin-top:var(--erlen-esp-6);padding-top:var(--erlen-esp-4);border-top:1px solid var(--erlen-vidrio-contorno);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
 .erlen-inicio-activo{display:inline-flex;align-items:center;gap:6px;color:var(--erlen-verde);font-weight:700}
 .erlen-inicio-activo::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .erlen-inicio-acerca{display:flex;flex-direction:column;gap:var(--erlen-esp-3);max-width:72ch}
@@ -124,16 +131,22 @@
 }
 @media (max-width:760px){
  .erlen-inicio-marco{display:block}
- .erlen-inicio-lateral{position:static;height:auto;padding:var(--erlen-esp-4) var(--erlen-esp-4) var(--erlen-esp-2);border-right:0;border-bottom:1px solid var(--erlen-linea)}
+ .erlen-inicio-lateral{position:static;height:auto;padding:var(--erlen-esp-4) var(--erlen-esp-4) var(--erlen-esp-2);border-right:0;border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 -1px 0 var(--erlen-vidrio-borde)}
  .erlen-inicio-marca{padding:0 0 var(--erlen-esp-2)}
- .erlen-inicio-nav{flex-direction:row;overflow-x:auto;scrollbar-width:none}
+ /* La fila de navegación se desplaza en horizontal y recorta lo que sobresale: un poco de margen interior y un relieve
+    corto en la lente para que su sombra no se corte en un rectángulo. */
+ .erlen-inicio-nav{flex-direction:row;overflow-x:auto;scrollbar-width:none;padding:var(--erlen-esp-1);margin:calc(-1 * var(--erlen-esp-1))}
+ .erlen-inicio .erlen-inicio-enlace[aria-current=page]{box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 1px 3px var(--erlen-vidrio-contorno)}
  .erlen-inicio .erlen-inicio-enlace{flex:none;white-space:nowrap}
  .erlen-inicio-lateral-pie{flex-direction:row;flex-wrap:wrap;align-items:center;padding-top:0;margin-top:0}
  .erlen-inicio-estado{display:none}
  .erlen-inicio .erlen-inicio-titulo{font-size:38px}
  .erlen-inicio-controles{grid-template-columns:1fr}
- .erlen-inicio-cabecera{min-height:56px;padding-block:var(--erlen-esp-2)}
+ .erlen-inicio-cabecera{position:relative;min-height:56px;padding-block:var(--erlen-esp-2)}
  .erlen-inicio-cabecera>span{display:none}
+ /* Sin menú de suite ni «Continuar» (app fuera del portal, file://) la cabecera no tendría nada visible: se retira en
+    vez de dejar una franja de cristal vacía entre la barra lateral y el contenido (2.0.1). */
+ .erlen-inicio-cabecera:not(:has(.erlen-inicio-cabecera-acciones>:not(.erlen-inicio-local,.erlen-inicio-suite:empty))){display:none}
  .erlen-inicio-cabecera-acciones{width:100%;justify-content:flex-end;gap:var(--erlen-esp-2)}
 }
 .erlen-inicio-cabecera-acciones{min-width:0;flex-wrap:wrap;justify-content:flex-end}
@@ -156,4 +169,6 @@
 }
 @media (max-width:360px){.erlen-inicio-contenido{padding-inline:14px}.erlen-inicio-cabecera{padding:0 14px}}
 @media (prefers-reduced-motion:reduce){.erlen-inicio *{transition:none!important}}
+/* Colores forzados: la lente del enlace actual y la cabecera se marcan con el borde del sistema. */
+@media (forced-colors:active){.erlen-inicio .erlen-inicio-enlace[aria-current=page]{border-color:Highlight}.erlen-inicio-cabecera::before{background:Canvas}}
 @media print{.erlen-inicio{display:none}}
