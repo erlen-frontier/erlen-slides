@@ -13,6 +13,7 @@ jobs:
         env:
           TITULO: ${{ github.event.pull_request.title }}
           CUERPO: ${{ github.event.pull_request.body }}
+          AUTOR: ${{ github.event.pull_request.user.login }}
         run: |
           ok=1
           tipos='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
@@ -23,7 +24,8 @@ jobs:
             echo "::error::Title must be in English (no accents, ñ, ¿ or ¡)."; ok=0
           fi
           if [ "${#TITULO}" -gt 100 ]; then echo "::error::Title longer than 100 characters."; ok=0; fi
-          if ! printf '%s\n' "$CUERPO" | grep -qiE '^#{1,3} *testing'; then
+          # Dependabot genera su propia descripción (notas de versión); su CI hace de prueba.
+          if [ "$AUTOR" != "dependabot[bot]" ] && ! printf '%s\n' "$CUERPO" | grep -qiE '^#{1,3} *testing'; then
             echo "::error::Description needs a '## Testing' section with the real test results."; ok=0
           fi
           [ "$ok" = 1 ] && echo "Convention OK: $TITULO"
