@@ -1,5 +1,7 @@
-/* Erlen Suite · paquete de diseño 1.0.0 · tokens (docs/DISENO-PAQUETE.md, docs/GUIA-DISENO.md §2–§6).
+/* Erlen Suite · paquete de diseño 2.0.0 · tokens (docs/DISENO-PAQUETE.md, docs/GUIA-DISENO.md §0 y §2–§6).
    Fuente única en el portal: diseno/tokens.css. Los valores viven aquí y solo aquí; el cromo de cada app usa var(--erlen-*), nunca literales.
+   2.0.0 · cristal (vidrio líquido): el material de la capa de controles también vive aquí, con sus respaldos opacos (sin
+   backdrop-filter, prefers-reduced-transparency, prefers-contrast:more, forced-colors y [data-erlen-material="solido"]).
    Claro por defecto; oscuro por prefers-color-scheme (salvo [data-theme="light"]) o por [data-theme="dark"]. Licencia: licencias/MIT.txt */
 :root{color-scheme:light;
  /* Paleta: papel, tinta, verde, ámbar, peligro, línea, superficie */
@@ -23,10 +25,30 @@
  --erlen-interlineado:1.7;--erlen-interlineado-ui:1.5;
  /* Espaciado */
  --erlen-esp-1:4px;--erlen-esp-2:8px;--erlen-esp-3:12px;--erlen-esp-4:16px;--erlen-esp-5:24px;--erlen-esp-6:32px;--erlen-esp-7:48px;--erlen-esp-8:64px;
- /* Radios */
- --erlen-radio-campo:7px;--erlen-radio-pequeno:8px;--erlen-radio-tarjeta:12px;--erlen-radio-panel:18px;--erlen-radio-badge:30px;
- /* Sombras: solo en paneles destacados y menús flotantes; las tarjetas se separan con --erlen-linea */
- --erlen-sombra-tarjeta:0 10px 30px #284b3014;--erlen-sombra-menu:0 10px 28px #183b3226;--erlen-sombra-panel:0 20px 55px #284b3010;
+ /* Radios: concéntricos (interior = exterior − relleno); cápsula para pestañas, navegación y acciones */
+ --erlen-radio-campo:10px;--erlen-radio-pequeno:10px;--erlen-radio-tarjeta:16px;--erlen-radio-panel:22px;--erlen-radio-badge:999px;--erlen-radio-capsula:999px;
+ /* Sombras: paneles destacados, menús flotantes y tarjetas de cristal */
+ --erlen-sombra-tarjeta:0 10px 30px #284b3014;--erlen-sombra-menu:0 14px 36px #183b3229;--erlen-sombra-panel:0 20px 55px #284b3014;
+ /* Cristal (vidrio líquido, 2.0.0). Solo la capa de controles: cinta, cabeceras, menús, diálogos, paneles y tarjetas del inicio.
+    El área de trabajo (documento, hoja, lienzo, diapositiva, figura, espectro, partitura) sigue opaca.
+    --erlen-vidrio: sobre la atmósfera o sobre papel (barra lateral, tarjetas, paneles).
+    --erlen-vidrio-fuerte: sobre contenido que cambia (cinta, cabeceras fijas, menús, diálogos); legible sobre negro puro (test).
+    --erlen-vidrio-filtro: el desenfoque; úsalo solo en capas que flotan sobre contenido y nunca en áreas grandes que se desplazan. */
+ --erlen-vidrio:color-mix(in srgb,var(--erlen-superficie) 66%,transparent);
+ --erlen-vidrio-fuerte:color-mix(in srgb,var(--erlen-superficie) 88%,transparent);
+ --erlen-vidrio-tinte:color-mix(in srgb,var(--erlen-verde) 10%,transparent);
+ --erlen-vidrio-borde:#ffffffb3;--erlen-vidrio-contorno:#243c3224;
+ --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff8c 0,#ffffff29 38%,#ffffff00 62%);
+ --erlen-vidrio-relieve:inset 0 1px 0 #ffffff,inset 0 0 0 1px #ffffff66,inset 0 -1px 0 #ffffff40,0 1px 2px #1b2e2514,0 10px 28px #1b2e2521;
+ --erlen-vidrio-filtro:blur(18px) saturate(160%);
+ /* Brillo especular sobre rellenos del acento (botón principal, «Archivo», «+»): tenue para que su texto siga ≥ 4,5:1 (test) */
+ --erlen-vidrio-reflejo-acento:linear-gradient(180deg,#ffffff38 0,#ffffff0d 45%,#ffffff00 60%);
+ /* Atmósfera: luz de color detrás del cromo (inicio de las apps, portal); nunca detrás del contenido del usuario */
+ /* --erlen-luz: versión luminosa del acento (la misma en claro y oscuro); la eligen también los acentos personales */
+ --erlen-luz:#7fc8a9;
+ --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 36%,transparent);
+ --erlen-atmosfera-b:color-mix(in srgb,#bea4ed 30%,transparent);
+ --erlen-atmosfera:radial-gradient(60% 70% at 0% 0%,var(--erlen-atmosfera-a) 0,transparent 72%),radial-gradient(55% 60% at 100% 0%,var(--erlen-atmosfera-b) 0,transparent 70%),radial-gradient(70% 55% at 75% 100%,var(--erlen-atmosfera-a) 0,transparent 70%),radial-gradient(50% 45% at 15% 95%,var(--erlen-atmosfera-b) 0,transparent 70%),var(--erlen-papel);
  /* Movimiento: micro 120 ms, estados 180 ms, entradas 300 ms */
  --erlen-dur-micro:.12s;--erlen-dur:.18s;--erlen-dur-entrada:.3s;--erlen-ease:cubic-bezier(.2,.7,.2,1);
  /* Controles */
@@ -38,19 +60,27 @@
  --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
  --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
- --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}}
+ --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 14px 36px #00000080;--erlen-sombra-panel:0 20px 55px #00000066;
+ --erlen-vidrio-borde:#ffffff24;--erlen-vidrio-contorno:#ffffff1f;
+ --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff17 0,#ffffff08 38%,#ffffff00 62%);
+ --erlen-vidrio-relieve:inset 0 1px 0 #ffffff2e,inset 0 0 0 1px #ffffff0d,inset 0 -1px 0 #ffffff0d,0 1px 2px #00000040,0 10px 28px #00000059;
+ --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 16%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#bea4ed 11%,transparent)}}
 :root[data-theme="dark"]{color-scheme:dark;
  --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
  --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
  --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
  --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
- --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 10px 28px #00000080;--erlen-sombra-panel:0 20px 55px #00000066}
+ --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 14px 36px #00000080;--erlen-sombra-panel:0 20px 55px #00000066;
+ --erlen-vidrio-borde:#ffffff24;--erlen-vidrio-contorno:#ffffff1f;
+ --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff17 0,#ffffff08 38%,#ffffff00 62%);
+ --erlen-vidrio-relieve:inset 0 1px 0 #ffffff2e,inset 0 0 0 1px #ffffff0d,inset 0 -1px 0 #ffffff0d,0 1px 2px #00000040,0 10px 28px #00000059;
+ --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 16%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#bea4ed 11%,transparent)}
 /* La preferencia de color solo toca el acento del cromo, no documentos, Mey, iconos o
    --erlen-foco. Contraste mínimo 4,5:1 en ambas superficies de las apps. */
-:root[data-erlen-color="violeta"]{--erlen-verde:#59368b;--erlen-verde-suave:#eee8f6}
-:root[data-erlen-color="azul"]{--erlen-verde:#24559c;--erlen-verde-suave:#e6effb}
-:root[data-erlen-color="cobre"]{--erlen-verde:#85502e;--erlen-verde-suave:#f5ebe2}
+:root[data-erlen-color="violeta"]{--erlen-verde:#59368b;--erlen-verde-suave:#eee8f6;--erlen-luz:#bea4ed}
+:root[data-erlen-color="azul"]{--erlen-verde:#24559c;--erlen-verde-suave:#e6effb;--erlen-luz:#94bcf0}
+:root[data-erlen-color="cobre"]{--erlen-verde:#85502e;--erlen-verde-suave:#f5ebe2;--erlen-luz:#e8ad7d}
 @media(prefers-color-scheme:dark){
  :root:not([data-theme="light"])[data-erlen-color="violeta"]{--erlen-verde:#bea4ed;--erlen-verde-suave:#31273d}
  :root:not([data-theme="light"])[data-erlen-color="azul"]{--erlen-verde:#94bcf0;--erlen-verde-suave:#203047}
@@ -59,3 +89,12 @@
 :root[data-theme="dark"][data-erlen-color="violeta"]{--erlen-verde:#bea4ed;--erlen-verde-suave:#31273d}
 :root[data-theme="dark"][data-erlen-color="azul"]{--erlen-verde:#94bcf0;--erlen-verde-suave:#203047}
 :root[data-theme="dark"][data-erlen-color="cobre"]{--erlen-verde:#e8ad7d;--erlen-verde-suave:#37291f}
+/* Cristal accesible: sin backdrop-filter, con menos transparencia, más contraste, colores forzados o
+   [data-erlen-material="solido"] (elección de la persona), el material pasa a superficie opaca, sin reflejos ni desenfoque.
+   :root:root sube la especificidad para ganar a los bloques del modo oscuro, que también redefinen el cristal. */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie)}}
+@media (prefers-reduced-transparency:reduce){:root:root{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none}}
+@media (prefers-contrast:more){:root:root{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-tinte:var(--erlen-verde-suave);--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none;--erlen-vidrio-borde:var(--erlen-linea-fuerte);--erlen-vidrio-contorno:var(--erlen-tinta);--erlen-vidrio-relieve:0 0 0 1px var(--erlen-tinta);--erlen-atmosfera:var(--erlen-papel)}}
+@media (forced-colors:active){:root:root{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:Canvas;--erlen-vidrio-fuerte:Canvas;--erlen-vidrio-tinte:Canvas;--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none;--erlen-vidrio-borde:CanvasText;--erlen-vidrio-contorno:CanvasText;--erlen-vidrio-relieve:none;--erlen-atmosfera:Canvas}}
+:root[data-erlen-material="solido"]{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none;--erlen-atmosfera:var(--erlen-papel)}
+@media print{:root:root{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none;--erlen-vidrio-relieve:none;--erlen-atmosfera:none}}
