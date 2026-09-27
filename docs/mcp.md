@@ -60,7 +60,7 @@ En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mj
 | `editar_metadatos` | Título, autores, institución, fecha, tema, aspecto, acento, tipografía. |
 | `agregar_diapositivas`, `agregar_diapositiva` | Varias diapositivas de una vez (entran todas o ninguna) o una sola, con notas del orador y minutos. |
 | `editar_diapositiva`, `duplicar_diapositiva`, `mover_diapositiva`, `eliminar_diapositiva` | La estructura de la charla. |
-| `agregar_bloque`, `editar_bloque`, `eliminar_bloque` | Texto, viñetas, ecuaciones, reacciones, tablas, gráficas (también desde archivos del equipo), gráficas dinámicas, SmartArt, cajas Beamer, teoremas, código, citas e imágenes. |
+| `agregar_bloque`, `editar_bloque`, `eliminar_bloque` | Texto, viñetas, ecuaciones, reacciones, estructuras químicas desde SMILES o MOL, tablas, gráficas (también desde archivos del equipo), gráficas dinámicas, SmartArt, cajas Beamer, teoremas, código, citas e imágenes. |
 | `agregar_referencia` | Una referencia real, dónde se cita y su clave para citar en línea con `[@clave]`. |
 | `historial_presentacion`, `deshacer`, `rehacer` | Cada cambio guarda antes la versión anterior (las 50 últimas). |
 | `revisar_presentacion` | Calidad científica de las figuras, accesibilidad, estructura, tiempo frente a la duración disponible y avisos por formato. |
@@ -71,7 +71,24 @@ También ofrece tres *prompts* que el cliente puede mostrar como atajos: **prese
 
 Un pedido típico: «Con `drx/zn-al-ph10.xy` y mis notas, hazme una presentación de 10 minutos para la reunión de grupo sobre la síntesis de HDL Zn-Al, tema Marino, y enséñame el mosaico». El asistente consulta la guía, propone el guion, crea el proyecto con todas las diapositivas, revisa, mira el mosaico, corrige lo que se desborda y exporta.
 
-Después abre el `.json` en Erlen Slides («Abrir proyecto») para seguir editando a mano. Las estructuras químicas dibujadas, los montajes de laboratorio, las figuras geométricas, las galerías y los vídeos se editan mejor ahí: el servidor los conserva, pero no los construye.
+Después abre el `.json` en Erlen Slides («Abrir proyecto») para seguir editando a mano. Los montajes de laboratorio, las figuras geométricas, las galerías y los vídeos se editan mejor ahí: el servidor los conserva, pero no los construye.
+
+## Estructuras químicas
+
+Un bloque de estructura se construye desde un SMILES o un archivo MOL:
+
+```json
+{"tipo": "estruct", "smiles": "C[C@H](N)C(=O)O", "caption": "L-alanina"}
+{"tipo": "estruct", "archivo_mol": "moleculas/ligando.mol", "caption": "Ligando", "estilo": "acs"}
+```
+
+- RDKit, la misma biblioteca que usa el editor, interpreta la entrada, dibuja en 2D, pone los aromáticos en forma de Kekulé y las cuñas de los estereocentros definidos. Un `.mol` o `.sdf` que ya trae su dibujo se respeta (del `.sdf`, la primera molécula).
+- El resultado es **la estructura nativa del editor**: vectorial, se sigue editando átomo a átomo en el lienzo de estructuras y sale como TikZ en el `.tex`. No es una imagen.
+- Las sales y los iones se colocan en fila, sin superponerse.
+- Los hidrógenos los deduce la app por valencia; donde RDKit dice otra cosa (radicales, metales) se fija el número de RDKit.
+- Si no se da `w`, el ancho se calcula para que el enlace mida lo mismo en todas las moléculas (unos 36 px en una diapositiva de 1280) según la zona donde cae; si una molécula no cabe legible, se avisa.
+- `estilo` elige la norma de dibujo: `diapo` (por omisión, para proyectar), `acs`, `nature`, `rsc`, `cell` o `wiley`.
+- La respuesta trae la fórmula (orden de Hill), la masa molar, el SMILES canónico y los estereocentros sin asignar. **Un modelo de lenguaje se puede equivocar al escribir un SMILES**: el servidor le pide que compare la fórmula y la masa con la molécula pedida, y conviene que tú también la mires en la vista previa.
 
 ## Datos de tus equipos
 
@@ -110,6 +127,7 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 - `mcp/servidor.mjs`: protocolo MCP (JSON-RPC 2.0 sobre stdio, versiones `2025-06-18`, `2025-03-26` y `2024-11-05`; `structuredContent` desde la primera), catálogo de herramientas y *prompts*. Sin dependencias nuevas.
 - `mcp/motor.mjs`: carpeta de trabajo, escritura atómica, historial, lectura de imágenes y datos, y la aplicación construida cargada en JSDOM.
 - `mcp/operaciones.js`: las operaciones sobre el proyecto. Se evalúa dentro de la página, en el ámbito de los módulos, para usar sus funciones reales.
+- `mcp/quimica.mjs`: de SMILES o MOL a la estructura nativa, con RDKit (`@rdkit/rdkit`).
 - `mcp/navegador.mjs`: vista previa, PDF y PowerPoint en Chromium, con `public/` servido en `127.0.0.1`.
 - `tests/mcp.test.mjs`: arranca el servidor como un cliente; prueba el protocolo, construye una presentación con datos de difracción, la revisa, deshace, rehace y exporta. La prueba de vista previa, PDF y PowerPoint se salta si no hay Chromium.
 

@@ -18,6 +18,7 @@ const VERSIONES = ['2025-06-18', '2025-03-26', '2024-11-05'];
 
 const INSTRUCCIONES = `Erlen Slides es un editor de presentaciones científicas con acabado LaTeX/Beamer. Estas herramientas trabajan sobre proyectos JSON de la carpeta de trabajo del usuario, que después se abren en el editor.
 Flujo recomendado: guia_formato (una vez por conversación) → crear_presentacion con todas las diapositivas (o agregar_diapositivas por partes) → revisar_presentacion → vista_previa (el mosaico sin «diapositiva» enseña toda la charla) → corregir lo que se desborde → exportar_presentacion.
+Moléculas: un bloque estruct con «smiles» (o «archivo_mol» para un .mol/.sdf) da una estructura vectorial y editable. Si el SMILES lo escribiste tú y no el usuario, compara la fórmula y la masa molar de la respuesta con la molécula que se pidió antes de seguir.
 Datos: si el usuario tiene archivos de su equipo (XRD, FTIR, UV-Vis, TGA, Raman, CV, CSV), usa un bloque chart con «archivo_datos»: la técnica, los ejes y la procedencia salen solos.
 Reglas: no inventes datos, cifras ni referencias. Lo que no venga del usuario se marca como ilustrativo en el pie y en las notas. Las referencias solo se añaden si el usuario las da o están verificadas.
 Cada cambio queda en el historial: deshacer lo revierte. Las diapositivas se numeran desde 1; los bloques se identifican por su id (ver_presentacion).`;
@@ -26,8 +27,8 @@ Cada cambio queda en el historial: deshacer lo revierte. Las diapositivas se num
    propiedad, así que las alternativas van con anyOf. */
 const archivo = {type: 'string', description: 'Proyecto JSON dentro de la carpeta de trabajo, p. ej. «tesis» o «grupo/avance.json»; «.json» es opcional.'};
 const diapositiva = {anyOf: [{type: 'integer', minimum: 1}, {type: 'string'}], description: 'Número de diapositiva (desde 1) o su id.'};
-const bloque = {type: 'object', additionalProperties: true, required: ['tipo'], properties: {tipo: {type: 'string', description: 'text, bullets, math, chem, table, chart, func, smart, bblock, teorema, quote, code, image, refs, spacer…'}},
-  description: 'Un bloque: {"tipo": "<tipo>", ...propiedades} (guia_formato las lista). Imagen local: {"tipo":"image","archivo":"figs/sem.png","caption":"…"}. Datos de un equipo: {"tipo":"chart","archivo_datos":"datos/xrd.xy","caption":"…"}.'};
+const bloque = {type: 'object', additionalProperties: true, required: ['tipo'], properties: {tipo: {type: 'string', description: 'text, bullets, math, chem, estruct, table, chart, func, smart, bblock, teorema, quote, code, image, refs, spacer…'}},
+  description: 'Un bloque: {"tipo": "<tipo>", ...propiedades} (guia_formato las lista). Imagen local: {"tipo":"image","archivo":"figs/sem.png","caption":"…"}. Datos de un equipo: {"tipo":"chart","archivo_datos":"datos/xrd.xy","caption":"…"}. Molécula: {"tipo":"estruct","smiles":"CC(=O)Oc1ccccc1C(=O)O","caption":"Ácido acetilsalicílico"}.'};
 const zonas = {type: 'array', items: {type: 'array', items: bloque}, description: 'Una lista de bloques por zona, en orden («twocol» tiene 2 zonas, «cuadricula» 4…). Reemplaza el contenido de esas zonas.'};
 const encabezados = {type: 'array', items: {type: 'string'}, description: 'Encabezados de zona en los diseños que los usan: comparacion, partida, filas, rejilla6; en «dato» son [cifra, rótulo] y en «cita» [autor o fuente].'};
 const propsDiapositiva = {
@@ -102,11 +103,11 @@ const HERRAMIENTAS = [
     inputSchema: {type: 'object', required: ['archivo', 'diapositiva'], properties: {archivo, diapositiva}},
     annotations: borra, run: M.eliminaDiapositiva},
   {name: 'agregar_bloque', title: 'Agregar bloque',
-    description: 'Añade un bloque a una zona de una diapositiva: texto, viñetas, ecuación, reacción, tabla, gráfica (también desde un archivo de datos del equipo), gráfica dinámica, SmartArt, caja, teorema, código, cita o imagen.',
+    description: 'Añade un bloque a una zona de una diapositiva: texto, viñetas, ecuación, reacción, estructura química (desde SMILES o MOL), tabla, gráfica (también desde un archivo de datos del equipo), gráfica dinámica, SmartArt, caja, teorema, código, cita o imagen.',
     inputSchema: {type: 'object', required: ['archivo', 'diapositiva', 'bloque'], properties: {archivo, diapositiva, bloque, zona: {type: 'integer', minimum: 1, description: 'Zona desde 1 (por omisión 1).'}, posicion: {type: 'integer', minimum: 1, description: 'Posición dentro de la zona, desde 1 (por omisión al final).'}}},
     annotations: cambia, run: M.agregaBloque},
   {name: 'editar_bloque', title: 'Editar bloque',
-    description: 'Cambia propiedades de un bloque por su id. Solo se tocan las enviadas; null borra una. En una imagen, «archivo» reemplaza la figura; en una gráfica, «archivo_datos» vuelve a leer los datos.',
+    description: 'Cambia propiedades de un bloque por su id. Solo se tocan las enviadas; null borra una. En una imagen, «archivo» reemplaza la figura; en una gráfica, «archivo_datos» vuelve a leer los datos; en una estructura, «smiles» o «archivo_mol» la redibujan y «estilo» cambia la norma de dibujo.',
     inputSchema: {type: 'object', required: ['archivo', 'bloque', 'cambios'], properties: {archivo, bloque: {type: 'string', description: 'Id del bloque.'}, cambios: {type: 'object', additionalProperties: true}}},
     annotations: cambia, run: M.editaBloque},
   {name: 'eliminar_bloque', title: 'Eliminar bloque',
@@ -163,6 +164,7 @@ const CONVENCIONES = {
   chem: 'Bloque «chem»: sintaxis mhchem sin \\ce{}, p. ej. "2 H2 + O2 -> 2 H2O" o "Zn^2+ + 2 OH- <=> Zn(OH)2 v".',
   chart: 'Bloque «chart»: data es una tabla (lista de filas o texto con tabuladores) con encabezado; la primera columna es x y las demás, series. Una columna «±» tras una serie es su barra de error. kind: linea, dispersion, ajuste o barras. Unidades entre paréntesis en xlabel/ylabel y siempre un caption.',
   datos_de_equipo: 'Bloque «chart» con archivo_datos (ruta en la carpeta de trabajo; CSV, TXT, XY, DAT…): detecta separador, coma decimal y técnica (xrd, ftir, uvvis, tga, raman, cv, pl) y rotula los ejes con unidades; registra la procedencia (archivo, fecha, filas, huella). Opcionales: tecnica (forzarla), columnas ([1,3]: x y las series a usar, desde 1), max_puntos (por omisión 1500; se submuestrea conservando picos). Las propiedades que envíes además (caption, xlabel…) mandan sobre las detectadas.',
+  estruct: 'Bloque «estruct»: {"tipo":"estruct","smiles":"…","caption":"…","w":55}. RDKit calcula el dibujo 2D, los aromáticos en forma de Kekulé, las cargas y las cuñas de los estereocentros definidos; el resultado es la estructura nativa del editor (vectorial, editable, TikZ en Beamer). También «mol» (texto de un bloque MOL) o «archivo_mol» (.mol o .sdf de la carpeta; se respeta su dibujo). «estilo»: diapo (por omisión, para proyectar), acs, nature, rsc, cell o wiley. La respuesta trae fórmula, masa molar, SMILES canónico y estereocentros sin asignar: compruébalos.',
   table: 'Bloque «table»: rows es una lista de filas; header=true marca la primera como encabezado.',
   smart: 'Bloque «smart»: items es una lista de textos o de {t, d} (d = detalle).',
   image: 'Bloque «image»: {"tipo":"image","archivo":"ruta/en/la/carpeta.png","caption":"…","w":70}. PNG, JPEG, GIF, WebP o SVG hasta 8 MB; también src con https o data:.',
@@ -181,7 +183,7 @@ const PROMPTS = [
 Audiencia: ${a.audiencia || 'no indicada (pregúntala si cambia el enfoque)'}. Duración: ${a.minutos ? a.minutos + ' min' : 'no indicada'}.${a.archivos ? '\nArchivos disponibles: ' + a.archivos + '.' : ''}
 1. Consulta guia_formato. Propón primero el guion (una línea por diapositiva, con el mensaje de cada una) y espera mi visto bueno.
 2. Crea el proyecto con crear_presentacion y todas las diapositivas. Títulos que digan la conclusión; notas del orador y minutos en cada una.
-3. Usa mis archivos de datos con archivo_datos. No inventes cifras ni referencias; si falta un dato, deja el hueco señalado y dímelo.
+3. Usa mis archivos de datos con archivo_datos y dibuja las moléculas con bloques estruct (smiles o archivo_mol), comprobando la fórmula devuelta. No inventes cifras ni referencias; si falta un dato, deja el hueco señalado y dímelo.
 4. Ejecuta revisar_presentacion${a.minutos ? ' con minutos_objetivo=' + a.minutos : ''}, mira el mosaico con vista_previa y corrige desbordes y avisos.
 5. Resume qué hiciste y qué falta que yo aporte.`},
   {name: 'revisar_antes_de_presentar', title: 'Revisión antes de presentar',

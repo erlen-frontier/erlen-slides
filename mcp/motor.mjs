@@ -10,6 +10,7 @@ import {createHash} from 'node:crypto';
 import {resolve, relative, isAbsolute, extname, basename, dirname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {homedir} from 'node:os';
+import {estructuraDesde} from './quimica.mjs';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const APP = resolve(RAIZ, 'public/index.html');
@@ -133,12 +134,13 @@ const describeVersion = (ruta, pila, n) => {
    debe ver. */
 async function modifica(archivo, operacion, args, nombreHerramienta) {
   const {ruta, deck} = lee(archivo);
-  const entrada = preparaEntrada(args);
+  const entrada = await preparaEntrada(args);
   const r = await op(operacion, {...entrada, deck});
   guardaVersion(ruta, nombreHerramienta || operacion);
   escribe(ruta, r.deck);
   const out = {archivo: visible(ruta), ...(r.resultado || {}), avisos: r.avisos};
   if (r.datos_importados) out.datos_importados = r.datos_importados;
+  if (r.estructuras) out.estructuras = r.estructuras;
   return out;
 }
 
@@ -169,19 +171,39 @@ function leeDatos(b, datos) {
   if (bytes.subarray(0, 8000).includes(0)) throw new ErrorUso('«' + visible(ruta) + '» es binario. Exporta los datos del equipo como texto (CSV, TXT, XY, DAT).');
   datos[b.archivo_datos] = {nombre: basename(ruta), texto: bytes.toString('utf8')};
 }
-function preparaEntrada(args) {
+/* Estructuras químicas: SMILES, un bloque MOL o un archivo .mol/.sdf de la
+   carpeta pasan por RDKit (quimica.mjs) y llegan a la app ya como estructura
+   nativa, en «est». */
+const EXT_MOL = ['.mol', '.sdf', '.mdl'];
+async function convierteEstructura(b) {
+  const clave = ['smiles', 'mol', 'archivo_mol'].filter(k => b[k] != null);
+  if (!clave.length) return b;
+  if (clave.length > 1) throw new ErrorUso('Usa solo una de estas propiedades: smiles, mol o archivo_mol.');
+  let entrada, nombre;
+  if (b.archivo_mol != null) {
+    const ruta = archivoEnCarpeta(b.archivo_mol, 'el archivo de estructura', 2 * 1048576);
+    if (!EXT_MOL.includes(extname(ruta).toLowerCase())) throw new ErrorUso('«archivo_mol» debe ser .mol o .sdf (se usa la primera molécula).');
+    nombre = basename(ruta);
+    entrada = {mol: readFileSync(ruta, 'utf8').split(/^\$\$\$\$/m)[0], nombre};
+  } else entrada = b.smiles != null ? {smiles: b.smiles} : {mol: b.mol};
+  const {est, info} = await estructuraDesde(entrada);
+  const out = {...b, est, smiles: info.smiles, _quimica: {...info, ...(nombre ? {archivo: nombre} : {})}};
+  delete out.mol; delete out.archivo_mol;
+  return out;
+}
+async function preparaEntrada(args) {
   const datos = {};
-  const bloque = (b, esImagen) => {
+  const bloque = async (b, esImagen) => {
     if (!b || typeof b !== 'object' || Array.isArray(b)) return b;
     leeDatos(b, datos);
-    return incrustaImagen(b, esImagen);
+    return convierteEstructura(incrustaImagen(b, esImagen));
   };
-  const zonas = z => Array.isArray(z) ? z.map(x => Array.isArray(x) ? x.map(y => bloque(y)) : x) : z;
+  const zonas = z => Array.isArray(z) ? Promise.all(z.map(x => Array.isArray(x) ? Promise.all(x.map(y => bloque(y))) : x)) : z;
   const out = {...args};
-  if (out.bloque) out.bloque = bloque(out.bloque);
-  if (out.cambios && typeof out.cambios === 'object') out.cambios = bloque(out.cambios, true);
-  if (out.zonas) out.zonas = zonas(out.zonas);
-  if (Array.isArray(out.diapositivas)) out.diapositivas = out.diapositivas.map(d => d && typeof d === 'object' && !Array.isArray(d) ? {...d, zonas: zonas(d.zonas)} : d);
+  if (out.bloque) out.bloque = await bloque(out.bloque);
+  if (out.cambios && typeof out.cambios === 'object') out.cambios = await bloque(out.cambios, true);
+  if (out.zonas) out.zonas = await zonas(out.zonas);
+  if (Array.isArray(out.diapositivas)) out.diapositivas = await Promise.all(out.diapositivas.map(async d => d && typeof d === 'object' && !Array.isArray(d) ? {...d, zonas: await zonas(d.zonas)} : d));
   out.__datos = datos;
   return out;
 }
@@ -227,7 +249,7 @@ export function ejemplos() {
 export async function crear(a) {
   const ruta = rutaSegura(a.archivo, '.json');
   if (existsSync(ruta) && !a.sobrescribir) throw new ErrorUso('«' + visible(ruta) + '» ya existe. Elige otro nombre o pasa sobrescribir: true (la versión anterior queda en el historial).');
-  const entrada = preparaEntrada(a);
+  const entrada = await preparaEntrada(a);
   let r;
   if (a.desde_ejemplo) {
     if (!/^[a-z0-9-]+$/.test(a.desde_ejemplo) || !existsSync(resolve(RAIZ, 'examples', a.desde_ejemplo, 'proyecto.json')))
@@ -243,6 +265,7 @@ export async function crear(a) {
   escribe(ruta, r.deck);
   const out = {archivo: visible(ruta), diapositivas: r.deck.slides.length, avisos: r.avisos};
   if (r.datos_importados) out.datos_importados = r.datos_importados;
+  if (r.estructuras) out.estructuras = r.estructuras;
   out.nota = a.desde_ejemplo ? 'Copia de un ejemplo con datos ilustrativos: sustituye cifras y afirmaciones antes de presentar.'
     : r.deck.slides.length === 1 ? 'La presentación empieza con una portada; añade diapositivas con agregar_diapositivas.' : 'Revisa con revisar_presentacion y mira el resultado con vista_previa.';
   return out;

@@ -13,7 +13,7 @@
 var ERLEN_MCP = (function () {
   'use strict';
   const ES_ENCABEZADO_FICTICIO = { dato: true, cita: true };
-  const TIPOS_GUIADOS = ['text', 'bullets', 'math', 'chem', 'table', 'bblock', 'quote', 'code', 'spacer', 'chart', 'func', 'smart', 'teorema', 'refs', 'image'];
+  const TIPOS_GUIADOS = ['text', 'bullets', 'math', 'chem', 'table', 'bblock', 'quote', 'code', 'spacer', 'chart', 'func', 'smart', 'teorema', 'refs', 'image', 'estruct'];
 
   class ErrorMcp extends Error {}
   const falla = m => { throw new ErrorMcp(m); };
@@ -60,7 +60,7 @@ var ERLEN_MCP = (function () {
      propio build para que la lista no se quede atrás. */
   const CONOCIDAS = new Set();
   Array.from(document.scripts).forEach(s => { for (const m of s.textContent.matchAll(/\bb\.([A-Za-z_$][\w$]*)/g)) CONOCIDAS.add(m[1]); });
-  ['archivo', 'archivo_datos', 'columnas', 'max_puntos', 'tecnica'].forEach(k => CONOCIDAS.add(k));
+  ['archivo', 'archivo_datos', 'columnas', 'max_puntos', 'tecnica', 'smiles'].forEach(k => CONOCIDAS.add(k));
   let AVISOS = [];
   const avisa = t => { if (!AVISOS.includes(t)) AVISOS.push(t); };
 
@@ -150,17 +150,44 @@ var ERLEN_MCP = (function () {
     }
     if (info) ['archivo_datos', 'columnas', 'max_puntos', 'tecnica'].forEach(k => delete p[k]);
     Object.keys(p).forEach(k0 => {
-      if (k0 === 'tipo' || k0 === 'type' || k0 === 'id') return;
+      if (k0 === 'tipo' || k0 === 'type' || k0 === 'id' || k0 === '_quimica') return;
+      if (k0 === 'estilo' && b.type === 'estruct') return;
       const k = nombrePropiedad(b, k0);
       let v = p[k0];
       if (b.type === 'chart' && k === 'data') v = tablaATexto(v);
       if (b.type === 'smart' && k === 'items' && Array.isArray(v)) v = v.map(it => typeof it === 'string' ? { t: it } : it);
       if (b.type === 'table' && k === 'rows' && Array.isArray(v)) v = v.map(f => Array.isArray(f) ? f.map(c => String(c == null ? '' : c)) : [String(f)]);
+      if ((k === 'est' || k === 'smiles') && b.type !== 'estruct') falla('SMILES y MOL solo valen para bloques «estruct»; este es «' + b.type + '».');
       if (k === 'src' && !['image', 'video'].includes(b.type)) falla('Solo los bloques image y video llevan una imagen o un vídeo (src/archivo); este es «' + b.type + '».');
       if (v === null) delete b[k]; else b[k] = v;
     });
     if (info) b._importado = info;
+    if (b.type === 'estruct') acabaEstructura(b, p);
     return b;
+  }
+  /* La estructura llega de RDKit con su recuento de hidrógenos en _h. La app
+     los deduce por valencia; solo donde no coinciden (un metal, un radical,
+     un átomo raro) se fija el número, para que el dibujo diga lo mismo que
+     RDKit sin congelar el resto de átomos cuando se edite en el lienzo. */
+  function acabaEstructura(b, p) {
+    const e = b.est;
+    if (p.estilo != null) {
+      if (!e) falla('Este bloque «estruct» aún no tiene estructura: pasa smiles, mol o archivo_mol.');
+      if (!ESTILOS_REVISTA.some(x => x.id === p.estilo)) falla('Estilo de estructura desconocido: «' + p.estilo + '». Válidos: ' + ESTILOS_REVISTA.map(x => x.id).join(', ') + '.');
+      e.estilo = p.estilo;
+    }
+    if (!e || !p._quimica) return;
+    if (p.w == null) b._autoW = true;
+    let fijados = 0;
+    e.atomos.forEach(a => {
+      const h = a._h; delete a._h;
+      a.h = null;
+      if (h != null && hImplicitos(e, a) !== h) { a.h = h; fijados++; }
+    });
+    const q = p._quimica;
+    const exceso = e.atomos.filter(a => excesoValencia(e, a)).map(a => a.el);
+    ESTRUCTURAS.push(Object.assign({ bloque: b.id, formula: formulaMolecular(e) }, q, fijados ? { hidrogenos_fijados: fijados } : {},
+      exceso.length ? { avisos: (q.avisos || []).concat(['Valencia excedida en ' + exceso.join(', ') + ': revisa cargas.']) } : {}));
   }
   function bloqueDesde(spec) {
     if (!spec || typeof spec !== 'object' || Array.isArray(spec)) falla('Cada bloque debe ser un objeto con «tipo».');
@@ -171,6 +198,7 @@ var ERLEN_MCP = (function () {
   /* Los archivos de datos los lee Node y llegan aquí por nombre. */
   let DATOS = {};
   let IMPORTADOS = [];
+  let ESTRUCTURAS = [];
   function recogeImportados(deck) {
     deck.slides.forEach(sl => CLAVES_ZONA.forEach(k => (sl[k] || []).forEach(b => {
       if (b && b._importado) { IMPORTADOS.push(Object.assign({ bloque: b.id }, b._importado)); delete b._importado; }
@@ -242,12 +270,55 @@ var ERLEN_MCP = (function () {
   }
 
   /* ---------- validar ---------- */
+  /* ---------- tamaño de las estructuras ----------
+     Una estructura llena el ancho que se le da, así que con el mismo «w» un
+     ion suelto sale gigante y una molécula grande, diminuta. Si el modelo no
+     fija «w», se calcula para que el enlace mida lo mismo en todas (unos 32 px
+     en una diapositiva de 1280), según el ancho aproximado de su zona. */
+  const ENLACE_PX = 36, HUECO_COL = 32;
+  /* Ancho de la zona en px de diapositiva, medido en Chromium: el cuerpo
+     (W − 96) menos los huecos de 32 px entre columnas. */
+  function anchoZona(W, sl, z) {
+    const C = W - 96, col = n => (C - HUECO_COL * (n - 1)) / n;
+    const s = (+sl.split || 50) / 100;
+    switch (sl.layout) {
+      case 'twocol': case 'barra': return (C - HUECO_COL) * (z === 0 ? s : 1 - s);
+      case 'comparacion': case 'partida': case 'cuadricula': case 'zigzag': return col(2);
+      case 'tres': case 'pasos': case 'rejilla6': return col(3);
+      case 'flujo': return col(+sl.cols || 2);
+      case 'filas': return C * 0.78;
+      case 'piefigura': return (C - HUECO_COL) * (z === 0 ? 0.7 : 0.3);
+      case 'dato': return C * 0.7;
+      case 'cita': return C * 0.82;
+      default: return C;
+    }
+  }
+  function ajustaEstructuras(deck) {
+    const [W] = slideDims(deck);
+    deck.slides.forEach((sl, i) => CLAVES_ZONA.forEach((k, z) => (sl[k] || []).forEach(b => {
+      if (!b || !b._autoW) return;
+      delete b._autoW;
+      const zonaPx = anchoZona(W, sl, z);
+      const cajaW = cajaEstructura(b.est).w;
+      const ideal = cajaW * (ENLACE_PX * W / 1280) / 40 / zonaPx * 100;
+      b.w = Math.round(clamp(ideal, 12, 100));
+      const info = ESTRUCTURAS.find(x => x.bloque === b.id);
+      if (!info) return;
+      info.ancho = b.w;
+      const px = Math.round(40 * zonaPx * b.w / 100 / cajaW);
+      info.enlace_px = px;
+      if (px < 24) info.avisos = (info.avisos || []).concat(['La molécula no cabe a buen tamaño en esta zona de la diapositiva ' + (i + 1) + ': los enlaces medirán unos ' + px + ' px, poco legible en una sala. Usa un diseño más ancho («content» o «ancho») o muestra un fragmento.']);
+    })));
+  }
+
   function valida(deck) {
     recogeImportados(deck);
+    ajustaEstructuras(deck);
     const r = saneaDeck(deck);
     if (r.error) falla(r.error);
     const out = { deck: r.deck, avisos: Array.from(new Set(AVISOS.concat(r.avisos))) };
     if (IMPORTADOS.length) out.datos_importados = IMPORTADOS;
+    if (ESTRUCTURAS.length) out.estructuras = ESTRUCTURAS;
     return out;
   }
 
@@ -265,6 +336,7 @@ var ERLEN_MCP = (function () {
       case 'func': r.curvas = (b.curves || []).map(c => c.expr); break;
       case 'smart': r.clase = b.kind; r.elementos = (b.items || []).map(it => corto(it.t, 50)); break;
       case 'teorema': r.clase = b.kind; r.texto = corto(b.body, 100); break;
+      case 'estruct': r.estructura = b.est ? (b.smiles || b.est.atomos.length + ' átomos') : 'vacía'; if (b.est) r.estilo = b.est.estilo || 'diapo'; break;
       case 'image': r.imagen = b.src ? (String(b.src).startsWith('data:') ? 'incrustada' : b.src) : 'vacía'; break;
     }
     if (b.caption) r.pie = corto(b.caption, 100);
@@ -306,6 +378,7 @@ var ERLEN_MCP = (function () {
         smart: SMART_KINDS.map(k => ({ id: k.id, uso: k.d, min: k.min, max: k.max })),
         bblock: ['block', 'alert', 'example'],
         teorema: TEOREMAS.map(t => t.id),
+        estruct_estilo: ESTILOS_REVISTA.map(x => ({ id: x.id, nombre: x.n })),
         text_size: ['s', 'n', 'l'], text_align: ['left', 'center', 'right']
       }
     };
@@ -492,7 +565,7 @@ var ERLEN_MCP = (function () {
     try {
       if (!OPS[op]) falla('Operación desconocida: ' + op);
       const args = JSON.parse(argsJson || '{}');
-      AVISOS = []; IMPORTADOS = []; DATOS = args.__datos || {};
+      AVISOS = []; IMPORTADOS = []; ESTRUCTURAS = []; DATOS = args.__datos || {};
       return JSON.stringify({ ok: OPS[op](args) });
     } catch (e) {
       return JSON.stringify({ error: e instanceof ErrorMcp ? e.message : 'Error interno: ' + (e && e.message || e) });

@@ -216,3 +216,67 @@ test('MCP: vista previa, PDF y PowerPoint en Chromium', {timeout: 240000}, async
     assert.equal(readFileSync(join(dir, 'p.pptx')).subarray(0, 2).toString(), 'PK');
   });
 });
+
+/* Etanol dibujado a mano en V2000, con sus coordenadas: se respetan. */
+const ETANOL_MOL = `etanol
+  a mano
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END
+$$$$
+`;
+
+test('MCP: estructuras químicas desde SMILES y MOL', {timeout: 180000}, async () => {
+  await conServidor(async (c, dir) => {
+    writeFileSync(join(dir, 'etanol.sdf'), ETANOL_MOL);
+    const r = await c.llama('crear_presentacion', {archivo: 'q', titulo: 'Química', diapositivas: [
+      {diseno: 'tres', titulo: 'Tres', zonas: [
+        [{tipo: 'estruct', smiles: 'CC(=O)Oc1ccccc1C(=O)O', caption: 'Aspirina'}],
+        [{tipo: 'estruct', smiles: 'C[C@H](N)C(=O)[O-].[Na+]', caption: 'L-alaninato de sodio'}],
+        [{tipo: 'estruct', smiles: '[CH2]C', caption: 'Radical etilo', estilo: 'acs'}]]},
+      {titulo: 'Archivo', zonas: [[{tipo: 'estruct', archivo_mol: 'etanol.sdf', caption: 'Etanol'}]]}]});
+    assert.equal(r.error, false, r.texto);
+    const [asp, ala, etilo, etanol] = r.datos.estructuras;
+    assert.equal(asp.formula, 'C₉H₈O₄');
+    assert.equal(asp.masa_molar, 180.159);
+    assert.equal(ala.formula, 'C₃H₆NNaO₂');
+    assert.equal(ala.estereocentros, 1);
+    assert.equal(etilo.formula, 'C₂H₅', 'el radical conserva los hidrógenos que dice RDKit');
+    assert.equal(etilo.hidrogenos_fijados, 1);
+    assert.equal(etanol.formula, 'C₂H₆O');
+    assert.equal(etanol.archivo, 'etanol.sdf');
+    for (const e of [asp, ala]) assert.ok(e.enlace_px >= 33 && e.enlace_px <= 37, 'mismo tamaño de enlace en todas: ' + e.enlace_px);
+
+    const d = proyecto(dir, 'q');
+    const [bAsp, bAla, bEt] = [d.slides[1].blocks[0], d.slides[1].blocks2[0], d.slides[1].blocks3[0]];
+    assert.equal(bAsp.smiles, 'CC(=O)Oc1ccccc1C(=O)O');
+    assert.equal(bAsp.est.enlaces.filter(x => x.orden === 2).length, 5, 'benceno en Kekulé (3) y dos C=O');
+    assert.ok(bAla.est.enlaces.some(x => x.tipo === 'cuna' || x.tipo === 'raya'), 'el estereocentro lleva cuña');
+    assert.deepEqual(bAla.est.atomos.filter(a => a.carga).map(a => [a.el, a.carga]).sort(), [['Na', 1], ['O', -1]]);
+    assert.equal(bEt.est.estilo, 'acs');
+    /* El Na⁺ no puede caer encima de la molécula. */
+    const na = bAla.est.atomos.find(a => a.el === 'Na');
+    const otros = bAla.est.atomos.filter(a => a !== na);
+    assert.ok(Math.min(...otros.map(a => Math.hypot(a.x - na.x, a.y - na.y))) >= 40, 'el contraión queda aparte');
+    /* Las coordenadas del archivo se respetan: el etanol sigue siendo un zigzag. */
+    const [c1, c2, o] = d.slides[2].blocks[0].est.atomos;
+    assert.ok(c2.y < c1.y && c2.y < o.y, 'el C central queda arriba, como en el archivo');
+
+    assert.match((await c.llama('agregar_bloque', {archivo: 'q', diapositiva: 3, bloque: {tipo: 'estruct', smiles: 'C1CC(('}})).texto, /RDKit no reconoce el SMILES/);
+    assert.match((await c.llama('agregar_bloque', {archivo: 'q', diapositiva: 3, bloque: {tipo: 'text', smiles: 'CCO'}})).texto, /solo valen para bloques «estruct»/);
+    assert.match((await c.llama('editar_bloque', {archivo: 'q', bloque: bEt.id, cambios: {estilo: 'vogue'}})).texto, /Estilo de estructura desconocido/);
+    assert.equal((await c.llama('editar_bloque', {archivo: 'q', bloque: bEt.id, cambios: {estilo: 'nature'}})).error, false);
+    assert.equal(proyecto(dir, 'q').slides[1].blocks3[0].est.estilo, 'nature');
+    const cambio = await c.llama('editar_bloque', {archivo: 'q', bloque: bEt.id, cambios: {smiles: 'c1ccncc1'}});
+    assert.equal(cambio.datos.estructuras[0].formula, 'C₅H₅N');
+
+    assert.equal((await c.llama('exportar_presentacion', {archivo: 'q', formato: 'beamer'})).error, false);
+    const tex = readFileSync(join(dir, 'q-beamer', 'q.tex'), 'utf8');
+    assert.ok((tex.match(/\\begin\{tikzpicture\}/g) || []).length >= 4, 'cada estructura sale como TikZ');
+  });
+});
