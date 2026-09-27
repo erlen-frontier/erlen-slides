@@ -325,7 +325,15 @@ function renderChart(b, deck, mode, availPx) {
   /* El margen izquierdo lo pide el rótulo de tick más largo; fijarlo en 72
      dejaba un pasillo vacío con «0,1» y apretaba el eje con «1,2×10⁻³». */
   let padL = 72;
-  const padR = 26, padT = 16;
+  /* Rótulos de picos: posiciones medidas, no un dibujo aparte. Se reserva
+     encima del marco una franja para los que van sobre un máximo y, dentro del
+     eje, un hueco bajo el mínimo para los que van debajo (las bandas de un
+     FTIR en transmitancia). Así no hace falta ensanchar el rango de los datos. */
+  const FSP = 16, ALTO_PICO = FSP + 14;
+  const picos = !isFunc && kind !== 'barras' && Array.isArray(b.picos)
+    ? b.picos.filter(p => p && isFinite(+p.x) && isFinite(+p.y) && series[Math.floor(+p.serie) || 0]) : [];
+  const picosArriba = picos.some(p => !p.abajo), huecoAbajo = picos.some(p => p.abajo) ? ALTO_PICO : 0;
+  const padR = 26, padT = 16 + (picosArriba ? ALTO_PICO : 0);
   const padB = 48 + (series.length > 1 && !(kind === 'linea' && b.offset) && b.legend !== false ? 34 : 0);
   let iw = W - padL - padR, ih = H - padT - padB;
 
@@ -415,7 +423,7 @@ function renderChart(b, deck, mode, availPx) {
     const a = eX(xmin), z = eX(xmax), f = (t - a) / ((z - a) || 1);
     return invX ? padL + iw - f * iw : padL + f * iw;
   };
-  const pyDe = t => padT + ih - (t - eY(ymin)) / ((eY(ymax) - eY(ymin)) || 1) * ih;
+  const pyDe = t => padT + ih - huecoAbajo - (t - eY(ymin)) / ((eY(ymax) - eY(ymin)) || 1) * (ih - huecoAbajo);
   const sx = v => pxDe(eX(v));
   const sy = v => pyDe(eY(v));
 
@@ -501,13 +509,22 @@ function renderChart(b, deck, mode, availPx) {
   const capas = [];
   const capaG = (nombre) => { const g = sv('g', { class: 'capa', 'data-capa': String(capas.length + 1), 'data-nombre': nombre }); capas.push(g); return g; };
   let gAjuste = null;
+  /* Los rótulos de picos viven fuera del recorte del marco (van en la franja
+     de encima). Por capas, cada serie es una capa sin recortar con sus datos
+     recortados dentro, para que su rótulo entre con ella. */
+  const capaSerie = [];
 
   draw.forEach((s, i) => {
     const col = P.series[i % P.series.length];
     const mk = MARKERS[i % MARKERS.length];
     const pts = s.pts.filter(vale);
     if (!pts.length) return;
-    const destino = porCapas ? capaG(mathToUnicode(s.name)) : plot;
+    let destino = plot;
+    if (porCapas) {
+      capaSerie[i] = capaG(mathToUnicode(s.name));
+      destino = sv('g', { 'clip-path': `url(#${clip})` });
+      capaSerie[i].append(destino);
+    }
     if (porCapas && kind === 'ajuste' && !gAjuste) gAjuste = sv('g', { class: 'capa', 'data-nombre': 'el ajuste' });
     const plotFit = porCapas && gAjuste ? gAjuste : destino;
 
@@ -560,7 +577,9 @@ function renderChart(b, deck, mode, availPx) {
         destino.append(sv('path', { d: d.join('') + `L${sx(pts[pts.length - 1][0]).toFixed(1)},${base}L${sx(pts[0][0]).toFixed(1)},${base}z`, fill: col, opacity: 0.1 }));
       }
       if (offsetMode) {
-        const last = pts[pts.length - 1];
+        /* El nombre va al final de la curva en pantalla, que con el eje
+           invertido (FTIR) es el primer punto de los datos y no el último. */
+        const last = pts.reduce((a, q) => sx(q[0]) > sx(a[0]) ? q : a);
         destino.append(txt(sx(last[0]) - 8, sy(last[1]) - 10, mathToUnicode(s.name), { anchor: 'end', fill: P.ink, size: FS }));
       }
     } else {
@@ -588,8 +607,45 @@ function renderChart(b, deck, mode, availPx) {
       });
     }
   });
+  /* Rótulos de los picos, de izquierda a derecha: el que choca con el anterior
+     sube (o baja) un renglón en vez de taparlo. Por capas, cada rótulo entra
+     con su serie. */
+  const puestos = [], gPicos = sv('g');
+  /* _picosHueco (el «después» de un antes/después): mismo hueco, sin rótulos. */
+  (b._picosHueco ? [] : picos).map(p => ({ p, si: Math.floor(+p.serie) || 0 })).filter(q => draw[q.si])
+    .map(q => Object.assign(q, { y: +q.p.y + offStep * (draw.length - 1 - q.si) }))
+    .filter(q => vale([+q.p.x, q.y]))
+    .map(q => Object.assign(q, { X: sx(+q.p.x), Y: sy(q.y) }))
+    .filter(q => q.X >= padL - 1 && q.X <= padL + iw + 1)
+    .sort((a, c) => a.X - c.X)
+    .forEach(q => {
+      const t = mathToUnicode(q.p.txt), abajo = !!q.p.abajo;
+      const w = t.length * FSP * 0.56 + 6;
+      let base = abajo ? q.Y + 10 + FSP : q.Y - 10;
+      for (let k = 0; k < 4 && puestos.some(r => Math.abs(r.X - q.X) < (r.w + w) / 2 && Math.abs(r.base - base) < FSP + 2); k++)
+        base += abajo ? FSP + 2 : -(FSP + 2);
+      /* Por abajo no se pasa del eje x, donde están los números. */
+      base = clamp(base, FSP, abajo ? padT + ih - 3 : H - 4);
+      puestos.push({ X: q.X, w, base });
+      const col = P.series[q.si % P.series.length];
+      const g = sv('g', { class: 'pico' });
+      g.append(sv('line', { x1: q.X.toFixed(1), x2: q.X.toFixed(1), y1: (q.Y + (abajo ? 3 : -3)).toFixed(1),
+        y2: (abajo ? base - FSP + 2 : base + 3).toFixed(1), stroke: col, 'stroke-width': 1.2 }));
+      /* El texto no se sale por los lados del marco aunque el pico esté en
+         el borde, y lleva un halo del color del fondo para leerse sobre otra
+         curva (con espectros apilados, la de arriba pasa por encima). */
+      if (t) {
+        const et = txt(clamp(q.X, padL + w / 2, padL + iw - w / 2), base, t, { fill: P.ink, size: FSP });
+        et.setAttribute('stroke', P.surface); et.setAttribute('stroke-width', 4);
+        et.setAttribute('paint-order', 'stroke'); et.setAttribute('stroke-linejoin', 'round');
+        g.append(et);
+      }
+      (capaSerie[q.si] || gPicos).append(g);
+    });
   if (porCapas) {
-    capas.forEach(g => plot.append(g));
+    /* Mismo orden en el documento que antes: las series, el ajuste y el
+       punto destacado; así se numeran los pasos al presentar. */
+    capas.forEach(g => svg.append(g));
     if (gAjuste) { gAjuste.dataset.capa = String(capas.length + 1); capas.push(gAjuste); plot.append(gAjuste); }
     /* el punto que importa: un anillo del color de acento y su etiqueta */
     const d = b.destaca;
@@ -604,7 +660,7 @@ function renderChart(b, deck, mode, availPx) {
     }
     svg.dataset.capas = String(capas.length);
   }
-  svg.append(plot);
+  svg.append(plot, gPicos);
 
 
   /* leyenda */
