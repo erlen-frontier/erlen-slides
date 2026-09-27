@@ -87,7 +87,7 @@ La ruta completa de Node la da `node -p process.execPath`. En Windows usa rutas 
 | `agregar_referencia` | Una referencia real, dónde se cita y su clave para citar en línea con `[@clave]`. |
 | `historial_presentacion`, `deshacer`, `rehacer` | Cada cambio guarda antes la versión anterior (las 50 últimas). |
 | `revisar_presentacion` | Calidad científica de las figuras, accesibilidad, estructura, tiempo frente a la duración disponible y avisos por formato. |
-| `vista_previa` | En Chromium: un mosaico numerado de toda la charla en una sola imagen, o diapositivas a tamaño real; siempre dice qué bloque se desborda y cuántos píxeles. |
+| `vista_previa` | En Chromium: un mosaico numerado de toda la charla en una sola imagen, o diapositivas a tamaño real; siempre dice qué bloque se desborda y cuántos píxeles: hacia abajo (invade el pie o el margen inferior), a la derecha o hacia arriba (sube bajo el título). |
 | `exportar_presentacion` | Beamer (carpeta con el `.tex` y las figuras, lista para Overleaf), HTML imprimible, PDF y PowerPoint. Con la extensión [exportaciones](mcp-extensiones/exportaciones.md): PNG por diapositiva, folleto en PDF, paquete reproducible (.zip), figuras en SVG con sus datos en CSV e informe de exportación. |
 | `abrir_en_editor` | Abre el proyecto en el editor, en el navegador del usuario, para seguir a mano ([detalles](mcp-extensiones/editor.md)). |
 

@@ -248,3 +248,58 @@ test('MCP: estructuras químicas desde SMILES y MOL', {timeout: 180000}, async (
     assert.ok((tex.match(/\\begin\{tikzpicture\}/g) || []).length >= 4, 'cada estructura sale como TikZ');
   });
 });
+
+/* Las de respaldo no se llegan a presentar: no cuentan en el tiempo ni se
+   señalan como «sin tiempo». */
+test('MCP: la revisión de tiempo no cuenta las diapositivas de respaldo', async () => {
+  await conServidor(async (c, dir) => {
+    await c.llama('crear_presentacion', {archivo: 'r', titulo: 'Tiempo', diapositivas: [
+      {titulo: 'Resultado', minutos: 3, zonas: [[{tipo: 'text', text: 'Uno.'}]]},
+      {titulo: 'Pregunta previsible', minutos: 4, zonas: [[{tipo: 'text', text: 'Dos.'}]]},
+      {titulo: 'Otra de respaldo', zonas: [[{tipo: 'text', text: 'Tres.'}]]}]});
+    const d = proyecto(dir, 'r');
+    d.slides[2].respaldo = d.slides[3].respaldo = true;
+    writeFileSync(join(dir, 'r.json'), JSON.stringify(d));
+    const t = (await c.llama('revisar_presentacion', {archivo: 'r', minutos_objetivo: 3})).datos.tiempo;
+    assert.equal(t.minutos_previstos, 3, 'los 4 min del respaldo no suman');
+    assert.deepEqual(t.sin_tiempo, [1], 'solo la portada queda sin minutos');
+    assert.equal(t.valoracion, 'Dentro del objetivo.');
+  });
+});
+
+/* En el zigzag, una gráfica con su ecuación de ajuste era más alta que su
+   fila y se salía por arriba, bajo el título; vista_previa no lo veía porque
+   solo medía hacia abajo y a la derecha. */
+test('MCP: vista previa del zigzag y desbordes por arriba', {timeout: 240000}, async t => {
+  await conServidor(async c => {
+    await c.llama('crear_presentacion', {archivo: 'z', titulo: 'Zigzag', diapositivas: [
+      {diseno: 'zigzag', titulo: 'Calibración', zonas: [[{tipo: 'chart'}], [{tipo: 'text', text: 'Lineal.'}], [{tipo: 'text', text: 'Segundo.'}], [{tipo: 'chart'}]]},
+      {diseno: 'twocol', titulo: 'Síntesis', zonas: [[{tipo: 'text', text: 'Coprecipitación.'}], [{tipo: 'chem', ecuacion: 'Zn^2+ + 2 OH- -> Zn(OH)2 v'}]]},
+      {diseno: 'zigzag', titulo: 'Texto largo', zonas: [[], [{tipo: 'text', text: 'palabra '.repeat(160)}], [], []]}]});
+    const v = await c.llama('vista_previa', {archivo: 'z'});
+    if (v.error && /No se encontró Chromium/.test(v.texto)) { t.skip('sin Chromium'); return; }
+    assert.equal(v.error, false, v.texto);
+    assert.deepEqual(v.datos.desbordes.map(x => x.n), [4], 'la gráfica cabe en su fila y la reacción no da falsos positivos');
+  });
+  /* El medidor, sobre una diapositiva hecha a mano: un bloque que sube bajo
+     el título y otro que se come el margen de abajo sin llegar al borde. */
+  const pw = (await import('playwright-core')).default;
+  const {candidatos, mideDesbordes} = await import('../mcp/navegador.mjs');
+  let nav = null;
+  for (const o of candidatos()) { try { nav = await pw.chromium.launch(o); break; } catch {} }
+  if (!nav) return;
+  try {
+    const p = await nav.newPage({viewport: {width: 800, height: 450}});
+    await p.setContent(`<div class="slide" style="position:relative;width:800px;height:450px;display:flex;flex-direction:column">
+      <div style="height:60px"></div>
+      <div class="fbody" style="flex:1;padding:24px 40px 40px;display:flex;flex-direction:column;justify-content:space-between">
+        <div data-bid="sube" style="margin-top:-50px;height:40px">arriba</div>
+        <div data-bid="bien" style="height:20px"><span class="pstrut" style="display:inline-block;height:200px;vertical-align:bottom"></span></div>
+        <div data-bid="baja" style="margin-bottom:-30px;height:40px">abajo</div>
+      </div></div>`);
+    const d = await p.evaluate(fn => new Function('return ' + fn)()(document), mideDesbordes.toString());
+    assert.deepEqual(d.map(x => x.bloque), ['sube', 'baja'], 'el puntal invisible de KaTeX no cuenta');
+    assert.equal(d[0].px_arriba, 50);
+    assert.ok(d[1].px_abajo > 2 && !d[1].px_arriba, JSON.stringify(d[1]));
+  } finally { await nav.close(); }
+});

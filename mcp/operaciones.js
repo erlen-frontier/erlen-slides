@@ -410,11 +410,13 @@ var ERLEN_MCP = (function () {
       const palabras = CLAVES_ZONA.slice(0, n).reduce((a, k) => a + (sl[k] || []).reduce((x, b) => x + String(b.text || b.body || (b.items || []).map(it => it.t).join(' ') || '').split(/\s+/).filter(Boolean).length, 0), 0);
       if (palabras > 90) estructura.push({ diapositiva: i + 1, problema: 'Mucho texto (' + palabras + ' palabras)', arreglo: 'Divide en dos diapositivas, pasa detalle a las notas o usa el diseño «flujo».' });
     });
-    const minutos = deck.slides.reduce((a, s) => a + (+s.min || 0), 0);
-    const tiempo = { minutos_previstos: Math.round(minutos * 100) / 100, sin_tiempo: deck.slides.map((s, i) => s.min ? 0 : i + 1).filter(Boolean) };
+    /* Las de respaldo no se cuentan en el tiempo: no se llega a ellas avanzando. */
+    const charla = deck.slides.filter(s => !esRespaldo(s));
+    const minutos = charla.reduce((a, s) => a + (+s.min || 0), 0);
+    const tiempo = { minutos_previstos: Math.round(minutos * 100) / 100, sin_tiempo: deck.slides.map((s, i) => s.min || esRespaldo(s) ? 0 : i + 1).filter(Boolean) };
     if (objetivo > 0) {
       tiempo.minutos_objetivo = +objetivo;
-      if (tiempo.sin_tiempo.length === deck.slides.length) tiempo.valoracion = 'Ninguna diapositiva tiene minutos: asigna «minutos» para comparar con el objetivo. Como referencia, ' + deck.slides.length + ' diapositivas suelen ocupar ' + Math.round(deck.slides.length * 1.2) + '–' + Math.round(deck.slides.length * 2) + ' min.';
+      if (tiempo.sin_tiempo.length === charla.length) tiempo.valoracion = 'Ninguna diapositiva tiene minutos: asigna «minutos» para comparar con el objetivo. Como referencia, ' + charla.length + ' diapositivas suelen ocupar ' + Math.round(charla.length * 1.2) + '–' + Math.round(charla.length * 2) + ' min.';
       else if (minutos > objetivo * 1.1) tiempo.valoracion = 'Excede el objetivo en ' + Math.round((minutos - objetivo) * 10) / 10 + ' min: recorta o mueve diapositivas a respaldo.';
       else if (minutos < objetivo * 0.8) tiempo.valoracion = 'Queda corta por ' + Math.round((objetivo - minutos) * 10) / 10 + ' min.';
       else tiempo.valoracion = 'Dentro del objetivo.';

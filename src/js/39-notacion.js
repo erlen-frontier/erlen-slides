@@ -47,9 +47,22 @@ function unidadBonita(u) {
   return u;
 }
 
+/* Índices de Miller: (00l), (hk0), (1-10), {100}, [001], <110>. Sin
+   protegerlos, «(00l)» se leía como cero litros y «(10l)» como 10 l. Se
+   apartan antes de tocar el texto y se devuelven intactos al final. */
+const RE_MILLER = /[({[<](?:[-−]?[0-9hkliℓ]){3,4}[)}\]>]/g;
+function sinMiller(txt, fn) {
+  const guardados = [];
+  const s = fn(String(txt).replace(RE_MILLER, m => '\u0000' + (guardados.push(m) - 1) + '\u0000'));
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => guardados[+i]);
+}
+
 /* Transforma un trozo de texto plano. Nunca recibe matemáticas ni código. */
 function notacion(txt) {
-  let s = String(txt == null ? '' : txt);
+  return sinMiller(txt == null ? '' : txt, notacionSinMiller);
+}
+function notacionSinMiller(txt) {
+  let s = txt;
   /* 1 · unidades compuestas con barra: 10 mg/L, 4000 rpm, 5 mL/min */
   s = s.replace(/(\d+(?:[.,]\d+)?)\s*([A-Za-zµÅ°%]+)\/([A-Za-zµÅ°]+)(\d?)/g, (m0, n, a, b, e) => {
     if (UNIDADES.indexOf(a) < 0 || UNIDADES.indexOf(b) < 0) return m0;
@@ -78,7 +91,10 @@ function conNotacion(txt) { return notacionOn() ? notacion(txt) : txt; }
 /* ---------- versión para LaTeX ----------
    En el .tex sale como siunitx y mhchem, que es lo correcto, no como texto. */
 function notacionTex(txt) {
-  let s = String(txt == null ? '' : txt);
+  return sinMiller(txt == null ? '' : txt, notacionTexSinMiller);
+}
+function notacionTexSinMiller(txt) {
+  let s = txt;
   /* Solo se convierten las unidades que siunitx conoce de verdad; las demás
      (u. a., counts…) se quedan como texto: mejor eso que un PDF que no compila. */
   const conocida = u => Object.prototype.hasOwnProperty.call(SI_MAP, u);

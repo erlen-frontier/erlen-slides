@@ -1055,7 +1055,11 @@ g.capa.frag.on{opacity:1;transition:opacity .45s}
 
 /* --- zigzag --- */
 .zigzag{display:flex;flex-direction:column;gap:var(--e5);flex:1;min-height:0}
-.zz-fila{flex:1 1 0;min-height:0;align-items:center;gap:var(--gap-col)}
+/* Las columnas ocupan todo el alto de su fila (el centrado lo hace la
+   columna): con align-items:center medían lo que su contenido, el tope
+   max-height:100% de la gráfica no limitaba nada y la ecuación del ajuste
+   quedaba recortada contra la barra del título. */
+.zz-fila{flex:1 1 0;min-height:0;align-items:stretch;gap:var(--gap-col)}
 .zz-fila > .col{flex:1 1 0;min-width:0;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:var(--e3);overflow:hidden}
 .zz-fila > .col.zz-txt{flex:0 0 42%}
 .zz-txt .b-text,.zz-txt ul.bl li{font-size:.84em}
