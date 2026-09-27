@@ -127,6 +127,86 @@ test('An idle recheck in the middle of the export cannot blank a slide',async()=
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
+/* Los encabezados de zona de «Dato grande», «Cita destacada», «Tres filas» y
+   «Pantalla partida» no estaban en la lista de la exportación: la cifra, el
+   autor y los rótulos no llegaban al PowerPoint. Esta prueba los recorre desde
+   los que pinta el render, para que un diseño nuevo no se quede fuera. */
+test('Every zone heading the slide shows reaches the PowerPoint',async()=>{const{dom,run,errors}=await editor();try{
+ const clases=run(`[...new Set([...renderSlide.toString().matchAll(/class: '([a-z-]+)' \\+ emptyCls\\(zt\\(/g)].map(m=>m[1]))]`);
+ assert.ok(clases.length>=8,'no se encontraron los encabezados en el render: '+clases);
+ const selector=run('formasSlide.toString()');
+ for(const c of clases) assert.ok(new RegExp('\\.'+c+'\\b').test(selector),'la exportación no recoge .'+c);
+ run(capturaPptx+`(()=>{const d=blankDeck();
+   const mk=(layout,zt)=>{const s={id:uid(),layout,title:'T '+layout,blocks:[]};prepararZonas(s,layout);s.zt=zt;return s;};
+   d.slides.push(mk('dato',['7,6 nm','espacio basal']),mk('cita',['Autora, 2020']),mk('filas',['Fila uno','Fila dos','Fila tres']),mk('partida',['Mitad A','Mitad B']));
+   wsNueva(d);})()`);
+ await run('exportPPTX()');
+ const partes=leeZip(Uint8Array.from(run('window.__pptx').bytes));
+ const texto=n=>(partes.get('ppt/slides/slide'+n+'.xml').match(/<a:t[^>]*>[^<]*<\/a:t>/g)||[]).join(' ').replace(/\s/g,' '); /* el número y su unidad van con espacio duro */
+ for(const [n,t] of [[2,'7,6 nm'],[2,'espacio basal'],[3,'Autora, 2020'],[4,'Fila dos'],[5,'Mitad B']])
+  assert.ok(texto(n).includes(t),'falta «'+t+'» en la diapositiva '+n+': '+texto(n));
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+/* «En blanco» es un lienzo libre: ni título ni pie, pero sus bloques tienen
+   que llegar a la pantalla, al Beamer y al PowerPoint. Los otros tres diseños
+   nuevos llevan rótulos propios que tampoco pueden perderse por el camino. */
+test('The blank slide and the new layouts reach the screen, Beamer and PowerPoint',async()=>{const{dom,run,errors}=await editor();try{
+ run(capturaPptx+`(()=>{const d=blankDeck();
+   const mk=(layout,title,zonas,zt)=>{const s={id:uid(),layout,title,blocks:[]};prepararZonas(s,layout);
+     zonas.forEach((txt,i)=>zona(s,i).push({id:uid(),type:'text',text:txt}));if(zt)s.zt=zt;return s;};
+   d.slides.push(mk('blanco','Titulo oculto',['Frase del lienzo libre']),
+     mk('titular','Frase completa del titular de prueba',['Evidencia del titular']),
+     mk('tresfig','Tres paneles',['Panel uno','Panel dos','Panel tres']),
+     mk('objetivos','Objetivos',['Objetivo general de prueba','Objetivo especifico de prueba']));
+   wsNueva(d);})()`);
+ /* pantalla */
+ const vista=JSON.parse(run(`JSON.stringify([1,2,3,4].map(i=>{const r=renderSlide(S.deck,i,'export',99);return {
+   ft:!!r.querySelector('.frametitle'),titular:!!r.querySelector('.frametitle.ft-titular'),
+   pie:!!r.querySelector('.footline, .pagenum, .pie-nota'),texto:r.textContent};}))`));
+ assert.equal(vista[0].ft,false,'«En blanco» no enseña el título');
+ assert.equal(vista[0].pie,false,'«En blanco» no lleva pie ni número');
+ assert.ok(vista[0].texto.includes('Frase del lienzo libre'));
+ assert.ok(!vista[0].texto.includes('Titulo oculto'));
+ assert.equal(vista[1].titular,true,'el titular va en su propio estilo');
+ assert.ok(vista[1].pie,'los demás diseños conservan el pie');
+ for(const t of ['(a)','(b)','(c)','Panel dos'])assert.ok(vista[2].texto.includes(t),'falta «'+t+'» en «Tres figuras»');
+ for(const t of ['Objetivo general','Objetivos específicos','Objetivo especifico de prueba'])assert.ok(vista[3].texto.includes(t),'falta «'+t+'» en «Objetivos»');
+ /* Beamer */
+ const tex=run('toBeamer(S.deck)');
+ const marco=n=>tex.split(run('MARCA_DIAPO')+n+' ---')[1].split('\\end{frame}')[0];
+ assert.match(marco(2),/^\s*\\begin\{frame\}\[plain\]\n/,'«En blanco» es un marco [plain]');
+ assert.ok(marco(2).includes('Frase del lienzo libre')&&!tex.includes('Titulo oculto'));
+ assert.ok(marco(3).includes('{Frase completa del titular de prueba}')&&marco(3).includes('Evidencia del titular'));
+ assert.ok(marco(4).includes('(b)')&&marco(4).includes('Panel tres'));
+ assert.match(marco(5),/\\begin\{block\}\{Objetivo general\}[\s\S]*Objetivo general de prueba[\s\S]*\\end\{block\}[\s\S]*Objetivos específicos[\s\S]*Objetivo especifico de prueba/);
+ /* PowerPoint */
+ await run('exportPPTX()');
+ const partes=leeZip(Uint8Array.from(run('window.__pptx').bytes));
+ const texto=n=>(partes.get('ppt/slides/slide'+n+'.xml').match(/<a:t[^>]*>[^<]*<\/a:t>/g)||[]).join(' ');
+ assert.ok(texto(2).includes('Frase del lienzo libre'),'el bloque de «En blanco» no llegó: '+texto(2));
+ assert.ok(!texto(2).includes('Titulo oculto')&&!/\d+ \/ \d+/.test(texto(2)),'«En blanco» no lleva título ni número: '+texto(2));
+ assert.ok(texto(3).includes('Frase completa del titular de prueba')&&texto(3).includes('Evidencia del titular'));
+ for(const t of ['(a)','(c)','Panel uno'])assert.ok(texto(4).includes(t),'falta «'+t+'» en el PowerPoint: '+texto(4));
+ for(const t of ['Objetivo general','Objetivos específicos','Objetivo especifico de prueba'])assert.ok(texto(5).includes(t),'falta «'+t+'» en el PowerPoint: '+texto(5));
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+/* Una diapositiva nueva «En blanco» nace sin título ni bloques, y la revisión
+   no le pide el título que no enseña. */
+test('A new blank slide is born empty and the review does not ask for its title',async()=>{const{dom,run,errors}=await editor();try{
+ run("wsNueva();addSlide('blanco')");
+ const sl=JSON.parse(run('JSON.stringify(curSlide())'));
+ assert.equal(sl.layout,'blanco');assert.equal(sl.title,'');assert.deepEqual(sl.blocks,[]);
+ run("curSlide().blocks.push({id:uid(),type:'text',text:'Una sola frase'})");
+ const avisos=run('JSON.stringify(revisaMazo().fallos.filter(x=>x.i===S.cur))');
+ assert.ok(!/sin título/i.test(avisos),'la revisión pidió título a «En blanco»: '+avisos);
+ /* y la regla sigue viva para los diseños que sí enseñan el título */
+ run("addSlide('content');curSlide().title='';curSlide().blocks.push({id:uid(),type:'text',text:'Otra frase'})");
+ assert.match(run('JSON.stringify(revisaMazo().fallos.filter(x=>x.i===S.cur))'),/sin título/i);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
 test('The export measures on its own bench, not on the shared one',async()=>{const{dom,run,errors}=await editor();try{
  run(capturaPptx+"wsNueva(EJEMPLOS[0].build());document.getElementById('workbench').innerHTML='<i id=\"testigo\"></i>'");
  await run('exportPPTX()');

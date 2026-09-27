@@ -6,6 +6,8 @@ Do not bring production credentials, cloud configuration, private research, othe
 
 Preserve JSON v1 compatibility, blank new slides, explicit save failures, and immutable scientific source data. Examples must label illustrative data and must not invent research claims or citations. Read src/js/_orden.txt before changing module dependencies.
 
+The MCP server for AI assistants lives in mcp/ (docs/mcp.md): mcp/operaciones.js is evaluated inside the built app and calls its functions, so block, layout and export changes can affect it; run tests/mcp.test.mjs after them.
+
 Run npm run build and relevant tests. When examples change, regenerate with npm run examples. Inspect rendered results for visual changes. JSDOM geometry is simulated; do not report it as browser validation.
 
 Publicación: un tag `v<versión>` lanza `.github/workflows/release.yml` (workflow «Publish release»), que crea la release y avisa a erlen-suite (docs/actualizacion-automatica.md del portal). Requiere el secreto `ERLEN_SYNC_APP_KEY`.

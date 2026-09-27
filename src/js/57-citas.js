@@ -133,7 +133,7 @@ const numeroRef = (id, deck) => ordenRefs(deck).indexOf(id) + 1;
 function quienCita(r) {
   const A = apellidos(r.autores);
   if (!A.length) return (r.titulo || 'Sin autor').slice(0, 22);
-  return A.length === 1 ? A[0] : A.length === 2 ? A[0] + ' y ' + A[1] : A[0] + ' et al.';
+  return firmantes(A);
 }
 /* La marca ya resuelta, en el estilo elegido. modo: 'html' | 'tex' | 'txt'. */
 function marcaCita(refs, deck, modo) {
@@ -183,15 +183,41 @@ function resuelveCitas(s, modo, deck) {
 /* Un nombre entre llaves es una institución («{Organización Mundial de la Salud}»),
    como en BibTeX: se queda entero en vez de reducirse a la última palabra. */
 const sinLlaves = s => String(s || '').replace(/[{}]/g, '');
+/* «et al.» (o el «and others» de BibTeX) al final no es un apellido: se quita
+   de la lista y queda anotado en «etal», para que la cita corta diga
+   «Nadie et al.» y no «Nadie y et al.». */
+const RE_ETAL = /^\{?\s*(?:et\s*al\.?|others)\s*\}?$/i;
+/* Se parte por «;», « and » o « y », pero nunca dentro de llaves: «{Food and
+   Agriculture Organization}» es un solo nombre. */
+function partesAutores(autores) {
+  const s = String(autores || ''), out = [];
+  let n = 0, ini = 0;
+  for (let j = 0; j < s.length; j++) {
+    const ch = s[j];
+    if (ch === '{') n++;
+    else if (ch === '}') n = Math.max(0, n - 1);
+    else if (!n) {
+      const m = ch === ';' ? [';'] : /\s/.test(ch) ? s.slice(j).match(/^\s+(?:and|y)\s+/i) : null;
+      if (m) { out.push(s.slice(ini, j)); j += m[0].length - 1; ini = j + 1; }
+    }
+  }
+  out.push(s.slice(ini));
+  return out.map(x => x.trim()).filter(Boolean);
+}
 function apellidos(autores) {
-  return String(autores || '').split(/\s*;\s*|\s+(?:and|y)\s+/i)
-    .map(x => x.trim()).filter(Boolean)
+  const todos = partesAutores(autores);
+  const A = todos.filter(x => !RE_ETAL.test(x))
     .map(x => {
       const inst = x.match(/^\{(.+)\}$/);
       if (inst) return inst[1].trim();
       return x.includes(',') ? x.split(',')[0].trim() : (x.split(/\s+/).pop() || x);
     });
+  A.etal = A.length < todos.length;
+  return A;
 }
+/* Quién firma, en corto: uno, «A y B» o «A et al.». */
+const firmantes = A => !A.length ? '' : A.etal || A.length > 2 ? A[0] + ' et al.'
+  : A.length === 1 ? A[0] : A[0] + ' y ' + A[1];
 /* Abreviatura de revista al estilo ISO 4, con las palabras que más salen.
    Solo se aplica si el nombre es largo: «Nature» se queda como está. */
 const ABREV_REV = {
@@ -224,8 +250,7 @@ function revistaCorta(nombre) {
 /* Cita corta al pie: «Rodríguez et al., Nature 2021». */
 function citaCorta(r) {
   if (!r) return '';
-  const A = apellidos(r.autores);
-  const quien = !A.length ? '' : A.length === 1 ? A[0] : A.length === 2 ? A[0] + ' y ' + A[1] : A[0] + ' et al.';
+  const quien = firmantes(apellidos(r.autores));
   return [quien, revistaCorta(r.revista), r.anio].filter(Boolean).join(', ');
 }
 /* Referencia completa, al estilo de una lista de artículo. */
@@ -243,8 +268,14 @@ function citaLarga(r) {
   return s;
 }
 
-/* En pantalla el volumen va con ** ** porque así lo entiende el pintador de
-   texto enriquecido; en LaTeX eso no significa nada, hay que poner \textbf. */
+/* El volumen va entre ** **, que ni inlineRich ni LaTeX entienden: en
+   pantalla se vuelve <b> y en LaTeX \textbf. Antes la lista de referencias
+   enseñaba los asteriscos tal cual. */
+function citaLargaHtml(r) {
+  const p = citaLarga(r).split('**');
+  if (p.length < 3 || p.length % 2 === 0) return inlineRich(citaLarga(r));
+  return p.map((t, i) => i % 2 ? '<b>' + inlineRich(t) + '</b>' : inlineRich(t)).join('');
+}
 function citaLargaTex(r) {
   const p = citaLarga(r).split('**');
   if (p.length < 3 || p.length % 2 === 0) return texInline(citaLarga(r));
@@ -253,44 +284,192 @@ function citaLargaTex(r) {
 
 /* ---------- traer una referencia de fuera ---------- */
 /* Crossref es abierta y no pide clave; con el DOI basta. */
+const limpiaDOI = s => String(s || '').trim()
+  .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').replace(/^doi:\s*/i, '');
 async function refDesdeDOI(doi) {
-  const limpio = String(doi || '').trim()
-    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').replace(/^doi:\s*/i, '');
+  const limpio = limpiaDOI(doi);
   if (!/^10\.\d{4,9}\/\S+$/.test(limpio)) throw new Error('Eso no parece un DOI');
   const res = await fetch('https://api.crossref.org/works/' + encodeURIComponent(limpio), {
     headers: { Accept: 'application/json' }
   });
   if (!res.ok) throw new Error(res.status === 404 ? 'Ese DOI no está en Crossref' : 'Crossref respondió ' + res.status);
-  const m = (await res.json()).message || {};
-  const aut = (m.author || []).map(a => [a.family, a.given].filter(Boolean).join(', ')).join('; ');
-  const anio = ((m.issued || {})['date-parts'] || [[]])[0][0];
+  return refDesdeCrossref((await res.json()).message || {}, limpio);
+}
+/* Crossref escribe los títulos con marcado JATS: «TiO<sub>2</sub>»,
+   «<i>in situ</i>». Los subíndices y superíndices de cifras pasan a sus
+   caracteres Unicode (en química importan; los mapas son los de 12-chart.js);
+   el resto de etiquetas se quita. */
+function sinMarcado(s) {
+  let t = String(s || '')
+    .replace(/<sub>\s*([0-9+-]+)\s*<\/sub>/gi, (m, n) => n.replace(/./g, c => SUB_UNI[c]))
+    .replace(/<sup>\s*([0-9+-]+)\s*<\/sup>/gi, (m, n) => n.replace(/./g, c => SUP_UNI[c]));
+  /* Una pasada no basta: «<scr<b>ipt>» deja «<script>» al quitar la de dentro.
+     Se repite hasta que no quede ninguna (el texto se escapa al pintarse, pero
+     esta función promete texto llano y lo cumple sola). */
+  for (let antes = null; antes !== t;) { antes = t; t = t.replace(/<[^<>]*>/g, ''); }
+  return t
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
+}
+/* La respuesta de Crossref (su «message») a una referencia de aquí. Lo que
+   Crossref no trae se queda vacío: no se rellena con nada supuesto. */
+function refDesdeCrossref(m, doi) {
+  const aut = (m.author || []).map(a => a.name ? '{' + a.name + '}' : [a.family, a.given].filter(Boolean).join(', '))
+    .filter(Boolean).join('; ');
+  const fecha = m.issued || m['published-print'] || m['published-online'] || {};
+  const anio = ((fecha['date-parts'] || [[]])[0] || [])[0];
+  const primero = v => Array.isArray(v) ? (v[0] || '') : (v || '');
   return {
     id: uid(),
-    autores: aut,
-    titulo: Array.isArray(m.title) ? m.title[0] : (m.title || ''),
-    revista: (Array.isArray(m['container-title']) ? m['container-title'][0] : m['container-title']) || '',
+    autores: sinMarcado(aut),
+    titulo: sinMarcado(primero(m.title)),
+    revista: sinMarcado(primero(m['container-title'])),
     anio: anio ? String(anio) : '',
-    vol: m.volume || '', pag: m.page || '',
-    doi: m.DOI || limpio, url: m.URL || ''
+    vol: String(m.volume || ''), pag: String(m.page || '').replace(/(\d)\s*-+\s*(\d)/g, '$1–$2'),
+    doi: limpiaDOI(m.DOI || doi), url: String(m.URL || '')
   };
 }
-/* Un BibTeX pegado: se leen los campos que nos sirven, sin pretender ser un
-   analizador completo de BibTeX. */
-function refDesdeBibtex(txt) {
+
+/* ---------- BibTeX ----------
+   Un lector de verdad, contando llaves, porque los .bib de Zotero, JabRef o las
+   revistas traen llaves anidadas ({\'e}, {TiO$_2$}), comillas, números sueltos,
+   abreviaturas de mes (month = jan) y «#» para concatenar. */
+const TEX_ACENTO = { "'": '́', '`': '̀', '^': '̂', '"': '̈', '~': '̃',
+  '=': '̄', '.': '̇', u: '̆', v: '̌', H: '̋', c: '̧', k: '̨', r: '̊', d: '̣', b: '̱' };
+const TEX_LETRA = { ss: 'ß', o: 'ø', O: 'Ø', aa: 'å', AA: 'Å', ae: 'æ', AE: 'Æ', oe: 'œ', OE: 'Œ', l: 'ł', L: 'Ł', i: 'ı', j: 'ȷ' };
+/* De LaTeX a texto llano: {\'e}, \'{e} y \'e son «é»; {\ss} es «ß»; \& es «&».
+   Lo que va entre $…$ se deja tal cual, porque el editor lo dibuja. */
+function texALlano(s) {
+  const letra = t => t === '\\i' ? 'i' : t === '\\j' ? 'j' : t;
+  const fuera = t => t
+    /* \'{e}, \'e, \' e y \c{c}, \c c: el acento se vuelve un carácter combinante. */
+    .replace(/\\([\'`^"~=.])\s*(?:\{\s*(\\[ij](?![A-Za-z])|[A-Za-z])\s*\}|(\\[ij](?![A-Za-z])|[A-Za-z]))/g,
+      (m, a, l1, l2) => letra(l1 || l2) + TEX_ACENTO[a])
+    .replace(/\\([uvHckrdb])(?:\s*\{\s*(\\[ij](?![A-Za-z])|[A-Za-z])\s*\}|\s+([A-Za-z]))/g,
+      (m, a, l1, l2) => letra(l1 || l2) + TEX_ACENTO[a])
+    .replace(/\\(ss|aa|AA|ae|AE|oe|OE|o|O|l|L|i|j)(?![A-Za-z])\s*/g, (m, l) => TEX_LETRA[l])
+    .replace(/\\([&%_#])/g, '$1')
+    .replace(/\\textendash(?![A-Za-z])\s*/g, '–').replace(/\\textemdash(?![A-Za-z])\s*/g, '—')
+    .replace(/---/g, '—').replace(/--/g, '–')
+    .replace(/(^|[^\\])~/g, '$1\u00a0')
+    /* Cualquier otra orden con argumento (\emph{…}, \textsubscript{2}, \ce{…})
+       deja solo su texto. */
+    .replace(/\\[A-Za-z]+\*?\s*(?=\{)/g, '')
+    .replace(/[{}]/g, '');
+  /* Lo que va entre $…$ se deja tal cual, y también \$ (un dólar literal):
+     el editor dibuja lo uno y respeta lo otro. */
+  return String(s || '').split(/((?:^|[^\\])\$[^$]*\$)/).map((t, k) => {
+    if (!(k % 2)) return fuera(t);
+    const i = t.indexOf('$');
+    return fuera(t.slice(0, i)) + t.slice(i);
+  }).join('').normalize('NFC').replace(/\s+/g, ' ').trim();
+}
+const MESES_BIB = { jan: '1', feb: '2', mar: '3', apr: '4', may: '5', jun: '6', jul: '7', aug: '8', sep: '9', oct: '10', nov: '11', dec: '12' };
+/* Una entrada «@tipo{clave, campo = valor, …}» en crudo: el tipo, la clave y
+   cada campo tal como está escrito (sin quitar llaves ni LaTeX). Las macros de
+   @string llegan en «macros». */
+function camposBibtex(txt, macros) {
   const s = String(txt || '');
-  if (!/@\w+\s*\{/.test(s)) throw new Error('Eso no parece una entrada BibTeX');
-  const campo = n => {
-    const re = new RegExp(n + '\\s*=\\s*(\\{((?:[^{}]|\\{[^{}]*\\})*)\\}|"([^"]*)"|(\\d+))', 'i');
-    const m = s.match(re);
-    return m ? (m[2] || m[3] || m[4] || '').replace(/[{}]/g, '').replace(/\s+/g, ' ').trim() : '';
+  const cab = s.match(/^\s*@\s*(\w+)\s*([{(])/);
+  if (!cab) throw new Error('Eso no parece una entrada BibTeX');
+  const cierra = cab[2] === '(' ? ')' : '}';
+  let i = cab[0].length;
+  const fin = s.lastIndexOf(cierra);
+  const cuerpo = s.slice(i, fin > i ? fin : s.length);
+  const out = { tipo: cab[1].toLowerCase(), clave: '', campos: {} };
+  let p = 0;
+  const blanco = () => { while (p < cuerpo.length && /[\s,]/.test(cuerpo[p])) p++; };
+  /* La clave es lo que hay antes de la primera coma, si no lleva «=». */
+  const coma = cuerpo.indexOf(',');
+  const antes = coma < 0 ? cuerpo : cuerpo.slice(0, coma);
+  if (antes.indexOf('=') < 0) { out.clave = antes.trim(); p = coma < 0 ? cuerpo.length : coma + 1; }
+  const valor = () => {
+    const c = cuerpo[p];
+    if (c === '{') {
+      let n = 0, j = p;
+      for (; j < cuerpo.length; j++) {
+        if (cuerpo[j] === '\\') { j++; continue; }
+        if (cuerpo[j] === '{') n++;
+        else if (cuerpo[j] === '}') { n--; if (!n) break; }
+      }
+      const v = cuerpo.slice(p + 1, j); p = j + 1; return v;
+    }
+    if (c === '"') {
+      let n = 0, j = p + 1;
+      for (; j < cuerpo.length; j++) {
+        if (cuerpo[j] === '\\') { j++; continue; }
+        if (cuerpo[j] === '{') n++;
+        else if (cuerpo[j] === '}') n--;
+        else if (cuerpo[j] === '"' && n <= 0) break;
+      }
+      const v = cuerpo.slice(p + 1, j); p = j + 1; return v;
+    }
+    const m = cuerpo.slice(p).match(/^[^\s,#}]+/);
+    const w = m ? m[0] : '';
+    p += w.length;
+    const k = w.toLowerCase();
+    if (macros && Object.prototype.hasOwnProperty.call(macros, k)) return macros[k];
+    if (MESES_BIB[k]) return MESES_BIB[k];
+    return w;
   };
-  const aut = campo('author').split(/\s+and\s+/i).map(x => x.trim()).filter(Boolean).join('; ');
-  const r = {
-    id: uid(), autores: aut, titulo: campo('title'),
-    revista: campo('journal') || campo('booktitle') || campo('publisher'),
-    anio: campo('year'), vol: campo('volume'), pag: campo('pages').replace(/--/g, '–'),
-    doi: campo('doi'), url: campo('url')
+  while (p < cuerpo.length) {
+    blanco();
+    const m = cuerpo.slice(p).match(/^([A-Za-z][\w:.+-]*)\s*=\s*/);
+    if (!m) { const sig = cuerpo.indexOf(',', p); if (sig < 0) break; p = sig + 1; continue; }
+    p += m[0].length;
+    let v = valor();
+    /* «a # b»: se concatenan. */
+    for (;;) {
+      const q = cuerpo.slice(p).match(/^\s*#\s*/);
+      if (!q) break;
+      p += q[0].length; v += valor();
+    }
+    out.campos[m[1].toLowerCase()] = v;
+  }
+  return out;
+}
+/* Los autores de BibTeX van separados por «and» fuera de llaves; un nombre
+   entero entre llaves es una institución y conserva sus llaves exteriores
+   (apellidos() lo reconoce así). «and others» es «et al.». */
+function autoresBibtex(v) {
+  const partes = [];
+  let n = 0, ini = 0;
+  const s = String(v || '');
+  for (let j = 0; j < s.length; j++) {
+    if (s[j] === '{') n++;
+    else if (s[j] === '}') n--;
+    else if (!n && /\s/.test(s[j])) {
+      const m = s.slice(j).match(/^\s+and\s+/i);
+      if (m) { partes.push(s.slice(ini, j)); j += m[0].length - 1; ini = j + 1; }
+    }
+  }
+  partes.push(s.slice(ini));
+  return partes.map(x => x.trim()).filter(Boolean).map(x => {
+    if (/^others$/i.test(x)) return '{et al.}';
+    const inst = x.match(/^\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}$/);
+    return inst ? '{' + texALlano(inst[1]) + '}' : texALlano(x);
+  }).join('; ');
+}
+/* De los campos de una entrada a una referencia de aquí. */
+function refDeCamposBibtex(e) {
+  const c = e.campos || {};
+  const t = k => texALlano(c[k] || '');
+  /* DOI y enlace: sin llaves, espacios ni escapes de LaTeX (10.1000/a\_b). */
+  const crudo = k => String(c[k] || '').replace(/[{}]/g, '').replace(/\\([_%&#~$])/g, '$1').replace(/\s+/g, '').trim();
+  const anio = (t('year') || t('date')).match(/\b\d{4}\b/);
+  return {
+    id: uid(), autores: autoresBibtex(c.author || c.editor || ''), titulo: t('title'),
+    revista: t('journal') || t('journaltitle') || t('booktitle') || t('school') || t('institution') || t('publisher'),
+    anio: anio ? anio[0] : '', vol: t('volume'),
+    pag: t('pages').replace(/(\d)\s*[-–]+\s*(\d)/g, '$1–$2'),
+    doi: limpiaDOI(crudo('doi')), url: crudo('url')
   };
+}
+/* Un BibTeX pegado: una sola entrada. */
+function refDesdeBibtex(txt, macros) {
+  const s = String(txt || '');
+  if (!/@\w+\s*[{(]/.test(s)) throw new Error('Eso no parece una entrada BibTeX');
+  const r = refDeCamposBibtex(camposBibtex(s.slice(s.search(/@\w+\s*[{(]/)), macros));
   if (!r.titulo && !r.autores) throw new Error('No encontré ni autores ni título en ese BibTeX');
   return r;
 }
@@ -404,7 +583,7 @@ function renderReferencias(b, deck, mode) {
     : h('ol', { class: 'refs-lista' + densa, start: String(base + 1) });
   lista.forEach(id => {
     const r = refPorId(id, deck);
-    cont.append(h('li', { html: inlineRich(citaLarga(r)) }));
+    cont.append(h('li', { html: citaLargaHtml(r) }));
   });
   caja.append(cont);
   return caja;

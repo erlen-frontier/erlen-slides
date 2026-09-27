@@ -91,6 +91,10 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
     texto(ver('.tp-inst'), m.institute);
     texto(ver('.tp-date'), m.date);
   }
+  /* El recuadro del objetivo general lleva fondo propio: sin él, en el
+     PowerPoint el general no se distinguiría de los específicos. */
+  const og = ver('.obj-parte.k0');
+  if (og && opaco(getComputedStyle(og).backgroundColor)) F.push(xmlRect(id(), marco(og, raiz, esc), hex6(getComputedStyle(og).backgroundColor, ctx.fondo)));
   /* sección */
   if (sl.layout === 'section') {
     const banda = ver('.sec-band');
@@ -112,7 +116,13 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
     })));
   }
   /* encabezados de zona */
-  todos('.zona-tit, .comp-tit, .paso-tit, .celda-tit, .paso-n').forEach(el => texto(el, el.textContent));
+  /* Todos los que pinta 04-render.js con zt(): la cifra y el rótulo del dato
+     grande, el autor de la cita, el rótulo de cada fila y los de la pantalla
+     partida también son texto de la diapositiva, y sin ellos esos diseños
+     llegaban al PowerPoint vacíos. Igual la letra de cada panel de «Tres
+     figuras» y los encabezados de «Objetivos». */
+  todos('.zona-tit, .comp-tit, .paso-tit, .celda-tit, .paso-n, .dt-num, .dt-rot, .ct-autor, .fl-rot, .pt-tit, .tf-rot, .obj-tit')
+    .filter(el => el.textContent.trim()).forEach(el => texto(el, el.textContent));
 
   /* bloques */
   for (const el of todos('.blk[data-bid]')) {

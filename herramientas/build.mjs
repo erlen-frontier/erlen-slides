@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
-import {readFileSync as read,writeFileSync as write,mkdirSync,cpSync,rmSync} from 'node:fs';
+import {readFileSync as read,writeFileSync as write,mkdirSync,cpSync,rmSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -65,7 +65,12 @@ const science=join(out,'libre');mkdirSync(science,{recursive:true});
 const assets=[['@rdkit/rdkit','dist/RDKit_minimal.js','rdkit.js'],['@rdkit/rdkit','dist/RDKit_minimal.wasm','RDKit_minimal.wasm'],['kekule','dist/kekule.min.js','kekule.js'],['3dmol','build/3Dmol-min.js','3dmol.js'],['plotly.js-basic-dist-min','plotly-basic.min.js','plotly.js']];
 const manifest=[];
 for(const [pkg,file,name]of assets){const data=read(join(root,'node_modules',pkg,file));write(join(science,name),data);manifest.push({package:pkg,version:JSON.parse(lib(pkg+'/package.json')).version,file:name,bytes:data.length,sha256:createHash('sha256').update(data).digest('hex')});}
-for(const pkg of new Set([...licenses,...assets.map(a=>a[0])]))cpSync(join(root,'node_modules',pkg,'LICENSE'),join(out,'licenses',pkg.replaceAll('/','-')+'.txt'));
+/* Cada paquete trae su licencia con un nombre distinto, y alguno deja de traerla (@rdkit/rdkit 2026.3 solo publica README y dist/): entonces vale la copia
+   que ya está en licenses/, revisada a mano. Sin ninguna de las dos, el build se detiene: no se publica un paquete sin su licencia. */
+for(const pkg of new Set([...licenses,...assets.map(a=>a[0])])){const destino=join(out,'licenses',pkg.replaceAll('/','-')+'.txt');
+ const propio=['LICENSE','LICENSE.md','LICENSE.txt','COPYING'].map(n=>join(root,'node_modules',pkg,n)).find(existsSync);
+ if(propio)cpSync(propio,destino);else if(existsSync(join(root,'licenses',pkg.replaceAll('/','-')+'.txt')))console.warn(`${pkg} no incluye su licencia: se usa la copia de licenses/.`);
+ else throw new Error(`${pkg} no incluye su licencia y no hay copia en licenses/${pkg.replaceAll('/','-')}.txt`);}
 cpSync(join(root,'node_modules/3dmol/build/3Dmol-min.js.LICENSE.txt'),join(out,'licenses/3dmol-dependencies.txt'));
 cpSync(join(root,'node_modules/kekule/dist/themes'),join(science,'themes'),{recursive:true});cpSync(join(root,'web/quimica-worker.js'),join(science,'quimica-worker.js'));
 write(join(science,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
