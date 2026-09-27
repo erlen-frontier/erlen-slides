@@ -1020,6 +1020,50 @@ function toBeamer(deck) {
       L.push('  \\vfill');
       cierraFrame(L, sl, deck);
 
+    } else if (sl.layout === 'blanco') {
+      /* [plain] quita la cabecera, el pie y la navegación: el marco queda
+         entero para los bloques, igual que en la pantalla. Sin título aunque
+         la diapositiva guarde uno, porque aquí no se enseña. */
+      L.push('\\begin{frame}[' + ['plain'].concat(frameConCodigo(sl) ? ['fragile'] : []).join(',') + ']');
+      L.push(texBlocks(sl.blocks || [], '  '));
+      cierraFrame(L, sl, deck);
+
+    } else if (sl.layout === 'titular') {
+      /* El titular va de título del marco; la evidencia se centra en lo que queda. */
+      L.push(abreFrame(sl));
+      L.push('  \\vfill');
+      L.push('  \\begin{center}');
+      L.push(texBlocks(sl.blocks || [], '    '));
+      L.push('  \\end{center}');
+      L.push('  \\vfill');
+      cierraFrame(L, sl, deck);
+
+    } else if (sl.layout === 'tresfig') {
+      L.push(abreFrame(sl));
+      L.push('  \\begin{columns}[T, onlytextwidth]');
+      [0, 1, 2].forEach(i => {
+        L.push('    \\begin{column}{0.32\\textwidth}');
+        if (zt(sl, i)) L.push('      {\\bfseries\\small\\color{structure.fg} ' + texInline(zt(sl, i)) + '}\\par\\smallskip');
+        L.push('      \\centering\\footnotesize');
+        L.push(texBlocks(sl[CLAVES_ZONA[i]] || [], '      '));
+        L.push('    \\end{column}');
+      });
+      L.push('  \\end{columns}');
+      cierraFrame(L, sl, deck);
+
+    } else if (sl.layout === 'objetivos') {
+      /* El general en un block de Beamer, como en la pantalla; los
+         específicos debajo con su encabezado. Un encabezado borrado a
+         propósito tampoco sale aquí. */
+      L.push(abreFrame(sl));
+      L.push('  \\begin{block}{' + texInline(zt(sl, 0)) + '}');
+      L.push(texBlocks(sl.blocks || [], '    '));
+      L.push('  \\end{block}');
+      L.push('  \\medskip');
+      if (zt(sl, 1)) L.push('  {\\bfseries\\color{structure.fg} ' + texInline(zt(sl, 1)) + '}\\par\\smallskip');
+      L.push(texBlocks(sl.blocks2 || [], '  '));
+      cierraFrame(L, sl, deck);
+
     } else if (sl.layout === 'flujo') {
       L.push(abreFrame(sl));
       L.push('  \\begin{multicols}{' + clamp(sl.cols || 2, 2, 3) + '}');

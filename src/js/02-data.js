@@ -145,12 +145,16 @@ const FU = {}; FUENTES.forEach(f => FU[f.id] = f);
 const GRUPO_FUENTE = { serif: 'Con remates · para leer y para tesis', sans: 'De palo seco · para proyectar' };
 const fuenteDe = m => FU[m && m.fuente] ? FU[m.fuente] : FU.auto;
 
-/* z = número de zonas donde se pueden soltar bloques */
+/* z = número de zonas donde se pueden soltar bloques.
+   sinTitulo: el diseño no enseña el título del marco, así que las revisiones
+   no deben pedirlo. sinPie: tampoco lleva pie ni número de página. */
 const LAYOUTS = [
   { id: 'title',      name: 'Portada',        z: 0, grp: 'Estructura', d: 'Título, autores e institución.' },
   { id: 'section',    name: 'Sección',        z: 0, grp: 'Estructura', d: 'Separador entre partes de la charla.' },
   { id: 'toc',        name: 'Índice',         z: 0, grp: 'Estructura', d: 'Se llena solo con tus secciones.' },
+  { id: 'objetivos',  name: 'Objetivos',      z: 2, grp: 'Estructura', d: 'El objetivo general arriba, destacado, y los específicos debajo. Como se piden en una defensa de tesis.' },
   { id: 'content',    name: 'Contenido',      z: 1, grp: 'Una columna', d: 'La de siempre: los bloques van uno debajo de otro.' },
+  { id: 'blanco',     name: 'En blanco',      z: 1, grp: 'Una columna', sinTitulo: true, sinPie: true, d: 'Sin título ni pie: un lienzo libre para una figura grande, un esquema o una sola frase.' },
   { id: 'flujo',      name: 'Texto fluido',   z: 1, grp: 'Una columna', d: 'El texto llena la diapositiva en dos o tres columnas, como un artículo. Ideal cuando hay mucho que decir.' },
   { id: 'enunciado',  name: 'Enunciado',      z: 1, grp: 'Una columna', d: 'Una idea grande, centrada y con aire. Para conclusiones y transiciones.' },
   { id: 'ancho',      name: 'A todo lo ancho', z: 1, grp: 'Una columna', d: 'Márgenes mínimos: la figura o la tabla ocupan casi toda la diapositiva.' },
@@ -163,6 +167,8 @@ const LAYOUTS = [
   { id: 'rejilla6',   name: 'Cuadrícula 3×2', z: 6, grp: 'Varias columnas', d: 'Seis celdas rotuladas: una por técnica, por muestra o por condición.' },
   { id: 'filas',      name: 'Tres filas',     z: 3, grp: 'Varias columnas', d: 'Tres bandas horizontales con su rótulo a la izquierda. La secuencia se lee de arriba abajo.' },
   { id: 'partida',    name: 'Pantalla partida', z: 2, grp: 'Varias columnas', d: 'Dos mitades a sangre, sin marcos ni márgenes: antes y después, o dos muestras enfrentadas.' },
+  { id: 'titular',    name: 'Titular + figura', z: 1, grp: 'La figura manda', d: 'El título es una frase con la conclusión y debajo va la evidencia, grande. El formato afirmación-evidencia.' },
+  { id: 'tresfig',    name: 'Tres figuras',   z: 3, grp: 'La figura manda', d: 'Tres paneles rotulados (a), (b) y (c), del mismo ancho y alineados: tres técnicas sobre la misma muestra.' },
   { id: 'sangre',     name: 'Figura a sangre', z: 1, grp: 'La figura manda', d: 'La figura llena la diapositiva y el texto va encima, en una banda legible.' },
   { id: 'piefigura',  name: 'Figura con pie ancho', z: 2, grp: 'La figura manda', d: 'La figura ocupa casi todo y el pie va al lado, en una columna estrecha con aire.' },
   { id: 'zigzag',     name: 'Zigzag',         z: 4, grp: 'La figura manda', d: 'Dos filas alternadas: figura y texto, luego texto y figura. Para encadenar dos resultados.' },
@@ -182,7 +188,9 @@ const ZT_DEF = {
   cita: ['Kojima et al., J. Am. Chem. Soc., 2009'],
   cuadricula: ['Primero', 'Segundo', 'Tercero', 'Cuarto'],
   pasos: ['Síntesis', 'Caracterización', 'Análisis'],
-  barra: ['Datos clave', '']
+  barra: ['Datos clave', ''],
+  tresfig: ['(a)', '(b)', '(c)'],
+  objetivos: ['Objetivo general', 'Objetivos específicos']
 };
 
 /* Una columna de una tabla es numérica si todas sus celdas con contenido lo

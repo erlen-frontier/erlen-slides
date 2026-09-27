@@ -514,9 +514,9 @@ accion({ id: 'diagrama', grp: 'Figuras', n: 'Insertar un diagrama',
     return SK[v].n + ': ' + SK[v].d;
   } });
 accion({ id: 'acomodo', grp: 'Diapositivas', n: 'Cambiar el acomodo de la página',
-  d: 'Veintidós plantillas de página: además de las de siempre, figura a sangre, dato grande, cita destacada, pantalla partida, cuadrícula 3×2, tres filas, figura con pie ancho y zigzag.',
-  clave: 'acomodo plantilla de pagina distribucion sangre dato cita partida rejilla filas zigzag pie ancho',
-  frases: 'cambiar el acomodo plantilla de pagina figura a sangre dato grande cita destacada pantalla partida zigzag',
+  d: 'Veintiséis plantillas de página: además de las de siempre, en blanco, titular + figura, tres figuras, objetivos, figura a sangre, dato grande, cita destacada, pantalla partida, cuadrícula 3×2, tres filas, figura con pie ancho y zigzag.',
+  clave: 'acomodo plantilla de pagina distribucion blanco titular paneles objetivos sangre dato cita partida rejilla filas zigzag pie ancho',
+  frases: 'cambiar el acomodo plantilla de pagina en blanco titular y figura tres figuras objetivos figura a sangre dato grande cita destacada pantalla partida zigzag',
   arg: { n: 'acomodo', tipo: 'opcion', ops: () => LAYOUTS.filter(l => l.z > 0).map(l => ({ v: l.id, n: l.name })) },
   corre: v => { changeLayout(curSlide(), v); return LAY[v].name + ': ' + LAY[v].d; } });
 accion({ id: 'articulo', grp: 'Exportar', n: 'Esqueleto de artículo',

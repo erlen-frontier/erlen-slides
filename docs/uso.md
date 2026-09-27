@@ -12,6 +12,17 @@ Una gráfica conserva los pares de datos y sus etiquetas. Verifica unidades y si
 
 En Recursos → Laboratorio científico puedes usar RDKit para analizar estructuras, Kekule para dibujarlas, 3Dmol para visualizarlas y Plotly para generar gráficas. Estas herramientas adicionales requieren servir los recursos de `public/libre/` por HTTP, incluso si el servidor es local y no hay Internet. Abrir únicamente el HTML offline permite seguir viendo figuras ya insertadas.
 
+Cada diapositiva tiene un diseño: lo eliges en Inicio → Nueva y lo cambias, sin perder bloques, en Diapositiva → Acomodo. Además de los de estructura, columnas y cuadrículas, hay cuatro pensados para charlas científicas:
+
+| Diseño | Para qué sirve | En Beamer y PowerPoint |
+|---|---|---|
+| **En blanco** | Lienzo libre, sin título ni pie ni número de página: una figura grande, un esquema o una sola frase. El título que tenga la diapositiva se guarda (sirve para la tira, la búsqueda y el índice), pero no se muestra, y la revisión no lo pide | Marco `[plain]` con sus bloques; en PowerPoint salen los bloques, sin pie |
+| **Titular + figura** | El título es la conclusión en una frase completa, sin barra y a dos líneas si hace falta, y debajo va la evidencia. La revisión sugiere reescribirlo si tiene menos de cuatro palabras | El titular es el título del marco; la evidencia va centrada |
+| **Tres figuras** | Tres paneles del mismo ancho con su letra —(a), (b), (c), editables— para comparar tres técnicas de la misma muestra | Tres columnas con la letra de cada panel |
+| **Objetivos** | El objetivo general destacado arriba y los específicos debajo, con encabezados editables | El general en un `block`; los específicos debajo |
+
+Las diapositivas nuevas nacen vacías: los encabezados de zona son rótulos genéricos, no datos.
+
 Para empezar una lámina con una idea clara, usa **Afirmación + evidencia** en Insertar → Nueva diapositiva. La plantilla deja una zona para la afirmación, otra para la figura y una nota para explicar incertidumbre y límites; sustituye los datos ilustrativos antes de presentar.
 
 Antes de compartir, abre Archivo → Calidad científica. La revisión comprueba datos, ejes, unidades indicadas, escalas logarítmicas, barras de error, pies y procedencia. Sus avisos ayudan a revisar el archivo; no certifican la validez del experimento.
