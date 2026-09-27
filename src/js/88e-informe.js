@@ -10,9 +10,10 @@
 
    La conversión es un borrador para hablar, no un facsímil del informe: el
    texto se reparte con el mismo umbral de palabras que 66-carga.js considera
-   una diapositiva hablada, las tablas se recortan a lo que se lee de lejos y
-   las figuras pasan a gráficas de datos editables. Todo recorte se dice en el
-   pie de la tabla o de la figura y en las notas; nada se inventa. */
+   una diapositiva hablada, las tablas largas o anchas se reparten en varias
+   diapositivas de lo que se lee de lejos y las figuras pasan a gráficas de
+   datos editables. Todo reparto y todo recorte se dice en el pie de la tabla
+   o de la figura y en las notas; nada se inventa. */
 
 /* Límites del tipo: INFORME_LIMITES (secciones, bloques, bytes, columnas, filas,
    series, puntos, marcas y regiones) no se escribe aquí. Lo genera el build
@@ -190,35 +191,126 @@ function infCelda(c, max) {
    iguales, que es lo peor que hace el navegador. Las celdas de texto se quedan
    en dos líneas como mucho, y una palabra más ancha que su columna se deja
    partir (con un guion discrecional, que el .tex también entiende) para que
-   no empuje la tabla fuera. */
-function infTablaBloque(t, disponible) {
-  const cols = t.columns.slice(0, INF_COLUMNAS), omitC = t.columns.length - cols.length;
-  const cpl = Math.max(6, Math.floor((INF_ANCHO / cols.length - 40) / 11.5)), max = Math.max(12, Math.min(INF_CELDA, cpl * 2));
-  const corte = Math.max(4, cpl - 3);   /* las mayúsculas y las cifras son más anchas que la media */
-  const numero = w => /^[-+−]?[\d.,]+(?:e[-+]?\d+)?%?$/i.test(w);
-  const celda = c => infCelda(c, max);
-  const cabeza = cols.map(celda), cuerpo = t.data.map(r => cols.map((_, j) => celda(r[j])));
-  const natural = cols.reduce((a, _, j) => a + 40 + 11.5 * Math.max(cabeza[j].length, ...cuerpo.slice(0, 15).map(r => r[j].length)), 0);
-  const lineas = x => natural <= INF_ANCHO ? 1 : infLineas(x, cpl);
-  const alto = r => 26 + 29 * Math.max(...r.map(lineas));
-  const pie = 16 + 26 * infLineas(t.titulo + ' · Se muestran 000 de 000 filas (000 omitidas), 00 de 00 columnas (00 omitidas) y celdas largas acortadas con «…»', 95);
-  let usado = alto(cabeza) + pie, n = 0;
-  for (const f of cuerpo) {
-    const a = alto(f);
-    if (n && usado + a > disponible) break;
-    usado += a; n++;
+   no empuje la tabla fuera.
+
+   Lo que no cabe en una diapositiva no se tira: se reparte. Las filas van en
+   tramos que caben, con el encabezado en cada uno, y las columnas de más, en
+   grupos de hasta siete que repiten las que identifican la fila (ver
+   infColumnasId): sin ellas, un «78.2» suelto en otra diapositiva no se sabría
+   de qué corrida es. Solo si el reparto pasara de INF_TABLA_PARTES
+   diapositivas se recorta lo que sobra, y se dice como siempre. Un L27 con
+   nueve columnas ocupa ocho. */
+const INF_TABLA_PARTES = 12;
+/* Las columnas que se repiten en cada grupo: la primera siempre (la corrida,
+   el experimento o el descriptor) y, justo detrás, las que tienen pinta de
+   factores de un diseño: sin celdas vacías y con pocos niveles que se repiten
+   entre filas (un L9 tiene tres niveles en nueve corridas; una respuesta
+   medida casi nunca repite). Si fueran tantas que no dejaran sitio a dos
+   columnas de datos por diapositiva, se repite solo la primera. */
+function infColumnasId(t) {
+  const ids = [0], n = t.data.length;
+  if (n >= 4) for (let j = 1; j < t.columns.length - 1; j++) {
+    const vals = t.data.map(r => r[j]);
+    if (vals.some(v => v === null || v === undefined || v === '')) break;
+    if (new Set(vals.map(v => typeof v + ':' + String(v))).size > Math.min(6, n / 2)) break;
+    ids.push(j);
   }
-  /* Solo hace falta partir palabras cuando la tabla no cabe a su ancho natural. */
-  const parte = v => natural <= INF_ANCHO ? infPlano(v) : infPlano(v.replace(new RegExp('\\S{' + (corte + 1) + ',}', 'g'), w => numero(w) ? w : w.match(new RegExp('.{1,' + corte + '}', 'g')).join('\u00ad')));
-  const rows = [cabeza].concat(cuerpo.slice(0, n)).map(r => r.map(parte));
-  const omitF = t.data.length - n;
-  const cortadas = [t.columns].concat(t.data.slice(0, n)).some(r => cols.some((_, j) => typeof r[j] === 'string' && infCelda(r[j], max) !== r[j].replace(/\s+/g, ' ').trim()));
-  const recorte = [omitF ? 'se muestran ' + n + ' de ' + t.data.length + ' filas (' + omitF + (omitF === 1 ? ' omitida' : ' omitidas') + ')' : '',
-    omitC ? cols.length + ' de ' + t.columns.length + ' columnas (' + omitC + (omitC === 1 ? ' omitida' : ' omitidas') + ')' : '',
+  return ids.length <= INF_COLUMNAS - 2 ? ids : [0];
+}
+/* «1–5 y 8–9»: los números (desde 1) de las columnas de un grupo, por tramos. */
+function infTramos(idx) {
+  const t = [];
+  idx.forEach(j => { const u = t[t.length - 1]; if (u && u[1] === j - 1) u[1] = j; else t.push([j, j]); });
+  return t.map(([a, z]) => a === z ? String(a + 1) : (a + 1) + '–' + (z + 1)).join(', ').replace(/, ([^,]*)$/, ' y $1');
+}
+/* Parte una lista en n trozos seguidos que difieren a lo sumo en uno. */
+function infParejos(lista, n) {
+  const out = [];
+  for (let k = 0, i = 0; k < n; k++) { const tam = Math.floor(lista.length / n) + (k < lista.length % n ? 1 : 0); out.push(lista.slice(i, i + tam)); i += tam; }
+  return out;
+}
+function infTablaPartes(t, disponible) {
+  const nC = t.columns.length, nF = t.data.length;
+  /* Grupos de columnas: todas juntas si son siete o menos; si no, las de datos
+     en grupos parejos (4 y 3 mejor que 5 y 2), cada uno tras las que
+     identifican la fila. */
+  let ids = [], grupos = [t.columns.map((_, j) => j)];
+  if (nC > INF_COLUMNAS) {
+    ids = infColumnasId(t);
+    const datos = grupos[0].filter(j => !ids.includes(j)), cabe = INF_COLUMNAS - ids.length;
+    grupos = infParejos(datos, Math.ceil(datos.length / cabe)).map(g => ids.concat(g));
+  }
+  const omitG = grupos.length > INF_TABLA_PARTES;
+  grupos = grupos.slice(0, INF_TABLA_PARTES);
+  const numero = w => /^[-+−]?[\d.,]+(?:e[-+]?\d+)?%?$/i.test(w);
+  const medidas = grupos.map(cols => {
+    const cpl = Math.max(6, Math.floor((INF_ANCHO / cols.length - 40) / 11.5)), max = Math.max(12, Math.min(INF_CELDA, cpl * 2));
+    const corte = Math.max(4, cpl - 3);   /* las mayúsculas y las cifras son más anchas que la media */
+    const celda = c => infCelda(c, max);
+    const cabeza = cols.map(j => celda(t.columns[j])), cuerpo = t.data.map(r => cols.map(j => celda(r[j])));
+    /* El ancho natural se mide con todas las filas: un tramo de más abajo, con
+       celdas más largas, también tiene que caber con esta cuenta. */
+    const natural = cols.reduce((a, _, k) => a + 40 + 11.5 * Math.max(cabeza[k].length, ...cuerpo.map(r => r[k].length)), 0);
+    const lineas = x => natural <= INF_ANCHO ? 1 : infLineas(x, cpl);
+    const alto = r => 26 + 29 * Math.max(...r.map(lineas));
+    /* Solo hace falta partir palabras cuando la tabla no cabe a su ancho natural. */
+    const parte = v => natural <= INF_ANCHO ? infPlano(v) : infPlano(v.replace(new RegExp('\\S{' + (corte + 1) + ',}', 'g'), w => numero(w) ? w : w.match(new RegExp('.{1,' + corte + '}', 'g')).join('­')));
+    const cortada = r => cols.some(j => typeof r[j] === 'string' && infCelda(r[j], max) !== r[j].replace(/\s+/g, ' ').trim());
+    return { cols, cabeza, cuerpo, alto, parte, cortada };
+  });
+  /* Cada fila mide lo que su celda más alta en cualquiera de los grupos: así
+     los tramos son los mismos en todos y «Filas 1–5» dice lo mismo en cada uno. */
+  const altoFila = t.data.map((_, i) => Math.max(...medidas.map(m => m.alto(m.cuerpo[i]))));
+  const altoCabeza = Math.max(...medidas.map(m => m.alto(m.cabeza)));
+  const leyenda = (k, n, a, z, cols, recorte, reserva) => [
+    n > 1 ? (t.titulo.trim() || 'Tabla') + ' (' + k + '/' + n + ')' : t.titulo.trim(),
+    n > 1 && (reserva || z - a + 1 < nF) ? 'Filas ' + (z > a ? a + '–' + z : a) + ' de ' + nF : '',
+    n > 1 && cols.length < nC ? 'Columnas ' + infTramos(cols) + ' de ' + nC : '',
+    recorte ? recorte.charAt(0).toUpperCase() + recorte.slice(1) : ''].filter(Boolean).join(' · ');
+  /* Tramos de filas: se llena cada diapositiva y, si salen varias, se igualan
+     (5 y 4 mejor que 8 y 1) cuando las filas igualadas también caben. El pie
+     se reserva con cifras de tres dígitos y, si hay que recortar, con el texto
+     de recorte más largo que puede salir. */
+  const tramos = recortando => {
+    const pie = Math.max(...grupos.map(cols => 16 + 26 * infLineas(leyenda(99, 99, 100, 999, cols,
+      (recortando ? 'se muestran 000 de 000 filas (000 omitidas), 00 de 00 columnas (00 omitidas) y ' : '') + 'celdas largas acortadas con «…»', true), 95)));
+    const hueco = disponible - altoCabeza - pie, out = [];
+    let usado = 0, cur = [];
+    altoFila.forEach((a, i) => {
+      if (cur.length && usado + a > hueco) { out.push(cur); cur = []; usado = 0; }
+      cur.push(i); usado += a;
+    });
+    out.push(cur);
+    if (out.length > 1) {
+      const parejos = infParejos(altoFila.map((_, i) => i), out.length);
+      if (parejos.every(p => p.reduce((s, i) => s + altoFila[i], 0) <= hueco)) return parejos;
+    }
+    return out;
+  };
+  const maxTramos = Math.max(1, Math.floor(INF_TABLA_PARTES / grupos.length));
+  let filas = tramos(false);
+  if (filas.length > maxTramos || omitG) filas = tramos(true).slice(0, maxTramos);
+  const vistas = filas.flat().length, omitF = nF - vistas, omitC = nC - new Set(grupos.flat()).size;
+  const cortadas = medidas.some(m => [t.columns].concat(t.data.slice(0, vistas)).some(m.cortada));
+  const recorte = [omitF ? 'se muestran ' + vistas + ' de ' + nF + ' filas (' + omitF + (omitF === 1 ? ' omitida' : ' omitidas') + ')' : '',
+    omitC ? (nC - omitC) + ' de ' + nC + ' columnas (' + omitC + (omitC === 1 ? ' omitida' : ' omitidas') + ')' : '',
     cortadas ? 'celdas largas acortadas con «…»' : ''].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' y $1');
-  const caption = [t.titulo.trim(), recorte ? recorte.charAt(0).toUpperCase() + recorte.slice(1) : ''].filter(Boolean).join(' · ');
-  const b = Object.assign(newBlock('table'), { header: true, align: 'c', caption: infPlano(caption), rows });
-  return { b, recorte, filas: t.data.length, columnas: t.columns.length };
+  const n = medidas.length * filas.length, partes = [];
+  /* Primero todas las filas de un grupo de columnas y después el siguiente:
+     así una respuesta se lee entera antes de pasar a la otra. */
+  medidas.forEach(m => filas.forEach(tramo => {
+    const a = tramo.length ? tramo[0] + 1 : 0, z = tramo.length ? tramo[tramo.length - 1] + 1 : 0;
+    const rows = [m.cabeza].concat(tramo.map(i => m.cuerpo[i])).map(r => r.map(m.parte));
+    const b = Object.assign(newBlock('table'), { header: true, align: 'c', caption: infPlano(leyenda(partes.length + 1, n, a, z, m.cols, recorte)), rows });
+    partes.push({ b, desde: a, hasta: z, cols: m.cols });
+  }));
+  /* Cómo se repartió, para el aviso y las notas; vacío si cabe en una. */
+  const cuantos = (x, uno, varios) => x + ' ' + (x === 1 ? uno : varios);
+  const nombres = ids.map(j => '«' + t.columns[j] + '»').join(', ').replace(/, ([^,]*)$/, ' y $1');
+  const reparto = n > 1 ? 'repartida en ' + n + ' diapositivas (' + [filas.length > 1 ? 'las filas en ' + cuantos(filas.length, 'tramo', 'tramos') : '',
+    medidas.length > 1 ? 'las columnas en ' + cuantos(medidas.length, 'grupo', 'grupos') : ''].filter(Boolean).join(' y ') +
+    '; cada una repite el encabezado' + (medidas.length > 1 ? (ids.length === 1 ? ' y la columna ' + nombres + ', que identifica' : ' y las columnas ' + nombres + ', que identifican') + ' cada fila' : '') + ')' : '';
+  return { partes, recorte, reparto, filas: nF, columnas: nC };
 }
 /* Reduce una serie a `cap` puntos conservando el mínimo y el máximo de cada
    tramo, en su orden: un pico estrecho de un espectro no desaparece al
@@ -295,7 +387,7 @@ function informeADeck(inf, copia) {
     const disponible = infDisponible(titulo);
     const nueva = () => { cur = { bloques: [], palabras: 0, vinetas: 0, alto: 0, notas: [] }; propias.push(cur); return cur; };
     const hueco = (palabras, alto, vineta) => !cur || (cur.bloques.length && (cur.palabras + palabras > INF_PALABRAS || cur.alto + alto > disponible || (vineta && cur.vinetas + 1 > INF_VINETAS)));
-    const sola = (b, notas) => { propias.push({ bloques: [b], notas }); cur = null; };
+    const sola = (b, notas, marca) => { propias.push({ bloques: [b], notas, marca: marca || '' }); cur = null; };
     sec.bloques.forEach(b => {
       if (b.tipo === 'parrafo') {
         infTrocea(b.texto, INF_PALABRAS, infCaracteres(disponible, 72)).forEach(t => {
@@ -317,10 +409,17 @@ function informeADeck(inf, copia) {
           cur.palabras += n; cur.vinetas++; cur.alto += a;
         }));
       } else if (b.tipo === 'tabla') {
-        const r = infTablaBloque(b, disponible);
-        const que = '«' + (b.titulo.trim() || 'Tabla') + '»';
-        if (r.recorte) avisos.push('Tabla ' + que + ': ' + r.recorte + '.');
-        sola(r.b, r.recorte ? ['Tabla ' + que + ' recortada: ' + r.recorte + '. La tabla completa (' + r.filas + ' filas, ' + r.columnas + ' columnas) sigue en el informe de DoE.'] : []);
+        /* El alto se calcula con la marca «(1/2)» ya en el título, por si lo alarga a otra línea. */
+        const r = infTablaPartes(b, infDisponible(titulo + ' (00/00)'));
+        const que = '«' + (b.titulo.trim() || 'Tabla') + '»', n = r.partes.length;
+        if (r.reparto || r.recorte) avisos.push('Tabla ' + que + ': ' + [r.reparto, r.recorte].filter(Boolean).join('; ') + '.');
+        r.partes.forEach((p, k) => {
+          const notas = [];
+          if (r.reparto) notas.push('Tabla ' + que + ' ' + r.reparto + '. Esta es la parte ' + (k + 1) + ' de ' + n + ': ' +
+            (p.hasta ? 'filas ' + (p.hasta > p.desde ? p.desde + ' a ' + p.hasta : p.desde) + ' de ' + r.filas : 'sin filas') + ', columnas ' + p.cols.map(j => b.columns[j]).join(', ') + '.');
+          if (r.recorte) notas.push('Tabla ' + que + ' recortada: ' + r.recorte + '. La tabla completa (' + r.filas + ' filas, ' + r.columnas + ' columnas) sigue en el informe de DoE.');
+          sola(p.b, notas, n > 1 ? ' (' + (k + 1) + '/' + n + ')' : '');
+        });
       } else {
         const f = b.figura, r = infFiguraBloque(f, b.titulo);
         const que = '«' + (b.titulo.trim() || f.titulo.trim() || 'Figura') + '»';
@@ -336,7 +435,7 @@ function informeADeck(inf, copia) {
     if (!propias.length) propias.push({ bloques: [Object.assign(newBlock('text'), { text: 'Esta sección no tiene contenido en el informe.' })], notas: [] });
     propias.forEach((p, k) => {
       const parte = propias.length > 1 ? ' (parte ' + (k + 1) + ' de ' + propias.length + ')' : '';
-      slides.push(slidePlantilla('content', titulo, [p.bloques], {
+      slides.push(slidePlantilla('content', titulo + (p.marca || ''), [p.bloques], {
         subtitle: subt(k ? 'continuación' : ''),
         notes: [origen + ', sección «' + (sec.titulo || 'Sección ' + (si + 1)) + '»' + parte + '.'].concat(p.notas, sim ? ['Datos simulados: no los presentes como mediciones.'] : []).join('\n')
       }));
@@ -356,7 +455,7 @@ function informeADeck(inf, copia) {
     /* En un bloque de código: la notación automática del texto (39-notacion.js)
        tomaría «5a7d» por un número con su unidad y metería un espacio. */
     Object.assign(newBlock('code'), { lang: 'text', text: 'Copia de intercambio  ' + copia.id + '\nSHA-256               ' + copia.sha256 }),
-    Object.assign(newBlock('text'), { size: 's', text: 'Las tablas y figuras pueden ir recortadas para caber en la diapositiva: cada una lo dice en su pie y en las notas. El informe completo sigue en Erlen DoE.' })
+    Object.assign(newBlock('text'), { size: 's', text: 'Las tablas largas se reparten en varias diapositivas y las figuras pueden ir aligeradas para caber: cada una lo dice en su pie y en las notas. El informe completo sigue en Erlen DoE.' })
   ]], { subtitle: subt(''), notes: 'La procedencia también se guarda en el proyecto (.json), en meta.origen.' }));
   const portada = slidePlantilla('title', '', null, { notes: origen + '. Copia ' + copia.id + ' · SHA-256 ' + copia.sha256 + (sim ? '\nDatos simulados: no los presentes como mediciones.' : '') });
   const deck = deckDe({
@@ -420,7 +519,7 @@ function previewInforme(res, r) {
     const bl = zonas(sl).flat();
     const que = sl.layout === 'title' ? 'portada' : bl.map(b => b.type === 'table' ? 'tabla' : b.type === 'chart' ? 'gráfica' : b.type === 'bullets' ? b.items.length + (b.items.length === 1 ? ' viñeta' : ' viñetas') : 'texto').join(' · ');
     lista.append(h('div', { class: 'es-fila' }, h('span', { class: 'es-n' }, String(i + 1)),
-      h('span', { class: 'es-t' }, (sl.layout === 'title' ? d.meta.title : sl.title).replace(/\\\$/g, '$') + (sl.subtitle && /continuación/.test(sl.subtitle) ? ' (cont.)' : '')),
+      h('span', { class: 'es-t' }, (sl.layout === 'title' ? d.meta.title : sl.title).replace(/\\\$/g, '$') + (sl.subtitle && /continuación/.test(sl.subtitle) && !/\(\d+\/\d+\)$/.test(sl.title) ? ' (cont.)' : '')),
       h('span', { class: 'es-c' }, que)));
   });
   const body = h('div', { class: 'inf-preview' },

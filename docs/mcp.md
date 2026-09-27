@@ -109,6 +109,7 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 
 - No inventar datos, cifras ni referencias. Lo que no venga del usuario se marca como ilustrativo en el pie y en las notas.
 - Las diapositivas nuevas nacen vacías. «Dato grande» y «Cita destacada» no heredan la cifra ni la atribución de muestra del editor.
+- `diseno: "blanco"` es la página en blanco: sin título, pie ni número, una sola zona para una figura grande, un esquema o una frase. `guia_formato` la marca con `sin_titulo`, y `revisar_presentacion` no le pide título. `titular` (la conclusión en una frase sobre la evidencia), `tresfig` (paneles (a), (b), (c)) y `objetivos` (general y específicos) completan los diseños para charlas científicas.
 - Cada cambio se valida con `saneaDeck` antes de guardarse; si falla, el archivo anterior queda intacto y la IA recibe el error. Un lote de diapositivas entra entero o no entra.
 - Se aceptan nombres de propiedad en español (`texto`, `pie`, `datos`, `ecuacion`, `eje_x`…). Una propiedad que la aplicación no usa se avisa, con la corrección probable («¿quisiste decir `align`?»).
 - Las rutas se interpretan dentro de la carpeta de trabajo: nada de `..` ni rutas absolutas fuera de ella. Las imágenes (PNG, JPEG, GIF, WebP, SVG; hasta 8 MB) se incrustan en el proyecto; los datos, hasta 20 MB.
@@ -126,13 +127,13 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 
 Las herramientas nuevas se añaden como extensiones, cada una en sus propios archivos, sin tocar el catálogo común:
 
-- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion` (si la función trae `propiedades`, sus parámetros entran en el esquema); `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES.
+- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion` (si la función trae `propiedades`, sus parámetros entran en el esquema); `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES; si deja en el bloque `_importado: {…}`, ese informe sale en `datos_importados` de la respuesta, con el id del bloque, y no se guarda.
 - `mcp/extensiones/<id>.pagina.js` (dentro de la app): `ERLEN_MCP.registra(nombre, fn)` añade una operación y `ERLEN_MCP.registraRevision(nombre, fn)` una regla de `revisar_presentacion` (sus hallazgos salen en `adicional`). `ERLEN_MCP.util` da `valida`, `bloqueDesde`, `diapositivaNueva`, `lote`, `indiceDiapositiva`, `buscaBloque`, `cambiaDiseno`, `esquema`, `falla` y `avisa`.
 - Desde Node, `mcp/motor.mjs` exporta `op`, `modifica` (lee, aplica, valida, guarda en el historial y escribe), `lee`, `escribe`, `preparaEntrada`, `archivoEnCarpeta` y `compacta`; `mcp/navegador.mjs`, `sesion` e `imprimible` para lo que necesite Chromium.
 - Cada extensión documenta sus herramientas en `docs/mcp-extensiones/<id>.md` y se prueba en `tests/mcp-<id>.test.mjs` con el cliente de `tests/_mcp-cliente.mjs`.
 - Un nombre de herramienta, prompt o formato repetido detiene el servidor al arrancar, con el archivo culpable.
 
-La extensión de referencia es [estadísticas](mcp-extensiones/estadisticas.md). `ERLEN_MCP_EXTENSIONES` añade otra carpeta de extensiones (la usan las pruebas).
+La extensión de referencia es [estadísticas](mcp-extensiones/estadisticas.md); [tablas desde archivos](mcp-extensiones/tablas.md) usa `transformaBloque`. `ERLEN_MCP_EXTENSIONES` añade otra carpeta de extensiones (la usan las pruebas).
 
 ## Desarrollo
 

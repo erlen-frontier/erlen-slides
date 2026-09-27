@@ -145,6 +145,12 @@ function onPresentKey(e) {
   }
   /* Con la vista general abierta, el teclado es suyo. */
   if (P.vista) { if (teclaVista(e)) { e.preventDefault(); e.stopPropagation(); } return; }
+  /* Con un deslizador de la gráfica dinámica enfocado, las flechas lo mueven
+     a él: si pasaran de diapositiva, afinar un valor en plena charla sería
+     imposible con el teclado. Re Pág y Av Pág siguen pasando diapositivas:
+     es lo que manda un control remoto. */
+  if (e.target && e.target.type === 'range' && e.target.closest && e.target.closest('.sliders') &&
+      /^(Arrow|Home$|End$)/.test(k)) return;
   if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); endPresent(); return; }
   if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown' || k === 'Enter') { e.preventDefault(); e.stopPropagation(); advance(1); return; }
   if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); e.stopPropagation(); advance(-1); return; }

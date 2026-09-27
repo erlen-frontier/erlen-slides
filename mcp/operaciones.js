@@ -150,7 +150,7 @@ var ERLEN_MCP = (function () {
     }
     if (info) ['archivo_datos', 'columnas', 'max_puntos', 'tecnica'].forEach(k => delete p[k]);
     Object.keys(p).forEach(k0 => {
-      if (k0 === 'tipo' || k0 === 'type' || k0 === 'id' || k0 === '_quimica') return;
+      if (k0 === 'tipo' || k0 === 'type' || k0 === 'id' || k0 === '_quimica' || k0 === '_importado') return;
       if (k0 === 'estilo' && b.type === 'estruct') return;
       const k = nombrePropiedad(b, k0);
       let v = p[k0];
@@ -161,7 +161,10 @@ var ERLEN_MCP = (function () {
       if (k === 'src' && !['image', 'video'].includes(b.type)) falla('Solo los bloques image y video llevan una imagen o un vídeo (src/archivo); este es «' + b.type + '».');
       if (v === null) delete b[k]; else b[k] = v;
     });
+    /* _importado también puede venir del transformaBloque de una extensión:
+       es un informe para la respuesta (recogeImportados), no una propiedad. */
     if (info) b._importado = info;
+    else if (p._importado) b._importado = p._importado;
     if (b.type === 'estruct') acabaEstructura(b, p);
     return b;
   }
@@ -284,7 +287,7 @@ var ERLEN_MCP = (function () {
     switch (sl.layout) {
       case 'twocol': case 'barra': return (C - HUECO_COL) * (z === 0 ? s : 1 - s);
       case 'comparacion': case 'partida': case 'cuadricula': case 'zigzag': return col(2);
-      case 'tres': case 'pasos': case 'rejilla6': return col(3);
+      case 'tres': case 'pasos': case 'rejilla6': case 'tresfig': return col(3);
       case 'flujo': return col(+sl.cols || 2);
       case 'filas': return C * 0.78;
       case 'piefigura': return (C - HUECO_COL) * (z === 0 ? 0.7 : 0.3);
@@ -368,7 +371,7 @@ var ERLEN_MCP = (function () {
     const ejemplo = {};
     TIPOS_GUIADOS.forEach(t => { const b = newBlock(t); delete b.id; ejemplo[t] = b; });
     return {
-      disenos: LAYOUTS.map(l => ({ id: l.id, nombre: l.name, zonas: l.z, uso: l.d, encabezados: ZT_DEF[l.id] ? (ES_ENCABEZADO_FICTICIO[l.id] ? ZT_DEF[l.id].map(() => '') : ZT_DEF[l.id]) : undefined })),
+      disenos: LAYOUTS.map(l => ({ id: l.id, nombre: l.name, zonas: l.z, uso: l.d, sin_titulo: l.sinTitulo || undefined, encabezados: ZT_DEF[l.id] ? (ES_ENCABEZADO_FICTICIO[l.id] ? ZT_DEF[l.id].map(() => '') : ZT_DEF[l.id]) : undefined })),
       temas: Object.keys(THEMES).map(k => ({ id: k, nombre: THEMES[k].name, uso: THEMES[k].desc, oscuro: THEMES[k].dark })),
       tipografias: FUENTES.map(f => ({ id: f.id, nombre: f.n || f.name || f.id })),
       bloques: BLOCK_DEFS.map(d => ({ tipo: d.id, nombre: d.name, guiado: TIPOS_GUIADOS.includes(d.id) })),

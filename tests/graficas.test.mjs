@@ -157,3 +157,51 @@ test('Log and linear axes agree with the export on what is drawn',async()=>{cons
  assert.equal(apilado,false,'al apilar espectros el desplazamiento vive en el eje: no puede ser logarítmico');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
+
+/* Rótulos de picos (los pone marcar_picos del MCP): en pantalla, cada uno
+   sobre su punto y con su serie; en pgfplots, un \draw con su nodo. Datos
+   sintéticos. */
+test('Peak labels sit on their measured point, on screen and in pgfplots',async()=>{const{dom,run,errors}=await editor();try{
+ run("wsNueva();addSlide('content')");
+ const data='x\tA\tB\n1\t0\t5\n2\t10\t6\n3\t0\t5\n4\t2\t9\n5\t0\t5';
+ const r=JSON.parse(run(`(()=>{const b=Object.assign(newBlock('chart'),{data:${JSON.stringify(data)},kind:'linea',
+   picos:[{x:2,y:10,serie:0,txt:'(003)'},{x:4,y:9,serie:1,txt:'4.0'}]});
+   const g=renderChart(b,S.deck,'export',900);
+   const picos=[...g.querySelectorAll('g.pico')].map(p=>({t:p.querySelector('text').textContent,x:+p.querySelector('line').getAttribute('x1')}));
+   const hueco=renderChart(Object.assign({},b,{_picosHueco:true}),S.deck,'export',900);
+   const capas=renderChart(Object.assign({},b,{capas:true}),S.deck,'export',900);
+   return JSON.stringify({picos,pgf:chartToPgf(b,''),
+     recortado:[...g.querySelectorAll('g.pico')].some(p=>p.closest('[clip-path]')),
+     marco:[g,hueco].map(x=>x.querySelector('clipPath rect').getAttribute('y')),
+     enHueco:hueco.querySelectorAll('g.pico').length,
+     porCapas:[...capas.querySelectorAll('g.capa')].map(c=>c.querySelectorAll('g.pico').length)})})()`));
+ assert.deepEqual(r.picos.map(p=>p.t),['(003)','4.0']);
+ assert.ok(r.picos[0].x<r.picos[1].x,'de izquierda a derecha, en su x');
+ assert.equal(r.recortado,false,'la franja de los rótulos no se recorta con el marco');
+ assert.equal(r.marco[0],r.marco[1],'el «después» deja el mismo hueco: el marco no salta');
+ assert.equal(r.enHueco,0,'y no rotula picos que sus datos no tienen');
+ assert.deepEqual(r.porCapas,[1,1],'por capas, cada rótulo entra con su serie');
+ assert.match(r.pgf,/\\draw\[serieA, line width=\.4pt\] \(axis cs:2,10\) \+\+\(0,2pt\) -- \+\+\(0,5pt\) node\[anchor=south, font=\\tiny, inner sep=1pt\] \{\(003\)\};/);
+ assert.match(r.pgf,/\\draw\[serieB[^\n]*\(axis cs:4,9\)/);
+ assert.match(r.pgf,/clip mode=individual/);
+ /* saneaDeck conserva los rótulos válidos y descarta los que no tienen dónde ir. */
+ const s=JSON.parse(run(`(()=>{const d=deepCopy(S.deck);const b=Object.assign(newBlock('chart'),{picos:[{x:1,y:2,txt:'a'},{x:'z',y:1},'nada']});
+   zona(d.slides[1],0).push(b);return JSON.stringify(saneaDeck(d).deck.slides[1].blocks.find(x=>x.type==='chart').picos)})()`));
+ assert.deepEqual(s,[{x:1,y:2,serie:0,txt:'a'}]);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+/* Espectros apilados con el eje invertido (FTIR): el nombre de cada curva va
+   al final visible, a la derecha, no fuera del marco, aunque los datos
+   vengan en x ascendente. */
+test('Stacked series names stay inside the frame with a reversed axis',async()=>{const{dom,run,errors}=await editor();try{
+ run("wsNueva();addSlide('content')");
+ const data='x\tuno\tdos\n'+Array.from({length:40},(_,i)=>(400+i*90)+'\t'+(90-i%7)+'\t'+(80-i%5)).join('\n');
+ const r=JSON.parse(run(`(()=>{const b=Object.assign(newBlock('chart'),{data:${JSON.stringify(data)},kind:'linea',offset:true,invertirX:true});
+   const g=renderChart(b,S.deck,'export',900);const W=+g.querySelector('svg').getAttribute('viewBox').split(' ')[2];
+   const t=[...g.querySelectorAll('text')].filter(x=>x.textContent==='uno'||x.textContent==='dos').map(x=>+x.getAttribute('x'));
+   return JSON.stringify({t,W})})()`));
+ assert.equal(r.t.length,2);
+ assert.ok(r.t.every(x=>x>r.W*0.6),'los nombres, a la derecha: '+JSON.stringify(r));
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});

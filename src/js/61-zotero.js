@@ -242,31 +242,41 @@ function refsDesdeCSL(txt) {
   if (!out.length) throw new Error('Ese JSON no traía referencias con título ni autores.');
   return out;
 }
-/* Corta un .bib en entradas contando llaves. */
+/* Corta un .bib en entradas contando llaves (o paréntesis, en la forma
+   @article(…) que BibTeX también admite). */
 function partesBibtex(txt) {
   const s = String(txt), out = [];
   let i = 0;
   while (i < s.length) {
     const a = s.indexOf('@', i);
     if (a < 0) break;
-    const abre = s.indexOf('{', a);
-    if (abre < 0) break;
+    /* Una arroba suelta (un correo en un comentario) no abre entrada: si se
+       contaran llaves desde ahí, se tragaría la entrada siguiente. */
+    const cab = s.slice(a, a + 80).match(/^@\w+\s*([{(])/);
+    if (!cab) { i = a + 1; continue; }
+    const abre = a + cab[0].length - 1, cierra = cab[1] === '(' ? ')' : '}';
     let n = 0, j = abre;
     for (; j < s.length; j++) {
-      if (s[j] === '{') n++;
-      else if (s[j] === '}') { n--; if (!n) { j++; break; } }
+      if (s[j] === cab[1]) n++;
+      else if (s[j] === cierra) { n--; if (!n) { j++; break; } }
     }
-    const trozo = s.slice(a, j);
-    if (/^@\w+\s*\{/.test(trozo)) out.push(trozo);
+    out.push(s.slice(a, j));
     i = j > a ? j : a + 1;
   }
   return out;
 }
+/* Las macros de @string valen para las entradas que las siguen; @comment y
+   @preamble no son referencias. */
 function refsDesdeBibtexMulti(txt) {
   const p = partesBibtex(txt);
   if (!p.length) throw new Error('No encontré ninguna entrada BibTeX (algo como @article{…}).');
-  const out = [];
-  p.forEach(t => { try { out.push(refDesdeBibtex(t)); } catch (e) {} });
+  const out = [], macros = {};
+  p.forEach(t => {
+    const tipo = (t.match(/^@(\w+)/) || ['', ''])[1].toLowerCase();
+    if (tipo === 'string') { try { Object.assign(macros, camposBibtex(t).campos); } catch (e) {} return; }
+    if (tipo === 'comment' || tipo === 'preamble') return;
+    try { out.push(refDesdeBibtex(t, macros)); } catch (e) {}
+  });
   if (!out.length) throw new Error('Encontré entradas pero ninguna traía autores ni título.');
   return out;
 }
@@ -309,7 +319,7 @@ function refsDesdeTexto(txt) {
   const s = String(txt || '').trim();
   if (!s) throw new Error('No hay nada pegado.');
   if (/^[[{]/.test(s)) return refsDesdeCSL(s);
-  if (/@\w+\s*\{/.test(s)) return refsDesdeBibtexMulti(s);
+  if (/@\w+\s*[{(]/.test(s)) return refsDesdeBibtexMulti(s);
   if (/^\s*TY\s{2}-/m.test(s)) return refsDesdeRIS(s);
   if (/^10\.\d{4,9}\//.test(s)) return null;   /* es un DOI: lo atiende el panel de Referencias */
   throw new Error('No reconocí el formato. De Zotero sirve CSL JSON, BibTeX o RIS.');

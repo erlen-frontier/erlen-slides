@@ -1,9 +1,10 @@
 /* ==== 55-disenador.js ==== */
 'use strict';
 /* ================= el Diseñador =================
-   Mira la figura que acabas de poner —su forma, sus colores, dónde está el
-   peso visual y cuánto ruido tiene— y también cuánto texto hay en la
-   diapositiva. Con eso propone acomodos completos y los enseña en miniatura
+   Mira lo que tiene la diapositiva —cuánto texto, qué figuras, una lista
+   corta, una cifra sola, una cita, una ecuación— y, si hay una imagen, su
+   forma, sus colores, dónde está el peso visual y cuánto ruido tiene. Con
+   eso propone acomodos completos y los enseña en miniatura
    de verdad, no como dibujo: cada propuesta es una copia real de la
    diapositiva ya cambiada. Aplicarla es un solo paso, y se deshace con Ctrl+Z.
    No manda nada a ningún servidor: el análisis ocurre en un lienzo, aquí. */
@@ -262,6 +263,420 @@ function cambiaLayoutSilencioso(sl, to) {
   if (typeof prepararZonas === 'function') { try { prepararZonas(sl, to); } catch (e) { /* el arranque es opcional */ } }
 }
 
+/* ================= propuestas según el contenido =================
+   Lo de arriba parte de una figura. Esto parte de lo que la diapositiva ya
+   tiene —mucho texto, una gráfica con su explicación, varias figuras, una
+   lista corta, una cifra sola, una cita, una ecuación— y propone acomodos
+   completos. Tres reglas que no se negocian:
+   · solo se reordena o se convierte lo que ya está: nunca se escribe una
+     palabra nueva, ni una cifra, ni un autor;
+   · la misma diapositiva da siempre las mismas propuestas, en el mismo
+     orden (el servidor MCP las vuelve a calcular para aplicar la elegida);
+   · cada propuesta dice en una frase por qué la hace. */
+const DIS_FIG = ['image', 'chart', 'func', 'galeria', 'video', 'montaje', 'geo', 'estruct', 'smart', 'table'];
+const DIS_TXT = ['text', 'bullets', 'bblock', 'quote', 'teorema'];
+const DIS_QUIM = ['math', 'chem', 'estruct'];
+const DIS_NOMBRE = { image: 'figura', chart: 'gráfica', func: 'gráfica', galeria: 'galería', video: 'video', montaje: 'montaje',
+  geo: 'figura', estruct: 'estructura', smart: 'diagrama', table: 'tabla' };
+
+function disTexto(b) {
+  switch (b.type) {
+    case 'text': case 'quote': return String(b.text || '');
+    case 'bullets': return (b.items || []).map(it => String(it.t || '')).join('\n');
+    case 'bblock': return String(b.btitle || '') + '\n' + String(b.body || '');
+    case 'teorema': return String(b.body || '');
+    default: return '';
+  }
+}
+function disVacio(b) {
+  return !b || b.type === 'spacer' || b.type === 'refs'
+    || (b.type === 'text' && !String(b.text || '').trim())
+    || (b.type === 'bullets' && !(b.items || []).some(it => String(it.t || '').trim()))
+    || (b.type === 'image' && !b.src)
+    || (b.type === 'galeria' && !((b.gal || {}).imgs || []).length);
+}
+const disPalabras = t => String(t || '').replace(/\$[^$]*\$/g, ' x ').split(/\s+/).filter(Boolean).length;
+
+/* Qué hay en la diapositiva, contado sin mirar el acomodo actual. */
+function leeContenido(sl) {
+  const bloques = zonas(sl).flat().filter(Boolean);
+  const utiles = bloques.filter(b => !disVacio(b));
+  const textos = utiles.filter(b => DIS_TXT.includes(b.type));
+  return {
+    bloques, utiles, textos,
+    car: textos.reduce((s, b) => s + disTexto(b).length, 0),
+    palabras: textos.reduce((s, b) => s + disPalabras(disTexto(b)), 0),
+    figuras: utiles.filter(b => DIS_FIG.includes(b.type)),
+    quimica: utiles.filter(b => DIS_QUIM.includes(b.type)),
+    listas: textos.filter(b => b.type === 'bullets'),
+    otros: utiles.filter(b => !DIS_FIG.includes(b.type) && !DIS_TXT.includes(b.type) && !DIS_QUIM.includes(b.type))
+  };
+}
+function leeDiapositiva(C) {
+  if (!C.utiles.length) return 'La diapositiva está vacía: pon algo y te propongo cómo acomodarlo.';
+  const n = (k, s, p) => k + ' ' + (k === 1 ? s : p);
+  const partes = [];
+  if (C.palabras) partes.push(n(C.palabras, 'palabra', 'palabras') + ' de texto');
+  if (C.listas.length) partes.push(n(C.listas.length, 'lista', 'listas'));
+  const figs = C.figuras.filter(b => b.type !== 'estruct');
+  if (figs.length) partes.push(n(figs.length, 'figura o tabla', 'figuras o tablas'));
+  if (C.quimica.length) partes.push(n(C.quimica.length, 'ecuación o estructura', 'ecuaciones o estructuras'));
+  if (!partes.length) partes.push(n(C.utiles.length, 'bloque', 'bloques'));
+  return 'Veo ' + partes.join(', ') + '. Toca una propuesta para aplicarla; se deshace con Ctrl+Z.';
+}
+/* La figura con la que trabaja la parte de imagen: la primera con algo dentro. */
+function figuraPrincipal(sl) {
+  return zonas(sl).flat().find(b => b && ((b.type === 'image' && b.src) || (b.type === 'galeria' && ((b.gal || {}).imgs || []).length))) || null;
+}
+
+/* Rehace el acomodo de una diapositiva con un reparto por zonas. Lo que no
+   aparece en el reparto no se pierde: va al final de la última zona. Los
+   encabezados se ponen explícitos (vacíos si no se dan), porque los de
+   muestra de algunos diseños son datos de otra investigación. */
+function disAcomoda(sl, layout, reparto, zt) {
+  const todos = zonas(sl).flat().filter(Boolean);
+  const usados = new Set();
+  reparto.forEach(z => z.forEach(b => usados.add(b.id)));
+  const sobran = todos.filter(b => !usados.has(b.id));
+  const n = Math.max(1, zonasDe(layout));
+  CLAVES_ZONA.forEach(k => delete sl[k]);
+  sl.layout = layout;
+  for (let i = 0; i < n; i++) zona(sl, i);
+  reparto.forEach((z, i) => zona(sl, Math.min(i, n - 1)).push(...z));
+  if (sobran.length) zona(sl, n - 1).push(...sobran);
+  const def = ZT_DEF[layout];
+  if (zt || def) {
+    const largo = Math.max((zt || []).length, def ? def.length : 0);
+    const prev = sl.zt || [];
+    sl.zt = Array.from({ length: largo }, (_, i) => zt ? (zt[i] == null ? '' : String(zt[i])) : (prev[i] == null ? '' : prev[i]));
+  }
+  prepararZonas(sl, layout);
+}
+const disBloque = (sl, id) => zonas(sl).flat().find(b => b && b.id === id) || null;
+/* En una columna, una figura a 78 % queda como un sello: se le da todo el
+   ancho de su zona. La estructura química no, que calcula su propio ancho. */
+function disLlena(sl) {
+  zonas(sl).flat().forEach(b => { if (b && DIS_FIG.includes(b.type) && b.type !== 'estruct' && typeof b.w === 'number') b.w = 100; });
+}
+
+/* Parte el texto en dos mitades por donde se corta solo: entre bloques, entre
+   viñetas de primer nivel o entre párrafos. Devuelve [primera, segunda] o
+   null si no hay por dónde. Trabaja sobre la diapositiva que recibe. */
+function disParteTexto(textos) {
+  const mitad = (largos) => {
+    const total = largos.reduce((s, x) => s + x, 0);
+    let acc = 0, k = 1, mejor = Infinity;
+    for (let j = 1; j < largos.length; j++) {
+      acc += largos[j - 1];
+      const dif = Math.abs(total / 2 - acc);
+      if (dif < mejor) { mejor = dif; k = j; }
+    }
+    return k;
+  };
+  if (textos.length >= 2) {
+    const k = mitad(textos.map(b => disTexto(b).length));
+    return [textos.slice(0, k), textos.slice(k)];
+  }
+  const b = textos[0];
+  if (!b) return null;
+  if (b.type === 'bullets') {
+    /* Solo se corta delante de una viñeta de primer nivel: una subviñeta no
+       se separa de la suya. Se agrupan y se busca la mitad por grupos. */
+    const grupos = [];
+    (b.items || []).forEach(it => { if (!(+it.lvl > 0) || !grupos.length) grupos.push([it]); else grupos[grupos.length - 1].push(it); });
+    if (grupos.length < 2) return null;
+    const k = mitad(grupos.map(g => g.reduce((s, x) => s + String(x.t || '').length, 0)));
+    const b2 = Object.assign(deepCopy(b), { id: uid(), items: deepCopy(grupos.slice(k).flat()) });
+    b.items = grupos.slice(0, k).flat();
+    return [[b], [b2]];
+  }
+  if (b.type === 'text') {
+    const par = String(b.text || '').split(/\n\s*\n/);
+    if (par.length < 2) return null;
+    const k = mitad(par.map(x => x.length));
+    const b2 = Object.assign(deepCopy(b), { id: uid(), text: par.slice(k).join('\n\n') });
+    b.text = par.slice(0, k).join('\n\n');
+    return [[b], [b2]];
+  }
+  return null;
+}
+
+/* Las figuras en grupos: cada figura abre uno y el texto que la sigue va con
+   ella. Lo que haya antes de la primera figura se queda aparte. */
+function disGrupos(C) {
+  const grupos = [], antes = [];
+  C.utiles.forEach(b => {
+    if (DIS_FIG.includes(b.type)) grupos.push({ fig: b, txt: [] });
+    else if (grupos.length) grupos[grupos.length - 1].txt.push(b);
+    else antes.push(b);
+  });
+  return { grupos, antes };
+}
+
+/* ---------- de una lista a un SmartArt ----------
+   Qué diagrama pide una lista, leído en lo que dice: años al principio son
+   una cronología; «1.», «primero», «después» o flechas son pasos; volver al
+   inicio es un ciclo; un elemento con varios hijos es una jerarquía. Si nada
+   de eso aparece, una lista en cajas. */
+const DIS_ANIO = /^\s*(?:1[5-9]|20)\d{2}(?:\s*[–-]\s*(?:(?:1[5-9]|20)\d{2}|hoy|actualidad))?(?![\d.,])/i;
+const DIS_ORDEN = /^\s*(?:\d+\s*[.)º°:-]|paso\s+\d+|etapa\s+\d+|primer[oa]?\b|segund[oa]\b|tercer[oa]?\b|luego\b|despu[eé]s\b|a continuaci[oó]n\b|por [uú]ltimo\b|finalmente\b)/i;
+const DIS_CICLO = /(?:^|[^\wÁ-úñ])(?:ciclo|recicl[\wÁ-úñ]*|regener[\wÁ-úñ]*|reutiliz[\wÁ-úñ]*|vuelve|de nuevo|se repite|reinici[\wÁ-úñ]*)(?![\wÁ-úñ])/i;
+function claseSmart(todos) {
+  /* Una viñeta vacía (la que queda al pulsar Intro) no cuenta ni llega al diagrama. */
+  const items = (todos || []).filter(it => String(it.t || '').trim());
+  const top = items.filter(it => !(+it.lvl > 0));
+  const hijos = items.length - top.length;
+  if (!items.length || !items.every(it => String(it.t || '').length <= 110)) return [];
+  const out = [];
+  if (hijos) {
+    /* Los diagramas con niveles leen el primer elemento como raíz o como
+       encabezado: solo encajan si la lista empieza en el primer nivel. */
+    if (+items[0].lvl > 0) return [];
+    if (top.length === 1 && hijos >= 2 && hijos <= 6) {
+      out.push(['jerarquia', 'Un concepto y sus ' + hijos + ' ramas: la lista ya es una clasificación, y como jerarquía se ve de un golpe.']);
+      out.push(['radial', 'El concepto al centro y sus ' + hijos + ' aspectos alrededor, sin orden de importancia.']);
+    } else if (top.length === 2 && items.length >= 4 && items.length <= 12) {
+      out.push(['contraste', 'Dos encabezados con sus puntos debajo: enfrentados en dos columnas se comparan mejor.']);
+    }
+    return out;
+  }
+  const n = top.length;
+  if (n < 3 || n > 6) return [];
+  const txt = top.map(it => String(it.t || ''));
+  const anios = txt.filter(t => DIS_ANIO.test(t)).length;
+  const orden = txt.filter(t => DIS_ORDEN.test(t)).length;
+  const flechas = txt.some(t => /→|->|⟶/.test(t));
+  if (anios >= n - 1) out.push(['cronologia', 'Cada punto empieza con un año: en una línea de tiempo el orden se ve sin leer.']);
+  if (DIS_CICLO.test(txt.join(' | '))) out.push(['ciclo', 'La lista habla de volver al inicio: como ciclo, la última etapa enlaza con la primera.']);
+  if (orden >= Math.ceil(n / 2) || flechas) out.push(['proceso', 'Son ' + n + ' pasos en orden: como proceso con flechas, la secuencia se lee sin numerarla.']);
+  out.push(['lista', n + ' puntos cortos: en cajas numeradas pesan igual y se leen de un vistazo.']);
+  if (!out.some(x => x[0] === 'proceso')) out.push(['proceso', 'Si el orden importa, como proceso con flechas cada punto lleva al siguiente.']);
+  return out;
+}
+/* Convierte las viñetas en elementos del diagrama sin tocar el texto: solo
+   se quita la numeración que el diagrama ya dibuja, y en una cronología el
+   año pasa a ser el rótulo y el resto el detalle. */
+function listaASmart(b, kind) {
+  const items = (b.items || []).filter(it => String(it.t || '').trim()).map(it => {
+    let t = String(it.t || '').trim(), d = '';
+    if (kind === 'proceso' || kind === 'lista') t = t.replace(/^\s*(?:\d+\s*[.)º°:-]|(?:paso|etapa)\s+\d+\s*[:.–-]?)\s*/i, '') || t;
+    if (kind === 'cronologia') {
+      const m = t.match(DIS_ANIO);
+      if (m && t.slice(m[0].length).trim()) { d = t.slice(m[0].length).replace(/^\s*[:.,–—-]\s*/, '').trim(); t = m[0].trim(); }
+    }
+    const x = { t };
+    if (d) x.d = d;
+    if (+it.lvl > 0) x.lvl = 1;
+    return x;
+  });
+  const s = { id: b.id, type: 'smart', kind, w: 90, caption: '', anim: 'fade', items };
+  if (b.step) s.step = true;
+  return s;
+}
+
+/* ---------- una cifra sola ---------- */
+const DIS_CIFRA = /(?:[<>≈~±≤≥]\s*)?[−-]?\d+(?:[.,]\d+)?(?:\s*(?:×|x)\s*10\^?\{?[−-]?\d+\}?)?(?:\s*(?:%|‰|°C|°|K|nm|µm|μm|mm|cm|m²\/g|m2\/g|mg|kg|g|mL|µL|L|mmol|mol|mM|µM|M|min|ms|h|s|eV|kJ\/mol|kJ|J|kW|W|mA|V|MPa|GPa|kPa|Pa|ppm|ppb|kDa|Da|rpm|m)(?![A-Za-zÁ-úñÑ]))?/g;
+const disCifras = b => disTexto(b).replace(/\$[^$]*\$/g, ' ').match(DIS_CIFRA) || [];
+function datoUnico(C) {
+  if (C.figuras.length || C.quimica.length || C.otros.length || C.textos.length > 2 || C.car > 180) return null;
+  if (C.textos.reduce((s, b) => s + disCifras(b).length, 0) !== 1) return null;
+  const b = C.textos.find(x => disCifras(x).length === 1);
+  /* Con matemáticas en línea la cifra podría repetirse dentro de la fórmula
+     y el rótulo saldría mutilado: mejor no proponerlo. */
+  if (disTexto(b).includes('$')) return null;
+  if (!(b.type === 'text' || (b.type === 'bullets' && (b.items || []).length === 1))) return null;
+  const cifra = disCifras(b)[0].trim();
+  const t = disTexto(b);
+  const k = t.indexOf(cifra);
+  if (k < 0) return null;
+  const rotulo = (t.slice(0, k) + ' ' + t.slice(k + cifra.length)).replace(/\s+/g, ' ').replace(/^[\s:;,.–—-]+|[\s:;,–—-]+$/g, '').trim();
+  return { b, cifra, rotulo };
+}
+/* ---------- una cita ---------- */
+const DIS_COMILLAS = /^\s*[«“"„]([\s\S]+?)[»”"]\s*(?:[—–-]\s*(.+?))?\s*$/;
+function citaDe(C) {
+  if (C.figuras.length || C.quimica.length || C.otros.length) return null;
+  const q = C.textos.find(b => b.type === 'quote') || C.textos.find(b => b.type === 'text' && DIS_COMILLAS.test(String(b.text || '')));
+  if (!q) return null;
+  const resto = C.textos.filter(b => b !== q);
+  if (resto.length > 1 || resto.reduce((s, b) => s + disTexto(b).length, 0) > 160) return null;
+  if (q.type === 'quote') return { b: q, texto: String(q.text || '').trim(), autor: String(q.by || '').trim() };
+  const m = String(q.text).match(DIS_COMILLAS);
+  return { b: q, texto: m[1].trim(), autor: (m[2] || '').trim() };
+}
+
+function propuestasContenido(sl) {
+  if (!sl || !zonasDe(sl.layout)) return [];
+  const C = leeContenido(sl);
+  if (!C.utiles.length) return [];
+  const P = [];
+  const add = (id, n, d, aplica, punt) => P.push({ id, n, d, aplica, punt, origen: 'contenido' });
+  const ids = arr => arr.map(b => b.id);
+  const toma = (s2, lista) => lista.map(id => disBloque(s2, id)).filter(Boolean);
+  const nombre = b => DIS_NOMBRE[b.type] || 'figura';
+  const art = b => ['video', 'montaje', 'diagrama'].includes(nombre(b)) ? 'El ' : 'La ';
+
+  /* mucho texto y nada más: repartirlo */
+  const soloTexto = !C.figuras.length && !C.quimica.length && !C.otros.length;
+  const vinetas = C.listas.reduce((s, b) => s + (b.items || []).length, 0);
+  if (soloTexto && (C.car > 420 || vinetas > 7)) {
+    const cols = C.car > 1100 ? 3 : 2;
+    const tx = ids(C.textos);
+    add('flujo', 'Texto fluido en ' + cols + ' columnas',
+      'Son unas ' + C.palabras + ' palabras de texto corrido: repartidas en ' + cols + ' columnas, como en un artículo, los renglones se acortan y se leen mejor.',
+      (d, i) => { const s2 = d.slides[i]; disAcomoda(s2, 'flujo', [toma(s2, ids(C.utiles))]); s2.cols = cols; }, 8);
+    add('dos-columnas', 'Partir en dos columnas',
+      'El texto se parte en dos columnas por donde se corta solo —entre bloques, viñetas o párrafos—, sin cambiar una palabra.',
+      (d, i) => {
+        const s2 = d.slides[i];
+        const partes = disParteTexto(toma(s2, tx));
+        if (!partes) throw new Error('sin corte');
+        disAcomoda(s2, 'twocol', partes);
+      }, 6);
+    add('dos-diapositivas', 'Partir en dos diapositivas',
+      'Hay demasiado para una sola: la segunda mitad pasa a una diapositiva nueva justo después, con el mismo título. Una idea por diapositiva.',
+      (d, i) => {
+        const s2 = d.slides[i];
+        const partes = disParteTexto(toma(s2, tx));
+        if (!partes) throw new Error('sin corte');
+        const lay = zonasDe(s2.layout) === 1 ? s2.layout : 'content';
+        const segunda = new Set(ids(partes[1]));
+        const nueva = { id: uid(), layout: lay, title: s2.title || '', blocks: [] };
+        if (s2.cols != null) nueva.cols = s2.cols;
+        disAcomoda(nueva, lay, [partes[1]]);
+        disAcomoda(s2, lay, [partes[0]]);
+        CLAVES_ZONA.forEach(k => { if (s2[k]) s2[k] = s2[k].filter(b => !segunda.has(b.id)); });
+        d.slides.splice(i + 1, 0, nueva);
+      }, C.car > 900 ? 9 : 5);
+  }
+
+  /* una figura con su explicación */
+  const figs = C.figuras;
+  if (figs.length === 1 && C.textos.length && C.car >= 40) {
+    const f = figs[0], resto = C.utiles.filter(b => b !== f);
+    if (f.type !== 'image' && f.type !== 'galeria') {
+      add('figura-texto', art(f) + nombre(f) + ' a un lado, el texto al otro',
+        art(f) + nombre(f) + ' y su explicación, cada una en su columna: se leen a la par en vez de apilarse.',
+        (d, i) => { const s2 = d.slides[i]; disAcomoda(s2, 'twocol', [toma(s2, [f.id]), toma(s2, ids(resto))]); s2.split = 58; disLlena(s2); }, sl.layout === 'content' ? 8 : 6);
+    }
+    if (C.car <= 520) add('pie-ancho', art(f) + nombre(f) + ' con pie ancho',
+      art(f) + nombre(f) + ' ocupa casi todo y el texto va al lado, como un pie con aire: es lo que pide una figura que hay que leer con calma.',
+      (d, i) => { const s2 = d.slides[i]; disAcomoda(s2, 'piefigura', [toma(s2, [f.id]), toma(s2, ids(resto))]); disLlena(s2); }, C.car <= 260 ? 7 : 5);
+  }
+
+  /* varias figuras: en rejilla, cada una con lo que la explica */
+  if (figs.length >= 2 && figs.length <= 4) {
+    const G = disGrupos(C);
+    const celdas = G.grupos.map((g, k) => (k === 0 ? G.antes : []).concat([g.fig], g.txt));
+    const conTexto = G.grupos.some(g => g.txt.length);
+    const reparto = s2 => celdas.map(c => toma(s2, ids(c)));
+    if (figs.length === 2) {
+      add('lado-a-lado', 'Las dos figuras lado a lado',
+        'Las dos figuras, una junto a la otra' + (conTexto ? ' y cada una con su texto debajo' : '') + ': se comparan de un vistazo.',
+        (d, i) => { const s2 = d.slides[i]; disAcomoda(s2, 'twocol', reparto(s2)); s2.split = 50; disLlena(s2); }, 7);
+      if (G.grupos.every(g => g.txt.length) && !G.antes.length)
+        add('zigzag', 'Zigzag: dos resultados encadenados',
+          'Figura y texto, luego texto y figura: dos resultados que se leen uno detrás del otro sin perder cuál explica a cuál.',
+          (d, i) => { const s2 = d.slides[i]; const [a, b] = G.grupos;
+            disAcomoda(s2, 'zigzag', [toma(s2, [a.fig.id]), toma(s2, ids(a.txt)), toma(s2, ids(b.txt)), toma(s2, [b.fig.id])]); disLlena(s2); }, 6);
+    }
+    if (figs.length === 3) add('tres', 'Tres figuras en tres columnas',
+      'Las tres figuras en paralelo, cada una en su columna' + (conTexto ? ' con lo que la explica debajo' : '') + '.',
+      (d, i) => { const s2 = d.slides[i]; disAcomoda(s2, 'tres', reparto(s2)); disLlena(s2); }, 7);
+    if (figs.length === 4 || (figs.length === 3 && G.antes.length)) add('cuadricula', 'Cuadrícula 2×2',
+      figs.length === 4 ? 'Cuatro figuras en cuatro celdas iguales: ninguna manda sobre las otras y se recorren en orden.'
+        : 'Las tres figuras y el texto de entrada en cuatro celdas: el texto hace de primera pieza.',
+      (d, i) => { const s2 = d.slides[i];
+        const c = figs.length === 4 ? reparto(s2) : [toma(s2, ids(G.antes))].concat(G.grupos.map(g => toma(s2, ids([g.fig].concat(g.txt)))));
+        disAcomoda(s2, 'cuadricula', c, ['', '', '', '']); disLlena(s2); }, figs.length === 4 ? 8 : 5);
+  }
+
+  /* una lista corta: SmartArt */
+  const lista = C.listas.find(b => claseSmart(b.items || []).length);
+  if (lista && C.figuras.length <= 1) {
+    claseSmart(lista.items || []).slice(0, 2).forEach(([kind, razon], k) => {
+      add('smart-' + kind, 'Lista como ' + SK[kind].n.toLowerCase(), razon,
+        (d, i) => {
+          const s2 = d.slides[i];
+          CLAVES_ZONA.forEach(z => { const arr = s2[z]; if (!arr) return; const j = arr.findIndex(b => b.id === lista.id); if (j >= 0) arr[j] = listaASmart(arr[j], kind); });
+        }, k ? 5 : 8);
+    });
+  }
+
+  /* una cifra con su rótulo */
+  const dato = datoUnico(C);
+  if (dato) add('dato', 'Dato grande',
+    'Una sola cifra —' + dato.cifra + '— con su rótulo: en grande es lo que el público se lleva de la diapositiva.',
+    (d, i) => {
+      const s2 = d.slides[i];
+      disAcomoda(s2, 'dato', [toma(s2, ids(C.utiles.filter(b => b !== dato.b)))], [dato.cifra, dato.rotulo]);
+      CLAVES_ZONA.forEach(z => { if (s2[z]) s2[z] = s2[z].filter(b => b.id !== dato.b.id); });
+    }, 9);
+
+  /* una cita */
+  const cita = citaDe(C);
+  if (cita) add('cita', 'Cita destacada',
+    'Es una cita' + (cita.autor ? ' de ' + cita.autor : '') + ': sola, grande y con su autor debajo respira mejor.' + (cita.autor ? '' : ' El autor queda en blanco para que lo escribas.'),
+    (d, i) => {
+      const s2 = d.slides[i];
+      const q = disBloque(s2, cita.b.id);
+      const txt = { id: q.id, type: 'text', text: cita.texto, size: 'n', align: 'left' };
+      if (q.anim) txt.anim = q.anim;
+      /* El bloque de texto hereda el id de la cita: disAcomoda la da por
+         colocada y la original no vuelve como sobrante. */
+      disAcomoda(s2, 'cita', [[txt].concat(toma(s2, ids(C.utiles.filter(b => b !== cita.b))))], [cita.autor]);
+    }, 9);
+
+  /* una ecuación, una reacción o una estructura: al centro */
+  const otrasFig = C.figuras.filter(b => b.type !== 'estruct');
+  if (C.quimica.length === 1 && !otrasFig.length && !C.otros.length && C.car <= 240) {
+    const q = C.quimica[0];
+    const quien = q.type === 'estruct' ? 'La estructura' : q.type === 'chem' ? 'La reacción' : 'La ecuación';
+    add('enfasis', quien + ' al centro',
+      quien + ' es la protagonista: sola, centrada y ' + (q.type === 'math' ? 'más grande' : 'con aire') + ', con el texto como apoyo.',
+      (d, i) => {
+        const s2 = d.slides[i];
+        disAcomoda(s2, 'enunciado', [toma(s2, ids(C.utiles))]);
+        const b = disBloque(s2, q.id);
+        if (b && b.type === 'math') b.size = 'l';
+      }, 8);
+  }
+  return P;
+}
+
+/* Todas las propuestas para una diapositiva: las del contenido y, si hay una
+   figura, las de la imagen (con su análisis, si ya se hizo). Cada propuesta
+   trae la copia del proyecto ya cambiada; se descartan las que no cambian
+   nada y las que repiten el resultado de otra mejor puntuada. */
+function propuestasDiapositiva(deck, i, opciones) {
+  const o = opciones || {};
+  const sl = deck && deck.slides[i];
+  if (!sl || !zonasDe(sl.layout)) return [];
+  const P = propuestasContenido(sl);
+  const fig = o.bloque || figuraPrincipal(sl);
+  if (fig) propuestasDiseno(sl, fig, o.an || null, deck).forEach(p => {
+    const f = p.aplica;
+    P.push(Object.assign({}, p, { origen: 'figura', aplica: (d, k) => f(d, k, fig.id) }));
+  });
+  /* uid() da ids distintos en cada copia: la huella los ignora para que dos
+     propuestas iguales se reconozcan como iguales. */
+  const conocidos = new Set(zonas(sl).flat().filter(Boolean).map(b => b.id));
+  const huella = d => JSON.stringify([d.slides[i], d.slides.length !== deck.slides.length ? d.slides[i + 1] : null, d.slides.length, d.meta],
+    (k, v) => k === 'id' && typeof v === 'string' && !conocidos.has(v) ? '·' : v);
+  const vistas = new Set([huella(deck)]), out = [];
+  P.sort((a, b) => b.punt - a.punt).forEach(p => {
+    if (out.some(x => x.id === p.id)) return;
+    const copia = deepCopy(deck);
+    try { p.aplica(copia, i); } catch (e) { return; }
+    const hu = huella(copia);
+    if (vistas.has(hu)) return;
+    vistas.add(hu);
+    p.copia = copia;
+    out.push(p);
+  });
+  return out.slice(0, o.max || 8);
+}
+
 /* ---------- el panel ---------- */
 let _disPanel = null, _disCuerpo = null, _disBloque = null;
 function panelDisenador() {
@@ -285,45 +700,48 @@ function cierraDisenador() {
   if (_disPanel) _disPanel.classList.remove('on');
   _disBloque = null;
 }
+/* Se abre para la diapositiva actual. Si hay una figura (la indicada, la
+   seleccionada o la primera de la diapositiva), además se analiza la imagen
+   y se suman sus propuestas a las del contenido. */
+const figuraConImagen = b => b && ((b.type === 'image' && b.src) || (b.type === 'galeria' && ((galDe(b).imgs[0] || {}).src)));
 async function abreDisenador(b) {
-  const blk = b || (S.selBlock && (findBlock(S.selBlock) || {}).block);
-  if (!blk) return;
-  if (blk.type !== 'image' && blk.type !== 'galeria') { toast('Las ideas de diseño trabajan sobre una figura'); return; }
-  const src = blk.type === 'galeria' ? ((galDe(blk).imgs[0] || {}).src || '') : blk.src;
-  if (!src) { toast('Primero elige la imagen'); return; }
+  const sl = curSlide();
+  if (!sl || !zonasDe(sl.layout)) { toast('Las ideas de diseño trabajan sobre diapositivas con contenido; esta es una portada, una sección o el índice'); return; }
+  const sel = b || (S.selBlock && (findBlock(S.selBlock) || {}).block);
+  const fig = figuraConImagen(sel) ? sel : figuraPrincipal(sl);
   if (typeof cierraAsistente === 'function') cierraAsistente();
   panelDisenador();
-  _disBloque = blk.id;
+  const token = sl.id + '|' + (fig ? fig.id : '');
+  _disBloque = token;
   document.body.classList.add('con-dis');
   _disPanel.classList.add('on');
   _disCuerpo.innerHTML = '';
-  _disCuerpo.append(h('p', { class: 'hint' }, 'Mirando la figura…'));
-  const an = await analizaImagen(src);
-  if (_disBloque !== blk.id) return;
-  pintaDisenador(blk, an);
+  _disCuerpo.append(h('p', { class: 'hint' }, fig ? 'Mirando la figura…' : 'Mirando la diapositiva…'));
+  const an = fig ? await analizaImagen(fig.type === 'galeria' ? galDe(fig).imgs[0].src : fig.src) : null;
+  if (_disBloque !== token) return;
+  pintaDisenador(fig, an);
 }
-function pintaDisenador(blk, an) {
+function pintaDisenador(fig, an) {
   _disCuerpo.innerHTML = '';
   const sl = curSlide();
-  const props = propuestasDiseno(sl, blk, an, S.deck);
-  _disCuerpo.append(h('p', { class: 'dis-lee' }, leeImagen(an)));
+  const props = propuestasDiapositiva(S.deck, S.cur, { bloque: fig, an });
+  const C = leeContenido(sl);
+  _disCuerpo.append(h('p', { class: 'dis-lee' }, fig ? leeImagen(an) : leeDiapositiva(C)));
   const [W, H] = slideDims(S.deck);
   props.forEach(p => {
     /* la miniatura es la diapositiva de verdad, ya cambiada */
-    const copia = deepCopy(S.deck);
-    try { p.aplica(copia, S.cur, blk.id); } catch (e) { return; }
     const tw = 344, k = tw / W;
     const clip = h('div', { class: 'dis-clip', style: `width:${tw}px;height:${Math.round(H * k)}px` });
     let mini;
-    try { mini = renderSlide(copia, S.cur, 'thumb'); } catch (e) { return; }
+    try { mini = renderSlide(p.copia, S.cur, 'thumb'); } catch (e) { return; }
     mini.style.transform = `scale(${k})`; mini.style.transformOrigin = 'top left';
     clip.append(mini);
-    const tar = h('button', { class: 'dis-tar', title: p.d, onclick: () => aplicaPropuesta(p, blk) },
+    const tar = h('button', { class: 'dis-tar', title: p.d, 'data-propuesta': p.id, onclick: () => aplicaPropuesta(p.id, sl.id, fig, an) },
       clip,
       h('div', { class: 'dis-txt' }, h('b', null, p.n), h('em', null, p.d)));
     _disCuerpo.append(tar);
   });
-  if (!props.length) _disCuerpo.append(h('p', { class: 'hint' }, 'No se me ocurre nada mejor de lo que ya tienes.'));
+  if (!props.length) _disCuerpo.append(h('p', { class: 'hint' }, C.utiles.length ? 'No se me ocurre nada mejor de lo que ya tienes.' : 'Pon texto, una lista o una figura y te propongo cómo acomodarlos.'));
 }
 function leeImagen(an) {
   if (!an) return 'No pude leer la figura, pero aquí van los acomodos que suelen funcionar.';
@@ -335,16 +753,24 @@ function leeImagen(an) {
   const p = an.pesoX < 0.44 ? ', con el motivo hacia la izquierda' : an.pesoX > 0.56 ? ', con el motivo hacia la derecha' : '';
   return t + ', ' + f + l + p + '. Toca una propuesta para aplicarla; se deshace con Ctrl+Z.';
 }
-function aplicaPropuesta(p, blk) {
-  try { conTutorEnSilencio(() => p.aplica(S.deck, S.cur, blk.id)); } catch (e) { toast('No se pudo aplicar esa idea'); return; }
+/* Las tarjetas se pintaron para una diapositiva y un contenido concretos. Al
+   pulsar se recalculan sobre lo que hay ahora: si cambió de diapositiva, o la
+   propuesta ya no sale (se editó el texto), se repinta en vez de aplicar algo
+   calculado para otra cosa. */
+function aplicaPropuesta(id, slideId, fig, an) {
+  const sl = curSlide();
+  const vivo = fig ? buscaBloque(sl, fig.id) : null;
+  const p = sl && sl.id === slideId ? propuestasDiapositiva(S.deck, S.cur, { bloque: vivo, an }).find(x => x.id === id) : null;
+  if (!p) { toast('La diapositiva cambió: aquí van las ideas para lo que tiene ahora'); abreDisenador(figuraConImagen(vivo) ? vivo : undefined); return; }
+  try { conTutorEnSilencio(() => p.aplica(S.deck, S.cur)); } catch (e) { toast('No se pudo aplicar esa idea'); return; }
   S.selBlock = null;
   conTutorEnSilencio(() => commit());
   { const sl = curSlide(); const l = typeof leccionPendiente === 'function' ? leccionPendiente(sl) : null;
     if (l) ensena(l.id, 'Por qué el Diseñador lo acomodó así'); }
   toast('Diseño aplicado · ' + p.n, null, { t: 'Deshacer', fn: doUndo });
-  const b2 = buscaBloque(curSlide(), blk.id);
-  if (b2) { analizaImagen(b2.type === 'galeria' ? (galDe(b2).imgs[0] || {}).src : b2.src).then(an => { if (_disBloque) pintaDisenador(b2, an); }); }
-  else cierraDisenador();
+  /* Con el panel abierto, las ideas se recalculan sobre lo que quedó. */
+  const b2 = fig ? buscaBloque(curSlide(), fig.id) : null;
+  if (_disBloque) abreDisenador(figuraConImagen(b2) ? b2 : undefined);
 }
 /* Se llama al terminar de poner una imagen. */
 function disenadorAlPonerImagen(b) {
