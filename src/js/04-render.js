@@ -298,10 +298,18 @@ function renderSlide(deck, idx, mode, stepShown) {
     root.append(h('div', { class: 'ly-section' }, m.theme === 'madrid' ? h('div', { class: 'sec-band' }, inner) : inner));
   } else {
     const frame = h('div', { class: 'ly-frame' });
-    const showFt = edit || (sl.title || '').trim() !== '' || (sl.subtitle || '').trim() !== '';
+    /* «En blanco» no enseña el título ni en el editor: es el lienzo libre. El
+       título que tenga se conserva en los datos (lo usan la tira, la búsqueda
+       y el índice), solo que no se pinta. */
+    const sinTit = !!(LAY[sl.layout] && LAY[sl.layout].sinTitulo);
+    const showFt = !sinTit && (edit || (sl.title || '').trim() !== '' || (sl.subtitle || '').trim() !== '');
     if (showFt) {
-      const ft = h('div', { class: 'frametitle' },
-        h('div', Object.assign({ class: 'ft-t' + emptyCls(sl.title), html: inlineRich(sl.title) }, ed('slide.title', 'Título del marco'))));
+      /* En «Titular + figura» el título es una frase entera con la conclusión:
+         va sin barra, a dos líneas si hace falta, como en el formato
+         afirmación-evidencia. Sigue siendo el .frametitle, así que el
+         PowerPoint y la revisión lo encuentran igual. */
+      const ft = h('div', { class: 'frametitle' + (sl.layout === 'titular' ? ' ft-titular' : '') },
+        h('div', Object.assign({ class: 'ft-t' + emptyCls(sl.title), html: inlineRich(sl.title) }, ed('slide.title', sl.layout === 'titular' ? 'La conclusión, en una frase completa' : 'Título del marco'))));
       if (edit || (sl.subtitle || '').trim() !== '')
         ft.append(h('div', Object.assign({ class: 'ft-s' + emptyCls(sl.subtitle), html: inlineRich(sl.subtitle) }, ed('slide.subtitle', 'Subtítulo (opcional)'))));
       frame.append(ft);
@@ -481,6 +489,61 @@ function renderSlide(deck, idx, mode, stepShown) {
         if (v) caja.querySelector('.ct-cu').append(v);
         body.append(caja);
 
+      } else if (sl.layout === 'blanco') {
+        /* Lienzo libre: una sola zona que ocupa toda la diapositiva, centrada
+           en vertical, sin título ni pie que le quiten sitio. */
+        body.classList.add('v-center');
+        body.dataset.z = '0';
+        body.append(...bloquesDe(0, bodyW));
+        const v = vacia(0, 'Lienzo libre: una figura grande, un esquema o una sola frase');
+        if (v) { v.style.width = '64%'; v.style.alignSelf = 'center'; body.append(v); }
+
+      } else if (sl.layout === 'titular') {
+        /* La evidencia debajo del titular: una zona que se centra en el alto
+           que deja la frase. */
+        body.classList.add('v-center');
+        body.dataset.z = '0';
+        body.append(...bloquesDe(0, bodyW));
+        const v = vacia(0, 'La evidencia: la figura, la gráfica o la micrografía que demuestra el titular');
+        if (v) { v.style.width = '64%'; v.style.alignSelf = 'center'; body.append(v); }
+
+      } else if (sl.layout === 'tresfig') {
+        /* Tres paneles del mismo ancho con su letra, alineados arriba: las tres
+           figuras se leen como una sola, igual que la figura de un artículo. */
+        const w = Math.round((bodyW - GAP * 2) / 3);
+        /* Una gráfica dibujada 1:1 en un tercio de la diapositiva sale chata y
+           con los números de los ejes encimados. Se dibuja un 30 % más ancha y
+           el CSS la encoge al panel: es la escala de un panel de artículo, con
+           sitio para los ticks. */
+        const K_PANEL = 1.3;
+        const bloquesPanel = i => (sl[CLAVES_ZONA[i]] || []).filter(x => typeof bloqueVisible !== 'function' || bloqueVisible(x, deck))
+          .map(x => renderBlock(x, ['chart', 'func'].includes(x.type) ? Math.round(w * K_PANEL) : w));
+        const fila = h('div', { class: 'cols tresfig' });
+        [0, 1, 2].forEach(i => {
+          const c = h('div', { class: 'col tf-panel', 'data-col': String(i + 1) },
+            h('div', Object.assign({ class: 'tf-rot' + emptyCls(zt(i)), html: inlineRich(zt(i)) }, ztEd(i))),
+            h('div', { class: 'tf-cu', 'data-z': String(i) }, bloquesPanel(i)));
+          const v = vacia(i, 'Figura ' + String.fromCharCode(97 + i));
+          if (v) c.querySelector('.tf-cu').append(v);
+          fila.append(c);
+        });
+        body.classList.add('v-center');
+        body.append(fila);
+
+      } else if (sl.layout === 'objetivos') {
+        /* El general, destacado y a lo ancho; los específicos, debajo. Los
+           encabezados son editables: «Hipótesis» y «Objetivos» también caben. */
+        const caja = h('div', { class: 'objetivos' });
+        [0, 1].forEach(i => {
+          const parte = h('div', { class: 'obj-parte k' + i, 'data-col': String(i + 1) },
+            h('div', Object.assign({ class: 'obj-tit' + emptyCls(zt(i)), html: inlineRich(zt(i)) }, ztEd(i))),
+            h('div', { class: 'obj-cu', 'data-z': String(i) }, bloquesDe(i, bodyW - 48)));
+          const v = vacia(i, i ? 'Los objetivos específicos, en viñetas: uno por verbo' : 'El objetivo general, en una frase');
+          if (v) parte.querySelector('.obj-cu').append(v);
+          caja.append(parte);
+        });
+        body.append(caja);
+
       } else if (sl.layout === 'cuadricula') {
         const w = Math.round((bodyW - GAP) / 2);
         const rej = h('div', { class: 'cuadricula' });
@@ -514,7 +577,8 @@ function renderSlide(deck, idx, mode, stepShown) {
   const th = temaDe(deck);
   const cfgPie = pieDe(m);
   const esPortada = sl.layout === 'title', esSeccion = sl.layout === 'section';
-  const conPie = (!esPortada && !esSeccion) || (esPortada && cfgPie.enPortada) || (esSeccion && cfgPie.enSecciones);
+  const sinPie = !!(LAY[sl.layout] && LAY[sl.layout].sinPie);
+  const conPie = !sinPie && ((!esPortada && !esSeccion) || (esPortada && cfgPie.enPortada) || (esSeccion && cfgPie.enSecciones));
   const pageTxt = (typeof esRespaldo === 'function' && esRespaldo(sl))
     ? rotuloDiapositiva(deck, idx)
     : `${typeof rotuloDiapositiva === 'function' ? rotuloDiapositiva(deck, idx) : idx + 1} / ${typeof totalCharla === 'function' ? totalCharla(deck) : deck.slides.length}`;

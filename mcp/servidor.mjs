@@ -33,9 +33,9 @@ const diapositiva = {anyOf: [{type: 'integer', minimum: 1}, {type: 'string'}], d
 const bloque = {type: 'object', additionalProperties: true, required: ['tipo'], properties: {tipo: {type: 'string', description: 'text, bullets, math, chem, estruct, table, chart, func, smart, bblock, teorema, quote, code, image, refs, spacer…'}},
   description: 'Un bloque: {"tipo": "<tipo>", ...propiedades} (guia_formato las lista). Imagen local: {"tipo":"image","archivo":"figs/sem.png","caption":"…"}. Datos de un equipo: {"tipo":"chart","archivo_datos":"datos/xrd.xy","caption":"…"}. Molécula: {"tipo":"estruct","smiles":"CC(=O)Oc1ccccc1C(=O)O","caption":"Ácido acetilsalicílico"}.'};
 const zonas = {type: 'array', items: {type: 'array', items: bloque}, description: 'Una lista de bloques por zona, en orden («twocol» tiene 2 zonas, «cuadricula» 4…). Reemplaza el contenido de esas zonas.'};
-const encabezados = {type: 'array', items: {type: 'string'}, description: 'Encabezados de zona en los diseños que los usan: comparacion, partida, filas, rejilla6; en «dato» son [cifra, rótulo] y en «cita» [autor o fuente].'};
+const encabezados = {type: 'array', items: {type: 'string'}, description: 'Encabezados de zona en los diseños que los usan: comparacion, partida, filas, rejilla6, tresfig (letras de panel), objetivos; en «dato» son [cifra, rótulo] y en «cita» [autor o fuente].'};
 const propsDiapositiva = {
-  diseno: {type: 'string', description: 'Id de diseño (guia_formato): content, twocol, section, enunciado, dato, cuadricula… Por omisión «content».'},
+  diseno: {type: 'string', description: 'Id de diseño (guia_formato): content, blanco (sin título ni pie: lienzo libre), titular, twocol, section, enunciado, dato, cuadricula… Por omisión «content».'},
   titulo: {type: 'string', description: 'Mejor una frase con la conclusión que un rótulo («El pH 10 da la fase más pura», no «Resultados»).'},
   notas: {type: 'string', description: 'Notas del orador: lo que se dice, no lo que se lee.'},
   minutos: {type: 'number', exclusiveMinimum: 0, description: 'Tiempo previsto para esta diapositiva.'},
