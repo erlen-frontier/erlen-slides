@@ -60,7 +60,11 @@ async function charla(c, dir, extra = []) {
   const r = await c.llama('crear_presentacion', {archivo: 'hdl', titulo: 'HDL Zn-Al', diapositivas: [
     {titulo: 'Difractograma', zonas: [[{tipo: 'chart', archivo_datos: 'datos/hdl.xy', caption: 'XRD del HDL.'}]]},
     {diseno: 'twocol', titulo: 'Morfología', zonas: [[{tipo: 'image', archivo: 'sem.png', caption: 'SEM.'}], [{tipo: 'estruct', smiles: 'OC(=O)c1ccccc1', caption: 'Benzoato.'}]]},
-    {titulo: 'Modelo', zonas: [[{tipo: 'func', xlabel: 't (h)', ylabel: 'C (mM)', caption: 'Liberación.'}]]},
+    /* Con su fórmula: desde las gráficas dinámicas validadas (#42), un bloque
+       func vacío no se guarda. */
+    {titulo: 'Modelo', zonas: [[{tipo: 'func', curves: [{expr: 'C0*exp(-k*x)', name: 'C(t)'}],
+      params: [{name: 'C0', value: 1, min: 0.1, max: 2, step: 0.1}, {name: 'k', value: 0.3, min: 0.01, max: 1, step: 0.01}],
+      xmin: 0, xmax: 10, xlabel: 't (h)', ylabel: 'C (mM)', caption: 'Liberación.'}]]},
     ...extra]});
   assert.equal(r.error, false, r.texto);
   return r;

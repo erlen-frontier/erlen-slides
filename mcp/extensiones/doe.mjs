@@ -47,7 +47,7 @@ function lista(deck) {
   return deck.slides.map((sl, i) => {
     const bl = ZONAS.flatMap(k => sl[k] || []);
     return {n: i + 1, id: sl.id, diseno: sl.layout,
-      titulo: String(sl.layout === 'title' ? deck.meta.title : sl.title || '').replace(/\\\$/g, '$') + (/continuación/.test(sl.subtitle || '') ? ' (cont.)' : ''),
+      titulo: String(sl.layout === 'title' ? deck.meta.title : sl.title || '').replace(/\\\$/g, '$') + (/continuación/.test(sl.subtitle || '') && !/\(\d+\/\d+\)$/.test(sl.title || '') ? ' (cont.)' : ''),
       contenido: sl.layout === 'title' ? 'portada' : bl.map(b => b.type === 'table' ? 'tabla de ' + ((b.rows || []).length - 1) + ' filas' : b.type === 'chart' ? 'gráfica' : b.type === 'bullets' ? (b.items || []).length + ((b.items || []).length === 1 ? ' viñeta' : ' viñetas') : b.type === 'code' ? 'código' : 'texto').join(' · ')};
   });
 }
