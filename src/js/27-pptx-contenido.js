@@ -112,7 +112,12 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
     })));
   }
   /* encabezados de zona */
-  todos('.zona-tit, .comp-tit, .paso-tit, .celda-tit, .paso-n').forEach(el => texto(el, el.textContent));
+  /* Todos los que pinta 04-render.js con zt(): la cifra y el rótulo del dato
+     grande, el autor de la cita, el rótulo de cada fila y los de la pantalla
+     partida también son texto de la diapositiva, y sin ellos esos diseños
+     llegaban al PowerPoint vacíos. */
+  todos('.zona-tit, .comp-tit, .paso-tit, .celda-tit, .paso-n, .dt-num, .dt-rot, .ct-autor, .fl-rot, .pt-tit')
+    .filter(el => el.textContent.trim()).forEach(el => texto(el, el.textContent));
 
   /* bloques */
   for (const el of todos('.blk[data-bid]')) {

@@ -127,6 +127,27 @@ test('An idle recheck in the middle of the export cannot blank a slide',async()=
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
+/* Los encabezados de zona de «Dato grande», «Cita destacada», «Tres filas» y
+   «Pantalla partida» no estaban en la lista de la exportación: la cifra, el
+   autor y los rótulos no llegaban al PowerPoint. Esta prueba los recorre desde
+   los que pinta el render, para que un diseño nuevo no se quede fuera. */
+test('Every zone heading the slide shows reaches the PowerPoint',async()=>{const{dom,run,errors}=await editor();try{
+ const clases=run(`[...new Set([...renderSlide.toString().matchAll(/class: '([a-z-]+)' \\+ emptyCls\\(zt\\(/g)].map(m=>m[1]))]`);
+ assert.ok(clases.length>=8,'no se encontraron los encabezados en el render: '+clases);
+ const selector=run('formasSlide.toString()');
+ for(const c of clases) assert.ok(new RegExp('\\.'+c+'\\b').test(selector),'la exportación no recoge .'+c);
+ run(capturaPptx+`(()=>{const d=blankDeck();
+   const mk=(layout,zt)=>{const s={id:uid(),layout,title:'T '+layout,blocks:[]};prepararZonas(s,layout);s.zt=zt;return s;};
+   d.slides.push(mk('dato',['7,6 nm','espacio basal']),mk('cita',['Autora, 2020']),mk('filas',['Fila uno','Fila dos','Fila tres']),mk('partida',['Mitad A','Mitad B']));
+   wsNueva(d);})()`);
+ await run('exportPPTX()');
+ const partes=leeZip(Uint8Array.from(run('window.__pptx').bytes));
+ const texto=n=>(partes.get('ppt/slides/slide'+n+'.xml').match(/<a:t[^>]*>[^<]*<\/a:t>/g)||[]).join(' ').replace(/\s/g,' '); /* el número y su unidad van con espacio duro */
+ for(const [n,t] of [[2,'7,6 nm'],[2,'espacio basal'],[3,'Autora, 2020'],[4,'Fila dos'],[5,'Mitad B']])
+  assert.ok(texto(n).includes(t),'falta «'+t+'» en la diapositiva '+n+': '+texto(n));
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
 test('The export measures on its own bench, not on the shared one',async()=>{const{dom,run,errors}=await editor();try{
  run(capturaPptx+"wsNueva(EJEMPLOS[0].build());document.getElementById('workbench').innerHTML='<i id=\"testigo\"></i>'");
  await run('exportPPTX()');
