@@ -142,7 +142,7 @@ function comandos() {
   a('Ver el código de esta diapositiva', 'F7', () => alternaCodigo(true));
   a('Revisar antes de presentar…', 'desbordes, contraste, figuras', openRevision);
   a('Simulacro de sala…', 'proyector, distancia, daltonismo', openSala);
-  a('Ideas de diseño para la figura…', 'propone acomodos según la imagen', () => abreDisenador());
+  a('Ideas de diseño para esta diapositiva…', 'acomodos según el texto, las figuras o la lista', () => abreDisenador());
   a('Insertar galería de figuras', '(a) (b) (c) con un pie común', () => addBlockToSlide('galeria', S.insCol || 1));
   a('Insertar estructura química', 'editor tipo ChemDraw', () => { const b = nuevoBloqueEn('estruct', {}); if (b) { commit(); openEstructura(b); } });
   a('Insertar montaje experimental', 'vidrio, equipo, biología, circuitos', () => { const b = nuevoBloqueEn('montaje', {}); if (b) { b.mont = montajeEjemplo(); commit(); openMontaje(b); } });

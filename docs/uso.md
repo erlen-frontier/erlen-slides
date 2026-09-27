@@ -10,9 +10,29 @@ En una pantalla vertical la diapositiva se coloca arriba, sus controles quedan e
 
 Una gráfica conserva los pares de datos y sus etiquetas. Verifica unidades y significado de la incertidumbre antes de mostrar resultados. Los ejemplos tienen datos didácticos. El editor no certifica un ajuste, una asignación espectral ni la validez de un método.
 
+La **gráfica dinámica** dibuja fórmulas (`x` es la variable del eje; cualquier otra letra es un parámetro con deslizador) y al presentar los deslizadores mueven la curva en vivo; en el PDF y en Beamer sale fija, con los valores que tenga al exportar.
+
+- **Modelos listos**, cada uno con el significado y la unidad de cada símbolo (pasa el ratón por la tarjeta para ver sus supuestos): Arrhenius y su forma linealizada, cinéticas de 1.er y 2.º orden, pico gaussiano, gaussiana, lorentziana y pseudo-Voigt con el mismo FWHM, Beer–Lambert, isotermas de Langmuir y Freundlich, cinética de adsorción de pseudo-primer y pseudo-segundo orden, Scherrer, ley de Bragg, borde de absorción de Tauc, Van 't Hoff, Michaelis–Menten, Fermi–Dirac y superposición de ondas. Los valores iniciales son ilustrativos: cámbialos por los tuyos.
+- **Parámetros**: cada uno tiene recorrido, valor, unidad (se ve junto al deslizador) y la casilla *log* para los que abarcan órdenes de magnitud, como un factor preexponencial. Al cambiar el recorrido el paso se recalcula. El botón ↺ junto a los deslizadores vuelve a los valores con que se abrió la diapositiva; con un deslizador enfocado, las flechas lo mueven a él y no pasan de diapositiva.
+- **Muestreo**: la curva se refina donde cambia deprisa (un pico estrecho, el escalón de Fermi a baja temperatura) y se corta en las discontinuidades y los polos, en vez de unirlos con una raya vertical. Con polos, el eje Y se ajusta a la parte normal de la curva; *Fijar el eje Y* permite elegir otro rango. Los ejes pueden ir en logaritmo, y entonces el muestreo se reparte por décadas.
+- **Errores**: si una fórmula no se entiende, el editor dice qué curva y marca con ▸ el carácter donde se atascó; también avisa de letras sin definir y de parámetros que chocan con una constante (`R`, `e`, `pi`, `kB`…).
+
 En Recursos → Laboratorio científico puedes usar RDKit para analizar estructuras, Kekule para dibujarlas, 3Dmol para visualizarlas y Plotly para generar gráficas. Estas herramientas adicionales requieren servir los recursos de `public/libre/` por HTTP, incluso si el servidor es local y no hay Internet. Abrir únicamente el HTML offline permite seguir viendo figuras ya insertadas.
 
+Cada diapositiva tiene un diseño: lo eliges en Inicio → Nueva y lo cambias, sin perder bloques, en Diapositiva → Acomodo. Además de los de estructura, columnas y cuadrículas, hay cuatro pensados para charlas científicas:
+
+| Diseño | Para qué sirve | En Beamer y PowerPoint |
+|---|---|---|
+| **En blanco** | Lienzo libre, sin título ni pie ni número de página: una figura grande, un esquema o una sola frase. El título que tenga la diapositiva se guarda (sirve para la tira, la búsqueda y el índice), pero no se muestra, y la revisión no lo pide | Marco `[plain]` con sus bloques; en PowerPoint salen los bloques, sin pie |
+| **Titular + figura** | El título es la conclusión en una frase completa, sin barra y a dos líneas si hace falta, y debajo va la evidencia. La revisión sugiere reescribirlo si tiene menos de cuatro palabras | El titular es el título del marco; la evidencia va centrada |
+| **Tres figuras** | Tres paneles del mismo ancho con su letra —(a), (b), (c), editables— para comparar tres técnicas de la misma muestra | Tres columnas con la letra de cada panel |
+| **Objetivos** | El objetivo general destacado arriba y los específicos debajo, con encabezados editables | El general en un `block`; los específicos debajo |
+
+Las diapositivas nuevas nacen vacías: los encabezados de zona son rótulos genéricos, no datos.
+
 Para empezar una lámina con una idea clara, usa **Afirmación + evidencia** en Insertar → Nueva diapositiva. La plantilla deja una zona para la afirmación, otra para la figura y una nota para explicar incertidumbre y límites; sustituye los datos ilustrativos antes de presentar.
+
+**Ideas de diseño** (Diseño → Ideas, o Ctrl+K y «ideas de diseño») propone acomodos completos para la diapositiva actual según lo que contiene: un texto largo pasa a texto fluido o se parte en dos columnas o dos diapositivas; una gráfica con su explicación, a dos columnas o con pie ancho; dos a cuatro figuras, lado a lado, en zigzag, en tres columnas o en cuadrícula; una lista corta de tres a seis puntos, a un SmartArt (proceso si los puntos van numerados o en orden, cronología si empiezan con un año, ciclo si vuelven al inicio, jerarquía o radial si un punto tiene subpuntos); una cifra sola con su rótulo, a «Dato grande»; una cita, a «Cita destacada»; una ecuación, una reacción o una estructura, al centro y más grande. Si hay una imagen, además se analizan su forma y sus colores, como al insertarla. Cada miniatura es la diapositiva de verdad ya cambiada, con una frase que explica por qué; se aplica con un clic y se deshace con Ctrl+Z. Nunca se escribe texto nuevo: los encabezados que la propuesta no puede sacar de lo que ya hay (el autor de una cita sin autor, los rótulos de una cuadrícula) quedan vacíos para que los escribas.
 
 Antes de compartir, abre Archivo → Calidad científica. La revisión comprueba datos, ejes, unidades indicadas, escalas logarítmicas, barras de error, pies y procedencia. Sus avisos ayudan a revisar el archivo; no certifican la validez del experimento.
 

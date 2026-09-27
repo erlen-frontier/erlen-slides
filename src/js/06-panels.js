@@ -339,6 +339,12 @@ function layoutWire(id) {
     case 'zigzag': cab(); bar(2, 12, 28, 9, ACC); lineas(34, 13, 26, 3); lineas(2, 25, 26, 3); bar(34, 24, 28, 9, ACC); break;
     case 'dato': cab(); bar(16, 14, 32, 12, ACC); bar(20, 29, 24, 2); break;
     case 'cita': cab(); bar(6, 12, 6, 8, ACC); lineas(16, 14, 44, 3); bar(38, 29, 22, 2); break;
+    /* Sin barra de título: solo el lienzo, en gris claro porque está por llenar. */
+    case 'blanco': bar(8, 6, 48, 24, '#C6CBDD'); break;
+    case 'titular': bar(4, 4, 2, 8, ACC); bar(8, 4, 50, 3); bar(8, 9, 34, 3); bar(10, 15, 44, 18, ACC); break;
+    case 'tresfig': cab();
+      [3, 23, 43].forEach(x => { bar(x, 11, 6, 2); bar(x, 15, 18, 13, ACC); bar(x, 30, 12, 2); }); break;
+    case 'objetivos': cab(); bar(4, 12, 2, 8, ACC); bar(8, 13, 40, 2); bar(8, 17, 30, 2); lineas(6, 24, 44, 3); break;
     default: cab(); lineas(6, 13, 46, 3);
   }
   return box;
@@ -408,7 +414,9 @@ const NOMBRES_ZONA = {
   filas: ['Fila 1', 'Fila 2', 'Fila 3'],
   partida: ['Mitad 1', 'Mitad 2'],
   piefigura: ['Figura', 'Pie'],
-  zigzag: ['Figura 1', 'Texto 1', 'Texto 2', 'Figura 2']
+  zigzag: ['Figura 1', 'Texto 1', 'Texto 2', 'Figura 2'],
+  tresfig: ['Panel a', 'Panel b', 'Panel c'],
+  objetivos: ['General', 'Específicos']
 };
 function gruposLayout() {
   const out = [];

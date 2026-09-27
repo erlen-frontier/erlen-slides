@@ -231,27 +231,117 @@ const sigFig = (v, n) => {
   return s;
 };
 
+/* ---------- muestreo de una fórmula ----------
+   Con 260 puntos fijos, una curva empinada salía con esquinas (un pico
+   estrecho, un escalón de Fermi a baja temperatura) y una asíntota se unía
+   con una raya vertical de un lado al otro, como si la función pasara por
+   ahí. Aquí se parte de una rejilla base y se subdivide solo donde la curva
+   se aparta de la recta entre dos puntos; si en la subdivisión más fina el
+   salto sigue siendo grande, es una discontinuidad y se corta el trazo con
+   un NaN, que es como la pantalla y pgfplots entienden «levanta el lápiz».
+   Con el eje x logarítmico la rejilla se reparte por décadas: en lineal, la
+   primera década de un rango 0.01–100 se quedaba con dos puntos. */
+const FUNC_BASE = 200, FUNC_PROF = 7, FUNC_MAX = 900;
+function muestreaFunc(f, x0, x1, logX) {
+  const enLog = !!logX && x0 > 0 && x1 > 0;
+  const aX = t => enLog ? Math.pow(10, t) : t;
+  const t0 = enLog ? Math.log10(x0) : x0, t1 = enLog ? Math.log10(x1) : x1;
+  const ev = t => { let y; try { y = f(aX(t)); } catch (e) { y = NaN; } return isFinite(y) ? y : NaN; };
+  const base = [];
+  for (let i = 0; i <= FUNC_BASE; i++) { const t = t0 + (t1 - t0) * i / FUNC_BASE; base.push([t, ev(t)]); }
+  /* La escala «normal» de la curva, sin dejar que un polo la decida: los
+     cuantiles 5–95 % de la rejilla base, que es uniforme y no está sesgada
+     hacia donde se refinó. */
+  const fin = base.map(q => q[1]).filter(isFinite).sort((a, c) => a - c);
+  const cuantil = q => fin[Math.min(fin.length - 1, Math.max(0, Math.round(q * (fin.length - 1))))];
+  let escala = fin.length ? cuantil(0.95) - cuantil(0.05) : 1;
+  if (!(escala > 0)) escala = fin.length ? (fin[fin.length - 1] - fin[0]) || Math.abs(fin[0]) || 1 : 1;
+  const tol = escala * 0.002, salto = escala * 0.25;
+  const out = [];
+  let presupuesto = FUNC_MAX - base.length;
+  const refina = (ta, ya, tb, yb, prof) => {
+    const fa = isFinite(ya), fb = isFinite(yb);
+    if (!fa && !fb) return;
+    /* Sin presupuesto se deja de refinar, pero no se corta: a la resolución
+       de la rejilla base un seno rápido parecería un salto. */
+    if (presupuesto <= 0 && prof < FUNC_PROF) return;
+    if (prof >= FUNC_PROF) {
+      /* En la subdivisión más fina, un salto grande entre dos vecinos puede
+         ser pendiente (junto a un polo, 1/x sube mucho pero sin saltar) o
+         discontinuidad. Lo distingue el punto medio: si la función es
+         continua el salto se reparte entre las dos mitades; si no, casi todo
+         cae en una. */
+      if (fa && fb && Math.abs(yb - ya) > salto) {
+        const ym = ev((ta + tb) / 2), J = Math.abs(yb - ya);
+        if (!isFinite(ym) || Math.max(Math.abs(ym - ya), Math.abs(yb - ym)) > 0.9 * J) out.push([(ta + tb) / 2, NaN]);
+      }
+      return;
+    }
+    const tm = (ta + tb) / 2, ym = ev(tm);
+    const recta = fa && fb && isFinite(ym) && Math.abs(ym - (ya + yb) / 2) <= tol &&
+      /* Que el punto medio caiga en la recta no basta si los extremos ya
+         están lejos: un polo simétrico (1/x en ±h) engaña al punto medio. */
+      Math.abs(yb - ya) <= salto;
+    if (recta) return;
+    presupuesto--;
+    refina(ta, ya, tm, ym, prof + 1);
+    out.push([tm, ym]);
+    refina(tm, ym, tb, yb, prof + 1);
+  };
+  for (let i = 0; i < base.length; i++) {
+    out.push(base[i]);
+    if (i < base.length - 1) refina(base[i][0], base[i][1], base[i + 1][0], base[i + 1][1], 0);
+  }
+  const pts = out.map(([t, y]) => [aX(t), y]);
+  /* Cortes: cada tramo sin valor entre dos con valor (un salto, un polo que
+     cae justo en la rejilla, un hueco del dominio). Los bordes del dominio
+     no cuentan: ln x en [−1, 1] empieza en 0, no se corta. */
+  let cortes = 0, visto = false, hueco = false;
+  pts.forEach(q => {
+    if (isFinite(q[1])) { if (visto && hueco) cortes++; visto = true; hueco = false; }
+    else hueco = true;
+  });
+  /* Con un corte, o con valores diez veces más allá de la parte central de la
+     curva (el 10¹⁶ junto a una asíntota), el eje no lo fijan los extremos:
+     se propone el rango de la parte «normal», con holgura. */
+  let rango = null;
+  if (fin.length) {
+    const lo = cuantil(0.05), hi = cuantil(0.95);
+    const ys = pts.map(q => q[1]).filter(isFinite);
+    const lejos = ys.some(y => y > hi + 10 * escala || y < lo - 10 * escala);
+    if (cortes || lejos) {
+      const m = (hi - lo || escala) * 0.15;
+      rango = [Math.max(fin[0], lo - m), Math.min(fin[fin.length - 1], hi + m)];
+    }
+  }
+  return { pts, cortes, rango };
+}
+/* Los valores de los parámetros, tal como los ve la fórmula. */
+function valoresFunc(b) {
+  const params = {};
+  (b.params || []).forEach(p => { if (p && p.name) params[p.name] = +p.value; });
+  return params;
+}
+
 /* ---------- construcción de series ---------- */
 function chartSeries(b) {
   if (b.type === 'func') {
-    const params = {};
-    (b.params || []).forEach(p => params[p.name] = p.value);
+    const params = valoresFunc(b);
     const x0 = +b.xmin, x1 = +b.xmax;
-    const N = 260;
     const out = [];
+    let rango = null;
     (b.curves || []).forEach(cv => {
       const c = exprTry(cv.expr);
       if (!c || c.error) { out.push({ name: cv.name || cv.expr, pts: [], error: c ? c.error : 'fórmula vacía' }); return; }
-      const pts = [];
-      for (let i = 0; i <= N; i++) {
-        const x = x0 + (x1 - x0) * i / N;
-        const v = Object.assign({ x }, params);
-        let y;
-        try { y = c.fn(v); } catch (e) { y = NaN; }
-        pts.push([x, isFinite(y) ? y : NaN]);
-      }
-      out.push({ name: cv.name || cv.expr, pts });
+      const v = Object.assign({}, params);
+      const m = muestreaFunc(x => { v.x = x; return c.fn(v); }, x0, x1, b.logX);
+      out.push({ name: cv.name || cv.expr, pts: m.pts, cortes: m.cortes, recortada: !!m.rango });
+      /* El rango de todas las curvas: la que tiene polos aporta su parte
+         normal; la que no, todo lo que dibuja. */
+      const r = m.rango || (() => { const ys = m.pts.map(q => q[1]).filter(isFinite); return ys.length ? [Math.min(...ys), Math.max(...ys)] : null; })();
+      if (r) rango = rango ? [Math.min(rango[0], r[0]), Math.max(rango[1], r[1])] : r;
     });
+    if (out.some(s => s.recortada) && rango) out.rangoY = rango;
     return out;
   }
   const { headers, rows } = parseTable(b.data);
@@ -382,6 +472,9 @@ function renderChart(b, deck, mode, availPx) {
   }));
   if (b.despues && b.despues.data && !isFunc && !offsetMode) ys = ys.concat(allY.filter(v => isFinite(eY(v))));
   if (!ys.length) ys = logY ? [1, 10] : [0, 1];
+  /* Una fórmula con polos propone su rango (muestreaFunc): sin eso, el valor
+     que cae junto a la asíntota aplasta el resto de la curva contra el eje. */
+  if (isFunc && series.rangoY && !logY) ys = series.rangoY.slice();
 
   let xmin = b.xminAuto === false && isFinite(+b.xmin0) ? +b.xmin0 : Math.min(...allX);
   let xmax = b.xminAuto === false && isFinite(+b.xmax0) ? +b.xmax0 : Math.max(...allX);
@@ -667,7 +760,9 @@ function renderChart(b, deck, mode, availPx) {
   if (draw.length > 1 && !offsetMode && b.legend !== false) {
     const y = H - 16;
     const items = draw.map((s, i) => ({ n: mathToUnicode(s.name), c: P.series[i % P.series.length], m: MARKERS[i % MARKERS.length] }));
-    const wEst = items.map(it => String(it.n).length * FS * 0.52 + 42);
+    /* El ancho de cada entrada se estima por caracteres; con 0.52 los nombres
+       largos («Pseudo-1.er orden») se montaban sobre la raya de la siguiente. */
+    const wEst = items.map(it => String(it.n).length * FS * 0.58 + 52);
     let total = wEst.reduce((a, c) => a + c, 0);
     let x = padL + Math.max(0, (iw - total) / 2);
     items.forEach((it, i) => {
@@ -693,7 +788,10 @@ function renderChart(b, deck, mode, availPx) {
       const r = svg.getBoundingClientRect();
       const px = (ev.clientX - r.left) / r.width * W;
       if (px < padL || px > padL + iw) { hov.setAttribute('opacity', 0); return; }
-      const xv = xmin + (px - padL) / iw * (xmax - xmin);
+      /* Del píxel al dato por el mismo camino que al dibujar: con el eje
+         en logaritmo (o invertido) la interpolación lineal señalaba otro x. */
+      const fr = (px - padL) / iw, fx = invX ? 1 - fr : fr;
+      const xv = logX ? Math.pow(10, eX(xmin) + fx * (eX(xmax) - eX(xmin))) : xmin + fx * (xmax - xmin);
       let best = null;
       draw.forEach((s, i) => s.pts.forEach(pt => {
         if (!isFinite(pt[1])) return;
@@ -746,23 +844,81 @@ function renderChart(b, deck, mode, availPx) {
 
 
 /* ---------- deslizadores en vivo ---------- */
+/* Un parámetro que abarca décadas (el factor preexponencial de Arrhenius, de
+   10⁸ a 10¹²) no se puede mover con un deslizador lineal: el valor típico
+   queda pegado al extremo izquierdo. Con «log» el recorrido se reparte por
+   décadas. Solo tiene sentido si los dos extremos son positivos. */
+const paramLog = pr => !!pr.log && +pr.min > 0 && +pr.max > +pr.min;
+const PASOS_LOG = 1000;
+function posDeslizador(pr) {
+  if (!paramLog(pr)) return pr.value;
+  const a = Math.log10(pr.min), z = Math.log10(pr.max), v = Math.log10(Math.max(pr.min, Math.min(pr.max, pr.value)));
+  return Math.round((v - a) / (z - a) * PASOS_LOG);
+}
+function valorDeslizador(pr, pos) {
+  if (!paramLog(pr)) return +pos;
+  const a = Math.log10(pr.min), z = Math.log10(pr.max);
+  /* Tres cifras significativas: lo que se lee en la etiqueta es lo que queda. */
+  return +Math.pow(10, a + (z - a) * pos / PASOS_LOG).toPrecision(3);
+}
+/* Un paso redondo que dé unas doscientas posiciones al deslizador: 1, 2 o 5
+   por una potencia de diez, como los ticks. */
+function pasoParam(min, max) {
+  const span = Math.abs(+max - +min);
+  if (!(span > 0) || !isFinite(span)) return 0.1;
+  const raw = span / 200, mag = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / mag;
+  return +((n <= 1 + 1e-9 ? 1 : n <= 2 + 1e-9 ? 2 : n <= 5 + 1e-9 ? 5 : 10) * mag).toPrecision(1);
+}
+/* Al cambiar el recorrido se conserva el paso si sigue dando un número
+   razonable de posiciones: el orden de una reflexión va de uno en uno y no
+   debe volverse 0.01 por ensanchar el intervalo. */
+function pasoConservado(step, min, max) {
+  const n = Math.abs(+max - +min) / +step;
+  const discreto = n >= 2 && n <= 2000 && Math.abs(n - Math.round(n)) < 1e-6;
+  return step > 0 && ((n >= 10 && n <= 2000) || discreto) ? step : pasoParam(min, max);
+}
+/* El valor con su unidad, para la etiqueta y para el lector de pantalla. */
+const textoParam = pr => fmtParam(pr.value) + (pr.unit ? ' ' + mathToUnicode(pr.unit) : '');
 function buildSliders(b, holder, deck, mode, availPx) {
-  const bar = h('div', { class: 'sliders' + (mode === 'present' ? ' pres' : '') });
+  /* Con tres parámetros o más, deslizadores más cortos: si no, la fila no
+     cabe y el último se sale de la diapositiva. */
+  const bar = h('div', { class: 'sliders' + (mode === 'present' ? ' pres' : '') + ((b.params || []).length >= 3 ? ' muchos' : '') });
   const redraw = deb(() => {
     holder.innerHTML = '';
     holder.append(renderChart(b, deck, mode, availPx));
   }, 16);
+  /* Los valores con que se abrió la diapositiva: a ellos vuelve «↺». */
+  const iniciales = (b.params || []).map(pr => pr.value);
+  const filas = [];
   (b.params || []).forEach(pr => {
     const val = h('span', { class: 'sl-val' }, fmtParam(pr.value));
     const inp = h('input', {
-      type: 'range', min: pr.min, max: pr.max, step: pr.step, value: pr.value,
-      'aria-label': pr.name,
-      oninput: e => { pr.value = +e.target.value; val.textContent = fmtParam(pr.value); redraw(); }
+      type: 'range', min: paramLog(pr) ? 0 : pr.min, max: paramLog(pr) ? PASOS_LOG : pr.max,
+      step: paramLog(pr) ? 1 : pr.step, value: posDeslizador(pr),
+      'aria-label': (pr.d || pr.name) + (pr.unit ? ' (' + mathToUnicode(pr.unit) + ')' : ''),
+      'aria-valuetext': textoParam(pr),
+      oninput: e => {
+        pr.value = valorDeslizador(pr, e.target.value);
+        val.textContent = fmtParam(pr.value);
+        e.target.setAttribute('aria-valuetext', textoParam(pr));
+        redraw();
+      }
     });
-    bar.append(h('label', { class: 'sl' },
-      h('span', { class: 'sl-name', html: inlineRich('$' + texParam(pr.name) + '$') }),
-      inp, val));
+    filas.push({ pr, inp, val });
+    bar.append(h('label', { class: 'sl', title: pr.d || null },
+      h('span', { class: 'sl-name', html: inlineRich('$' + (pr.tex || texParam(pr.name)) + '$') }),
+      inp, val, pr.unit ? h('span', { class: 'sl-unit', html: inlineRich(pr.unit) }) : null));
   });
+  bar.append(h('button', {
+    class: 'sl-reset', type: 'button', title: 'Volver a los valores iniciales', 'aria-label': 'Volver a los valores iniciales',
+    onclick: () => {
+      filas.forEach(({ pr, inp, val }, i) => {
+        pr.value = iniciales[i]; inp.value = posDeslizador(pr);
+        val.textContent = fmtParam(pr.value); inp.setAttribute('aria-valuetext', textoParam(pr));
+      });
+      redraw();
+    }
+  }, '↺'));
   if (mode === 'present') bar.addEventListener('click', e => e.stopPropagation());
   return bar;
 }
@@ -776,11 +932,21 @@ function supDigits(n) {
   const map = { '-': '\u207b', 0: '\u2070', 1: '\u00b9', 2: '\u00b2', 3: '\u00b3', 4: '\u2074', 5: '\u2075', 6: '\u2076', 7: '\u2077', 8: '\u2078', 9: '\u2079' };
   return String(n).split('').map(c => map[c] || c).join('');
 }
-/* nombres tipo Ea, x0, C0 se ven mejor con subíndice */
+/* nombres tipo Ea, x0, C0 se ven mejor con subíndice; theta, lam o eps, en
+   griego. Un parámetro puede traer su propio «tex» y entonces manda ese. */
+const GRIEGO_PARAM = { alpha: 1, beta: 1, gamma: 1, delta: 1, epsilon: 1, zeta: 1, eta: 1, theta: 1, kappa: 1, lambda: 1,
+  mu: 1, nu: 1, xi: 1, rho: 1, sigma: 1, tau: 1, phi: 1, chi: 1, psi: 1, omega: 1,
+  Gamma: 1, Delta: 1, Theta: 1, Lambda: 1, Xi: 1, Sigma: 1, Phi: 1, Psi: 1, Omega: 1,
+  lam: 'lambda', eps: 'varepsilon' };
 function texParam(name) {
+  const griego = w => GRIEGO_PARAM[w] ? '\\' + (GRIEGO_PARAM[w] === 1 ? w : GRIEGO_PARAM[w]) : null;
+  const sub = /^([A-Za-z]+)_([A-Za-z0-9]+)$/.exec(name);
+  if (sub) return (griego(sub[1]) || (sub[1].length > 1 ? '\\mathrm{' + sub[1] + '}' : sub[1])) + '_{\\mathrm{' + sub[2] + '}}';
   const m = /^([A-Za-z]+)([A-Za-z0-9]*)$/.exec(name);
   if (!m) return name;
-  if (m[2]) return m[1] + '_{' + m[2] + '}';
+  const g = griego(m[1]);
+  if (m[2]) return (g || m[1]) + '_{' + m[2] + '}';
+  if (g) return g;
   if (m[1].length > 1) return '\\mathrm{' + m[1] + '}';
   return m[1];
 }
