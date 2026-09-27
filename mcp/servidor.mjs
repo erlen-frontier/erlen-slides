@@ -13,6 +13,9 @@
 import {createInterface} from 'node:readline';
 import * as M from './motor.mjs';
 import * as N from './navegador.mjs';
+import {archivos as archivosExtension} from './extensiones.mjs';
+import {pathToFileURL} from 'node:url';
+import {basename} from 'node:path';
 
 const VERSIONES = ['2025-06-18', '2025-03-26', '2024-11-05'];
 
@@ -154,7 +157,8 @@ const HERRAMIENTAS = [
       if (a.formato === 'beamer' || a.formato === 'html') return M.exportaTexto(a, a.formato);
       if (a.formato === 'pdf') return N.exportaPdf(a);
       if (a.formato === 'pptx') return N.exportaPptx(a);
-      throw new M.ErrorUso('Formato desconocido: «' + a.formato + '». Usa beamer, html, pdf o pptx.');
+      if (FORMATOS[a.formato]) return FORMATOS[a.formato](a);
+      throw new M.ErrorUso('Formato desconocido: «' + a.formato + '». Usa ' + ['beamer', 'html', 'pdf', 'pptx', ...Object.keys(FORMATOS)].join(', ') + '.');
     }}
 ];
 
@@ -202,6 +206,36 @@ Comprueba en la respuesta la técnica detectada, las columnas y el intervalo de 
 ${a.mensaje ? 'El mensaje de la diapositiva es: ' + a.mensaje + '. Úsalo como título.' : 'Pregúntame qué debe ver la audiencia antes de poner el título.'}
 Escribe un pie que diga qué se midió y qué mirar, y enséñame la vista previa de esa diapositiva.`}
 ];
+/* ---------- extensiones ----------
+   mcp/extensiones/*.mjs (ver extensiones.mjs). Un nombre repetido es un error
+   de quien escribe la extensión: se dice al arrancar, en vez de que una
+   herramienta tape a otra en silencio. */
+const FORMATOS = {};
+for (const ruta of archivosExtension('.mjs')) {
+  const ext = (await import(pathToFileURL(ruta).href)).default || {};
+  const origen = basename(ruta);
+  for (const h of ext.herramientas || []) {
+    if (HERRAMIENTAS.some(x => x.name === h.name)) throw new Error(origen + ': la herramienta «' + h.name + '» ya existe.');
+    if (!h.inputSchema || h.inputSchema.type !== 'object' || typeof h.run !== 'function') throw new Error(origen + ': «' + h.name + '» necesita inputSchema de tipo object y run.');
+    HERRAMIENTAS.push({annotations: {openWorldHint: false}, ...h});
+  }
+  for (const p of ext.prompts || []) {
+    if (PROMPTS.some(x => x.name === p.name)) throw new Error(origen + ': el prompt «' + p.name + '» ya existe.');
+    PROMPTS.push({arguments: [], ...p});
+  }
+  Object.assign(CONVENCIONES, ext.convenciones || {});
+  for (const [nombre, fn] of Object.entries(ext.formatos || {})) {
+    if (['beamer', 'html', 'pdf', 'pptx'].includes(nombre) || FORMATOS[nombre]) throw new Error(origen + ': el formato «' + nombre + '» ya existe.');
+    FORMATOS[nombre] = fn;
+  }
+  if (ext.transformaBloque) M.TRANSFORMADORES.push(ext.transformaBloque);
+}
+if (Object.keys(FORMATOS).length) {
+  const exp = HERRAMIENTAS.find(x => x.name === 'exportar_presentacion');
+  exp.inputSchema.properties.formato.enum.push(...Object.keys(FORMATOS));
+  exp.description += ' Además: ' + Object.keys(FORMATOS).join(', ') + '.';
+}
+
 /* ---------- protocolo ---------- */
 const escribe = m => process.stdout.write(JSON.stringify(m) + '\n');
 const responde = (id, result) => escribe({jsonrpc: '2.0', id, result});

@@ -180,3 +180,7 @@ export async function exportaPptx(a) {
   await descarga.saveAs(destino);
   return {archivo: visible(destino), nota: 'Texto y tablas quedan editables; las gráficas se insertan como imagen. Ábrelo antes de enviarlo.'};
 }
+
+/* Para las extensiones: la sesión de Chromium con la app abierta y la página
+   imprimible de un proyecto (una .pr-page por diapositiva). */
+export {sesion, imprimible};

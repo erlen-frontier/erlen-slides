@@ -6,47 +6,15 @@
    Chromium: su prueba se salta si no hay ninguno. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {mkdtempSync, readFileSync, writeFileSync, existsSync, rmSync, mkdirSync, readdirSync} from 'node:fs';
-import {tmpdir} from 'node:os';
+import {readFileSync, writeFileSync, mkdirSync, readdirSync} from 'node:fs';
 import {join} from 'node:path';
-import {createInterface} from 'node:readline';
+import {conServidor, proyecto, bloques} from './_mcp-cliente.mjs';
 
 /* Un PNG de 1×1 con relleno detrás del IEND: los lectores lo ignoran y pesa
    lo bastante para que la respuesta tenga que resumirlo. */
 const PNG = Buffer.concat([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'), Buffer.alloc(4096)]);
 
-function cliente(dir) {
-  const proc = spawn(process.execPath, [new URL('../mcp/servidor.mjs', import.meta.url).pathname], {env: {...process.env, ERLEN_SLIDES_DIR: dir}, stdio: ['pipe', 'pipe', 'pipe']});
-  const pendientes = new Map(), ruido = [];
-  let n = 0;
-  createInterface({input: proc.stdout}).on('line', l => {
-    let m;
-    try { m = JSON.parse(l); } catch { ruido.push(l); return; }
-    pendientes.get(m.id)?.(m); pendientes.delete(m.id);
-  });
-  const pide = (method, params) => new Promise(ok => { const id = ++n; pendientes.set(id, ok); proc.stdin.write(JSON.stringify({jsonrpc: '2.0', id, method, params}) + '\n'); });
-  const llama = async (name, args) => {
-    const r = await pide('tools/call', {name, arguments: args});
-    const texto = r.result.content[0].text;
-    return {error: !!r.result.isError, texto, datos: r.result.isError ? null : JSON.parse(texto), crudo: r.result};
-  };
-  const inicia = async (version = '2025-06-18') => {
-    const r = await pide('initialize', {protocolVersion: version, capabilities: {}, clientInfo: {name: 'prueba', version: '0'}});
-    proc.stdin.write(JSON.stringify({jsonrpc: '2.0', method: 'notifications/initialized'}) + '\n');
-    return r;
-  };
-  return {proc, pide, llama, inicia, ruido, cierra: () => new Promise(ok => { proc.on('exit', ok); proc.stdin.end(); })};
-}
-async function conServidor(fn, version) {
-  const dir = mkdtempSync(join(tmpdir(), 'erlen-mcp-'));
-  const c = cliente(dir);
-  try { await c.inicia(version); await fn(c, dir); assert.deepEqual(c.ruido, [], 'stdout solo lleva mensajes del protocolo'); }
-  finally { await c.cierra(); rmSync(dir, {recursive: true, force: true}); }
-}
-const proyecto = (dir, n) => JSON.parse(readFileSync(join(dir, n + '.json'), 'utf8'));
-const bloques = sl => ['blocks', 'blocks2', 'blocks3', 'blocks4'].flatMap(k => sl[k] || []);
 
 test('MCP: protocolo, catálogo y prompts', {timeout: 120000}, async () => {
   await conServidor(async c => {

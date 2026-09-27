@@ -122,6 +122,18 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 - El `.tex` requiere una instalación de LaTeX u Overleaf; su compilación no forma parte de la validación. Las figuras con forma, marco, sombra o filtro salen sin ese estilo (se avisa); «Exportar figuras» del editor las da con él. Las imágenes GIF, WebP o SVG hay que convertirlas a PNG o PDF.
 - La primera llamada tarda unos segundos: carga la aplicación. Las siguientes son inmediatas.
 
+## Extensiones
+
+Las herramientas nuevas se añaden como extensiones, cada una en sus propios archivos, sin tocar el catálogo común:
+
+- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion`; `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES.
+- `mcp/extensiones/<id>.pagina.js` (dentro de la app): `ERLEN_MCP.registra(nombre, fn)` añade una operación y `ERLEN_MCP.registraRevision(nombre, fn)` una regla de `revisar_presentacion` (sus hallazgos salen en `adicional`). `ERLEN_MCP.util` da `valida`, `bloqueDesde`, `diapositivaNueva`, `lote`, `indiceDiapositiva`, `buscaBloque`, `cambiaDiseno`, `esquema`, `falla` y `avisa`.
+- Desde Node, `mcp/motor.mjs` exporta `op`, `modifica` (lee, aplica, valida, guarda en el historial y escribe), `lee`, `escribe`, `preparaEntrada`, `archivoEnCarpeta` y `compacta`; `mcp/navegador.mjs`, `sesion` e `imprimible` para lo que necesite Chromium.
+- Cada extensión documenta sus herramientas en `docs/mcp-extensiones/<id>.md` y se prueba en `tests/mcp-<id>.test.mjs` con el cliente de `tests/_mcp-cliente.mjs`.
+- Un nombre de herramienta, prompt o formato repetido detiene el servidor al arrancar, con el archivo culpable.
+
+La extensión de referencia es [estadísticas](mcp-extensiones/estadisticas.md). `ERLEN_MCP_EXTENSIONES` añade otra carpeta de extensiones (la usan las pruebas).
+
 ## Desarrollo
 
 - `mcp/servidor.mjs`: protocolo MCP (JSON-RPC 2.0 sobre stdio, versiones `2025-06-18`, `2025-03-26` y `2024-11-05`; `structuredContent` desde la primera), catálogo de herramientas y *prompts*. Sin dependencias nuevas.
@@ -129,6 +141,7 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 - `mcp/operaciones.js`: las operaciones sobre el proyecto. Se evalúa dentro de la página, en el ámbito de los módulos, para usar sus funciones reales.
 - `mcp/quimica.mjs`: de SMILES o MOL a la estructura nativa, con RDKit (`@rdkit/rdkit`).
 - `mcp/navegador.mjs`: vista previa, PDF y PowerPoint en Chromium, con `public/` servido en `127.0.0.1`.
+- `mcp/extensiones.mjs` y `mcp/extensiones/`: el sistema de extensiones (ver arriba).
 - `tests/mcp.test.mjs`: arranca el servidor como un cliente; prueba el protocolo, construye una presentación con datos de difracción, la revisa, deshace, rehace y exporta. La prueba de vista previa, PDF y PowerPoint se salta si no hay Chromium.
 
 Si cambia el formato de un bloque en `src/js/`, la guía lo refleja sola (`newBlock`); revisa además las convenciones de `mcp/servidor.mjs`.

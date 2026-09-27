@@ -11,6 +11,7 @@ import {resolve, relative, isAbsolute, extname, basename, dirname, sep} from 'no
 import {fileURLToPath} from 'node:url';
 import {homedir} from 'node:os';
 import {estructuraDesde} from './quimica.mjs';
+import {archivos as archivosExtension} from './extensiones.mjs';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const APP = resolve(RAIZ, 'public/index.html');
@@ -65,6 +66,11 @@ async function cargaPagina() {
      cinco primeros bytes del SHA-256 del texto. JSDOM no trae crypto.subtle. */
   dom.window.ERLEN_MCP_HUELLA = texto => createHash('sha256').update(String(texto || ''), 'utf8').digest('hex').slice(0, 10);
   dom.window.eval(readFileSync(new URL('./operaciones.js', import.meta.url), 'utf8'));
+  /* Las extensiones de la página, detrás, con ERLEN_MCP ya definido. */
+  for (const ruta of archivosExtension('.pagina.js')) {
+    try { dom.window.eval(readFileSync(ruta, 'utf8')); }
+    catch (e) { throw new Error('La extensión ' + ruta + ' falló al cargarse en la página: ' + e.message); }
+  }
   return dom;
 }
 async function op(nombre, args) {
@@ -191,12 +197,17 @@ async function convierteEstructura(b) {
   delete out.mol; delete out.archivo_mol;
   return out;
 }
+/* Transformaciones de bloque que aportan las extensiones (extensiones.mjs):
+   se aplican en orden tras las de aquí. */
+export const TRANSFORMADORES = [];
 async function preparaEntrada(args) {
   const datos = {};
   const bloque = async (b, esImagen) => {
     if (!b || typeof b !== 'object' || Array.isArray(b)) return b;
     leeDatos(b, datos);
-    return convierteEstructura(incrustaImagen(b, esImagen));
+    let out = await convierteEstructura(incrustaImagen(b, esImagen));
+    for (const t of TRANSFORMADORES) out = await t(out, {esImagen: !!esImagen, datos});
+    return out;
   };
   const zonas = z => Array.isArray(z) ? Promise.all(z.map(x => Array.isArray(x) ? Promise.all(x.map(y => bloque(y))) : x)) : z;
   const out = {...args};
@@ -368,4 +379,5 @@ export async function proyectoValidado(archivo) {
   const {ruta, deck} = lee(archivo);
   return {ruta, deck: (await op('sanea', {deck})).deck};
 }
-export {visible, RAIZ};
+/* Lo que usan las extensiones para escribir herramientas propias. */
+export {visible, RAIZ, op, modifica, lee, escribe, guardaVersion, preparaEntrada, archivoEnCarpeta, compacta};

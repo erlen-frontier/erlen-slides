@@ -397,7 +397,10 @@ var ERLEN_MCP = (function () {
     const estructura = [];
     deck.slides.forEach((sl, i) => {
       const n = zonasDe(sl.layout);
-      if (n && !['title', 'section', 'toc'].includes(sl.layout) && !String(sl.title || '').trim() && !['dato', 'cita', 'sangre', 'partida'].includes(sl.layout))
+      /* Los diseños que no llevan título lo declaran con «sinTitulo» en
+         LAYOUTS; la lista fija queda para los que aún no lo hacen. */
+      const sinTitulo = (LAY[sl.layout] && LAY[sl.layout].sinTitulo) || ['title', 'section', 'toc', 'dato', 'cita', 'sangre', 'partida'].includes(sl.layout);
+      if (n && !sinTitulo && !String(sl.title || '').trim())
         estructura.push({ diapositiva: i + 1, problema: 'La diapositiva no tiene título', arreglo: 'Un título que diga la conclusión ayuda a seguir la charla.' });
       if (n && CLAVES_ZONA.slice(0, n).every(k => !(sl[k] || []).length))
         estructura.push({ diapositiva: i + 1, problema: 'La diapositiva no tiene bloques', arreglo: 'Añade contenido o cambia a un diseño de estructura.' });
@@ -413,8 +416,15 @@ var ERLEN_MCP = (function () {
       else if (minutos < objetivo * 0.8) tiempo.valoracion = 'Queda corta por ' + Math.round((objetivo - minutos) * 10) / 10 + ' min.';
       else tiempo.valoracion = 'Dentro del objetivo.';
     }
+    /* Reglas de las extensiones: cada una devuelve hallazgos con su
+       categoría; una regla que falla no tumba la revisión, se anota. */
+    const adicional = [];
+    REVISIONES.forEach(({ nombre, fn }) => {
+      try { (fn(deck) || []).forEach(h => adicional.push(Object.assign({ regla: nombre }, h))); }
+      catch (e) { adicional.push({ regla: nombre, problema: 'La regla falló: ' + (e && e.message || e) }); }
+    });
     return {
-      calidad_cientifica: cal, accesibilidad, estructura, tiempo,
+      calidad_cientifica: cal, accesibilidad, estructura, tiempo, ...(adicional.length ? { adicional } : {}),
       exportacion: inf.warnings.map(w => ({ gravedad: w.severity, mensaje: w.message, diapositivas: w.slides, formatos: w.formats })),
       resumen: inf.summary,
       nota: 'Reglas locales y explicables; no validan el experimento. El contraste y el desbordamiento se comprueban solo con vista_previa en un navegador real.'
@@ -561,6 +571,20 @@ var ERLEN_MCP = (function () {
     html: a => { const v = valida(a.deck).deck; loadDeck(v, null); return { html: buildPrintableHTML(false) }; }
   };
 
+  /* ---------- extensiones ----------
+     Los archivos mcp/extensiones/*.pagina.js se evalúan después de este y
+     añaden operaciones y reglas de revisión con estas dos funciones. */
+  const REVISIONES = [];
+  function registra(nombre, fn) {
+    if (OPS[nombre]) throw new Error('La operación «' + nombre + '» ya existe.');
+    OPS[nombre] = fn;
+  }
+  function registraRevision(nombre, fn) {
+    if (typeof nombre === 'function') { fn = nombre; nombre = 'regla-' + (REVISIONES.length + 1); }
+    REVISIONES.push({ nombre, fn });
+  }
+  const util = { valida, bloqueDesde, aplicaPropiedades, diapositivaNueva, lote, indiceDiapositiva, buscaBloque, cambiaDiseno, esquema, resumenBloque, falla, avisa, ErrorMcp };
+
   function ejecuta(op, argsJson) {
     try {
       if (!OPS[op]) falla('Operación desconocida: ' + op);
@@ -571,5 +595,5 @@ var ERLEN_MCP = (function () {
       return JSON.stringify({ error: e instanceof ErrorMcp ? e.message : 'Error interno: ' + (e && e.message || e) });
     }
   }
-  return { ejecuta };
+  return { ejecuta, registra, registraRevision, util };
 })();
