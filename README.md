@@ -21,7 +21,7 @@ Escribe ecuaciones, dibuja química, explica datos y prepara tu próxima charla.
 - **Exportaciones:** PDF mediante impresión, PowerPoint, fuente Beamer, SVG científico, informe JSON de advertencias y HTML imprimible. Cada formato tiene [límites documentados](docs/uso.md#exportaciones).
 - **Herramientas libres:** KaTeX, RDKit, Kekule.js, 3Dmol.js y Plotly. Los componentes científicos adicionales se cargan desde los archivos de la propia aplicación.
 
-El asistente integrado localiza herramientas mediante reglas; **no es un modelo generativo de IA**. Si quieres trabajar con uno, el [servidor MCP](docs/mcp.md) deja que Claude u otro asistente cree, revise y exporte presentaciones con el mismo motor, en tu máquina. Esta publicación no incorpora cuentas, cobro, sincronización en la nube ni coedición simultánea.
+El asistente integrado localiza herramientas mediante reglas; **no es un modelo generativo de IA**. Si quieres trabajar con uno, el [servidor MCP](docs/mcp.md) deja que Claude u otro asistente cree, revise y exporte presentaciones con el mismo motor, en tu máquina; `npm run mcp:instalar` lo conecta a Claude Desktop o Claude Code. Esta publicación no incorpora cuentas, cobro, sincronización en la nube ni coedición simultánea.
 
 ## Empezar
 

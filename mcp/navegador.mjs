@@ -20,7 +20,7 @@ const TIPOS = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.
    Chrome o Edge instalados, cualquier Chromium de otra versión de Playwright
    y los de sistema. Así la vista previa funciona sin configurar nada en la
    mayoría de las máquinas. */
-function candidatos() {
+export function candidatos() {
   if (process.env.ERLEN_CHROMIUM) return [{executablePath: process.env.ERLEN_CHROMIUM}];
   const out = [{}, {channel: 'chrome'}, {channel: 'msedge'}];
   const cachés = [process.env.PLAYWRIGHT_BROWSERS_PATH, join(homedir(), '.cache', 'ms-playwright'), join(homedir(), 'Library', 'Caches', 'ms-playwright'),
