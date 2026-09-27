@@ -122,7 +122,7 @@ function cintaDiseno() {
       menuC('tipografia', 'Tipografía', 'CaseSensitive', () => FUENTES.filter(x => x.id !== 'auto').map(x => opc(x.n, () => { m().fuente = x.id; commit(); }, () => (m().fuente || 'auto') === x.id, x.esp || '')))),
     grupoC('Ideas',
       grande('ideas', 'Ideas de diseño', 'Sparkles', () => { const b = blq(); abreDisenador(b && b.type === 'image' ? b : undefined); },
-        { d: 'Propone acomodos según la figura' })),
+        { d: 'Propone acomodos según lo que tiene la diapositiva' })),
     grupoC('Movimiento',
       menuC('transicion', 'Transición', 'MoveRight', () => TRANS.map(t => opc(t.n, () => { m().trans = t.id; commit(); }, () => (m().trans || 'fundido') === t.id, t.d)),
         { d: 'Cómo se pasa de una diapositiva a otra' })),
