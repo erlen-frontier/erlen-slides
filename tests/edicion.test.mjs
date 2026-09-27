@@ -165,3 +165,13 @@ test('The precipitate arrow survives balancing and rendering',async()=>{const{do
  assert.equal(r[2],true,'KaTeX compone la flecha hacia abajo');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
+
+/* \item [100] tomaba «[100]» como marca de la viñeta, y \item <001> se leía
+   como capas de Beamer: el índice cristalográfico desaparecía o no compilaba. */
+test('Bullets that start with [ or < keep their text in the Beamer export',async()=>{const{dom,run,errors}=await editor();try{
+ const tex=run(`(()=>{const d=blankDeck();d.slides.push({id:uid(),layout:'content',title:'Direcciones',blocks:[Object.assign(newBlock('bullets'),{step:true,items:[{t:'<001> es la dirección de crecimiento',l:0},{t:'[100] también',l:0},{t:'Normal',l:0}]})]});loadDeck(d,null);return toBeamer(S.deck)})()`);
+ assert.match(tex,/\\item<\+-> \{\}<001> es la dirección de crecimiento/);
+ assert.match(tex,/\\item<\+-> \{\}\[100\] también/);
+ assert.match(tex,/\\item<\+-> Normal\n/,'una viñeta normal no cambia');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
