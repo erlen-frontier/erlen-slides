@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
 permissions: {}
+# Un push o edición nueva del PR cancela la ejecución anterior (ahorro de minutos de Actions).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   convencion:
     runs-on: ubuntu-latest
