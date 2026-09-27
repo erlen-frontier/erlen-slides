@@ -164,7 +164,8 @@ test('Log and linear axes agree with the export on what is drawn',async()=>{cons
 test('Peak labels sit on their measured point, on screen and in pgfplots',async()=>{const{dom,run,errors}=await editor();try{
  run("wsNueva();addSlide('content')");
  const data='x\tA\tB\n1\t0\t5\n2\t10\t6\n3\t0\t5\n4\t2\t9\n5\t0\t5';
- const r=JSON.parse(run(`(()=>{const b=Object.assign(newBlock('chart'),{data:${JSON.stringify(data)},kind:'linea',
+ dom.window.__arg=data;
+ const r=JSON.parse(run(`(()=>{const b=Object.assign(newBlock('chart'),{data:__arg,kind:'linea',
    picos:[{x:2,y:10,serie:0,txt:'(003)'},{x:4,y:9,serie:1,txt:'4.0'}]});
    const g=renderChart(b,S.deck,'export',900);
    const picos=[...g.querySelectorAll('g.pico')].map(p=>({t:p.querySelector('text').textContent,x:+p.querySelector('line').getAttribute('x1')}));
@@ -197,7 +198,8 @@ test('Peak labels sit on their measured point, on screen and in pgfplots',async(
 test('Stacked series names stay inside the frame with a reversed axis',async()=>{const{dom,run,errors}=await editor();try{
  run("wsNueva();addSlide('content')");
  const data='x\tuno\tdos\n'+Array.from({length:40},(_,i)=>(400+i*90)+'\t'+(90-i%7)+'\t'+(80-i%5)).join('\n');
- const r=JSON.parse(run(`(()=>{const b=Object.assign(newBlock('chart'),{data:${JSON.stringify(data)},kind:'linea',offset:true,invertirX:true});
+ dom.window.__arg=data;
+ const r=JSON.parse(run(`(()=>{const b=Object.assign(newBlock('chart'),{data:__arg,kind:'linea',offset:true,invertirX:true});
    const g=renderChart(b,S.deck,'export',900);const W=+g.querySelector('svg').getAttribute('viewBox').split(' ')[2];
    const t=[...g.querySelectorAll('text')].filter(x=>x.textContent==='uno'||x.textContent==='dos').map(x=>+x.getAttribute('x'));
    return JSON.stringify({t,W})})()`));

@@ -122,3 +122,13 @@ test('Figures and tables on the same slide are numbered one after another',async
  assert.deepEqual(pies[1],['Tabla 1:','Figura 4:']);
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
+
+/* Los títulos de Crossref llegan con marcado JATS. Quitar las etiquetas en una
+   sola pasada dejaba «<script>» a partir de «<scr<b>ipt>» (CodeQL). */
+test('Crossref markup is stripped until no tag is left',async()=>{const{dom,run,errors}=await editor();try{
+ const r=JSON.parse(run(`JSON.stringify([sinMarcado('TiO<sub>2</sub> <i>in situ</i>'),sinMarcado('<scr<b>ipt>alert(1)</scr</b>ipt>'),sinMarcado('pH &lt; 7 &amp; T &gt; 300 K')])`));
+ assert.equal(r[0],'TiO₂ in situ');
+ assert.ok(!/<[a-z\/]/i.test(r[1]),'no queda ninguna etiqueta: '+r[1]);
+ assert.equal(r[2],'pH < 7 & T > 300 K','las entidades pasan a sus caracteres');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});

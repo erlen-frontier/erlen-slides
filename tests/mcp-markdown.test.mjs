@@ -256,3 +256,22 @@ test('MCP markdown: el ejemplo de la documentación se importa sin avisos', {tim
     assert.deepEqual(sinIds(proyecto(dir, 'vuelta')), sinIds(proyecto(dir, 'ejemplo')));
   });
 });
+
+/* Una «\» al final del último encabezado de zona formaba «\|» con la barra que
+   lo cierra y el encabezado volvía como «Después|» (CodeQL lo señaló como escape
+   incompleto). Las celdas de tabla, unidas con « | », ya lo aguantaban; el LaTeX
+   de una celda sigue como se escribe. */
+test('MCP markdown: una barra invertida al final de una celda sobrevive la ida y vuelta', {timeout: 120000}, async () => {
+  await conServidor(async (c, dir) => {
+    const filas = [['Serie\\', 'b'], ['$\\alpha$', 'c\\|d']];
+    const cr = await c.llama('crear_presentacion', {archivo: 'k', titulo: 'Barras', diapositivas: [
+      {diseno: 'comparacion', titulo: 'Celdas', encabezados: ['Antes\\', 'Después\\'], zonas: [[{tipo: 'table', rows: filas}], [{tipo: 'text', text: 'x'}]]}]});
+    assert.equal(cr.error, false, cr.texto);
+    assert.equal((await c.llama('exportar_presentacion', {archivo: 'k', formato: 'markdown'})).error, false);
+    const i = await c.llama('importar_markdown', {archivo_md: 'k.md', archivo: 'k2'});
+    assert.equal(i.error, false, i.texto);
+    const sl = proyecto(dir, 'k2').slides[1];
+    assert.deepEqual(sl.zt, ['Antes\\', 'Después\\'], 'el último encabezado es el que se fundía con la barra de cierre');
+    assert.deepEqual(bloques(sl).find(b => b.type === 'table').rows, filas);
+  });
+});

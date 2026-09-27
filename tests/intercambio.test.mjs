@@ -1,5 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync,existsSync} from 'node:fs';import {IDBFactory} from 'fake-indexeddb';
 import {editor} from '../herramientas/test-browser.mjs';import {createExchange} from '../web/exchange-v2.mjs';
+/* Un texto literal dentro de una RegExp: todos sus caracteres especiales, barra invertida incluida. */
+const escRe=s=>String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 /* Slides recibe de Erlen DoE un informe (tipo informe-v1 del contrato de la suite,
    docs/intercambio-doe.md del portal) y lo abre como presentación nueva. JSDOM no mide: aquí se
    comprueban la validación, la conversión, la vista previa, lo que se crea y lo que no; que el
@@ -174,8 +176,8 @@ test('Long and wide Taguchi tables are split across continuation slides with eve
    const t=s.blocks[0];
    assert.deepEqual(t.rows[0].slice(0,5),ids,'el encabezado y las columnas de la corrida y los factores, en cada una');
    assert.ok(t.rows[0].length<=7&&t.rows.length-1<=8);
-   assert.match(t.caption,new RegExp('^'+tabla.titulo+' \\('+(k+1)+'/'+n+'\\) · Filas \\d+–\\d+ de '+tabla.data.length+' · Columnas '+(k<n/2?'1–7':'1–5 y 8–9')+' de 9$'));
-   assert.match(s.notes,new RegExp('repartida en '+n+' diapositivas \\(las filas en \\d tramos y las columnas en 2 grupos; cada una repite el encabezado y las columnas '+ids.slice(0,-1).map(c=>'«'+c.replace(/[()]/g,'\\$&')+'»').join(', ')+' y «'+ids[4]+'», que identifican cada fila\\)\\. Esta es la parte '+(k+1)+' de '+n));
+   assert.match(t.caption,new RegExp('^'+escRe(tabla.titulo)+' \\('+(k+1)+'/'+n+'\\) · Filas \\d+–\\d+ de '+tabla.data.length+' · Columnas '+(k<n/2?'1–7':'1–5 y 8–9')+' de 9$'));
+   assert.match(s.notes,new RegExp('repartida en '+n+' diapositivas \\(las filas en \\d tramos y las columnas en 2 grupos; cada una repite el encabezado y las columnas '+ids.slice(0,-1).map(c=>'«'+escRe(c)+'»').join(', ')+' y «'+escRe(ids[4])+'», que identifican cada fila\\)\\. Esta es la parte '+(k+1)+' de '+n));
   });
   /* Todas las celdas, idénticas a las del informe: ni redondeo nuevo ni una omitida. */
   const celdas=junta(partes,tabla.data.length);

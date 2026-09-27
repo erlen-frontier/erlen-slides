@@ -243,7 +243,9 @@ export function leeMarkdown(texto) {
       d.disenoExplicito = v.trim();
     } else if (clave === 'encabezados') {
       const d = actual && actual !== portada ? actual : nueva('content', '', n);
-      d.encabezados = celdas('|' + v + '|');
+      /* La barra de cierre la pone este código: una «\» justo antes no puede
+         estar escapando una barra de verdad, es una «\» del texto. */
+      d.encabezados = celdas('|' + v + (v.endsWith('\\') ? ' |' : '|'));
     } else avisa(n, 'directiva «' + m[1] + '» desconocida (válidas: minutos, diseno, encabezados); se ignoró.');
   };
 
@@ -463,7 +465,12 @@ export function leeMarkdown(texto) {
 const MIME_EXT = {'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp', 'image/svg+xml': 'svg'};
 const yaml = v => JSON.stringify(String(v));
 const unaLinea = s => String(s == null ? '' : s).replace(/\s*\n\s*/g, ' ').trim();
-const celda = s => unaLinea(s).replace(/\|/g, '\\|');
+/* «|» se escapa como «\|», que es lo que lee celdas(). Una «\» al final de la
+   celda no debe tocar la barra que la cierra: se le pone un espacio detrás, que
+   celdas() quita al recortar (el encabezado de zona, cuyo valor llega recortado,
+   lo resuelve además al leerlo). Las demás «\» (el LaTeX de una celda) se
+   quedan tal cual, como las escribe una persona. */
+const celda = s => unaLinea(s).replace(/\\$|\|/g, m => m === '|' ? '\\|' : '\\ ');
 const comentario = s => String(s).replace(/--+>?/g, '—');
 /* Marca de las exportaciones: solo un archivo que la lleve se sobrescribe. */
 export const MARCA = '<!-- Exportado por Erlen Slides. Se puede editar y volver a importar con importar_markdown. -->';

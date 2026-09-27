@@ -99,8 +99,9 @@ test('The ready-made models are complete and their formulas are right',async()=>
   assert.ok(m.finitos.every(n=>n>150),m.id+': la curva se evalúa en todo el intervalo: '+m.finitos);
  }
  /* Números que se pueden comprobar a mano. */
- const ev=(id,i,x,cambia)=>+run(`(()=>{const m=FUNC_MODELS.find(q=>q.id===${JSON.stringify(id)});const v={x};
-  m.params.forEach(p=>v[p.name]=p.value);Object.assign(v,${JSON.stringify(cambia||{})});return exprCompile(m.curves[${i}].expr).fn(v)})()`.replace('{x}','{x:'+x+'}'));
+ /* Los datos viajan como objeto en window, no pegados en el código que se evalúa. */
+ const ev=(id,i,x,cambia)=>{dom.window.__arg={id,i,x,cambia:cambia||{}};return +run(`(()=>{const a=__arg;const m=FUNC_MODELS.find(q=>q.id===a.id);const v={x:a.x};
+  m.params.forEach(p=>v[p.name]=p.value);Object.assign(v,a.cambia);return exprCompile(m.curves[a.i].expr).fn(v)})()`);};
  const cerca=(a,b,tol,msg)=>assert.ok(Math.abs(a-b)<=tol,msg+': '+a+' frente a '+b);
  cerca(ev('bragg',0,11.6),0.15406/(2*Math.sin(5.8*Math.PI/180)),1e-9,'Bragg: d = λ/(2 sen θ) con θ = 2θ/2');
  cerca(ev('bragg',0,11.6),0.7622,1e-3,'un pico en 11.6° con Cu Kα son 7.6 Å');
@@ -145,7 +146,8 @@ test('Dynamic graphs saved before these changes still work',async()=>{const{dom,
  /* Un bloque v1 tal cual: sin unit, log ni tex en los parámetros. */
  const viejo={id:'f1',type:'func',curves:[{expr:'A*exp(-Ea*1000/(R*x))',name:'k(T)'}],params:[{name:'A',value:1e10,min:1e8,max:1e12,step:1e8},{name:'Ea',value:60,min:10,max:150,step:1}],
   xmin:280,xmax:500,xlabel:'Temperatura $T$ (K)',ylabel:'$k$ (s$^{-1}$)',title:'',w:78,ar:0.52,grid:true,legend:true,sliders:true,anim:'draw'};
- const r=J(run,`(()=>{wsNueva();addSlide('content');const b=${JSON.stringify(viejo)};zona(S.deck.slides[S.cur],0).push(b);commit();
+ dom.window.__arg=viejo;
+ const r=J(run,`(()=>{wsNueva();addSlide('content');const b=JSON.parse(JSON.stringify(__arg));zona(S.deck.slides[S.cur],0).push(b);commit();
   const r=[...document.querySelectorAll('#stageInner .sliders input[type=range]')];
   return {max:r.map(x=>x.max),uni:document.querySelectorAll('#stageInner .sl-unit').length,tex:/addplot/.test(toBeamer(S.deck)),puntos:chartSeries(b)[0].pts.length}})()`);
  assert.deepEqual(r.max,['1000000000000','150'],'sin «log», el deslizador sigue siendo lineal');

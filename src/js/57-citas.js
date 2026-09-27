@@ -300,10 +300,14 @@ async function refDesdeDOI(doi) {
    caracteres Unicode (en química importan; los mapas son los de 12-chart.js);
    el resto de etiquetas se quita. */
 function sinMarcado(s) {
-  return String(s || '')
+  let t = String(s || '')
     .replace(/<sub>\s*([0-9+-]+)\s*<\/sub>/gi, (m, n) => n.replace(/./g, c => SUB_UNI[c]))
-    .replace(/<sup>\s*([0-9+-]+)\s*<\/sup>/gi, (m, n) => n.replace(/./g, c => SUP_UNI[c]))
-    .replace(/<[^>]*>/g, '')
+    .replace(/<sup>\s*([0-9+-]+)\s*<\/sup>/gi, (m, n) => n.replace(/./g, c => SUP_UNI[c]));
+  /* Una pasada no basta: «<scr<b>ipt>» deja «<script>» al quitar la de dentro.
+     Se repite hasta que no quede ninguna (el texto se escapa al pintarse, pero
+     esta función promete texto llano y lo cumple sola). */
+  for (let antes = null; antes !== t;) { antes = t; t = t.replace(/<[^<>]*>/g, ''); }
+  return t
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ').trim();
 }
