@@ -12,6 +12,7 @@
     "build": "node herramientas/build.mjs",
     "test": "node --test tests/*.test.mjs",
     "start": "node herramientas/serve.mjs",
+    "mcp": "node mcp/servidor.mjs",
     "examples": "node herramientas/examples.mjs",
     "accesibilidad": "node herramientas/accesibilidad.mjs"
   },

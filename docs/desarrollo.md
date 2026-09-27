@@ -19,6 +19,7 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 - `web/quimica-worker.js`: trabajo RDKit fuera del hilo de la interfaz.
 - `herramientas/build.mjs`: HTML, recursos locales y manifiestos; no lee credenciales ni configuración de nube.
 - `herramientas/examples.mjs`: regenera los JSON y TEX documentados después de construir.
+- `mcp/`: servidor MCP para asistentes de IA; carga el build en JSDOM y usa sus funciones. Ver [mcp.md](mcp.md).
 - `tests/`: interacción científica, recuperación y pruebas de la aplicación construida.
 
 Los nombres históricos internos no implican que la suite completa esté incluida. Esta distribución contiene Presentaciones. Evita introducir dependencias a sus otros editores.
