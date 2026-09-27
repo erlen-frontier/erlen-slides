@@ -16,6 +16,14 @@ function texEscapeNota(s) {
   });
   return texEscape(con).replace(/\u0001(\d+)\u0001/g, (_, i) => macros[+i]);
 }
+/* Texto de un \item. Si empieza con «[» LaTeX lo toma como la marca de la
+   viñeta («[100] también» perdía el [100] y el punto), y si empieza con «<»
+   Beamer lo toma como capas («<001> es la dirección» no compilaba). Un {}
+   delante lo deja como texto. */
+function texItem(t) {
+  const s = texInline(t);
+  return /^\s*[[<]/.test(s) ? '{}' + s : s;
+}
 /* Las matemáticas se copian literalmente al .tex: es lo que las hace útiles y
    también la vía por la que un proyecto ajeno podría colar órdenes de archivo
    o de shell en tu compilación. Estas primitivas no aparecen en ninguna
@@ -472,7 +480,7 @@ function texBlocks(arr, ind) {
           const want = clamp(it.lvl || 0, 0, 2);
           while (lvl < want) { lvl++; lines.push(p + '  '.repeat(lvl) + '\\begin{itemize}'); }
           while (lvl > want) { lines.push(p + '  '.repeat(lvl) + '\\end{itemize}'); lvl--; }
-          lines.push(p + '  '.repeat(lvl) + '  \\item' + (b.step && !(typeof TEX_PLANO !== 'undefined' && TEX_PLANO) ? '<+->' : '') + ' ' + texInline(it.t));
+          lines.push(p + '  '.repeat(lvl) + '  \\item' + (b.step && !(typeof TEX_PLANO !== 'undefined' && TEX_PLANO) ? '<+->' : '') + ' ' + texItem(it.t));
         }
         while (lvl > 0) { lines.push(p + '  '.repeat(lvl) + '\\end{itemize}'); lvl--; }
         lines.push(p + '\\end{itemize}');
@@ -697,7 +705,7 @@ function notaTex(sl) {
   partes.forEach(pt => {
     if (pt.tipo === 'lista') {
       L.push('  \\begin{itemize}');
-      pt.items.forEach(t => L.push('    \\item ' + texInline(t)));
+      pt.items.forEach(t => L.push('    \\item ' + texItem(t)));
       L.push('  \\end{itemize}');
     } else L.push('  ' + texInline(pt.texto) + '\\par');
   });

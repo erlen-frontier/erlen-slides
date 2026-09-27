@@ -5,7 +5,8 @@
 
      npm run build && npx playwright-core install chromium && npm run accesibilidad
 
-   Opciones: NAVEGADOR=firefox. Sirve public/ bajo /slides/, como el portal. */
+   Opciones: NAVEGADOR=firefox, ERLEN_CHROMIUM=/ruta/al/chrome. Sirve public/
+   bajo /slides/, como el portal. */
 import http from 'node:http';import {readFile,stat} from 'node:fs/promises';import {resolve,extname,join,sep} from 'node:path';import {fileURLToPath} from 'node:url';
 import pw from 'playwright-core';import {AxeBuilder} from '@axe-core/playwright';
 const root=fileURLToPath(new URL('../public/',import.meta.url));
@@ -20,7 +21,18 @@ const servidor=http.createServer(async(q,r)=>{try{
 }catch{r.writeHead(404).end();}});
 await new Promise(ok=>servidor.listen(0,'127.0.0.1',ok));
 const base=`http://127.0.0.1:${servidor.address().port}/slides/`;
-const navegador=await pw[process.env.NAVEGADOR||'chromium'].launch();
+/* Chromium se busca como en el servidor MCP: el de playwright-core, Chrome o
+   Edge instalados, el de otra versión de Playwright o el del sistema. Así
+   basta cualquier Chromium y no hace falta la compilación exacta que pide
+   esta versión de playwright-core. ERLEN_CHROMIUM indica uno a mano. */
+async function lanza(){
+ if(process.env.NAVEGADOR&&process.env.NAVEGADOR!=='chromium')return pw[process.env.NAVEGADOR].launch();
+ const {candidatos}=await import('../mcp/navegador.mjs');
+ let primero=null;
+ for(const o of candidatos()){try{return await pw.chromium.launch(o);}catch(e){primero||=e;}}
+ throw new Error('No se encontró Chromium ni Chrome. Instálalo con «npx playwright-core install chromium» o indica uno con ERLEN_CHROMIUM. Detalle: '+String(primero&&primero.message).split('\n')[0]);
+}
+const navegador=await lanza();
 const fallos=[];
 async function audita(pagina,vista){
  const {violations}=await new AxeBuilder({page:pagina}).analyze();
