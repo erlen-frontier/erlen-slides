@@ -150,7 +150,7 @@ var ERLEN_MCP = (function () {
     }
     if (info) ['archivo_datos', 'columnas', 'max_puntos', 'tecnica'].forEach(k => delete p[k]);
     Object.keys(p).forEach(k0 => {
-      if (k0 === 'tipo' || k0 === 'type' || k0 === 'id' || k0 === '_quimica') return;
+      if (k0 === 'tipo' || k0 === 'type' || k0 === 'id' || k0 === '_quimica' || k0 === '_importado') return;
       if (k0 === 'estilo' && b.type === 'estruct') return;
       const k = nombrePropiedad(b, k0);
       let v = p[k0];
@@ -161,7 +161,10 @@ var ERLEN_MCP = (function () {
       if (k === 'src' && !['image', 'video'].includes(b.type)) falla('Solo los bloques image y video llevan una imagen o un vídeo (src/archivo); este es «' + b.type + '».');
       if (v === null) delete b[k]; else b[k] = v;
     });
+    /* _importado también puede venir del transformaBloque de una extensión:
+       es un informe para la respuesta (recogeImportados), no una propiedad. */
     if (info) b._importado = info;
+    else if (p._importado) b._importado = p._importado;
     if (b.type === 'estruct') acabaEstructura(b, p);
     return b;
   }
