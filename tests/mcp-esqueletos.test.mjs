@@ -91,7 +91,7 @@ test('MCP: extensión esqueletos', {timeout: 600000}, async () => {
     assert.equal(deck.meta.title, 'Hidróxidos dobles laminares Zn–Al para adsorber colorantes');
     assert.equal(deck.meta.nivel, 'congreso');
     assert.equal(deck.meta.institute, '[Institución]');
-    let rev = (await c.llama('revisar_presentacion', {archivo: 'ldh'})).datos.adicional;
+    let rev = (await c.llama('revisar_presentacion', {archivo: 'ldh'})).datos.adicional.filter(h => h.regla === 'esqueleto-pendiente');
     assert.match(rev[0].problema, /institución/);
     assert.doesNotMatch(rev[0].problema, /título de la charla|autores/);
 
@@ -104,7 +104,7 @@ test('MCP: extensión esqueletos', {timeout: 600000}, async () => {
       notas: 'Contar que el pH se fijó con NaOH y que el complejo [Co(NH3)6]Cl3 se usó como referencia.',
       zonas: [[{tipo: 'text', text: 'Zn(NO3)2 y Al(NO3)3 con NaOH'}], [{tipo: 'text', text: 'Reflexión basal (003); $[A]_0$ inicial'}], [{tipo: 'text', text: 'Isotermas con el catalizador [Rh(cod)Cl]2 y [Fe(CN)6]'}]]});
     assert.equal(e.error, false, e.texto);
-    rev = (await c.llama('revisar_presentacion', {archivo: 'ldh'})).datos.adicional;
+    rev = (await c.llama('revisar_presentacion', {archivo: 'ldh'})).datos.adicional.filter(h => h.regla === 'esqueleto-pendiente');
     assert.ok(!rev.some(h => h.diapositiva === i), JSON.stringify(rev.find(h => h.diapositiva === i)));
     assert.ok(rev.some(h => h.diapositiva === i + 1), 'las demás siguen pendientes');
 
@@ -112,7 +112,7 @@ test('MCP: extensión esqueletos', {timeout: 600000}, async () => {
     const j = deck.slides.findIndex(s => s.layout === 'piefigura') + 1;
     await c.llama('editar_diapositiva', {archivo: 'ldh', diapositiva: j, titulo: 'La fase HDL es la única cristalina', notas: 'Señalar la reflexión basal.',
       zonas: [[{tipo: 'image'}], [{tipo: 'text', text: 'Pie escrito por el usuario'}]]});
-    rev = (await c.llama('revisar_presentacion', {archivo: 'ldh'})).datos.adicional;
+    rev = (await c.llama('revisar_presentacion', {archivo: 'ldh'})).datos.adicional.filter(h => h.regla === 'esqueleto-pendiente');
     assert.match(rev.find(h => h.diapositiva === j).problema, /figura sin imagen/);
 
     /* No sobrescribe salvo que se pida, y entonces deja la versión en el historial. */

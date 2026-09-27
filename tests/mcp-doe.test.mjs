@@ -39,17 +39,18 @@ test('MCP doe: un informe suelto pasa a presentación con su procedencia', {time
     const deck = proyecto(dir, 'charla');
     assert.equal(r.datos.diapositivas, deck.slides.length);
     assert.equal(deck.slides[0].layout, 'title');
-    assert.deepEqual(deck.slides.slice(1).map(s => s.title), ['Diseño', 'Matriz y respuesta', 'Medias por nivel', 'Procedencia']);
-    assert.deepEqual(r.datos.lista.map(d => d.titulo), ['Taguchi L9 de la síntesis', 'Diseño', 'Matriz y respuesta', 'Medias por nivel', 'Procedencia']);
+    assert.deepEqual(deck.slides.slice(1).map(s => s.title), ['Diseño', 'Matriz y respuesta (1/2)', 'Matriz y respuesta (2/2)', 'Medias por nivel', 'Procedencia']);
+    assert.deepEqual(r.datos.lista.map(d => d.titulo), ['Taguchi L9 de la síntesis', 'Diseño', 'Matriz y respuesta (1/2)', 'Matriz y respuesta (2/2)', 'Medias por nivel', 'Procedencia']);
     assert.equal(deck.meta.authors, 'A. Autora');
     assert.equal(deck.meta.subtitle, 'Reunión de grupo · DATOS SIMULADOS', 'un subtítulo propio no borra el aviso de datos simulados');
-    /* La matriz no cabe entera en una diapositiva: el recorte lo decide
-       informeADeck y se dice, nunca se calla. */
-    assert.ok(r.datos.avisos_conversion.some(t => /^Tabla «Corridas»: se muestran \d+ de 9 filas/.test(t)), r.datos.avisos_conversion.join(' | '));
+    /* La matriz no cabe entera en una diapositiva: informeADeck la reparte
+       (antes la recortaba) y lo dice; no se omite ninguna fila. */
+    assert.ok(r.datos.avisos_conversion.some(t => /^Tabla «Corridas»: repartida en \d+ diapositivas/.test(t)), r.datos.avisos_conversion.join(' | '));
+    assert.ok(!r.datos.avisos_conversion.some(t => /«Corridas».*omitidas/.test(t)), 'ninguna fila omitida');
     /* Las cifras llegan como las lee informeADeck (seis cifras significativas); ninguna otra. */
     const cs = celdas(deck);
     for (const v of ['71.2346', '74.8', '83.4']) assert.ok(cs.includes(v), v);
-    assert.ok(bloques(deck.slides[3]).some(b => b.type === 'chart' && /37\.1/.test(b.data)));
+    assert.ok(bloques(deck.slides.find(s => s.title === 'Medias por nivel')).some(b => b.type === 'chart' && /37\.1/.test(b.data)));
     /* La procedencia, al final y en meta.origen. */
     const ultima = deck.slides.at(-1);
     assert.ok(bloques(ultima).some(b => b.type === 'code' && b.text.includes(huella)));
@@ -130,7 +131,8 @@ test('MCP doe: límites de informe-v1 y avisos de recorte, sin escribir en la vi
     assert.equal(v.datos.contenido.figuras[0].puntos, L.puntos);
     assert.equal(v.datos.lista.at(-1).titulo, 'Procedencia');
     const avisos = v.datos.avisos_conversion.join('\n');
-    assert.match(avisos, new RegExp('Tabla «Grande»: se muestran \\d+ de ' + L.filas + ' filas'));
+    /* Con 500 filas ni repartida cabe: se reparte hasta el tope y el resto se dice omitido. */
+    assert.match(avisos, new RegExp('Tabla «Grande»: .*se muestran \\d+ de ' + L.filas + ' filas'));
     assert.match(avisos, new RegExp('Figura «Espectro»: reducida para la diapositiva a \\d+ de ' + L.puntos + ' puntos'));
 
     const i = await c.llama('importar_informe_doe', {archivo_informe: 'grande.json', archivo: 'grande-charla'});
