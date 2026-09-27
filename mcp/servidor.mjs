@@ -233,6 +233,9 @@ for (const ruta of archivosExtension('.mjs')) {
 if (Object.keys(FORMATOS).length) {
   const exp = HERRAMIENTAS.find(x => x.name === 'exportar_presentacion');
   exp.inputSchema.properties.formato.enum.push(...Object.keys(FORMATOS));
+  /* Un formato declara sus opciones en fn.propiedades; si dos usan el mismo
+     nombre, vale la primera descripción. */
+  for (const fn of Object.values(FORMATOS)) for (const [k, v] of Object.entries(fn.propiedades || {})) exp.inputSchema.properties[k] ||= v;
   exp.description += ' Además: ' + Object.keys(FORMATOS).join(', ') + '.';
 }
 

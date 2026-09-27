@@ -65,7 +65,7 @@ En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mj
 | `historial_presentacion`, `deshacer`, `rehacer` | Cada cambio guarda antes la versión anterior (las 50 últimas). |
 | `revisar_presentacion` | Calidad científica de las figuras, accesibilidad, estructura, tiempo frente a la duración disponible y avisos por formato. |
 | `vista_previa` | En Chromium: un mosaico numerado de toda la charla en una sola imagen, o diapositivas a tamaño real; siempre dice qué bloque se desborda y cuántos píxeles. |
-| `exportar_presentacion` | Beamer (carpeta con el `.tex` y las figuras, lista para Overleaf), HTML imprimible, PDF y PowerPoint. |
+| `exportar_presentacion` | Beamer (carpeta con el `.tex` y las figuras, lista para Overleaf), HTML imprimible, PDF y PowerPoint. Con la extensión [exportaciones](mcp-extensiones/exportaciones.md): PNG por diapositiva, folleto en PDF, paquete reproducible (.zip), figuras en SVG con sus datos en CSV e informe de exportación. |
 
 También ofrece tres *prompts* que el cliente puede mostrar como atajos: **presentación a partir de resultados**, **revisión antes de presentar** y **figura desde un archivo de datos**.
 
@@ -126,7 +126,7 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 
 Las herramientas nuevas se añaden como extensiones, cada una en sus propios archivos, sin tocar el catálogo común:
 
-- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion`; `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES.
+- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion` (si la función trae `propiedades`, sus parámetros entran en el esquema); `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES.
 - `mcp/extensiones/<id>.pagina.js` (dentro de la app): `ERLEN_MCP.registra(nombre, fn)` añade una operación y `ERLEN_MCP.registraRevision(nombre, fn)` una regla de `revisar_presentacion` (sus hallazgos salen en `adicional`). `ERLEN_MCP.util` da `valida`, `bloqueDesde`, `diapositivaNueva`, `lote`, `indiceDiapositiva`, `buscaBloque`, `cambiaDiseno`, `esquema`, `falla` y `avisa`.
 - Desde Node, `mcp/motor.mjs` exporta `op`, `modifica` (lee, aplica, valida, guarda en el historial y escribe), `lee`, `escribe`, `preparaEntrada`, `archivoEnCarpeta` y `compacta`; `mcp/navegador.mjs`, `sesion` e `imprimible` para lo que necesite Chromium.
 - Cada extensión documenta sus herramientas en `docs/mcp-extensiones/<id>.md` y se prueba en `tests/mcp-<id>.test.mjs` con el cliente de `tests/_mcp-cliente.mjs`.
