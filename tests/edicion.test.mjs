@@ -132,3 +132,36 @@ test('Crossref markup is stripped until no tag is left',async()=>{const{dom,run,
  assert.equal(r[2],'pH < 7 & T > 300 K','las entidades pasan a sus caracteres');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
+
+/* «(00l)» es un índice de Miller, no cero litros: se leía como número y
+   unidad, en pantalla («00 l») y en Beamer (\SI{00}{\liter}). */
+test('Miller indices are left alone by the automatic notation',async()=>{const{dom,run,errors}=await editor();try{
+ const r=JSON.parse(run(`JSON.stringify(['Reflexión (00l) a 11.5°','planos (hk0), (1-10) y {100}','(003) de la HDL','10 mL y (5 L)'].map(t=>[notacion(t),notacionTex(t)]))`));
+ assert.equal(r[0][0],'Reflexión (00l) a 11.5°');
+ assert.equal(r[0][1],'Reflexión (00l) a \\SI{11.5}{\\degree}');
+ assert.equal(r[1][0],'planos (hk0), (1-10) y {100}','el menos de un índice negativo tampoco se toca');
+ assert.equal(r[2][1],'(003) de la HDL');
+ assert.equal(r[3][0],'10\u2009mL y (5\u2009L)','las unidades de verdad siguen con su espacio fino');
+ assert.equal(r[3][1],'\\SI{10}{\\milli\\liter} y (\\SI{5}{\\liter})');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+/* append() nativo escribe «null» si recibe null: el indicador decía
+   «null1 problema». */
+test('The readiness pill never shows the word null',async()=>{const{dom,run,errors}=await editor();try{
+ const t=run(`(()=>{const out=[];for(const p of [{errores:1,avisos:0,pendientes:0},{errores:2,avisos:1,pendientes:3}]){_prep=p;pintaPreparacion();out.push(document.getElementById('prepInd').textContent);}return JSON.stringify(out)})()`);
+ const [uno,varios]=JSON.parse(t);
+ assert.equal(uno,'1 problema');
+ assert.equal(varios,'2 problemas · 1 aviso · 3 pendientes');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+/* La «v» de mhchem es la flecha de precipitado: el analizador no la cuenta
+   como átomo, pero no debe perderse ni al ajustar ni al componer. */
+test('The precipitate arrow survives balancing and rendering',async()=>{const{dom,run,errors}=await editor();try{
+ const r=JSON.parse(run(`JSON.stringify([quimAjusta('BaCl2 + Na2SO4 -> BaSO4 v + NaCl').texto,quimEcuacion('Zn^2+ + 2 OH- -> Zn(OH)2 v').ajustada,kStr('\\\\ce{Zn(OH)2 v}',true).includes('↓')])`));
+ assert.equal(r[0],'BaCl2 + Na2SO4 -> BaSO4 v + 2 NaCl');
+ assert.equal(r[1],true,'la v no es un átomo que descuadre la reacción');
+ assert.equal(r[2],true,'KaTeX compone la flecha hacia abajo');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});

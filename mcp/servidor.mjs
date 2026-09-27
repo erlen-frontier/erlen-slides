@@ -140,7 +140,7 @@ const HERRAMIENTAS = [
     inputSchema: {type: 'object', required: ['archivo'], properties: {archivo, minutos_objetivo: {type: 'number', exclusiveMinimum: 0, description: 'Duración que tiene la charla.'}}},
     annotations: soloLectura, run: M.revisar},
   {name: 'vista_previa', title: 'Vista previa',
-    description: 'Renderiza en Chromium. Sin «diapositiva», un mosaico numerado de toda la charla (hasta 36) en una imagen; con «diapositiva» (una o hasta ocho), cada una a tamaño real. Siempre informa qué bloques se desbordan. Requiere Chromium o Chrome.',
+    description: 'Renderiza en Chromium. Sin «diapositiva», un mosaico numerado de toda la charla (hasta 36) en una imagen; con «diapositiva» (una o hasta ocho), cada una a tamaño real. Siempre informa qué bloques se desbordan y cuánto (px_abajo: invade el pie o el margen inferior; px_derecha: rebasa el borde; px_arriba: sube bajo el título). Requiere Chromium o Chrome.',
     inputSchema: {type: 'object', required: ['archivo'], properties: {archivo, diapositiva: {anyOf: [diapositiva, {type: 'array', items: diapositiva, maxItems: 8}]}, desde: {type: 'integer', minimum: 1, description: 'Mosaico: primera diapositiva.'}}},
     annotations: soloLectura,
     run: async a => {

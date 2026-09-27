@@ -31,8 +31,12 @@ function pintaPreparacion() {
   if (pendientes) p.push([pendientes, pendientes === 1 ? ' pendiente' : ' pendientes']);
   /* Igual con las cuentas: en estrecho quedan las cifras, que es lo que se mira. */
   const texto = h('span', null);
-  p.forEach(([n, nombre], i) => texto.append(
-    i ? h('span', null, ' · ') : null, String(n), h('span', { class: 'only-wide-i' }, nombre)));
+  /* append() nativo escribe «null» si se le pasa null: el separador solo se
+     añade cuando toca. */
+  p.forEach(([n, nombre], i) => {
+    if (i) texto.append(h('span', null, ' · '));
+    texto.append(String(n), h('span', { class: 'only-wide-i' }, nombre));
+  });
   el.append(h('i', { class: 'prep-pt' }), texto);
   el.title = 'Qué falta para que esté lista. Clic para verlo diapositiva por diapositiva.';
 }

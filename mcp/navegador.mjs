@@ -97,21 +97,42 @@ function mideDesbordes(pagina) {
   if (!sl) return [];
   const R = sl.getBoundingClientRect();
   const pie = sl.querySelector('.footline');
-  const limite = pie && pie.getBoundingClientRect().height ? pie.getBoundingClientRect().top : R.bottom;
+  let limite = pie && pie.getBoundingClientRect().height ? pie.getBoundingClientRect().top : R.bottom;
+  /* El cuerpo marca el área útil: arriba empieza tras su margen interior,
+     bajo el título, y abajo ese margen es aire que el contenido no debe
+     comerse. El de abajo cuenta a medias: algunos diseños lo aprovechan. */
+  const cuerpo = sl.querySelector('.fbody');
+  let techo = -Infinity;
+  if (cuerpo) {
+    const c = cuerpo.getBoundingClientRect(), st = getComputedStyle(cuerpo);
+    techo = c.top + parseFloat(st.paddingTop || 0);
+    limite = Math.min(limite, c.bottom - parseFloat(st.paddingBottom || 0) / 2);
+  }
   const out = [];
   sl.querySelectorAll('[data-bid]').forEach(b => {
-    let abajo = -Infinity, derecha = -Infinity;
+    let arriba = Infinity, abajo = -Infinity, derecha = -Infinity;
     for (const x of [b, ...b.querySelectorAll('*')]) {
       /* El MathML de KaTeX está para los lectores de pantalla, recortado a un
-         píxel: tiene medidas, pero no se ve. */
-      if (x.closest('.katex-mathml')) continue;
+         píxel: tiene medidas, pero no se ve. Sus .pstrut son puntales
+         invisibles que suben por encima de la fórmula para alinear pisos, y
+         sus flechas estirables son un trazo de miles de píxeles que el propio
+         SVG recorta: se mide el SVG, no el trazo. */
+      if (x.closest('.katex-mathml') || x.classList.contains('pstrut') || (x.ownerSVGElement && x.closest('.katex'))) continue;
       const r = x.getBoundingClientRect();
       if (!r.width && !r.height) continue;
       /* Lo que un contenedor recorta cuenta igual: en la sala se ve cortado. */
+      if (r.width && r.height) arriba = Math.min(arriba, r.top);
       abajo = Math.max(abajo, r.bottom); derecha = Math.max(derecha, r.right);
     }
-    const dy = Math.round(abajo - limite), dx = Math.round(derecha - R.right);
-    if (dy > 2 || dx > 2) out.push({bloque: b.dataset.bid, px_abajo: Math.max(0, dy), px_derecha: Math.max(0, dx)});
+    /* Un bloque fuera del cuerpo (la portada, un diseño de sangre) no tiene
+       techo que respetar. */
+    const dentro = cuerpo && cuerpo.contains(b);
+    const dy = Math.round(abajo - limite), dx = Math.round(derecha - R.right), du = dentro ? Math.round(techo - arriba) : 0;
+    if (dy > 2 || dx > 2 || du > 2) {
+      const d = {bloque: b.dataset.bid, px_abajo: Math.max(0, dy), px_derecha: Math.max(0, dx)};
+      if (du > 2) d.px_arriba = du;
+      out.push(d);
+    }
   });
   return out;
 }
@@ -184,3 +205,5 @@ export async function exportaPptx(a) {
 /* Para las extensiones: la sesión de Chromium con la app abierta y la página
    imprimible de un proyecto (una .pr-page por diapositiva). */
 export {sesion, imprimible};
+/* Para las pruebas: el medidor, que se evalúa dentro de la página. */
+export {mideDesbordes};
