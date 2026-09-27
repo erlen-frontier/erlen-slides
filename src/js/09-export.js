@@ -194,6 +194,23 @@ function pgfNum(v) {
   if (Math.abs(v) < 1e-20) return '0';
   return String(Number(Number(v).toPrecision(7)));
 }
+/* Un espectro de 1500 puntos hace lento a pdflatex, pero saltar puntos de n
+   en n recortaba los picos: el PDF dibujaba otra altura y un rótulo de pico
+   quedaba flotando. Se guardan el mínimo y el máximo de cada tramo, en su
+   orden, como al leer el archivo del equipo. */
+function pgfExtremos(pts, cubos) {
+  if (pts.length <= 2 * cubos + 2) return pts;
+  const out = [pts[0]], n = pts.length - 2;
+  for (let c = 0; c < cubos; c++) {
+    const ini = 1 + Math.floor(c * n / cubos), fin = 1 + Math.floor((c + 1) * n / cubos);
+    if (fin <= ini) continue;
+    let lo = ini, hi = ini;
+    for (let j = ini; j < fin; j++) { if (pts[j][1] < pts[lo][1]) lo = j; if (pts[j][1] > pts[hi][1]) hi = j; }
+    if (lo === hi) out.push(pts[lo]); else out.push(pts[Math.min(lo, hi)], pts[Math.max(lo, hi)]);
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
 /* conCortes (las fórmulas): los puntos ya vienen muestreados donde hacen
    falta, así que no se diezman —saltarse uno de cada n perdía justo los del
    pico o del escalón—, y un NaN se escribe como «nan», que con «unbounded
@@ -201,14 +218,13 @@ function pgfNum(v) {
 function pgfCoords(pts, p, conError, conCortes) {
   const out = [];
   let line = p + '    ';
-  const step = conCortes ? 1 : Math.max(1, Math.ceil(pts.length / 150));
+  const datos = conCortes ? pts : pgfExtremos(pts.filter(q => isFinite(q[1])), 150);
   let cortado = true;
-  pts.forEach(([x, y, e], i) => {
+  datos.forEach(([x, y, e]) => {
     if (!isFinite(y)) {
       if (conCortes && !cortado && isFinite(x)) { const t = `(${pgfNum(x)},nan) `; if (line.length + t.length > 94) { out.push(line); line = p + '    '; } line += t; cortado = true; }
       return;
     }
-    if (i % step && i !== pts.length - 1) return;
     cortado = false;
     /* La barra de error viaja con el punto, en la sintaxis de pgfplots. */
     const t = `(${pgfNum(x)},${pgfNum(y)})` + (conError ? ` +- (0,${pgfNum(isFinite(e) && e > 0 ? e : 0)})` : '') + ' ';
@@ -265,6 +281,17 @@ function chartToPgf(b, p) {
   opt.push('tick align=outside', 'tick pos=left', 'axis line style={gray!60}', 'label style={font=\\small}', 'tick label style={font=\\footnotesize}');
   if (series.length > 1 && !offsetMode && b.legend !== false) opt.push('legend style={font=\\footnotesize, draw=none, fill=none, at={(0.5,-0.22)}, anchor=north, legend columns=-1, /tikz/every even column/.append style={column sep=8pt}}');
   if (kind === 'barras') opt.push('ybar', 'bar width=7pt', 'ymin=0');
+  /* Rótulos de picos, como en pantalla: cada uno en el punto medido de su
+     serie. El eje se agranda por el lado donde van y los rótulos no se
+     recortan con el marco (clip mode=individual solo recorta las curvas). */
+  const picos = b.type !== 'func' && kind !== 'barras' && Array.isArray(b.picos)
+    ? b.picos.filter(q => q && isFinite(+q.x) && isFinite(+q.y) && series[Math.floor(+q.serie) || 0]) : [];
+  const picosArriba = picos.some(q => !q.abajo), picosAbajo = picos.some(q => q.abajo);
+  if (picos.length) {
+    opt.push('clip mode=individual');
+    /* Una segunda clave enlarge y limits pisaría la primera: van en una. */
+    opt.push('enlarge y limits=' + (picosArriba && picosAbajo ? '0.18' : '{' + (picosArriba ? 'upper' : 'lower') + ', value=0.18}'));
+  }
   /* Con capas o con un «después», los ejes se fijan: si no, Beamer los
      recalcularía en cada overlay y el marco saltaría. */
   const porCapas = !!b.capas && b.type !== 'func';
@@ -283,8 +310,11 @@ function chartToPgf(b, p) {
       const y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys), pad = (y1 - y0 || 1) * 0.08;
       /* En un eje logarítmico el margen no se suma, se multiplica: sumar un
          octavo del recorrido dejaría el mínimo en cero o por debajo. */
-      const yA = logY ? y0 / 1.3 : (kind === 'barras' ? Math.min(0, y0 - pad) : y0 - pad);
-      const yB = logY ? y1 * 1.3 : y1 + pad;
+      /* Con los ejes fijos, enlarge y limits no actúa: el hueco de los rótulos
+         de picos se suma aquí. */
+      const padA = picosAbajo ? (y1 - y0 || 1) * 0.2 : pad, padB = picosArriba ? (y1 - y0 || 1) * 0.2 : pad;
+      const yA = logY ? y0 / (picosAbajo ? 2 : 1.3) : (kind === 'barras' ? Math.min(0, y0 - pad) : y0 - padA);
+      const yB = logY ? y1 * (picosArriba ? 2 : 1.3) : y1 + padB;
       opt.push('xmin=' + pgfNum(Math.min.apply(null, xs)), 'xmax=' + pgfNum(Math.max.apply(null, xs)),
         'ymin=' + pgfNum(yA), 'ymax=' + pgfNum(yB));
     }
@@ -344,6 +374,16 @@ function chartToPgf(b, p) {
     L.push(pgfCoords(pts, p, !!s.tieneError, esFunc));
     L.push(p + '    };');
     if (series.length > 1 && !offsetMode && b.legend !== false) L.push(p + '    \\addlegendentry{' + texAxisLabel(s.name) + '}');
+    /* Los rótulos de picos de esta serie, dentro de su overlay si va por capas. */
+    /* _picosHueco: el «después» deja el mismo hueco pero no rotula, porque
+       los picos marcan puntos del «antes». */
+    if (!b._picosHueco) picos.filter(q => (Math.floor(+q.serie) || 0) === i).forEach(q => {
+      const y = +q.y + offStep * (series.length - 1 - i);
+      if (!vale([+q.x, y])) return;
+      const s2 = q.abajo ? '-' : '';
+      L.push(p + `    \\draw[${col}, line width=.4pt] (axis cs:${pgfNum(+q.x)},${pgfNum(y)}) ++(0,${s2}2pt) -- ++(0,${s2}5pt)` +
+        (String(q.txt || '').trim() ? ` node[anchor=${q.abajo ? 'north' : 'south'}, font=\\tiny, inner sep=1pt] {${texAxisLabel(q.txt)}}` : '') + ';');
+    });
     if (porCapas && pts.some(q => isFinite(q[1]))) L.push(p + '    }');
     if (kind === 'ajuste') {
       const ok = pts.filter(q => isFinite(q[1]));
@@ -362,7 +402,9 @@ function chartToPgf(b, p) {
       }
     }
     if (offsetMode && pts.length) {
-      const last = pts[pts.length - 1];
+      /* El extremo derecho del dibujo: con el eje invertido, el menor x. */
+      const rev = !!(b.xrev || b.invertirX);
+      const last = pts.reduce((a, q) => (rev ? q[0] < a[0] : q[0] > a[0]) ? q : a);
       L.push(p + `    \\node[anchor=east, font=\\footnotesize] at (axis cs:${pgfNum(last[0])},${pgfNum(last[1])}) {${texAxisLabel(s.name)}};`);
     }
   });
@@ -538,7 +580,7 @@ function texBlocks(arr, ind) {
           lines.push(p + '  \\only<+>{');
           lines.push(chartToPgf(Object.assign({}, b, { capas: false }), p + '    '));
           lines.push(p + '  }\\only<+->{');
-          lines.push(chartToPgf(Object.assign({}, b, { capas: false, data: b.despues.data, despues: null, _ejesDe: b }), p + '    '));
+          lines.push(chartToPgf(Object.assign({}, b, { capas: false, data: b.despues.data, despues: null, _picosHueco: true, _ejesDe: b }), p + '    '));
           lines.push(p + '  }');
         } else lines.push(chartToPgf(b, p + '  '));
         if (b.sello && b.fuente && typeof selloFuenteTex === 'function') lines.push(selloFuenteTex(b, p + '  '));

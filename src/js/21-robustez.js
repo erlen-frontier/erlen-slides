@@ -100,6 +100,16 @@ function saneaBloque(b, avisos, deck) {
       b.destaca = { serie: Math.max(0, Math.floor(+b.destaca.serie)), i: Math.max(0, Math.floor(+b.destaca.i)), txt: String(b.destaca.txt || '').slice(0, 80) };
     else delete b.destaca;
     if (Array.isArray(b.capasTxt)) b.capasTxt = b.capasTxt.map(x => String(x || '').slice(0, 300)); else delete b.capasTxt;
+    /* Rótulos de picos: un punto de una serie (x, y en las unidades de los
+       datos) y un texto corto. Sin coordenadas finitas no hay dónde ponerlo. */
+    if (Array.isArray(b.picos)) {
+      b.picos = b.picos.filter(p => p && typeof p === 'object' && isFinite(+p.x) && isFinite(+p.y)).slice(0, 60).map(p => {
+        const o = { x: +p.x, y: +p.y, serie: Math.max(0, Math.floor(+p.serie || 0)), txt: String(p.txt == null ? '' : p.txt).slice(0, 40) };
+        if (p.abajo) o.abajo = true;
+        return o;
+      });
+      if (!b.picos.length) delete b.picos;
+    } else delete b.picos;
     if (b.fuente && typeof b.fuente === 'object') b.fuente = { nombre: String(b.fuente.nombre || 'pegado').slice(0, 120), cuando: String(b.fuente.cuando || '').slice(0, 20), n: Math.max(0, Math.floor(+b.fuente.n || 0)), huella: String(b.fuente.huella || '').slice(0, 16), instrumento: b.fuente.instrumento ? String(b.fuente.instrumento).slice(0, 40) : undefined };
     else delete b.fuente;
     b.sello = !!(b.sello && b.fuente);
