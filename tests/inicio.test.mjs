@@ -6,6 +6,9 @@ const raiz=d=>d.querySelector('#inicioRoot main.erlen-inicio');
 const nav=(d,texto)=>[...raiz(d).querySelectorAll('.erlen-inicio-enlace')].find(a=>a.textContent===texto);
 const boton=(d,texto)=>[...raiz(d).querySelectorAll('button')].find(b=>b.textContent.trim()===texto);
 const espera=()=>new Promise(r=>setTimeout(r,0));
+/* Cambiar el hash a mano: hashchange es asíncrono (en un navegador y en jsdom), y desde jsdom 30 llega después
+   de un setTimeout(0). Se espera al evento mismo, y un turno más para que la vista termine de pintarse. */
+const aHash=(w,h)=>new Promise(r=>{w.addEventListener('hashchange',()=>setTimeout(r,0),{once:true});w.location.hash=h;});
 
 test('The home screen is the synced suite component and its stylesheet is inlined in the build; the old portada is gone',()=>{
  // El build carga el script directamente del paquete sincronizado: sin copias que se desfasen.
@@ -72,15 +75,15 @@ test('Hash routes keep their historical names and follow the component navigatio
  const pares=[['Mis presentaciones','biblioteca'],['Ejemplos editables','plantillas'],['Recursos y respaldos','herramientas'],['Acerca de','servicio'],['Inicio','inicio']];
  for(const [texto,ruta] of pares){nav(d,texto).click();assert.equal(w.location.hash,'#suite/'+ruta,texto);assert.equal(nav(d,texto).getAttribute('aria-current'),'page');assert.equal(d.activeElement,raiz(d).querySelector('h1'));}
  // Hacia atrás: cambiar el hash abre la vista, #presentaciones vuelve al editor.
- w.location.hash='#suite/plantillas';await espera();
+ await aHash(w,'#suite/plantillas');
  assert.equal(run('INICIO.vista'),'ejemplos');
  const titulos=[...raiz(d).querySelectorAll('.erlen-inicio-ejemplo h2')].map(h=>h.textContent);
  assert.equal(titulos.length,12,'Los doce ejemplos editables');
- w.location.hash='#presentaciones';await espera();
+ await aHash(w,'#presentaciones');
  assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('#app').inert);
- w.location.hash='#suite/servicio';await espera();
+ await aHash(w,'#suite/servicio');
  assert.equal(run('INICIO.vista'),'acerca');assert.match(raiz(d).textContent,/versión 0\.3\.0/);assert.match(raiz(d).textContent,/AGPLv3/);
- w.location.hash='#suite/nada';await espera();assert.equal(run('INICIO.vista'),'inicio','Una vista desconocida cae en Inicio');
+ await aHash(w,'#suite/nada');assert.equal(run('INICIO.vista'),'inicio','Una vista desconocida cae en Inicio');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
