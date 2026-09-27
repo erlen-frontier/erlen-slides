@@ -274,7 +274,10 @@ function wsInit() {
   const params=new URLSearchParams(location.search);
   const solicitado=params.get('plantilla');
   const plantilla=solicitado && PLANTILLAS.find(p=>p.id===solicitado);
-  if(params.has('plantilla')){const url=new URL(location.href);url.searchParams.delete('plantilla');history.replaceState(null,'',url.pathname+url.search+url.hash);}
+  /* ?abrir=<token>: lo pone el servidor MCP al abrir un proyecto en el editor. También se retira
+     antes de nada, para que recargar la página no vuelva a pedir un enlace que ya se gastó. */
+  const abrir=params.get('abrir');
+  if(params.has('plantilla')||params.has('abrir')){const url=new URL(location.href);url.searchParams.delete('plantilla');url.searchParams.delete('abrir');history.replaceState(null,'',url.pathname+url.search+url.hash);}
   if(plantilla){
     if(wsConservar()){loadDeck(plantilla.build(),null);toast('Ejemplo didáctico: sustituye los datos por los de tu trabajo.');}
     wsCerrar();
@@ -282,4 +285,66 @@ function wsInit() {
     suiteDesdeUrl();
     if(solicitado&&wsAbierto())INICIO.avisar('No existe el ejemplo «'+solicitado.slice(0,60)+'». Elige un punto de partida en la colección de inicio.',{error:true});
   }
+  if(abrir!==null)wsAbrirDelAsistente(abrir);
+}
+
+/* ---------- un proyecto que manda el asistente ----------
+   La herramienta abrir_en_editor del servidor MCP (mcp/extensiones/editor.mjs) sirve esta
+   misma app en 127.0.0.1 y deja preparado un proyecto detrás de una clave de un solo uso.
+   Se pide al mismo origen, con ruta relativa; se enseña qué llega y solo se abre si la
+   persona lo confirma. Fuera de ese servidor (la suite en /slides/, npm start) la clave no
+   existe y se dice, sin tocar nada. */
+const MCP_ABRIR = 'mcp/abrir/';
+function wsRechazoAsistente(texto) {
+  openModal({ title: 'No se abrió la presentación del asistente', size: 'modal-sm', body: h('div', null,
+    h('p', null, texto),
+    h('p', { class: 'hint' }, 'No se creó ni se cambió nada. El archivo sigue en la carpeta del asistente; también puedes abrirlo con «Importar proyecto».')),
+    foot: [h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Entendido')] });
+}
+async function wsAbrirDelAsistente(clave) {
+  /* La clave solo se usa como un segmento de la ruta: nada de barras, puntos ni escapes. */
+  if (!/^[A-Za-z0-9_-]{16,128}$/.test(clave)) { wsRechazoAsistente('El enlace está incompleto o mal copiado. Pide al asistente que vuelva a abrir la presentación en el editor.'); return null; }
+  let res, datos;
+  try { res = await fetch(MCP_ABRIR + clave, { cache: 'no-store', credentials: 'same-origin' }); }
+  catch (e) { wsRechazoAsistente('No se pudo contactar con el asistente: el servidor que abrió esta página ya no está en marcha. Pide que vuelva a abrir la presentación en el editor.'); return null; }
+  if (!res.ok) {
+    wsRechazoAsistente(res.status === 404 || res.status === 410
+      ? 'El enlace caducó o ya se usó: sirve una sola vez y durante unos minutos. Pide al asistente que vuelva a abrir la presentación en el editor.'
+      : 'El servidor del asistente respondió con un error (' + res.status + ').');
+    return null;
+  }
+  try { datos = await res.json(); } catch (e) { wsRechazoAsistente('Lo que llegó no es un JSON válido.'); return null; }
+  if (!datos || datos.formato !== 'erlen-mcp-abrir-v1' || !datos.deck || typeof datos.deck !== 'object') { wsRechazoAsistente('Lo que llegó no es un proyecto de Erlen Slides.'); return null; }
+  const r = saneaDeck(datos.deck);
+  if (r.error) { wsRechazoAsistente('El proyecto no se pudo leer: ' + r.error); return null; }
+  wsVistaAsistente(r.deck, String(datos.archivo || 'proyecto.json').slice(0, 200), r.avisos);
+  return r.deck;
+}
+function wsVistaAsistente(deck, archivo, avisos) {
+  const titulo = String(deck.meta.title || '').trim(), base = titulo || archivo.replace(/\.json$/i, ''), nombre = infNombreLibre(base);
+  const lista = h('div', { class: 'es-prev' });
+  deck.slides.forEach((sl, i) => lista.append(h('div', { class: 'es-fila' }, h('span', { class: 'es-n' }, String(i + 1)),
+    h('span', { class: 'es-t' }, (sl.layout === 'title' ? titulo || 'Portada' : sl.title || 'Sin título').replace(/\\\$/g, '$')))));
+  const total = deck.slides.length;
+  openModal({ title: 'Abrir la presentación del asistente', size: 'modal-lg', body: h('div', { class: 'inf-preview' },
+    h('p', null, 'El asistente envió «' + archivo + '», con ' + total + (total === 1 ? ' diapositiva' : ' diapositivas') + '. Se abrirá en el editor y quedará en tu biblioteca como «' + nombre + '». La presentación que tienes abierta se conserva.'),
+    lista,
+    avisos.length ? h('div', null, h('span', { class: 'sublabel', style: 'margin:10px 0 5px' }, 'Ajustes al leerlo'),
+      h('ul', { class: 'av-lista' }, Array.from(new Set(avisos)).slice(0, 14).map(a => h('li', null, a)))) : null,
+    h('p', { class: 'hint' }, 'Esta es una copia independiente del archivo: lo que cambies aquí se guarda en este navegador, no en «' + archivo + '». Para devolver los cambios a la carpeta del asistente, usa Exportar → Proyecto (.json) y guárdalo en esa carpeta.')),
+    foot: [h('button', { class: 'btn', onclick: closeModal }, 'Cancelar'),
+      h('button', { class: 'btn btn-pri', onclick: () => wsAbreAsistente(deck, base) }, 'Abrir en el editor')] });
+}
+/* Como una copia de DoE: primero la biblioteca (si no cabe, no se abre nada) y después el editor.
+   El nombre se elige después de conservar la abierta, que puede haber ocupado el propuesto. */
+function wsAbreAsistente(deck, base) {
+  if (!wsConservar()) return false;
+  const store = decksStore(), nombre = infNombreLibre(base);
+  Object.defineProperty(store, nombre, { value: { deck: deepCopy(deck), when: Date.now() }, enumerable: true, configurable: true, writable: true });
+  if (!lsSet(LS_DECKS, store)) { toast('No hay espacio en este navegador para la presentación. Descarga un respaldo y libera espacio; no se abrió nada.', 'warn'); return false; }
+  closeModal();
+  if (!cargaSegura(deck, nombre)) return false;
+  wsCerrar();
+  INICIO?.actualizar?.();
+  return true;
 }

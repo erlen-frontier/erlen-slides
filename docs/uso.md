@@ -16,6 +16,12 @@ Para empezar una lámina con una idea clara, usa **Afirmación + evidencia** en 
 
 Antes de compartir, abre Archivo → Calidad científica. La revisión comprueba datos, ejes, unidades indicadas, escalas logarítmicas, barras de error, pies y procedencia. Sus avisos ayudan a revisar el archivo; no certifican la validez del experimento.
 
+## Una presentación que prepara el asistente
+
+Si trabajas con un asistente de IA conectado al [servidor MCP](mcp.md), puede enseñarte lo que construyó con `abrir_en_editor`: tu navegador abre el editor en `http://127.0.0.1:8130/?abrir=<clave>` (el asistente te da la dirección si el navegador no se abre solo). Slides pide el proyecto a ese mismo servidor, retira la clave de la dirección y enseña una **vista previa** con sus diapositivas. Solo al pulsar **Abrir en el editor** entra en tu biblioteca, con su título (y « (2)» si el nombre ya existe); la presentación que tenías abierta se conserva. **Cancelar** no cambia nada.
+
+La clave sirve una vez y caduca a los 10 minutos: si ves «El enlace caducó o ya se usó», pide al asistente que vuelva a abrirla. Lo que edites a partir de ahí se guarda en este navegador, no en el archivo del asistente: para devolverle tus cambios, usa **Exportar → Proyecto (.json)** y guarda el archivo en su carpeta de trabajo.
+
 ## Un informe de Erlen DoE, como presentación
 
 Erlen DoE puede enviar su informe (tipo `informe-v1` del [contrato de copias de la suite](https://github.com/erlen-frontier-ops/erlen-suite/blob/main/docs/intercambio-doe.md)) para contarlo en una reunión de grupo. Dentro de la suite, la página de recursos del portal o el propio DoE abren `/slides/#copy=<id>`: Slides lee la copia al arrancar, la retira de la dirección sin dejar entrada en el historial y enseña una **vista previa** con las diapositivas que va a crear, los recortes que hizo falta hacer y, si el informe lo declara, el aviso **DATOS SIMULADOS**. Fuera de la suite, DoE descarga la copia como `erlen-copia-slides-<id8>.json`; ábrela con **Importar proyecto** y pasa por la misma vista previa.

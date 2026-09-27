@@ -2,7 +2,7 @@
 
 Erlen Slides incluye un servidor [MCP](https://modelcontextprotocol.io) (Model Context Protocol). Con él, un asistente de IA —Claude Desktop, Claude Code u otro cliente MCP— puede crear, editar, revisar y exportar presentaciones con **el mismo motor que el editor**: los bloques se construyen con `newBlock`, los proyectos se validan con `saneaDeck`, la revisión es la del panel de calidad científica y el `.tex` sale de `toBeamer`. El resultado es un proyecto JSON v1 normal, que después se abre en el editor para seguir a mano.
 
-El servidor corre en tu máquina, por stdio. No abre puertos a la red, no envía nada a Internet y solo lee y escribe dentro de su carpeta de trabajo.
+El servidor corre en tu máquina, por stdio. No abre puertos a la red (la vista previa y `abrir_en_editor` escuchan solo en `127.0.0.1`), no envía nada a Internet y solo lee y escribe dentro de su carpeta de trabajo.
 
 ## Instalar
 
@@ -66,12 +66,13 @@ En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mj
 | `revisar_presentacion` | Calidad científica de las figuras, accesibilidad, estructura, tiempo frente a la duración disponible y avisos por formato. |
 | `vista_previa` | En Chromium: un mosaico numerado de toda la charla en una sola imagen, o diapositivas a tamaño real; siempre dice qué bloque se desborda y cuántos píxeles. |
 | `exportar_presentacion` | Beamer (carpeta con el `.tex` y las figuras, lista para Overleaf), HTML imprimible, PDF y PowerPoint. |
+| `abrir_en_editor` | Abre el proyecto en el editor, en el navegador del usuario, para seguir a mano ([detalles](mcp-extensiones/editor.md)). |
 
 También ofrece tres *prompts* que el cliente puede mostrar como atajos: **presentación a partir de resultados**, **revisión antes de presentar** y **figura desde un archivo de datos**.
 
 Un pedido típico: «Con `drx/zn-al-ph10.xy` y mis notas, hazme una presentación de 10 minutos para la reunión de grupo sobre la síntesis de HDL Zn-Al, tema Marino, y enséñame el mosaico». El asistente consulta la guía, propone el guion, crea el proyecto con todas las diapositivas, revisa, mira el mosaico, corrige lo que se desborda y exporta.
 
-Después abre el `.json` en Erlen Slides («Abrir proyecto») para seguir editando a mano. Los montajes de laboratorio, las figuras geométricas, las galerías y los vídeos se editan mejor ahí: el servidor los conserva, pero no los construye.
+Después abre el `.json` en Erlen Slides («Importar proyecto»), o pide al asistente que lo abra él con `abrir_en_editor`, para seguir editando a mano. Los montajes de laboratorio, las figuras geométricas, las galerías y los vídeos se editan mejor ahí: el servidor los conserva, pero no los construye.
 
 ## Estructuras químicas
 
