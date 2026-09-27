@@ -72,13 +72,17 @@ function sectionsOf(deck) {
   deck.slides.forEach((sl, i) => { if (sl.layout === 'section') out.push({ i, name: sl.title || 'Sección' }); });
   return out;
 }
+/* Los bloques que llevan «Figura n» en el pie. Los cuenta countersFor para las
+   diapositivas anteriores y renderSlide para los de la propia diapositiva: si
+   cada uno tuviera su lista, la numeración se saltaría o repetiría números. */
+const TIPOS_FIGURA = ['image', 'chart', 'func', 'video', 'smart', 'estruct', 'montaje', 'geo'];
 function countersFor(deck, idx) {
   let fig = 0, tab = 0, secN = 0, secName = '';
   for (let i = 0; i < idx; i++) {
     const sl = deck.slides[i];
     if (sl.layout === 'section') { secN++; secName = sl.title || ''; }
     for (const arr of zonas(sl)) for (const b of arr) {
-      if (b.type === 'image' || b.type === 'chart' || b.type === 'func' || b.type === 'video' || b.type === 'smart' || b.type === 'estruct' || b.type === 'montaje' || b.type === 'geo') fig++;
+      if (TIPOS_FIGURA.includes(b.type)) fig++;
       if (b.type === 'table') tab++;
     }
   }

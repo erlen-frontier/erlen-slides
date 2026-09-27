@@ -264,6 +264,11 @@ function renderSlide(deck, idx, mode, stepShown) {
     }
     el.dataset.bid = b.id;
     if (edit && sel) el.classList.add('sel');
+    /* El pie ya se escribió con el número de este bloque: el siguiente de la
+       misma diapositiva lleva el siguiente. Sin esto, dos figuras juntas
+       salían las dos como «Figura 1». */
+    if (TIPOS_FIGURA.includes(b.type)) ctx.fig++;
+    else if (b.type === 'table') ctx.tab++;
     return el;
   }
 

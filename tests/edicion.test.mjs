@@ -106,3 +106,19 @@ test('Portrait thumbnails are big enough to read and the counter fits the bar',a
  assert.equal(run("document.querySelectorAll('#slidePos .only-narrow-i').length"), 1, 'y en su lugar queda «4/6»');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
+
+/* Dos figuras en la misma diapositiva salían las dos como «Figura 1»: el
+   contador solo avanzaba entre diapositivas. Una gráfica, una estructura y un
+   SmartArt juntos tienen que ser 1, 2 y 3, y la tabla y la figura de la
+   diapositiva siguiente, «Tabla 1» y «Figura 4». */
+test('Figures and tables on the same slide are numbered one after another',async()=>{const{dom,run,errors}=await editor();try{
+ const pies=JSON.parse(run(`JSON.stringify((()=>{const d=blankDeck();
+  const conPie=(t,o)=>Object.assign(newBlock(t),{caption:'pie'},o||{});
+  d.slides.push({id:uid(),layout:'tres',title:'Tres',blocks:[conPie('chart')],blocks2:[conPie('estruct',{est:{atomos:[{id:'a',x:0,y:0,el:'O',carga:0}],enlaces:[]}})],blocks3:[conPie('smart')]});
+  d.slides.push({id:uid(),layout:'twocol',title:'Dos',blocks:[conPie('table')],blocks2:[conPie('chart')]});
+  const lee=i=>[...renderSlide(d,i,'export',99).querySelectorAll('.cap-label')].map(x=>x.textContent.trim());
+  return [lee(1),lee(2)];})())`));
+ assert.deepEqual(pies[0],['Figura 1:','Figura 2:','Figura 3:']);
+ assert.deepEqual(pies[1],['Tabla 1:','Figura 4:']);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
