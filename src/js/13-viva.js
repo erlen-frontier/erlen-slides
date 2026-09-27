@@ -146,8 +146,17 @@ function openFuncEditor(b) {
     prev.innerHTML = '';
     const clone = Object.assign({}, b, { w: 100, sliders: false });
     prev.append(renderChart(clone, S.deck, 'thumb', 720));
-    const bad = (b.curves || []).map(c => exprTry(c.expr)).find(r => r && r.error);
-    errEl.textContent = bad ? 'Revisa la fórmula: ' + bad.error : '';
+    /* El error dice en qué curva y en qué carácter: «▸» marca dónde se
+       atascó el analizador, que en una fórmula larga ahorra buscarlo. */
+    const cs = b.curves || [];
+    const i = cs.findIndex(c => { const r = exprTry(c.expr); return r && r.error; });
+    errEl.innerHTML = '';
+    $$('.c-expr', curvesBox).forEach((inp, j) => inp.toggleAttribute('aria-invalid', j === i));
+    if (i >= 0) {
+      const r = exprTry(cs[i].expr), ex = String(cs[i].expr);
+      errEl.append('Revisa la fórmula' + (cs.length > 1 ? ' «' + (cs[i].name || i + 1) + '»' : '') + ': ' + r.error);
+      if (r.pos != null) errEl.append(h('code', { class: 'eq-pos' }, ex.slice(0, r.pos), h('mark', null, '▸'), ex.slice(r.pos)));
+    }
     checkParams();
   }, 130);
 
@@ -170,14 +179,21 @@ function openFuncEditor(b) {
   function paintParams() {
     paramsBox.innerHTML = '';
     (b.params || []).forEach((p, i) => {
+      /* Al cambiar el recorrido, el paso se recalcula: un paso de 0.1 en un
+         recorrido de 0 a 0.001 dejaba el deslizador clavado. */
       const num = (key, ph) => h('input', { class: 'field p-num', type: 'number', value: p[key], placeholder: ph, step: 'any',
-        oninput: e => { p[key] = +e.target.value; draw(); } });
-      paramsBox.append(h('div', { class: 'param-row' },
+        oninput: e => { p[key] = +e.target.value; if (key !== 'value') p.step = pasoConservado(p.step, p.min, p.max); draw(); } });
+      const fuera = !(+p.value >= +p.min && +p.value <= +p.max);
+      paramsBox.append(h('div', { class: 'param-row' + (fuera ? ' fuera' : ''), title: fuera ? 'El valor queda fuera del recorrido del deslizador' : (p.d || null) },
         h('input', { class: 'field p-name', value: p.name, placeholder: 'A', spellcheck: 'false',
           oninput: e => { p.name = e.target.value.trim(); draw(); } }),
         h('span', { style: 'color:var(--faint);font-size:12px' }, 'de'), num('min', 'mín'),
         h('span', { style: 'color:var(--faint);font-size:12px' }, 'a'), num('max', 'máx'),
         h('span', { style: 'color:var(--faint);font-size:12px' }, 'valor'), num('value', 'valor'),
+        h('input', { class: 'field p-unit', value: p.unit || '', placeholder: 'unidad', spellcheck: 'false', title: 'Unidad (admite $…$)',
+          oninput: e => { p.unit = e.target.value; if (!p.unit) delete p.unit; } }),
+        h('label', { class: 'check p-log', title: 'Deslizador por décadas: para parámetros que abarcan órdenes de magnitud (solo con extremos positivos)' },
+          h('input', { type: 'checkbox', checked: !!p.log, onchange: e => { if (e.target.checked) p.log = true; else delete p.log; } }), 'log'),
         h('button', { class: 'icon-btn', title: 'Quitar', onclick: () => { b.params.splice(i, 1); paintParams(); draw(); } }, '✕')));
     });
     paramsBox.append(h('button', { class: 'btn btn-sm', onclick: () => { (b.params = b.params || []).push({ name: 'a', value: 1, min: 0, max: 10, step: 0.1 }); paintParams(); draw(); } }, '+ Otro parámetro'));
@@ -191,6 +207,11 @@ function openFuncEditor(b) {
       if (r && r.vars) r.vars.forEach(v => { if (v !== 'x' && !known.has(v)) miss.add(v); });
     });
     missBox.innerHTML = '';
+    /* Un parámetro llamado R, e o pi nunca llega a la fórmula: el analizador
+       lee antes la constante. Mejor decirlo que dejar un deslizador mudo. */
+    const tapados = (b.params || []).map(p => p.name).filter(n => Object.prototype.hasOwnProperty.call(EXPR_CONST, n));
+    if (tapados.length) missBox.append(h('div', { class: 'hint', style: 'color:var(--warn);margin-bottom:6px' },
+      tapados.join(', ') + (tapados.length > 1 ? ' son constantes' : ' es una constante') + ' de la app: la fórmula no lee ese parámetro. Cámbiale el nombre.'));
     if (miss.size) {
       missBox.append(h('div', { class: 'hint', style: 'color:var(--warn);margin-bottom:6px' },
         'Sin definir: ' + Array.from(miss).join(', ') + '. '),
@@ -213,11 +234,15 @@ function openFuncEditor(b) {
     yRow.append(h('label', { class: 'check' },
       h('input', { type: 'checkbox', checked: b.yminAuto === false, onchange: e => {
         if (e.target.checked) {
+          /* Se parte de lo que se ve: con polos, el rango de la parte normal
+             de la curva y no el valor junto a la asíntota. */
           const ss = chartSeries(b);
           const ys = [];
           ss.forEach(q => q.pts.forEach(pt => { if (isFinite(pt[1])) ys.push(pt[1]); }));
-          b.ymin0 = ys.length ? Math.min.apply(null, ys) : 0;
-          b.ymax0 = ys.length ? Math.max.apply(null, ys) * 1.05 : 1;
+          const lo = ss.rangoY ? ss.rangoY[0] : ys.length ? Math.min.apply(null, ys) : 0;
+          const hi = ss.rangoY ? ss.rangoY[1] : ys.length ? Math.max.apply(null, ys) : 1;
+          b.ymin0 = lo;
+          b.ymax0 = hi > lo ? hi + (hi - lo) * 0.05 : hi + (Math.abs(hi) * 0.05 || 1);
           b.yminAuto = false;
         } else b.yminAuto = true;
         paintY(); draw();
@@ -232,10 +257,16 @@ function openFuncEditor(b) {
   }
   paintY();
 
+  /* Ejes logarítmicos: la misma casilla que en la gráfica de datos. Con el
+     eje x en logaritmo también el muestreo se reparte por décadas. */
+  const logRow = h('div', { class: 'irow', style: 'gap:14px' },
+    h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!b.logX, onchange: e => { b.logX = e.target.checked; draw(); } }), 'Eje x logarítmico'),
+    h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!b.logY, onchange: e => { b.logY = e.target.checked; draw(); } }), 'Eje y logarítmico'));
+
   const models = h('div', { class: 'model-grid' },
-    FUNC_MODELS.map(m => h('button', { class: 'model-card', onclick: () => {
-      Object.assign(b, { curves: deepCopy(m.curves), params: deepCopy(m.params), xmin: m.xmin, xmax: m.xmax, xlabel: m.xlabel, ylabel: m.ylabel, title: m.title });
-      paintCurves(); paintParams(); rangeRow.children[1].value = b.xmin; rangeRow.children[3].value = b.xmax;
+    FUNC_MODELS.map(m => h('button', { class: 'model-card', title: m.nota ? mathToUnicode(m.nota) : null, onclick: () => {
+      Object.assign(b, bloqueDesdeModelo(m), { yminAuto: true });
+      paintCurves(); paintParams(); paintY(); rangeRow.children[1].value = b.xmin; rangeRow.children[3].value = b.xmax;
       axl.value = b.xlabel || ''; ayl.value = b.ylabel || '';
       draw();
     } }, h('b', null, m.n), h('span', null, m.d))));
@@ -271,7 +302,7 @@ function openFuncEditor(b) {
           prev,
           h('div', { style: 'margin-top:12px' },
             h('span', { class: 'panel-label', style: 'display:block;margin-bottom:6px' }, 'Ejes'),
-            axl, ayl)))),
+            axl, ayl, logRow)))),
     foot: [
       h('span', { class: 'foot-note' }, 'Los deslizadores funcionan también durante la presentación.'),
       h('button', { class: 'btn btn-pri', onclick: () => { closeModal(); commit(); } }, 'Listo')

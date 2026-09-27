@@ -194,13 +194,22 @@ function pgfNum(v) {
   if (Math.abs(v) < 1e-20) return '0';
   return String(Number(Number(v).toPrecision(7)));
 }
-function pgfCoords(pts, p, conError) {
+/* conCortes (las fórmulas): los puntos ya vienen muestreados donde hacen
+   falta, así que no se diezman —saltarse uno de cada n perdía justo los del
+   pico o del escalón—, y un NaN se escribe como «nan», que con «unbounded
+   coords=jump» corta el trazo. Varios seguidos valen por uno. */
+function pgfCoords(pts, p, conError, conCortes) {
   const out = [];
   let line = p + '    ';
-  const step = Math.max(1, Math.ceil(pts.length / 150));
+  const step = conCortes ? 1 : Math.max(1, Math.ceil(pts.length / 150));
+  let cortado = true;
   pts.forEach(([x, y, e], i) => {
-    if (!isFinite(y)) return;
+    if (!isFinite(y)) {
+      if (conCortes && !cortado && isFinite(x)) { const t = `(${pgfNum(x)},nan) `; if (line.length + t.length > 94) { out.push(line); line = p + '    '; } line += t; cortado = true; }
+      return;
+    }
     if (i % step && i !== pts.length - 1) return;
+    cortado = false;
     /* La barra de error viaja con el punto, en la sintaxis de pgfplots. */
     const t = `(${pgfNum(x)},${pgfNum(y)})` + (conError ? ` +- (0,${pgfNum(isFinite(e) && e > 0 ? e : 0)})` : '') + ' ';
     if (line.length + t.length > 94) { out.push(line); line = p + '    '; }
@@ -280,6 +289,30 @@ function chartToPgf(b, p) {
         'ymin=' + pgfNum(yA), 'ymax=' + pgfNum(yB));
     }
   }
+  /* Una fórmula se dibuja en el intervalo que se eligió, no en el que
+     pgfplots deduzca de las coordenadas; y con el eje Y fijado a mano, o con
+     polos (el rango que propone muestreaFunc), el papel usa el mismo rango
+     que la pantalla. Lo que cae fuera se recorta a tres alturas del marco:
+     un 10¹⁶ junto a una asíntota hacía fallar TeX con «Dimension too large». */
+  const esFunc = b.type === 'func';
+  let recorteY = null;
+  if (esFunc) {
+    const xa = +b.xmin, xb = +b.xmax;
+    if (isFinite(xa) && isFinite(xb) && xa !== xb && (!logX || (xa > 0 && xb > 0)))
+      opt.push('xmin=' + pgfNum(Math.min(xa, xb)), 'xmax=' + pgfNum(Math.max(xa, xb)));
+    const fijo = b.yminAuto === false && isFinite(+b.ymin0) && isFinite(+b.ymax0) && +b.ymax0 > +b.ymin0 && (!logY || +b.ymin0 > 0);
+    let r = fijo ? [+b.ymin0, +b.ymax0] : (!logY && series.rangoY) ? series.rangoY : null;
+    /* El rango propuesto se redondea a la marca siguiente, como hace
+       renderChart: el eje del papel termina donde el de la pantalla. */
+    if (r && !fijo) { const st = niceTicks(r[0], r[1], 5).step; r = [Math.floor(r[0] / st + 1e-9) * st, Math.ceil(r[1] / st - 1e-9) * st]; }
+    if (r && r[1] > r[0]) {
+      opt.push('ymin=' + pgfNum(r[0]), 'ymax=' + pgfNum(r[1]));
+      const m = (r[1] - r[0]) * 3;
+      recorteY = [logY ? r[0] / 1e3 : r[0] - m, logY ? r[1] * 1e3 : r[1] + m];
+    }
+    /* Un NaN en las coordenadas levanta el lápiz: la asíntota no se une. */
+    opt.push('unbounded coords=jump');
+  }
   L.push(p + '  \\begin{axis}[');
   L.push(p + '    ' + opt.join(',\n' + p + '    '));
   L.push(p + '  ]');
@@ -288,7 +321,12 @@ function chartToPgf(b, p) {
   series.forEach((s, i) => {
     const col = PGF_COLORS[i % PGF_COLORS.length];
     const mk = PGF_MARKS[i % PGF_MARKS.length];
-    const pts = s.pts.filter(vale).map(([x, y, e]) => [x, y + offStep * (series.length - 1 - i), e]);
+    /* En una fórmula, un punto sin valor (polo, fuera del dominio, o no
+       positivo en un eje log) se queda como corte en vez de desaparecer: si
+       se quitara, pgfplots uniría los dos lados. */
+    const pts = esFunc
+      ? s.pts.map(pt => vale(pt) ? [pt[0], recorteY ? clamp(pt[1], recorteY[0], recorteY[1]) : pt[1]] : [pt[0], NaN])
+      : s.pts.filter(vale).map(([x, y, e]) => [x, y + offStep * (series.length - 1 - i), e]);
     let style;
     if (kind === 'barras') style = `[fill=${col}, draw=${col}]`;
     else if (kind === 'linea') {
@@ -303,7 +341,7 @@ function chartToPgf(b, p) {
     /* Por capas: cada serie es un overlay, en el mismo orden que en pantalla. */
     if (porCapas && pts.some(q => isFinite(q[1]))) L.push(p + '    \\only<+->{');
     L.push(p + `    \\addplot${style} coordinates {`);
-    L.push(pgfCoords(pts, p, !!s.tieneError));
+    L.push(pgfCoords(pts, p, !!s.tieneError, esFunc));
     L.push(p + '    };');
     if (series.length > 1 && !offsetMode && b.legend !== false) L.push(p + '    \\addlegendentry{' + texAxisLabel(s.name) + '}');
     if (porCapas && pts.some(q => isFinite(q[1]))) L.push(p + '    }');
@@ -493,7 +531,7 @@ function texBlocks(arr, ind) {
         if (b.type === 'func') {
           lines.push(p + '  % Curvas evaluadas por Erlen:');
           (b.curves || []).forEach(cv => lines.push(p + '  %   ' + String(cv.name || 'y').replace(/[\r\n]+/g, ' ') + ' = ' + String(cv.expr || '').replace(/[\r\n]+/g, ' ')));
-          if ((b.params || []).length) lines.push(p + '  %   con ' + b.params.map(q => q.name + ' = ' + q.value).join(', '));
+          if ((b.params || []).length) lines.push(p + '  %   con ' + b.params.map(q => q.name + ' = ' + q.value + (q.unit ? ' ' + mathToUnicode(q.unit) : '')).join(', ').replace(/[\r\n]+/g, ' '));
         }
         if (b.type === 'chart' && b.despues && b.despues.data) {
           /* Antes y después: el mismo marco, dos overlays. */
