@@ -126,13 +126,13 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 
 Las herramientas nuevas se añaden como extensiones, cada una en sus propios archivos, sin tocar el catálogo común:
 
-- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion`; `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES.
+- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion`; `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES; si deja en el bloque `_importado: {…}`, ese informe sale en `datos_importados` de la respuesta, con el id del bloque, y no se guarda.
 - `mcp/extensiones/<id>.pagina.js` (dentro de la app): `ERLEN_MCP.registra(nombre, fn)` añade una operación y `ERLEN_MCP.registraRevision(nombre, fn)` una regla de `revisar_presentacion` (sus hallazgos salen en `adicional`). `ERLEN_MCP.util` da `valida`, `bloqueDesde`, `diapositivaNueva`, `lote`, `indiceDiapositiva`, `buscaBloque`, `cambiaDiseno`, `esquema`, `falla` y `avisa`.
 - Desde Node, `mcp/motor.mjs` exporta `op`, `modifica` (lee, aplica, valida, guarda en el historial y escribe), `lee`, `escribe`, `preparaEntrada`, `archivoEnCarpeta` y `compacta`; `mcp/navegador.mjs`, `sesion` e `imprimible` para lo que necesite Chromium.
 - Cada extensión documenta sus herramientas en `docs/mcp-extensiones/<id>.md` y se prueba en `tests/mcp-<id>.test.mjs` con el cliente de `tests/_mcp-cliente.mjs`.
 - Un nombre de herramienta, prompt o formato repetido detiene el servidor al arrancar, con el archivo culpable.
 
-La extensión de referencia es [estadísticas](mcp-extensiones/estadisticas.md). `ERLEN_MCP_EXTENSIONES` añade otra carpeta de extensiones (la usan las pruebas).
+La extensión de referencia es [estadísticas](mcp-extensiones/estadisticas.md); [tablas desde archivos](mcp-extensiones/tablas.md) usa `transformaBloque`. `ERLEN_MCP_EXTENSIONES` añade otra carpeta de extensiones (la usan las pruebas).
 
 ## Desarrollo
 
