@@ -39,6 +39,14 @@ const EXPR_FN = {
 };
 const EXPR_ARITY = { atan2: 2, pow: 2, mod: 2, gauss: 3, lorentz: 3, if: 3 };
 
+/* Un error que sabe dónde está: con la posición, el editor y el MCP pueden
+   señalar el carácter en vez de dejar al usuario buscándolo. */
+function exprError(msg, pos) {
+  const e = new Error(msg);
+  e.pos = pos;
+  return e;
+}
+
 function exprTokenize(src) {
   const t = [];
   let i = 0;
@@ -55,20 +63,20 @@ function exprTokenize(src) {
         if (/[0-9]/.test(s[k] || '')) { k++; while (k < s.length && /[0-9]/.test(s[k])) k++; j = k; }
       }
       const num = parseFloat(s.slice(i, j));
-      if (!isFinite(num)) throw new Error('número no válido: ' + s.slice(i, j));
-      t.push({ k: 'num', v: num }); i = j; continue;
+      if (!isFinite(num)) throw exprError('número no válido: ' + s.slice(i, j), i);
+      t.push({ k: 'num', v: num, i }); i = j; continue;
     }
     if (/[A-Za-z_]/.test(c)) {
       let j = i;
       while (j < s.length && /[A-Za-z_0-9]/.test(s[j])) j++;
-      t.push({ k: 'id', v: s.slice(i, j) }); i = j; continue;
+      t.push({ k: 'id', v: s.slice(i, j), i }); i = j; continue;
     }
     const two = s.substr(i, 2);
     if (['<=', '>=', '==', '!=', '&&', '||', '**'].includes(two)) {
-      t.push({ k: 'op', v: two === '**' ? '^' : two }); i += 2; continue;
+      t.push({ k: 'op', v: two === '**' ? '^' : two, i }); i += 2; continue;
     }
-    if ('+-*/^%(),<>'.includes(c)) { t.push({ k: 'op', v: c }); i++; continue; }
-    throw new Error('carácter no reconocido: ' + c);
+    if ('+-*/^%(),<>'.includes(c)) { t.push({ k: 'op', v: c, i }); i++; continue; }
+    throw exprError('carácter no reconocido: ' + c, i);
   }
   return t;
 }
@@ -76,11 +84,14 @@ function exprTokenize(src) {
 /* Devuelve { fn(vars) , vars:Set } o lanza Error con mensaje en español. */
 function exprCompile(src) {
   const T = exprTokenize(src);
+  const fin = String(src).length;
   let p = 0;
+  /* La posición del token actual, o el final si ya no quedan. */
+  const aqui = () => T[p] ? T[p].i : fin;
   const used = new Set();
   const peek = () => T[p];
   const isOp = v => T[p] && T[p].k === 'op' && T[p].v === v;
-  const eat = v => { if (!isOp(v)) throw new Error('falta «' + v + '»'); p++; };
+  const eat = v => { if (!isOp(v)) throw exprError('falta «' + v + '»', aqui()); p++; };
 
   function parseExpr() { return parseOr(); }
   function parseOr() {
@@ -142,21 +153,21 @@ function exprCompile(src) {
   }
   function parseAtom() {
     const t = peek();
-    if (!t) throw new Error('la fórmula termina antes de tiempo');
+    if (!t) throw exprError('la fórmula termina antes de tiempo', fin);
     if (t.k === 'num') { p++; const n = t.v; return () => n; }
     if (t.k === 'op' && t.v === '(') { p++; const e = parseExpr(); eat(')'); return e; }
     if (t.k === 'id') {
       p++;
-      const name = t.v;
+      const name = t.v, pos = t.i;
       if (isOp('(')) {
         p++;
         const args = [];
         if (!isOp(')')) { args.push(parseExpr()); while (isOp(',')) { p++; args.push(parseExpr()); } }
         eat(')');
         const f = EXPR_FN[name];
-        if (!f) throw new Error('función desconocida: ' + name + '()');
+        if (!f) throw exprError('función desconocida: ' + name + '()', pos);
         const want = EXPR_ARITY[name];
-        if (want && args.length !== want) throw new Error(name + '() necesita ' + want + ' argumentos');
+        if (want && args.length !== want) throw exprError(name + '() necesita ' + want + ' argumentos', pos);
         if (name === 'if') return v => args[0](v) ? args[1](v) : args[2](v);
         if (args.length === 1) { const a0 = args[0]; return v => f(a0(v)); }
         if (args.length === 2) { const a0 = args[0], a1 = args[1]; return v => f(a0(v), a1(v)); }
@@ -166,20 +177,21 @@ function exprCompile(src) {
       used.add(name);
       return v => { const n = v[name]; return n == null ? NaN : n; };
     }
-    throw new Error('no esperaba «' + (t.v) + '»');
+    throw exprError('no esperaba «' + (t.v) + '»', t.i);
   }
 
   const fn = parseExpr();
-  if (p < T.length) throw new Error('sobra «' + T[p].v + '» al final');
+  if (p < T.length) throw exprError('sobra «' + T[p].v + '» al final', T[p].i);
   return { fn, vars: used };
 }
 
-/* Compila y avisa con mensaje amable; devuelve null si falla. */
+/* Compila y avisa con mensaje amable; devuelve null si la fórmula está vacía
+   y { error, pos } si no se entiende (pos: el carácter, desde 0). */
 function exprTry(src) {
   try {
     if (!String(src || '').trim()) return null;
     return exprCompile(src);
-  } catch (e) { return { error: e.message || String(e) }; }
+  } catch (e) { return { error: e.message || String(e), pos: e.pos }; }
 }
 
 
