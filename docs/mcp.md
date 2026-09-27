@@ -25,12 +25,35 @@ Si ya tienes un Chromium o Chrome, puedes indicarlo con `ERLEN_CHROMIUM=/ruta/al
 
 ## Conectarlo a un cliente
 
+Lo más fácil es el instalador, desde la carpeta de `erlen-slides`:
+
+```sh
+npm run mcp:instalar
+```
+
+Comprueba Node, las dependencias y el build (si falta, o quedó viejo tras actualizar el código, ofrece construirlo), busca Chromium, pregunta qué cliente conectar y lo deja listo. Al final arranca el servidor con la configuración escrita para comprobar que responde. Sin preguntas:
+
+```sh
+npm run mcp:instalar -- --cliente claude-desktop              # escribe la configuración de Claude Desktop
+npm run mcp:instalar -- --cliente claude-code --ejecutar      # ejecuta «claude mcp add» por ti
+npm run mcp:instalar -- --cliente imprimir                    # solo muestra qué poner, sin tocar nada
+npm run mcp:instalar -- --cliente claude-desktop --carpeta ~/Presentaciones --dry-run
+```
+
+- **Claude Desktop**: edita `claude_desktop_config.json` donde Claude lo busca (macOS `~/Library/Application Support/Claude/`, Windows `%APPDATA%\Claude\`, Linux `~/.config/Claude/`). Antes guarda una copia al lado (`claude_desktop_config.json.respaldo-<fecha>`); conserva los demás servidores, los demás ajustes y la sangría del archivo; si el JSON está roto no lo toca y dice qué falla. Repetirlo no cambia nada. Después **cierra Claude Desktop del todo y vuelve a abrirlo**.
+- El comando que escribe es la ruta completa del Node con el que lo ejecutaste, no `node` a secas: Claude Desktop se abre sin el `PATH` de la terminal y a menudo no encuentra `node` (sobre todo con nvm, fnm o Homebrew). Por lo mismo, si el navegador solo se encontró gracias a `ERLEN_CHROMIUM` o `PLAYWRIGHT_BROWSERS_PATH`, su ruta queda fijada en la entrada. Si cambias de versión de Node o mueves la carpeta, vuelve a ejecutar el instalador.
+- `--compilar` y `--no-compilar` deciden sin preguntar si construir la aplicación; `--config <archivo>` usa otro `claude_desktop_config.json`; `--sin-prueba` no arranca el servidor al final.
+
+Si algo no funciona, pide a la IA «ejecuta el diagnóstico de Erlen Slides»: la herramienta [`diagnostico`](mcp-extensiones/diagnostico.md) dice qué falla y con qué comando se arregla.
+
+### A mano
+
 La carpeta de trabajo es `~/erlen-slides` salvo que indiques otra con `ERLEN_SLIDES_DIR`. Ahí viven los proyectos `.json`, las imágenes que quieras insertar y lo que se exporte.
 
 **Claude Code**, desde cualquier carpeta:
 
 ```sh
-claude mcp add erlen-slides -e ERLEN_SLIDES_DIR="$HOME/Presentaciones" -- node /ruta/a/erlen-slides/mcp/servidor.mjs
+claude mcp add erlen-slides --scope user -e ERLEN_SLIDES_DIR="$HOME/Presentaciones" -- node /ruta/a/erlen-slides/mcp/servidor.mjs
 ```
 
 **Claude Desktop**, en `claude_desktop_config.json` (Ajustes → Desarrollador → Editar configuración):
@@ -39,7 +62,7 @@ claude mcp add erlen-slides -e ERLEN_SLIDES_DIR="$HOME/Presentaciones" -- node /
 {
   "mcpServers": {
     "erlen-slides": {
-      "command": "node",
+      "command": "/ruta/completa/a/node",
       "args": ["/ruta/a/erlen-slides/mcp/servidor.mjs"],
       "env": { "ERLEN_SLIDES_DIR": "/Users/tu-usuario/Presentaciones" }
     }
@@ -47,7 +70,7 @@ claude mcp add erlen-slides -e ERLEN_SLIDES_DIR="$HOME/Presentaciones" -- node /
 }
 ```
 
-En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mjs`. Cualquier otro cliente MCP que lance servidores por stdio sirve igual: el comando es `node mcp/servidor.mjs`.
+La ruta completa de Node la da `node -p process.execPath`. En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mjs`. Cualquier otro cliente MCP que lance servidores por stdio sirve igual: el comando es `node mcp/servidor.mjs`.
 
 ## Qué puede hacer la IA
 
