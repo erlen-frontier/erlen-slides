@@ -1,0 +1,54 @@
+% DATOS DE PRUEBA FICTICIOS para tests/mcp-bibliografia.test.mjs.
+% Ninguna de estas referencias existe: autores, títulos y revistas son
+% inventados, y los DOI usan el prefijo de pruebas de Crossref (10.5555).
+% Contacto del fichero: nadie@example.org (una arroba suelta no abre entrada).
+
+@string{jpru = {Journal of Test Materials}}
+
+@article{PerezNunez2021,
+  author    = {P{\'e}rez-N{\'u}{\~n}ez, Jos{\'e} and M\"{u}ller, J\"urgen and {\O}ster, {\AA}sa},
+  title     = {{Zn--Al} layered double hydroxides: a {\emph{fictional}} test entry with {TiO$_2$}},
+  journal   = jpru,
+  year      = 2021,
+  month     = mar,
+  volume    = {12},
+  number    = {3},
+  pages     = {101--115},
+  doi       = {10.5555/prueba.0001}
+}
+
+@inproceedings{garcia:2019-b,
+  booktitle = {Proceedings of the Imaginary Symposium on Solid State},
+  title     = "Ca{\c{c}}a de fases: ensayo \& prueba",
+  author    = {Garc{\'\i}a, Luc{\'\i}a and {Consorcio Ficticio de Materiales}},
+  year      = {2019},
+  pages     = {7-9}
+}
+
+@article{SinAutores2020,
+  title   = {An entry without authors},
+  journal = {Journal of Test Materials},
+  year    = {2020}
+}
+
+@misc{SoloAutor,
+  author = {Nadie, N. and others}
+}
+
+@article{PerezNunez2021,
+  author  = {Otro, Autor},
+  title   = {A different paper that reuses the same key},
+  journal = {Journal of Test Materials},
+  year    = {2022},
+  doi     = {10.5555/prueba.0002}
+}
+
+@article{Duplicada2021,
+  author  = {P{\'e}rez-N{\'u}{\~n}ez, Jos{\'e}},
+  title   = {Zn-Al layered double hydroxides: a fictional test entry with TiO$_2$},
+  journal = {Journal of Test Materials},
+  year    = {2021},
+  doi     = {10.5555/PRUEBA.0001}
+}
+
+@comment{jabref-meta: databaseType:bibtex;}
