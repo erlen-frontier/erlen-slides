@@ -13,6 +13,7 @@
     "test": "node --test tests/*.test.mjs",
     "start": "node herramientas/serve.mjs",
     "mcp": "node mcp/servidor.mjs",
+    "mcp:instalar": "node herramientas/mcp-instalar.mjs",
     "examples": "node herramientas/examples.mjs",
     "accesibilidad": "node herramientas/accesibilidad.mjs"
   },

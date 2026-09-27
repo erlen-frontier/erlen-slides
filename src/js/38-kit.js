@@ -101,7 +101,7 @@ function openComprobacion() {
 }
 
 /* ---------- 09 · kit de defensa ---------- */
-function leemeKit(pgs) {
+function leemeKit(pgs, extra) {
   const m = S.deck.meta;
   return [
     'KIT DE DEFENSA · ' + (m.title || 'Presentación'),
@@ -113,6 +113,7 @@ function leemeKit(pgs) {
     '  proyecto.json          El proyecto entero. Se abre en Erlen con Archivo → Importar.',
     '  guion.html             Tu guion con miniaturas, notas y tiempos. Ábrelo e imprímelo.',
     '  figuras/               Las imágenes sueltas, por si las necesitas en el artículo.',
+    ...(extra || []).filter(a => a.desc).map(a => '  ' + (a.rotulo || a.nombre).padEnd(22) + ' ' + a.desc),
     '',
     'LO QUE FALTA Y TIENES QUE PONER TÚ',
     '  presentacion.pdf       Expórtalo desde Erlen con Exportar → PDF (imprimir) y',
@@ -135,46 +136,56 @@ function leemeKit(pgs) {
   ].join('\n');
 }
 
+/* Los archivos del kit, sin comprimir. `extra` ([{nombre, datos, desc, rotulo}])
+   se añade al final, y lo que trae `desc`, a la lista del LEEME: el servidor MCP arma con esto su
+   paquete reproducible (datos de las gráficas, SVG, informe) sin repetir lo
+   que ya decide el kit. */
+async function archivosKit(extra) {
+  let pgs = 0;
+  S.deck.slides.forEach((sl, i) => { pgs += 1 + stepCount(S.deck, i); });
+
+  const figuras = [];
+  for (let i = 0; i < S.deck.slides.length; i++) for (const b of zonas(S.deck.slides[i]).flat()) {
+    if (!['image', 'chart', 'func', 'video', 'galeria', 'estruct', 'montaje', 'geo'].includes(b.type)) continue;
+    figuras.push({ id: b.id || null, slide: i + 1, type: b.type, caption: b.caption || null,
+      source: b.fuente || null, dataSha256: b.data ? await huellaDe(b.data) : null });
+  }
+  const provenance = { schema: 'erlen-provenance-v1', application: 'Erlen Slides',
+    version: window.ERLEN?.version || 'desconocida', generatedAt: new Date().toISOString(),
+    deck: { title: S.deck.meta.title || '', authors: S.deck.meta.authors || '',
+      sourceFormat: 'erlen-json-v1' }, figures: figuras };
+
+  const otro = deepCopy(S.deck);
+  otro.meta.aspect = S.deck.meta.aspect === '43' ? '169' : '43';
+  const nombreOtro = 'presentacion-' + (otro.meta.aspect === '43' ? '4-3' : '16-9') + '.tex';
+
+  const archivos = [
+    { nombre: 'LEEME.txt', datos: leemeKit(pgs, extra) },
+    { nombre: 'presentacion.tex', datos: toBeamer(S.deck) },
+    { nombre: nombreOtro, datos: toBeamer(otro) },
+    { nombre: 'proyecto.json', datos: JSON.stringify(S.deck, null, 2) },
+    { nombre: 'guion.html', datos: guionHTML() },
+    { nombre: 'provenance.json', datos: JSON.stringify(provenance, null, 2) + '\n' }
+  ];
+  const imgs = allImageBlocks().filter(b => b.src);
+  if (S.deck.meta.logo) imgs.unshift({ id: 'logo', src: S.deck.meta.logo, caption: 'logo' });
+  imgs.forEach(b => {
+    const d = dataUriToBlob(b.src);
+    if (!d) return;
+    const ext = d.mime.includes('svg') ? 'svg' : d.mime.includes('jpeg') ? 'jpg' : 'png';
+    const datos = new Uint8Array(0);
+    archivos.push({ nombre: 'figuras/' + (b.id === 'logo' ? 'logo' : figName(b)) + '.' + ext, blob: d.blob, datos });
+  });
+  (extra || []).forEach(a => archivos.push({ nombre: a.nombre, datos: a.datos }));
+  /* Los archivos que vienen como Blob se pasan a bytes antes de comprimir. */
+  for (const a of archivos) if (a.blob) a.datos = new Uint8Array(await a.blob.arrayBuffer());
+  return archivos;
+}
+
 async function kitDefensa() {
   const t = toast('Armando el kit…');
   try {
-    let pgs = 0;
-    S.deck.slides.forEach((sl, i) => { pgs += 1 + stepCount(S.deck, i); });
-
-    const figuras = [];
-    for (let i = 0; i < S.deck.slides.length; i++) for (const b of zonas(S.deck.slides[i]).flat()) {
-      if (!['image', 'chart', 'func', 'video', 'galeria', 'estruct', 'montaje', 'geo'].includes(b.type)) continue;
-      figuras.push({ id: b.id || null, slide: i + 1, type: b.type, caption: b.caption || null,
-        source: b.fuente || null, dataSha256: b.data ? await huellaDe(b.data) : null });
-    }
-    const provenance = { schema: 'erlen-provenance-v1', application: 'Erlen Slides',
-      version: window.ERLEN?.version || 'desconocida', generatedAt: new Date().toISOString(),
-      deck: { title: S.deck.meta.title || '', authors: S.deck.meta.authors || '',
-        sourceFormat: 'erlen-json-v1' }, figures };
-
-    const otro = deepCopy(S.deck);
-    otro.meta.aspect = S.deck.meta.aspect === '43' ? '169' : '43';
-    const nombreOtro = 'presentacion-' + (otro.meta.aspect === '43' ? '4-3' : '16-9') + '.tex';
-
-    const archivos = [
-      { nombre: 'LEEME.txt', datos: leemeKit(pgs) },
-      { nombre: 'presentacion.tex', datos: toBeamer(S.deck) },
-      { nombre: nombreOtro, datos: toBeamer(otro) },
-      { nombre: 'proyecto.json', datos: JSON.stringify(S.deck, null, 2) },
-      { nombre: 'guion.html', datos: guionHTML() },
-      { nombre: 'provenance.json', datos: JSON.stringify(provenance, null, 2) + '\n' }
-    ];
-    const imgs = allImageBlocks().filter(b => b.src);
-    if (S.deck.meta.logo) imgs.unshift({ id: 'logo', src: S.deck.meta.logo, caption: 'logo' });
-    imgs.forEach(b => {
-      const d = dataUriToBlob(b.src);
-      if (!d) return;
-      const ext = d.mime.includes('svg') ? 'svg' : d.mime.includes('jpeg') ? 'jpg' : 'png';
-      const datos = new Uint8Array(0);
-      archivos.push({ nombre: 'figuras/' + (b.id === 'logo' ? 'logo' : figName(b)) + '.' + ext, blob: d.blob, datos });
-    });
-    /* Los archivos que vienen como Blob se pasan a bytes antes de comprimir. */
-    for (const a of archivos) if (a.blob) a.datos = new Uint8Array(await a.blob.arrayBuffer());
+    const archivos = await archivosKit();
     const blob = await armaZip(archivos);
     await downloadFile(deckSlug() + '-kit.zip', blob, 'application/zip');
     if (t) t.remove();

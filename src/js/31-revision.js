@@ -70,8 +70,13 @@ function revisaMazo() {
     const bloques = zonas(sl).flat();
 
     if (zonasN > 0 && sl.layout !== 'toc') {
-      if (!(sl.title || '').trim()) add('aviso', i, 'Diapositiva sin título', 'Un título ayuda al público a ubicarse y alimenta el índice.');
-      else if (tituloGenerico(sl.title) && bloques.some(b => MUESTRA_ALGO.has(b.type)))
+      /* «En blanco» no enseña título: pedirlo sería pedir algo que no se ve. */
+      const sinTit = !!(LAY[sl.layout] && LAY[sl.layout].sinTitulo);
+      if (!sinTit && !(sl.title || '').trim()) add('aviso', i, 'Diapositiva sin título', 'Un título ayuda al público a ubicarse y alimenta el índice.');
+      else if (sl.layout === 'titular' && sl.title.trim().split(/\s+/).length < 4)
+        add('sugerencia', i, 'El titular «' + sl.title.trim() + '» no es una frase',
+        'En «Titular + figura» el título dice la conclusión completa, con verbo: «El dopaje con Cu reduce la banda prohibida», no «Resultados de UV-Vis».');
+      else if (!sinTit && tituloGenerico(sl.title) && bloques.some(b => MUESTRA_ALGO.has(b.type)))
         add('sugerencia', i, 'El título «' + sl.title.trim() + '» no dice nada',
         'Escribe en el título el mensaje de la diapositiva: «La banda prohibida baja con el yodo» en vez de «Resultados». Es lo que más sube la retención según la regla 3 de las diez de PLOS.');
       if (!bloques.length) add('error', i, 'Diapositiva vacía', 'Añade contenido o quítala antes de presentar.');

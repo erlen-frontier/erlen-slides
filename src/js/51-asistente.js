@@ -396,15 +396,15 @@ accion({ id: 'transicion-lista', grp: 'Diseño', n: 'Ver todas las transiciones'
   corre: () => { S.tab = 'design'; renderInspector(); openDrawer(true); return 'Están en Diseño → Transición. Todas viajan al PDF como orden de transición de página de verdad.'; } });
 
 /* --- lo nuevo: diseñador, estilos, iconos y galería --- */
-accion({ id: 'ideas', grp: 'Insertar', n: 'Ideas de diseño para esta figura',
-  d: 'Mira la figura —forma, colores, dónde está el motivo y cuánto ruido tiene— y propone acomodos completos de la diapositiva, en miniatura y de verdad.',
-  clave: 'ideas diseno disenador propuestas acomodo figura',
-  frases: 'ideas de diseno disenador proponme acomodo para esta imagen figura que hago con esta foto',
-  siNo: 'Necesito una figura en esta diapositiva. Pídeme «insertar figura» y en cuanto elijas la imagen te propongo acomodos.',
+accion({ id: 'ideas', grp: 'Insertar', n: 'Ideas de diseño para esta diapositiva',
+  d: 'Mira lo que tiene la diapositiva —texto largo, figuras, una lista corta, una cifra, una cita, una ecuación— y, si hay imagen, su forma y sus colores; propone acomodos completos, en miniatura y de verdad.',
+  clave: 'ideas diseno disenador propuestas acomodo figura diapositiva smartart',
+  frases: 'ideas de diseno disenador proponme acomodo para esta diapositiva imagen figura que hago con esta foto convierte la lista en diagrama',
+  siNo: 'Las ideas de diseño trabajan sobre una diapositiva con contenido: ve a una que tenga texto, una lista o una figura.',
   corre: () => {
-    const im = zonas(curSlide()).flat().find(x => (x.type === 'image' && x.src) || x.type === 'galeria');
-    if (!im) return null;
-    abreDisenador(im);
+    const sl = curSlide();
+    if (!zonasDe(sl.layout) || !zonas(sl).flat().length) return null;
+    abreDisenador(figuraPrincipal(sl) || undefined);
     return 'Ahí van las ideas: cada miniatura es tu diapositiva ya cambiada. Toca la que te guste.';
   } });
 accion({ id: 'estilo-fig', grp: 'Insertar', n: 'Cambiar el estilo de la figura',
@@ -514,9 +514,9 @@ accion({ id: 'diagrama', grp: 'Figuras', n: 'Insertar un diagrama',
     return SK[v].n + ': ' + SK[v].d;
   } });
 accion({ id: 'acomodo', grp: 'Diapositivas', n: 'Cambiar el acomodo de la página',
-  d: 'Veintidós plantillas de página: además de las de siempre, figura a sangre, dato grande, cita destacada, pantalla partida, cuadrícula 3×2, tres filas, figura con pie ancho y zigzag.',
-  clave: 'acomodo plantilla de pagina distribucion sangre dato cita partida rejilla filas zigzag pie ancho',
-  frases: 'cambiar el acomodo plantilla de pagina figura a sangre dato grande cita destacada pantalla partida zigzag',
+  d: 'Veintiséis plantillas de página: además de las de siempre, en blanco, titular + figura, tres figuras, objetivos, figura a sangre, dato grande, cita destacada, pantalla partida, cuadrícula 3×2, tres filas, figura con pie ancho y zigzag.',
+  clave: 'acomodo plantilla de pagina distribucion blanco titular paneles objetivos sangre dato cita partida rejilla filas zigzag pie ancho',
+  frases: 'cambiar el acomodo plantilla de pagina en blanco titular y figura tres figuras objetivos figura a sangre dato grande cita destacada pantalla partida zigzag',
   arg: { n: 'acomodo', tipo: 'opcion', ops: () => LAYOUTS.filter(l => l.z > 0).map(l => ({ v: l.id, n: l.name })) },
   corre: v => { changeLayout(curSlide(), v); return LAY[v].name + ': ' + LAY[v].d; } });
 accion({ id: 'articulo', grp: 'Exportar', n: 'Esqueleto de artículo',

@@ -226,11 +226,14 @@ function guionHTML() {
     });
     if (!notas.firstChild) notas.append(h('p', { class: 'gu-vacio' }, '—'));
     const min = minutosDe(sl);
+    /* Las de respaldo no suman al reloj de la charla: llevan su R1, R2… y
+       sus minutos, sin acumulado. */
+    const resp = esRespaldo(sl);
     const fila = h('div', { class: 'gu-fila' },
-      h('div', { class: 'gu-izq' }, h('div', { class: 'gu-num' }, String(i + 1)), clip),
+      h('div', { class: 'gu-izq' }, h('div', { class: 'gu-num' }, rotuloDiapositiva(S.deck, i)), clip),
       h('div', { class: 'gu-der' },
         h('div', { class: 'gu-cab' }, h('b', null, (sl.title || '').trim() || (LAY[sl.layout] || {}).name || ''),
-          min ? h('span', { class: 'gu-min' }, mmss(min) + ' min · acumulado ' + mmss(minutosHasta(S.deck, i))) : null),
+          min ? h('span', { class: 'gu-min' }, mmss(min) + ' min · ' + (resp ? 'respaldo' : 'acumulado ' + mmss(minutosHasta(S.deck, i)))) : null),
         notas));
     wb.append(fila);
     return fila.outerHTML;
@@ -246,7 +249,7 @@ function guionHTML() {
     '.gu-head h1{margin:0 0 3px;font-size:20px}.gu-head p{margin:0;color:#5A6470;font-size:13px}' +
     '.gu-fila{display:flex;gap:16px;padding:12px 0;border-bottom:1px solid #DDE2E8;break-inside:avoid;page-break-inside:avoid}' +
     '.gu-izq{flex:none;display:flex;gap:8px}' +
-    '.gu-num{font:700 15px/1 ui-monospace,monospace;color:#8A94A0;width:22px;text-align:right;padding-top:3px}' +
+    '.gu-num{font:700 15px/1 ui-monospace,monospace;color:#8A94A0;width:28px;text-align:right;padding-top:3px}' +
     '.gu-mini{overflow:hidden;border:1px solid #C9D0D8;border-radius:4px;position:relative;background:#fff}' +
     '.gu-der{flex:1;min-width:0}' +
     '.gu-cab{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:5px}' +

@@ -25,12 +25,35 @@ Si ya tienes un Chromium o Chrome, puedes indicarlo con `ERLEN_CHROMIUM=/ruta/al
 
 ## Conectarlo a un cliente
 
+Lo más fácil es el instalador, desde la carpeta de `erlen-slides`:
+
+```sh
+npm run mcp:instalar
+```
+
+Comprueba Node, las dependencias y el build (si falta, o quedó viejo tras actualizar el código, ofrece construirlo), busca Chromium, pregunta qué cliente conectar y lo deja listo. Al final arranca el servidor con la configuración escrita para comprobar que responde. Sin preguntas:
+
+```sh
+npm run mcp:instalar -- --cliente claude-desktop              # escribe la configuración de Claude Desktop
+npm run mcp:instalar -- --cliente claude-code --ejecutar      # ejecuta «claude mcp add» por ti
+npm run mcp:instalar -- --cliente imprimir                    # solo muestra qué poner, sin tocar nada
+npm run mcp:instalar -- --cliente claude-desktop --carpeta ~/Presentaciones --dry-run
+```
+
+- **Claude Desktop**: edita `claude_desktop_config.json` donde Claude lo busca (macOS `~/Library/Application Support/Claude/`, Windows `%APPDATA%\Claude\`, Linux `~/.config/Claude/`). Antes guarda una copia al lado (`claude_desktop_config.json.respaldo-<fecha>`); conserva los demás servidores, los demás ajustes y la sangría del archivo; si el JSON está roto no lo toca y dice qué falla. Repetirlo no cambia nada. Después **cierra Claude Desktop del todo y vuelve a abrirlo**.
+- El comando que escribe es la ruta completa del Node con el que lo ejecutaste, no `node` a secas: Claude Desktop se abre sin el `PATH` de la terminal y a menudo no encuentra `node` (sobre todo con nvm, fnm o Homebrew). Por lo mismo, si el navegador solo se encontró gracias a `ERLEN_CHROMIUM` o `PLAYWRIGHT_BROWSERS_PATH`, su ruta queda fijada en la entrada. Si cambias de versión de Node o mueves la carpeta, vuelve a ejecutar el instalador.
+- `--compilar` y `--no-compilar` deciden sin preguntar si construir la aplicación; `--config <archivo>` usa otro `claude_desktop_config.json`; `--sin-prueba` no arranca el servidor al final.
+
+Si algo no funciona, pide a la IA «ejecuta el diagnóstico de Erlen Slides»: la herramienta [`diagnostico`](mcp-extensiones/diagnostico.md) dice qué falla y con qué comando se arregla.
+
+### A mano
+
 La carpeta de trabajo es `~/erlen-slides` salvo que indiques otra con `ERLEN_SLIDES_DIR`. Ahí viven los proyectos `.json`, las imágenes que quieras insertar y lo que se exporte.
 
 **Claude Code**, desde cualquier carpeta:
 
 ```sh
-claude mcp add erlen-slides -e ERLEN_SLIDES_DIR="$HOME/Presentaciones" -- node /ruta/a/erlen-slides/mcp/servidor.mjs
+claude mcp add erlen-slides --scope user -e ERLEN_SLIDES_DIR="$HOME/Presentaciones" -- node /ruta/a/erlen-slides/mcp/servidor.mjs
 ```
 
 **Claude Desktop**, en `claude_desktop_config.json` (Ajustes → Desarrollador → Editar configuración):
@@ -39,7 +62,7 @@ claude mcp add erlen-slides -e ERLEN_SLIDES_DIR="$HOME/Presentaciones" -- node /
 {
   "mcpServers": {
     "erlen-slides": {
-      "command": "node",
+      "command": "/ruta/completa/a/node",
       "args": ["/ruta/a/erlen-slides/mcp/servidor.mjs"],
       "env": { "ERLEN_SLIDES_DIR": "/Users/tu-usuario/Presentaciones" }
     }
@@ -47,7 +70,7 @@ claude mcp add erlen-slides -e ERLEN_SLIDES_DIR="$HOME/Presentaciones" -- node /
 }
 ```
 
-En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mjs`. Cualquier otro cliente MCP que lance servidores por stdio sirve igual: el comando es `node mcp/servidor.mjs`.
+La ruta completa de Node la da `node -p process.execPath`. En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mjs`. Cualquier otro cliente MCP que lance servidores por stdio sirve igual: el comando es `node mcp/servidor.mjs`.
 
 ## Qué puede hacer la IA
 
@@ -65,7 +88,7 @@ En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mj
 | `historial_presentacion`, `deshacer`, `rehacer` | Cada cambio guarda antes la versión anterior (las 50 últimas). |
 | `revisar_presentacion` | Calidad científica de las figuras, accesibilidad, estructura, tiempo frente a la duración disponible y avisos por formato. |
 | `vista_previa` | En Chromium: un mosaico numerado de toda la charla en una sola imagen, o diapositivas a tamaño real; siempre dice qué bloque se desborda y cuántos píxeles. |
-| `exportar_presentacion` | Beamer (carpeta con el `.tex` y las figuras, lista para Overleaf), HTML imprimible, PDF y PowerPoint. |
+| `exportar_presentacion` | Beamer (carpeta con el `.tex` y las figuras, lista para Overleaf), HTML imprimible, PDF y PowerPoint. Con la extensión [exportaciones](mcp-extensiones/exportaciones.md): PNG por diapositiva, folleto en PDF, paquete reproducible (.zip), figuras en SVG con sus datos en CSV e informe de exportación. |
 | `abrir_en_editor` | Abre el proyecto en el editor, en el navegador del usuario, para seguir a mano ([detalles](mcp-extensiones/editor.md)). |
 
 También ofrece tres *prompts* que el cliente puede mostrar como atajos: **presentación a partir de resultados**, **revisión antes de presentar** y **figura desde un archivo de datos**.
@@ -110,6 +133,7 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 
 - No inventar datos, cifras ni referencias. Lo que no venga del usuario se marca como ilustrativo en el pie y en las notas.
 - Las diapositivas nuevas nacen vacías. «Dato grande» y «Cita destacada» no heredan la cifra ni la atribución de muestra del editor.
+- `diseno: "blanco"` es la página en blanco: sin título, pie ni número, una sola zona para una figura grande, un esquema o una frase. `guia_formato` la marca con `sin_titulo`, y `revisar_presentacion` no le pide título. `titular` (la conclusión en una frase sobre la evidencia), `tresfig` (paneles (a), (b), (c)) y `objetivos` (general y específicos) completan los diseños para charlas científicas.
 - Cada cambio se valida con `saneaDeck` antes de guardarse; si falla, el archivo anterior queda intacto y la IA recibe el error. Un lote de diapositivas entra entero o no entra.
 - Se aceptan nombres de propiedad en español (`texto`, `pie`, `datos`, `ecuacion`, `eje_x`…). Una propiedad que la aplicación no usa se avisa, con la corrección probable («¿quisiste decir `align`?»).
 - Las rutas se interpretan dentro de la carpeta de trabajo: nada de `..` ni rutas absolutas fuera de ella. Las imágenes (PNG, JPEG, GIF, WebP, SVG; hasta 8 MB) se incrustan en el proyecto; los datos, hasta 20 MB.
@@ -127,13 +151,13 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 
 Las herramientas nuevas se añaden como extensiones, cada una en sus propios archivos, sin tocar el catálogo común:
 
-- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion`; `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES.
+- `mcp/extensiones/<id>.mjs` (Node): `export default { herramientas, prompts, convenciones, formatos, transformaBloque }`. Las herramientas tienen la misma forma que las del catálogo (`name`, `title`, `description`, `inputSchema`, `annotations`, `run`); `formatos` añade opciones a `exportar_presentacion` (si la función trae `propiedades`, sus parámetros entran en el esquema); `transformaBloque(bloque, {esImagen})` prepara un bloque antes de mandarlo a la app, como hacen las imágenes, los datos y los SMILES; si deja en el bloque `_importado: {…}`, ese informe sale en `datos_importados` de la respuesta, con el id del bloque, y no se guarda.
 - `mcp/extensiones/<id>.pagina.js` (dentro de la app): `ERLEN_MCP.registra(nombre, fn)` añade una operación y `ERLEN_MCP.registraRevision(nombre, fn)` una regla de `revisar_presentacion` (sus hallazgos salen en `adicional`). `ERLEN_MCP.util` da `valida`, `bloqueDesde`, `diapositivaNueva`, `lote`, `indiceDiapositiva`, `buscaBloque`, `cambiaDiseno`, `esquema`, `falla` y `avisa`.
 - Desde Node, `mcp/motor.mjs` exporta `op`, `modifica` (lee, aplica, valida, guarda en el historial y escribe), `lee`, `escribe`, `preparaEntrada`, `archivoEnCarpeta` y `compacta`; `mcp/navegador.mjs`, `sesion` e `imprimible` para lo que necesite Chromium.
 - Cada extensión documenta sus herramientas en `docs/mcp-extensiones/<id>.md` y se prueba en `tests/mcp-<id>.test.mjs` con el cliente de `tests/_mcp-cliente.mjs`.
 - Un nombre de herramienta, prompt o formato repetido detiene el servidor al arrancar, con el archivo culpable.
 
-La extensión de referencia es [estadísticas](mcp-extensiones/estadisticas.md). `ERLEN_MCP_EXTENSIONES` añade otra carpeta de extensiones (la usan las pruebas).
+La extensión de referencia es [estadísticas](mcp-extensiones/estadisticas.md); [tablas desde archivos](mcp-extensiones/tablas.md) usa `transformaBloque`. `ERLEN_MCP_EXTENSIONES` añade otra carpeta de extensiones (la usan las pruebas).
 
 ## Desarrollo
 

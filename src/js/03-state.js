@@ -216,7 +216,7 @@ function doRedo() {
 /* ---------- operaciones ---------- */
 function addSlide(layout, at) {
   if (typeof flushEdicion === 'function') flushEdicion();
-  const sl = { id: uid(), layout, title: layout === 'toc' ? 'Contenido' : layout === 'section' ? 'Nueva sección' : layout === 'title' ? '' : 'Título de la diapositiva', blocks: [] };
+  const sl = { id: uid(), layout, title: layout === 'toc' ? 'Contenido' : layout === 'section' ? 'Nueva sección' : (layout === 'title' || (LAY[layout] && LAY[layout].sinTitulo)) ? '' : 'Título de la diapositiva', blocks: [] };
   prepararZonas(sl, layout);
   /* Sin texto de relleno: una diapositiva nueva enseña solo el recuadro de cada
      zona, y ahí va lo que se inserte. Lo que había que explicar del diseño lo

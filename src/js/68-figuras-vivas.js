@@ -45,7 +45,10 @@ function animaHaciaDespues(b, deck, mode, avail, holder, alTerminar) {
   const dur = 750, t0 = performance.now();
   const paso = () => {
     const t = Math.min(1, (performance.now() - t0) / dur);
-    const clone = Object.assign({}, b, { data: lerpTabla(A, B, suaviza(t)) });
+    /* Los rótulos de picos marcan puntos del «antes»: en el cambio y en el
+       «después» señalarían valores que esos datos no tienen. Se deja su hueco
+       para que el marco no salte. */
+    const clone = Object.assign({}, b, { data: lerpTabla(A, B, suaviza(t)), _picosHueco: true });
     const svg = renderChart(clone, deck, mode === 'present' ? 'export' : mode, avail);
     const viejo = holder.querySelector('svg.chart-morph');
     svg.classList.add('chart-morph');
@@ -64,7 +67,7 @@ function renderDespues(b, deck, mode, avail, holder, fragN, stepShown, edit) {
   const capa = h('div', { class: 'despues-capa' });
   holder.classList.add('con-despues');
   if (esImagen) capa.append(h('img', { src: d.src, alt: b.alt || b.caption || 'Después' }));
-  else capa.append(renderChart(Object.assign({}, b, { data: d.data, capas: false }), deck, mode === 'present' ? 'export' : mode, avail));
+  else capa.append(renderChart(Object.assign({}, b, { data: d.data, capas: false, _picosHueco: true }), deck, mode === 'present' ? 'export' : mode, avail));
   if (mode === 'present') {
     capa.classList.add('frag', 'an-fade');
     capa.dataset.frag = fragN;
@@ -258,6 +261,12 @@ function panelFigurasVivas(b, refresca) {
       g.append(h('span', { class: 'sublabel' }, 'Qué dices en cada capa (va a la vista de presentador)'));
       nombres.forEach((n, k) => g.append(h('input', { class: 'field', style: 'margin-bottom:4px', value: notaCapa(b, k), placeholder: n,
         oninput: e => { if (!Array.isArray(b.capasTxt)) b.capasTxt = []; b.capasTxt[k] = e.target.value; }, onchange: () => commit() })));
+    }
+    /* Los rótulos de picos los pone el asistente (marcar_picos); aquí se ven
+       y se pueden quitar de una vez. */
+    if (Array.isArray(b.picos) && b.picos.length) {
+      g.append(h('p', { class: 'hint', style: 'margin-top:8px' }, 'Rótulos de picos: ' + b.picos.map(p => p.txt || sigFig(p.x, 4)).join(' · ')),
+        h('button', { class: 'btn btn-sm', onclick: () => { delete b.picos; commit(); refresca(); } }, 'Quitar los rótulos de picos'));
     }
   }
   /* antes / después */

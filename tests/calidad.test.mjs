@@ -61,6 +61,9 @@ test('La exportación SVG entrega una figura vectorial autónoma con metadatos',
     assert.equal((run('window.__svgDownload.text').match(/\sxmlns="http:\/\/www\.w3\.org\/2000\/svg"/g) || []).length, 1);
     assert.match(run('window.__svgDownload.text'), /erlen-scientific-figure-v1/);
     assert.doesNotMatch(run('window.__svgDownload.text'), /foreignObject/);
+    /* Los rótulos de los ejes van en HTML en la diapositiva; en el SVG, como texto. */
+    assert.match(run('window.__svgDownload.text'), /<text[^>]*>Tiempo \(s\)<\/text>/);
+    assert.match(run('window.__svgDownload.text'), /<text[^>]*rotate\(-90\)[^>]*>Señal \(V\)<\/text>/);
     assert.deepEqual(errors, []);
   } finally { dom.window.close(); }
 });

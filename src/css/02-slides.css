@@ -1104,6 +1104,39 @@ g.capa.frag.on{opacity:1;transition:opacity .45s}
 .ct-autor{align-self:flex-end;font-size:.8em;color:var(--smut);margin-top:var(--e4)}
 .ct-autor::before{content:'— '}
 .ct-autor.is-empty::before{content:''}
+/* --- en blanco: sin título ni pie, el margen es el mismo por los cuatro lados --- */
+.fbody.ly-blanco{padding:var(--fbx) calc(var(--fbx) * var(--padk,1))}
+
+/* --- titular + figura: la frase va sin barra, a dos líneas si hace falta --- */
+.frametitle.ft-titular{background:transparent;color:var(--sfg);border-bottom:0;
+  padding:calc(var(--fbx) * .62) var(--fbx) 0}
+.frametitle.ft-titular::before{display:none}
+.ft-titular .ft-t{font-size:calc(var(--sz-ft) * .9);font-weight:600;line-height:1.22;letter-spacing:0;
+  border-bottom:0;padding:0 0 0 .55em;border-left:5px solid var(--sacc);max-width:94%}
+.ft-titular .ft-t::after{display:none}
+.ft-titular .ft-s{padding-left:calc(.55em + 5px)}
+
+/* --- tres figuras --- */
+.cols.tresfig{gap:var(--gap-col);align-items:flex-start;flex:0 1 auto}
+.tf-panel{flex:1 1 0;min-width:0;gap:var(--e3)}
+.tf-rot{font-weight:700;font-size:.86em;line-height:1.2;color:var(--sacc-txt)}
+.tf-cu{display:flex;flex-direction:column;gap:var(--e3);min-width:0}
+.tf-cu .b-text,.tf-cu ul.bl li{font-size:.8em}
+.tf-cu figcaption,.tf-cu .chart-cap,.tf-cu .smart-cap{font-size:.62em;max-width:100%}
+/* La gráfica del panel se dibuja más ancha y se encoge (04-render.js): los
+   rótulos de los ejes, que son HTML, encogen con ella. */
+.tf-cu .chart-box{font-size:.62em}
+
+/* --- objetivos --- */
+.objetivos{display:flex;flex-direction:column;gap:var(--e6);flex:1;min-height:0}
+.obj-parte{display:flex;flex-direction:column;gap:var(--e3);min-width:0}
+.obj-parte.k0{padding:var(--e4) var(--e5);border-left:5px solid var(--sacc);
+  background:color-mix(in srgb,var(--sacc) 8%,transparent)}
+.obj-parte.k1{flex:1;min-height:0}
+.obj-tit{font-weight:700;font-size:.8em;letter-spacing:.02em;color:var(--sacc-txt)}
+.obj-cu{display:flex;flex-direction:column;gap:var(--e3);min-width:0;overflow:hidden}
+.obj-parte.k0 .obj-cu .b-text{font-size:1.06em;line-height:1.4}
+
 /* Una gráfica se dibuja con el alto que le pide el ancho del cuerpo, sin saber
    cuánto sitio queda debajo del título. En los temas de titulares grandes
    —Plenaria, sobre todo, con dos líneas a 48 px— eso se comía el eje de abajo.

@@ -58,29 +58,57 @@ function bloqueCientificoActual(deck) {
   return null;
 }
 
+/* El SVG autónomo de una gráfica o función: lo usan este botón y el servidor
+   MCP (formato «figuras» y el paquete reproducible), para que las dos salidas
+   no se aparten. Lanza un error si la gráfica no produce un SVG. */
+function figuraSVG(b, deck) {
+  const rendered = renderChart(Object.assign({}, b, { capas: false, despues: null }), deck || S.deck, 'export', 1200);
+  let svg = rendered && rendered.matches && rendered.matches('svg') ? rendered : rendered?.querySelector?.('svg');
+  if (!svg) throw new Error('La gráfica no produjo un SVG');
+  /* El namespace de un elemento creado con createElementNS ya lo conserva el
+     serializador; quitar el atributo explícito evita que JSDOM/WebKit lo
+     duplique al convertir el nodo a XML. */
+  svg.removeAttribute('xmlns');
+  svg.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+  /* En la diapositiva el título y los rótulos de los ejes van en HTML, para
+     componerlos con KaTeX, y se quedaban fuera: una figura sin ejes no sirve
+     en un artículo. Aquí van como texto, con las matemáticas en Unicode,
+     alrededor de la gráfica. */
+  const [, , W, H] = String(svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+  const tit = mathToUnicode(b.title), xl = mathToUnicode(b.xlabel), yl = mathToUnicode(b.ylabel);
+  if (W && H && (tit || xl || yl)) {
+    const P = chartPalette(deck || S.deck);
+    const L = yl ? 34 : 0, T = tit ? 36 : 0, B = xl ? 34 : 0;
+    const marco = sv('svg', { viewBox: `0 0 ${W + L} ${H + T + B}`, width: W + L, height: H + T + B,
+      role: 'img', 'aria-label': svg.getAttribute('aria-label') || '' });
+    marco.append(sv('rect', { width: W + L, height: H + T + B, fill: P.surface }));
+    if (tit) marco.append(sv('text', { x: L + W / 2, y: 24, 'text-anchor': 'middle', 'font-size': 22, 'font-weight': 700, fill: P.ink, text: tit }));
+    if (yl) marco.append(sv('text', { x: 0, y: 0, transform: `translate(24 ${T + H / 2}) rotate(-90)`, 'text-anchor': 'middle', 'font-size': 20, fill: P.ink, text: yl }));
+    if (xl) marco.append(sv('text', { x: L + W / 2, y: T + H + 26, 'text-anchor': 'middle', 'font-size': 20, fill: P.ink, text: xl }));
+    svg.setAttribute('x', L); svg.setAttribute('y', T);
+    svg.removeAttribute('role'); svg.removeAttribute('aria-label');
+    marco.append(svg);
+    marco.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+    svg = marco;
+  }
+  svg.setAttribute('version', '1.1');
+  const meta = document.createElementNS(SVGNS, 'metadata');
+  meta.textContent = JSON.stringify({
+    schema: 'erlen-scientific-figure-v1',
+    app: 'Erlen Slides', version: window.ERLEN?.version || 'desconocida',
+    generatedAt: new Date().toISOString(), title: b.title || '',
+    caption: b.caption || '', source: b.fuente || null
+  });
+  svg.insertBefore(meta, svg.firstChild);
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(svg);
+}
+
 function exportFiguraSVG() {
   flushEdicion();
   const b = bloqueCientificoActual(S.deck);
   if (!b) { toast('Selecciona una gráfica o función para exportarla como SVG', 'warn'); return false; }
   try {
-    const rendered = renderChart(Object.assign({}, b, { capas: false, despues: null }), S.deck, 'export', 1200);
-    const svg = rendered && rendered.matches && rendered.matches('svg') ? rendered : rendered?.querySelector?.('svg');
-    if (!svg) throw new Error('La gráfica no produjo un SVG');
-    /* El namespace de un elemento creado con createElementNS ya lo conserva el
-       serializador; quitar el atributo explícito evita que JSDOM/WebKit lo
-       duplique al convertir el nodo a XML. */
-    svg.removeAttribute('xmlns');
-    svg.setAttribute('version', '1.1');
-    svg.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
-    const meta = document.createElementNS(SVGNS, 'metadata');
-    meta.textContent = JSON.stringify({
-      schema: 'erlen-scientific-figure-v1',
-      app: 'Erlen Slides', version: window.ERLEN?.version || 'desconocida',
-      generatedAt: new Date().toISOString(), title: b.title || '',
-      caption: b.caption || '', source: b.fuente || null
-    });
-    svg.insertBefore(meta, svg.firstChild);
-    const xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(svg);
+    const xml = figuraSVG(b, S.deck);
     const nombre = deckSlug() + '-figura-' + String(b.id || 'grafica').slice(0, 8) + '.svg';
     downloadFile(nombre, xml, 'image/svg+xml;charset=utf-8');
     toast('SVG científico descargado');
