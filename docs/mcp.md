@@ -53,42 +53,64 @@ En Windows usa rutas como `C:\\Users\\tu-usuario\\erlen-slides\\mcp\\servidor.mj
 
 | Herramienta | Para qué |
 |---|---|
-| `guia_formato` | Diseños de diapositiva, temas, tipos de bloque con sus propiedades y convenciones (TeX, mhchem, datos de gráficas). |
-| `listar_presentaciones`, `listar_ejemplos` | Ver los proyectos de la carpeta y los doce ejemplos editables. |
-| `crear_presentacion` | Proyecto nuevo con portada, o copia de un ejemplo. No sobrescribe sin permiso. |
-| `ver_presentacion` | Esquema con cada diapositiva, sus zonas y el id de cada bloque; o el JSON completo. |
+| `guia_formato` | Diseños de diapositiva, temas, tipos de bloque con sus propiedades y convenciones (TeX, mhchem, datos). |
+| `listar_presentaciones`, `listar_ejemplos` | Los proyectos de la carpeta, del más reciente al más antiguo, y los doce ejemplos editables. |
+| `crear_presentacion` | Proyecto nuevo con portada y, si se quiere, todas sus diapositivas en una sola llamada; o copia de un ejemplo. |
+| `ver_presentacion` | Esquema con el id de cada bloque; una diapositiva completa; o el proyecto entero. Las imágenes incrustadas se resumen en su tipo y tamaño. |
 | `editar_metadatos` | Título, autores, institución, fecha, tema, aspecto, acento, tipografía. |
-| `agregar_diapositiva`, `editar_diapositiva`, `eliminar_diapositiva`, `mover_diapositiva` | La estructura de la charla, con notas del orador y minutos por diapositiva. |
-| `agregar_bloque`, `editar_bloque`, `eliminar_bloque` | Texto, viñetas, ecuaciones, reacciones, tablas, gráficas de datos, gráficas dinámicas, SmartArt, cajas Beamer, teoremas, código, citas e imágenes. |
-| `agregar_referencia` | Una referencia real y dónde se cita. |
-| `revisar_presentacion` | Calidad científica de las figuras, accesibilidad, estructura y avisos por formato. |
-| `vista_previa` | La diapositiva renderizada en Chromium, como imagen, y si algo se desborda. |
-| `exportar_presentacion` | Beamer (`.tex`), HTML imprimible, PDF y PowerPoint. |
+| `agregar_diapositivas`, `agregar_diapositiva` | Varias diapositivas de una vez (entran todas o ninguna) o una sola, con notas del orador y minutos. |
+| `editar_diapositiva`, `duplicar_diapositiva`, `mover_diapositiva`, `eliminar_diapositiva` | La estructura de la charla. |
+| `agregar_bloque`, `editar_bloque`, `eliminar_bloque` | Texto, viñetas, ecuaciones, reacciones, tablas, gráficas (también desde archivos del equipo), gráficas dinámicas, SmartArt, cajas Beamer, teoremas, código, citas e imágenes. |
+| `agregar_referencia` | Una referencia real, dónde se cita y su clave para citar en línea con `[@clave]`. |
+| `historial_presentacion`, `deshacer`, `rehacer` | Cada cambio guarda antes la versión anterior (las 50 últimas). |
+| `revisar_presentacion` | Calidad científica de las figuras, accesibilidad, estructura, tiempo frente a la duración disponible y avisos por formato. |
+| `vista_previa` | En Chromium: un mosaico numerado de toda la charla en una sola imagen, o diapositivas a tamaño real; siempre dice qué bloque se desborda y cuántos píxeles. |
+| `exportar_presentacion` | Beamer (carpeta con el `.tex` y las figuras, lista para Overleaf), HTML imprimible, PDF y PowerPoint. |
 
-Un pedido típico: «Con los datos de `xrd.csv` que te pego, hazme una presentación de 8 diapositivas para la reunión de grupo sobre la síntesis de HDL Zn-Al, tema Revista, y enséñame la vista previa». El asistente consulta la guía, crea el proyecto, añade diapositivas con sus bloques, revisa, mira la vista previa, corrige lo que se desborda y exporta.
+También ofrece tres *prompts* que el cliente puede mostrar como atajos: **presentación a partir de resultados**, **revisión antes de presentar** y **figura desde un archivo de datos**.
+
+Un pedido típico: «Con `drx/zn-al-ph10.xy` y mis notas, hazme una presentación de 10 minutos para la reunión de grupo sobre la síntesis de HDL Zn-Al, tema Marino, y enséñame el mosaico». El asistente consulta la guía, propone el guion, crea el proyecto con todas las diapositivas, revisa, mira el mosaico, corrige lo que se desborda y exporta.
 
 Después abre el `.json` en Erlen Slides («Abrir proyecto») para seguir editando a mano. Las estructuras químicas dibujadas, los montajes de laboratorio, las figuras geométricas, las galerías y los vídeos se editan mejor ahí: el servidor los conserva, pero no los construye.
+
+## Datos de tus equipos
+
+Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
+
+```json
+{"tipo": "chart", "archivo_datos": "drx/zn-al-ph10.xy", "caption": "DRX de la muestra a pH 10."}
+```
+
+- Se usa la misma lectura que al soltar un archivo en el editor: detecta separador (tabulador, `;`, `,` o espacios), coma decimal y encabezados.
+- Reconoce la técnica por el nombre y el intervalo de los datos (XRD, FTIR, UV-Vis, TGA, Raman, voltamperometría, fotoluminiscencia) y rotula los ejes con sus unidades; el FTIR sale con el eje invertido. `tecnica` la fuerza si se equivoca.
+- `columnas` elige cuáles usar (`[1, 3]`: x y la tercera columna, contando desde 1).
+- Por encima de 1500 puntos (`max_puntos`) se submuestrea con el mínimo y el máximo de cada intervalo: **cada pico conserva su posición y su intensidad exactas**. La respuesta dice cuántas filas tenía el archivo y cuántas se guardaron.
+- La gráfica registra su procedencia (archivo, fecha, filas y huella SHA-256), igual que en el editor. Si después alguien cambia los datos a mano, la procedencia se retira y se avisa: no se atribuye al archivo lo que ya no viene de él.
+- Los archivos binarios de algunos equipos no se pueden leer: expórtalos como texto (CSV, TXT, XY, DAT).
 
 ## Reglas que el servidor le da a la IA
 
 - No inventar datos, cifras ni referencias. Lo que no venga del usuario se marca como ilustrativo en el pie y en las notas.
 - Las diapositivas nuevas nacen vacías. «Dato grande» y «Cita destacada» no heredan la cifra ni la atribución de muestra del editor.
-- Cada cambio se valida con `saneaDeck` antes de guardarse; si falla, el archivo anterior queda intacto y la IA recibe el error. Los avisos de reparación se devuelven siempre.
-- Las rutas se interpretan dentro de la carpeta de trabajo: nada de `..` ni rutas absolutas fuera de ella. Las imágenes (PNG, JPEG, GIF, WebP, SVG; hasta 8 MB) se incrustan en el proyecto.
+- Cada cambio se valida con `saneaDeck` antes de guardarse; si falla, el archivo anterior queda intacto y la IA recibe el error. Un lote de diapositivas entra entero o no entra.
+- Se aceptan nombres de propiedad en español (`texto`, `pie`, `datos`, `ecuacion`, `eje_x`…). Una propiedad que la aplicación no usa se avisa, con la corrección probable («¿quisiste decir `align`?»).
+- Las rutas se interpretan dentro de la carpeta de trabajo: nada de `..` ni rutas absolutas fuera de ella. Las imágenes (PNG, JPEG, GIF, WebP, SVG; hasta 8 MB) se incrustan en el proyecto; los datos, hasta 20 MB.
+- El historial vive en `.historial/` dentro de la carpeta de trabajo. Se puede borrar sin perder las presentaciones.
 
 ## Límites
 
-- `revisar_presentacion` corre en JSDOM y no mide: el contraste y el desbordamiento solo los comprueba `vista_previa`, en Chromium.
+- `revisar_presentacion` corre en JSDOM y no mide: el desbordamiento lo comprueba `vista_previa`, en Chromium, y el contraste, la revisión del propio editor.
+- Chromium se busca solo: el de `playwright-core`, Chrome o Edge instalados, otros Chromium de Playwright y los del sistema. `ERLEN_CHROMIUM` fija uno.
 - El PowerPoint es el del editor: texto y tablas editables, gráficas como imagen. Ábrelo antes de enviarlo.
-- El `.tex` requiere una instalación de LaTeX u Overleaf; su compilación no forma parte de la validación.
+- El `.tex` requiere una instalación de LaTeX u Overleaf; su compilación no forma parte de la validación. Las figuras con forma, marco, sombra o filtro salen sin ese estilo (se avisa); «Exportar figuras» del editor las da con él. Las imágenes GIF, WebP o SVG hay que convertirlas a PNG o PDF.
 - La primera llamada tarda unos segundos: carga la aplicación. Las siguientes son inmediatas.
 
 ## Desarrollo
 
-- `mcp/servidor.mjs`: protocolo MCP (JSON-RPC 2.0 sobre stdio, versiones `2025-06-18`, `2025-03-26` y `2024-11-05`) y catálogo de herramientas. Sin dependencias nuevas.
-- `mcp/motor.mjs`: carpeta de trabajo, lectura y escritura atómica, y la aplicación construida cargada en JSDOM.
+- `mcp/servidor.mjs`: protocolo MCP (JSON-RPC 2.0 sobre stdio, versiones `2025-06-18`, `2025-03-26` y `2024-11-05`; `structuredContent` desde la primera), catálogo de herramientas y *prompts*. Sin dependencias nuevas.
+- `mcp/motor.mjs`: carpeta de trabajo, escritura atómica, historial, lectura de imágenes y datos, y la aplicación construida cargada en JSDOM.
 - `mcp/operaciones.js`: las operaciones sobre el proyecto. Se evalúa dentro de la página, en el ámbito de los módulos, para usar sus funciones reales.
 - `mcp/navegador.mjs`: vista previa, PDF y PowerPoint en Chromium, con `public/` servido en `127.0.0.1`.
-- `tests/mcp.test.mjs`: arranca el servidor como un cliente y construye, revisa y exporta una presentación.
+- `tests/mcp.test.mjs`: arranca el servidor como un cliente; prueba el protocolo, construye una presentación con datos de difracción, la revisa, deshace, rehace y exporta. La prueba de vista previa, PDF y PowerPoint se salta si no hay Chromium.
 
 Si cambia el formato de un bloque en `src/js/`, la guía lo refleja sola (`newBlock`); revisa además las convenciones de `mcp/servidor.mjs`.

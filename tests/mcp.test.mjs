@@ -1,15 +1,21 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 /* El servidor MCP de punta a punta, como lo usaría un cliente: se arranca por
-   stdio, se negocia el protocolo y se construye una presentación completa con
-   las herramientas. Requiere el build (public/index.html). La vista previa,
-   el PDF y el PowerPoint usan Chromium y no se prueban aquí. */
+   stdio, se negocia el protocolo y se construye, revisa, deshace y exporta
+   una presentación con las herramientas. Requiere el build
+   (public/index.html). La vista previa, el PDF y el PowerPoint necesitan
+   Chromium: su prueba se salta si no hay ninguno. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {mkdtempSync, readFileSync, writeFileSync, existsSync, rmSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {mkdtempSync, readFileSync, writeFileSync, existsSync, rmSync, mkdirSync, readdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createInterface} from 'node:readline';
+
+/* Un PNG de 1×1 con relleno detrás del IEND: los lectores lo ignoran y pesa
+   lo bastante para que la respuesta tenga que resumirlo. */
+const PNG = Buffer.concat([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'), Buffer.alloc(4096)]);
 
 function cliente(dir) {
   const proc = spawn(process.execPath, [new URL('../mcp/servidor.mjs', import.meta.url).pathname], {env: {...process.env, ERLEN_SLIDES_DIR: dir}, stdio: ['pipe', 'pipe', 'pipe']});
@@ -24,101 +30,189 @@ function cliente(dir) {
   const llama = async (name, args) => {
     const r = await pide('tools/call', {name, arguments: args});
     const texto = r.result.content[0].text;
-    return {error: !!r.result.isError, texto, datos: r.result.isError ? null : JSON.parse(texto)};
+    return {error: !!r.result.isError, texto, datos: r.result.isError ? null : JSON.parse(texto), crudo: r.result};
   };
-  return {proc, pide, llama, ruido, avisa: m => proc.stdin.write(JSON.stringify({jsonrpc: '2.0', ...m}) + '\n'), cierra: () => new Promise(ok => { proc.on('exit', ok); proc.stdin.end(); })};
+  const inicia = async (version = '2025-06-18') => {
+    const r = await pide('initialize', {protocolVersion: version, capabilities: {}, clientInfo: {name: 'prueba', version: '0'}});
+    proc.stdin.write(JSON.stringify({jsonrpc: '2.0', method: 'notifications/initialized'}) + '\n');
+    return r;
+  };
+  return {proc, pide, llama, inicia, ruido, cierra: () => new Promise(ok => { proc.on('exit', ok); proc.stdin.end(); })};
 }
-
-test('servidor MCP: protocolo y construcción de una presentación', {timeout: 120000}, async () => {
+async function conServidor(fn, version) {
   const dir = mkdtempSync(join(tmpdir(), 'erlen-mcp-'));
   const c = cliente(dir);
-  try {
-    const ini = await c.pide('initialize', {protocolVersion: '2025-06-18', capabilities: {}, clientInfo: {name: 'prueba', version: '0'}});
-    assert.equal(ini.result.protocolVersion, '2025-06-18');
-    assert.equal(ini.result.serverInfo.name, 'erlen-slides');
-    assert.ok(ini.result.capabilities.tools);
-    c.avisa({method: 'notifications/initialized'});
+  try { await c.inicia(version); await fn(c, dir); assert.deepEqual(c.ruido, [], 'stdout solo lleva mensajes del protocolo'); }
+  finally { await c.cierra(); rmSync(dir, {recursive: true, force: true}); }
+}
+const proyecto = (dir, n) => JSON.parse(readFileSync(join(dir, n + '.json'), 'utf8'));
+const bloques = sl => ['blocks', 'blocks2', 'blocks3', 'blocks4'].flatMap(k => sl[k] || []);
 
+test('MCP: protocolo, catálogo y prompts', {timeout: 120000}, async () => {
+  await conServidor(async c => {
     const {result: {tools}} = await c.pide('tools/list');
     const nombres = tools.map(t => t.name);
-    for (const t of ['guia_formato', 'crear_presentacion', 'agregar_diapositiva', 'agregar_bloque', 'editar_bloque', 'revisar_presentacion', 'exportar_presentacion', 'vista_previa'])
+    for (const t of ['guia_formato', 'crear_presentacion', 'agregar_diapositivas', 'duplicar_diapositiva', 'agregar_bloque', 'editar_bloque', 'deshacer', 'rehacer', 'historial_presentacion', 'revisar_presentacion', 'exportar_presentacion', 'vista_previa'])
       assert.ok(nombres.includes(t), 'falta ' + t);
-    tools.forEach(t => assert.equal(t.inputSchema.type, 'object'));
+    /* Un tipo por propiedad: varios clientes rechazan «type» en lista. */
+    const recorre = v => { if (Array.isArray(v)) v.forEach(recorre); else if (v && typeof v === 'object') { assert.ok(!Array.isArray(v.type), JSON.stringify(v).slice(0, 80)); Object.values(v).forEach(recorre); } };
+    tools.forEach(t => { assert.equal(t.inputSchema.type, 'object'); assert.ok(t.annotations); recorre(t.inputSchema); });
 
-    const guia = (await c.llama('guia_formato', {})).datos;
-    assert.ok(guia.disenos.some(d => d.id === 'twocol' && d.zonas === 2));
-    assert.ok(guia.temas.some(t => t.id === 'metropolis'));
-    assert.deepEqual(guia.disenos.find(d => d.id === 'dato').encabezados, ['', ''], 'la cifra de muestra no se ofrece como contenido');
+    const {result: {prompts}} = await c.pide('prompts/list');
+    assert.ok(prompts.some(p => p.name === 'presentacion_desde_resultados'));
+    const p = await c.pide('prompts/get', {name: 'presentacion_desde_resultados', arguments: {tema: 'HDL Zn-Al', minutos: '12'}});
+    assert.match(p.result.messages[0].content.text, /HDL Zn-Al[\s\S]*minutos_objetivo=12/);
+    assert.equal((await c.pide('prompts/get', {name: 'figura_desde_datos', arguments: {}})).error.code, -32602);
 
-    const creada = await c.llama('crear_presentacion', {archivo: 'hdl', titulo: 'Síntesis de HDL Zn-Al', autores: 'Autora de prueba', tema: 'revista'});
+    const guia = await c.llama('guia_formato', {});
+    assert.ok(guia.datos.disenos.some(d => d.id === 'twocol' && d.zonas === 2));
+    assert.deepEqual(guia.datos.disenos.find(d => d.id === 'dato').encabezados, ['', ''], 'la cifra de muestra no se ofrece como contenido');
+    assert.ok(guia.crudo.structuredContent, 'structuredContent en 2025-06-18');
+
+    assert.match((await c.llama('crear_presentacion', {})).texto, /Falta «archivo»/);
+    assert.match((await c.llama('herramienta_rara', {})).texto, /Herramienta desconocida/);
+    assert.equal((await c.pide('metodo/raro', {})).error.code, -32601);
+  });
+  await conServidor(async c => {
+    assert.equal((await c.llama('listar_ejemplos', {})).crudo.structuredContent, undefined, 'sin structuredContent en versiones anteriores');
+  }, '2025-03-26');
+});
+
+test('MCP: construir, importar datos, revisar, deshacer y exportar', {timeout: 180000}, async () => {
+  await conServidor(async (c, dir) => {
+    /* Un difractograma ficticio de prueba: 3000 puntos, coma decimal y un pico. */
+    mkdirSync(join(dir, 'datos'));
+    const filas = ['2Theta;Intensity'];
+    for (let i = 0; i < 3000; i++) { const x = 5 + i * 0.02; filas.push(x.toFixed(2).replace('.', ',') + ';' + (100 + 900 * Math.exp(-((x - 11.7) ** 2) / 0.01)).toFixed(1).replace('.', ',')); }
+    writeFileSync(join(dir, 'datos', 'muestra-xrd.csv'), filas.join('\n'));
+    writeFileSync(join(dir, 'sem.png'), PNG);
+
+    const creada = await c.llama('crear_presentacion', {archivo: 'hdl', titulo: 'Síntesis de HDL Zn-Al', autores: 'Autora de prueba', tema: 'revista', diapositivas: [
+      {diseno: 'twocol', titulo: 'Condiciones de síntesis', notas: 'Explicar el pH.', minutos: 2,
+        zonas: [[{tipo: 'bullets', items: ['Coprecipitación a pH constante', 'Relación Zn/Al = 2']}], [{tipo: 'chem', ecuacion: 'Zn^2+ + 2 OH- -> Zn(OH)2 v'}]]},
+      {diseno: 'content', titulo: 'La fase es pura', minutos: 2, zonas: [[{tipo: 'chart', archivo_datos: 'datos/muestra-xrd.csv', pie: 'Difractograma de la muestra a pH 10.'}]]},
+      {diseno: 'dato', encabezados: ['2:1', 'relación molar Zn/Al'], minutos: 1},
+      {diseno: 'content', titulo: 'Morfología', minutos: 1, zonas: [[{tipo: 'image', archivo: 'sem.png', caption: 'SEM.', w: 60}, {tipo: 'text', texto: 'Placas.', tamaño: 'l', algin: 'center'}]]}
+    ]});
     assert.equal(creada.error, false, creada.texto);
-    assert.equal(creada.datos.archivo, 'hdl.json');
-    assert.equal((await c.llama('crear_presentacion', {archivo: 'hdl'})).error, true, 'no sobrescribe sin pedirlo');
+    assert.equal(creada.datos.diapositivas, 5);
+    const imp = creada.datos.datos_importados[0];
+    assert.equal(imp.tecnica, 'Difracción de rayos X');
+    assert.equal(imp.filas_archivo, 3000);
+    assert.ok(imp.filas_guardadas <= 1500 && imp.filas_guardadas >= 700, 'una línea base plana guarda un punto por intervalo: ' + imp.filas_guardadas);
+    assert.ok(creada.datos.avisos.some(a => /«algin»[\s\S]*«align»/.test(a)), 'avisa de la errata y sugiere la propiedad: ' + creada.datos.avisos);
+    assert.equal(creada.datos.avisos.length, 1, 'los alias no generan avisos: ' + creada.datos.avisos);
 
-    const d2 = await c.llama('agregar_diapositiva', {archivo: 'hdl', diseno: 'twocol', titulo: 'Condiciones de síntesis', notas: 'Explicar el pH.', minutos: 2,
-      zonas: [[{tipo: 'bullets', items: ['Coprecipitación a pH constante', 'Relación Zn/Al = 2']}], [{tipo: 'chem', tex: 'Zn^2+ + 2 OH- -> Zn(OH)2 v'}]]});
-    assert.equal(d2.error, false, d2.texto);
-    assert.equal(d2.datos.diapositiva, 2);
+    let d = proyecto(dir, 'hdl');
+    assert.equal(d.slides[1].blocks2[0].tex, 'Zn^2+ + 2 OH- -> Zn(OH)2 v', 'alias ecuacion → tex');
+    const graf = d.slides[2].blocks[0];
+    assert.equal(graf.xlabel, '2θ (°)');
+    assert.equal(graf.caption, 'Difractograma de la muestra a pH 10.', 'alias pie → caption');
+    assert.equal(graf.fuente.nombre, 'muestra-xrd.csv');
+    assert.equal(graf.fuente.instrumento, 'Difracción de rayos X');
+    assert.equal(graf.fuente.huella, createHash('sha256').update(graf.data).digest('hex').slice(0, 10), 'la huella es la de huellaDe');
+    const ys = graf.data.split('\n').slice(1).map(l => +l.split('\t')[1]);
+    const xs = graf.data.split('\n').slice(1).map(l => +l.split('\t')[0]);
+    assert.equal(Math.max(...ys), 1000, 'el submuestreo conserva la intensidad del pico');
+    assert.equal(xs[ys.indexOf(1000)], 11.7, 'y su posición');
+    assert.equal(d.slides[4].blocks[0].src.slice(0, 22), 'data:image/png;base64,');
+    assert.equal(d.slides[4].blocks[1].text, 'Placas.');
+    assert.equal(d.slides[4].blocks[1].size, 'l', 'alias tamaño → size');
 
-    const graf = await c.llama('agregar_bloque', {archivo: 'hdl', diapositiva: 2, zona: 2, bloque: {tipo: 'chart', kind: 'dispersion', data: [['t', 'Conversión'], [0, 0], [10, 34], [20, 63]], xlabel: 'Tiempo (min)', ylabel: 'Conversión (%)', caption: 'Datos ilustrativos.'}});
-    assert.equal(graf.error, false, graf.texto);
-    const idGraf = graf.datos.id;
+    /* Un lote con un error no escribe nada y dice cuál falló. */
+    const malo = await c.llama('agregar_diapositivas', {archivo: 'hdl', diapositivas: [{titulo: 'Bien'}, {titulo: 'Mal', diseno: 'inventado'}]});
+    assert.match(malo.texto, /Diapositiva 2 del lote \(«Mal»\): Diseño desconocido/);
+    assert.equal(proyecto(dir, 'hdl').slides.length, 5);
 
     assert.equal((await c.llama('agregar_bloque', {archivo: 'hdl', diapositiva: 2, zona: 3, bloque: {tipo: 'text', text: 'x'}})).error, true, 'zona fuera de rango');
     assert.equal((await c.llama('agregar_bloque', {archivo: 'hdl', diapositiva: 1, bloque: {tipo: 'text', text: 'x'}})).error, true, 'la portada no admite bloques');
     assert.match((await c.llama('agregar_bloque', {archivo: 'hdl', diapositiva: 2, bloque: {tipo: 'nube'}})).texto, /Tipo de bloque desconocido/);
+    assert.match((await c.llama('agregar_bloque', {archivo: 'hdl', diapositiva: 2, bloque: {tipo: 'text', archivo_datos: 'datos/muestra-xrd.csv'}})).texto, /solo vale para bloques «chart»/);
+    assert.match((await c.llama('agregar_bloque', {archivo: 'hdl', diapositiva: 2, bloque: {tipo: 'chart', archivo_datos: 'no-existe.csv'}})).texto, /No existe el archivo de datos/);
 
-    assert.equal((await c.llama('editar_bloque', {archivo: 'hdl', bloque: idGraf, cambios: {ylabel: 'Conversión de Zn (%)'}})).error, false);
-    assert.equal((await c.llama('agregar_diapositiva', {archivo: 'hdl', diseno: 'dato', encabezados: ['2:1', 'relación molar Zn/Al']})).error, false);
-    assert.equal((await c.llama('mover_diapositiva', {archivo: 'hdl', diapositiva: 3, a: 2})).error, false);
-    const ref = await c.llama('agregar_referencia', {archivo: 'hdl', autores: 'Autor, A.', titulo: 'Título verificado', anio: '2020', clave: 'Autor2020', diapositivas: [3]});
+    /* Cambiar los datos a mano retira la procedencia. */
+    const ed = await c.llama('editar_bloque', {archivo: 'hdl', bloque: graf.id, cambios: {data: [['x', 'y'], [1, 2], [2, 3]]}});
+    assert.ok(ed.datos.avisos.some(a => /se quitó la procedencia/.test(a)));
+    assert.equal(proyecto(dir, 'hdl').slides[2].blocks[0].fuente, undefined);
+
+    /* Deshacer y rehacer. */
+    let h = (await c.llama('historial_presentacion', {archivo: 'hdl'})).datos;
+    assert.equal(h.deshacer[0].antes_de, 'editar_bloque');
+    const des = await c.llama('deshacer', {archivo: 'hdl'});
+    assert.equal(des.error, false, des.texto);
+    assert.equal(proyecto(dir, 'hdl').slides[2].blocks[0].fuente.nombre, 'muestra-xrd.csv');
+    assert.equal((await c.llama('rehacer', {archivo: 'hdl'})).error, false);
+    assert.equal(proyecto(dir, 'hdl').slides[2].blocks[0].fuente, undefined);
+    await c.llama('deshacer', {archivo: 'hdl'});
+    await c.llama('mover_diapositiva', {archivo: 'hdl', diapositiva: 4, a: 2});
+    assert.match((await c.llama('rehacer', {archivo: 'hdl'})).texto, /No hay nada que rehacer/, 'un cambio nuevo vacía rehacer');
+
+    const dup = await c.llama('duplicar_diapositiva', {archivo: 'hdl', diapositiva: 3});
+    assert.equal(dup.datos.copia, 4);
+    d = proyecto(dir, 'hdl');
+    assert.equal(d.slides.length, 6);
+    assert.notEqual(bloques(d.slides[2])[0].id, bloques(d.slides[3])[0].id, 'la copia tiene ids nuevos');
+    await c.llama('eliminar_diapositiva', {archivo: 'hdl', diapositiva: 4});
+
+    const ref = await c.llama('agregar_referencia', {archivo: 'hdl', autores: 'Autor, A.', titulo: 'Título de prueba', anio: '2020', clave: 'Autor2020', diapositivas: [3]});
     assert.equal(ref.error, false, ref.texto);
-
-    const proyecto = JSON.parse(readFileSync(join(dir, 'hdl.json'), 'utf8'));
-    assert.equal(proyecto.v, 1);
-    assert.equal(proyecto.slides.length, 3);
-    assert.equal(proyecto.slides[1].layout, 'dato');
-    assert.deepEqual(proyecto.slides[1].zt, ['2:1', 'relación molar Zn/Al']);
-    const dos = proyecto.slides[2];
-    assert.equal(dos.layout, 'twocol');
-    assert.deepEqual(dos.blocks[0].items, [{t: 'Coprecipitación a pH constante', lvl: 0}, {t: 'Relación Zn/Al = 2', lvl: 0}]);
-    assert.equal(dos.blocks2[1].data, 't\tConversión\n0\t0\n10\t34\n20\t63');
-    assert.equal(dos.blocks2[1].ylabel, 'Conversión de Zn (%)');
-    assert.deepEqual(dos.citas, [ref.datos.id]);
+    assert.deepEqual(proyecto(dir, 'hdl').slides[2].citas, [ref.datos.id]);
 
     const vista = (await c.llama('ver_presentacion', {archivo: 'hdl'})).datos;
-    assert.equal(vista.diapositivas.length, 3);
-    assert.equal(vista.diapositivas[2].zonas[1][1].tipo, 'chart');
-    assert.equal(vista.minutos, 2);
+    assert.equal(vista.diapositivas.length, 5);
+    assert.equal(vista.minutos, 6);
+    const una = (await c.llama('ver_presentacion', {archivo: 'hdl', diapositiva: 5})).datos;
+    assert.match(una.diapositiva.blocks[0].src, /^\[image\/png incrustado, \d+ KB\]$/, 'sin base64 en la respuesta');
 
-    const rev = (await c.llama('revisar_presentacion', {archivo: 'hdl'})).datos;
-    assert.ok(rev.calidad_cientifica.some(f => f.bloque === idGraf && /procedencia/.test(f.problema)));
+    const rev = (await c.llama('revisar_presentacion', {archivo: 'hdl', minutos_objetivo: 15})).datos;
+    assert.equal(rev.tiempo.minutos_previstos, 6);
+    assert.match(rev.tiempo.valoracion, /Queda corta/);
 
     const tex = await c.llama('exportar_presentacion', {archivo: 'hdl', formato: 'beamer'});
     assert.equal(tex.error, false, tex.texto);
-    const fuente = readFileSync(join(dir, 'hdl.tex'), 'utf8');
+    assert.equal(tex.datos.carpeta, 'hdl-beamer');
+    const fuente = readFileSync(join(dir, 'hdl-beamer', 'hdl.tex'), 'utf8');
     assert.match(fuente, /\\documentclass\[aspectratio=169/);
     assert.match(fuente, /\\ce\{Zn\^2\+ \+ 2 OH- -> Zn\(OH\)2 v\}/);
+    const fig = readdirSync(join(dir, 'hdl-beamer')).find(n => n.endsWith('.png'));
+    assert.ok(fig && fuente.includes('{' + fig.replace(/\.png$/, '') + '}'), 'la figura se llama como la espera el .tex');
+    assert.deepEqual(readFileSync(join(dir, 'hdl-beamer', fig)), PNG);
     assert.equal((await c.llama('exportar_presentacion', {archivo: 'hdl', formato: 'html'})).error, false);
     assert.match(readFileSync(join(dir, 'hdl.html'), 'utf8'), /Síntesis de HDL Zn-Al/);
 
     assert.match((await c.llama('ver_presentacion', {archivo: '../fuera'})).texto, /fuera de la carpeta de trabajo/);
     writeFileSync(join(dir, 'roto.json'), '{');
     assert.match((await c.llama('ver_presentacion', {archivo: 'roto'})).texto, /no es un JSON válido/);
+    const antes = readFileSync(join(dir, 'hdl.json'), 'utf8');
     assert.equal((await c.llama('eliminar_diapositiva', {archivo: 'hdl', diapositiva: 9})).error, true);
-    assert.equal(JSON.parse(readFileSync(join(dir, 'hdl.json'), 'utf8')).slides.length, 3, 'un error no toca el archivo');
+    assert.equal(readFileSync(join(dir, 'hdl.json'), 'utf8'), antes, 'un error no toca el archivo');
+    assert.match((await c.llama('crear_presentacion', {archivo: 'hdl'})).texto, /ya existe/);
 
     const ej = await c.llama('crear_presentacion', {archivo: 'curso/cinetica', desde_ejemplo: 'cinetica', autores: 'Yo'});
     assert.equal(ej.error, false, ej.texto);
-    assert.ok(existsSync(join(dir, 'curso', 'cinetica.json')));
     const lista = (await c.llama('listar_presentaciones', {})).datos.presentaciones.map(p => p.archivo).sort();
-    assert.deepEqual(lista, ['curso/cinetica.json', 'hdl.json']);
+    assert.deepEqual(lista, ['curso/cinetica.json', 'hdl.json'], 'el historial no aparece como presentación');
+  });
+});
 
-    const desconocido = await c.pide('metodo/raro', {});
-    assert.equal(desconocido.error.code, -32601);
-    assert.deepEqual(c.ruido, [], 'stdout solo lleva mensajes del protocolo');
-  } finally {
-    await c.cierra();
-    rmSync(dir, {recursive: true, force: true});
-  }
+test('MCP: vista previa, PDF y PowerPoint en Chromium', {timeout: 240000}, async t => {
+  await conServidor(async (c, dir) => {
+    await c.llama('crear_presentacion', {archivo: 'p', titulo: 'Prueba', diapositivas: [
+      {titulo: 'Corta', zonas: [[{tipo: 'text', text: 'Hola.'}]]},
+      {titulo: 'Larga', zonas: [[{tipo: 'text', text: 'palabra '.repeat(500)}]]}]});
+    const v = await c.llama('vista_previa', {archivo: 'p'});
+    if (v.error && /No se encontró Chromium/.test(v.texto)) { t.skip('sin Chromium'); return; }
+    assert.equal(v.error, false, v.texto);
+    assert.equal(v.datos.modo, 'mosaico');
+    assert.equal(v.crudo.content.filter(x => x.type === 'image').length, 1);
+    const larga = proyecto(dir, 'p').slides[2].blocks[0].id;
+    assert.deepEqual(v.datos.desbordes.map(x => x.n), [3], 'solo se desborda la diapositiva larga');
+    assert.equal(v.datos.desbordes[0].desbordes[0].bloque, larga);
+    const det = await c.llama('vista_previa', {archivo: 'p', diapositiva: [1, 2]});
+    assert.equal(det.crudo.content.filter(x => x.type === 'image').length, 2);
+    assert.equal((await c.llama('exportar_presentacion', {archivo: 'p', formato: 'pdf'})).error, false);
+    assert.equal(readFileSync(join(dir, 'p.pdf')).subarray(0, 5).toString(), '%PDF-');
+    assert.equal((await c.llama('exportar_presentacion', {archivo: 'p', formato: 'pptx'})).error, false);
+    assert.equal(readFileSync(join(dir, 'p.pptx')).subarray(0, 2).toString(), 'PK');
+  });
 });

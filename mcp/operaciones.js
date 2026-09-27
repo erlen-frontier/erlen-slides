@@ -47,22 +47,134 @@ var ERLEN_MCP = (function () {
     if (!Array.isArray(v)) return v;
     return v.map(f => (Array.isArray(f) ? f : [f]).map(c => String(c == null ? '' : c).replace(/[\t\n]/g, ' ')).join('\t')).join('\n');
   }
-  function aplicaPropiedades(b, props) {
-    Object.keys(props || {}).forEach(k => {
-      if (k === 'tipo' || k === 'type' || k === 'id') return;
-      let v = props[k];
+  /* Un modelo escribe a menudo el nombre en español («texto», «pie»): se
+     traduce si la propiedad de destino existe en ese tipo de bloque. */
+  const ALIAS = {
+    texto: 'text', pie: 'caption', leyenda_figura: 'caption', datos: 'data', filas: 'rows', ancho: 'w',
+    ecuacion: 'tex', formula: 'tex', reaccion: 'tex', cuerpo: 'body', autor: 'by', lenguaje: 'lang', clase: 'kind',
+    eje_x: 'xlabel', eje_y: 'ylabel', elementos: 'items', vinetas: 'items', encabezado: 'header', tamano: 'size', tamanio: 'size', 'tamaño': 'size', alineacion: 'align',
+    titulo: ['btitle', 'title', 'titulo'], alto: 'hpx', curvas: 'curves', parametros: 'params', animacion: 'anim', texto_alterno: 'alt'
+  };
+  /* Propiedades que la aplicación lee de algún bloque: lo que no esté aquí
+     ni en los valores por omisión es casi seguro una errata. Se sacan del
+     propio build para que la lista no se quede atrás. */
+  const CONOCIDAS = new Set();
+  Array.from(document.scripts).forEach(s => { for (const m of s.textContent.matchAll(/\bb\.([A-Za-z_$][\w$]*)/g)) CONOCIDAS.add(m[1]); });
+  ['archivo', 'archivo_datos', 'columnas', 'max_puntos', 'tecnica'].forEach(k => CONOCIDAS.add(k));
+  let AVISOS = [];
+  const avisa = t => { if (!AVISOS.includes(t)) AVISOS.push(t); };
+
+  function distancia(a, b) {
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length];
+  }
+  function nombrePropiedad(b, k) {
+    const base = newBlock(b.type);
+    if (k in base) return k;
+    const al = ALIAS[k];
+    /* Primero un destino que el bloque ya trae; si el alias es inequívoco,
+       también uno opcional que la app lea (el pie de una gráfica no viene en
+       sus valores por omisión, pero existe). */
+    const destino = (Array.isArray(al) ? al : [al]).find(x => x && x in base) || (typeof al === 'string' && CONOCIDAS.has(al) ? al : null);
+    if (destino) return destino;
+    if (!CONOCIDAS.has(k)) {
+      const cerca = Object.keys(base).concat(['caption', 'alt', 'anim']).filter(x => x !== 'id' && x !== 'type')
+        .sort((x, y) => distancia(k, x) - distancia(k, y))[0];
+      const parece = cerca && distancia(k, cerca) <= Math.max(2, Math.floor(k.length / 3));
+      avisa('Bloque ' + b.type + ': la propiedad «' + k + '» no la usa la aplicación y se ignorará al dibujar' + (parece ? '; ¿quisiste decir «' + cerca + '»?' : '. Consulta guia_formato.'));
+    }
+    return k;
+  }
+
+  /* ---------- datos de instrumento ----------
+     El texto del archivo se interpreta con parseTable y detectaTecnica, los
+     mismos que al soltar un archivo en el editor. Lo que se guarda es la tabla
+     limpia (tabuladores y punto decimal) y la procedencia con su huella. */
+  function submuestrea(rows, max) {
+    /* Mínimo y máximo de cada intervalo, en su orden: cada pico conserva su
+       posición y su intensidad exactas, que en un difractograma o un espectro
+       es lo que se va a leer. Se decide por la primera serie y los mismos
+       índices valen para las demás columnas. */
+    if (!(max >= 4) || rows.length <= max) return rows;
+    const cubos = Math.floor((max - 2) / 2), n = rows.length - 2, idx = [0];
+    for (let c = 0; c < cubos; c++) {
+      const ini = 1 + Math.floor(c * n / cubos), fin = 1 + Math.floor((c + 1) * n / cubos);
+      let lo = ini, hi = ini;
+      for (let j = ini; j < fin; j++) {
+        if (!(rows[j][1] >= rows[lo][1])) lo = j;
+        if (!(rows[j][1] <= rows[hi][1])) hi = j;
+      }
+      if (lo === hi) idx.push(lo); else idx.push(Math.min(lo, hi), Math.max(lo, hi));
+    }
+    idx.push(rows.length - 1);
+    return idx.map(k => rows[k]);
+  }
+  const numTexto = v => isFinite(v) ? String(+v.toPrecision(10)) : '';
+  function importaDatos(b, datos, opciones) {
+    if (b.type !== 'chart') falla('«archivo_datos» solo vale para bloques «chart».');
+    const t = parseTable(datos.texto);
+    if (t.rows.length < 2 || t.headers.length < 2) falla('No se reconocieron al menos dos columnas numéricas y dos filas en «' + datos.nombre + '».');
+    let cols = t.headers.map((_, i) => i);
+    if (Array.isArray(opciones.columnas)) {
+      cols = opciones.columnas.map(c => Math.floor(+c) - 1);
+      if (cols.length < 2 || cols.some(c => !(c >= 0 && c < t.headers.length))) falla('«columnas» debe listar al menos dos columnas entre 1 y ' + t.headers.length + ' (la primera es x).');
+    }
+    let rows = t.rows.map(r => cols.map(c => r[c])).filter(r => isFinite(r[0]));
+    const total = rows.length;
+    rows = submuestrea(rows, opciones.max_puntos == null ? 1500 : +opciones.max_puntos);
+    const texto = [cols.map(c => t.headers[c]).join('\t')].concat(rows.map(r => r.map(numTexto).join('\t'))).join('\n');
+    const det = detectaTecnica(texto, datos.nombre);
+    let tec = det && det.tec;
+    if (opciones.tecnica) {
+      tec = TECNICAS.find(x => x.id === opciones.tecnica);
+      if (!tec) falla('Técnica desconocida: «' + opciones.tecnica + '». Válidas: ' + TECNICAS.map(x => x.id).join(', ') + '.');
+    }
+    b.data = texto;
+    if (tec && tec.id !== 'generico') {
+      b.tecnica = tec.id; b.kind = tec.kind; b.xlabel = tec.x; b.ylabel = tec.y;
+      if (tec.invertirX) b.invertirX = true; else delete b.invertirX;
+    }
+    b.fuente = { nombre: datos.nombre, cuando: new Date().toISOString().slice(0, 10), n: rows.length, huella: ERLEN_MCP_HUELLA(texto), instrumento: tec && tec.id !== 'generico' ? tec.n : undefined };
+    return { archivo: datos.nombre, tecnica: tec ? tec.n : 'sin identificar', filas_archivo: total, filas_guardadas: rows.length, columnas: cols.map(c => t.headers[c]), x: [rows[0][0], rows[rows.length - 1][0]] };
+  }
+
+  function aplicaPropiedades(b, props, datos) {
+    const p = Object.assign({}, props || {});
+    let info = null;
+    if (p.archivo_datos != null) {
+      if (!datos) falla('No se pudo leer «' + p.archivo_datos + '».');
+      info = importaDatos(b, datos, p);
+    }
+    if (info) ['archivo_datos', 'columnas', 'max_puntos', 'tecnica'].forEach(k => delete p[k]);
+    Object.keys(p).forEach(k0 => {
+      if (k0 === 'tipo' || k0 === 'type' || k0 === 'id') return;
+      const k = nombrePropiedad(b, k0);
+      let v = p[k0];
       if (b.type === 'chart' && k === 'data') v = tablaATexto(v);
       if (b.type === 'smart' && k === 'items' && Array.isArray(v)) v = v.map(it => typeof it === 'string' ? { t: it } : it);
       if (b.type === 'table' && k === 'rows' && Array.isArray(v)) v = v.map(f => Array.isArray(f) ? f.map(c => String(c == null ? '' : c)) : [String(f)]);
+      if (k === 'src' && !['image', 'video'].includes(b.type)) falla('Solo los bloques image y video llevan una imagen o un vídeo (src/archivo); este es «' + b.type + '».');
       if (v === null) delete b[k]; else b[k] = v;
     });
+    if (info) b._importado = info;
     return b;
   }
   function bloqueDesde(spec) {
-    if (!spec || typeof spec !== 'object') falla('Cada bloque debe ser un objeto con «tipo».');
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec)) falla('Cada bloque debe ser un objeto con «tipo».');
     const tipo = spec.tipo || spec.type;
     if (!BLOCK_DEFS.some(d => d.id === tipo)) falla('Tipo de bloque desconocido: «' + tipo + '». Tipos válidos: ' + BLOCK_DEFS.map(d => d.id).join(', ') + '.');
-    return aplicaPropiedades(newBlock(tipo), spec);
+    return aplicaPropiedades(newBlock(tipo), spec, DATOS[spec.archivo_datos]);
+  }
+  /* Los archivos de datos los lee Node y llegan aquí por nombre. */
+  let DATOS = {};
+  let IMPORTADOS = [];
+  function recogeImportados(deck) {
+    deck.slides.forEach(sl => CLAVES_ZONA.forEach(k => (sl[k] || []).forEach(b => {
+      if (b && b._importado) { IMPORTADOS.push(Object.assign({ bloque: b.id }, b._importado)); delete b._importado; }
+    })));
   }
   function aplicaEncabezados(sl, encabezados) {
     if (!Array.isArray(encabezados)) return;
@@ -120,11 +232,23 @@ var ERLEN_MCP = (function () {
     return sl;
   }
 
+  /* Varias diapositivas de una vez: o entran todas o ninguna, y el error dice
+     cuál del lote falló. */
+  function lote(lista) {
+    return lista.map((x, k) => {
+      try { return diapositivaNueva(x || {}); }
+      catch (e) { if (e instanceof ErrorMcp) falla('Diapositiva ' + (k + 1) + ' del lote' + (x && x.titulo ? ' («' + x.titulo + '»)' : '') + ': ' + e.message); throw e; }
+    });
+  }
+
   /* ---------- validar ---------- */
   function valida(deck) {
+    recogeImportados(deck);
     const r = saneaDeck(deck);
     if (r.error) falla(r.error);
-    return { deck: r.deck, avisos: Array.from(new Set(r.avisos)) };
+    const out = { deck: r.deck, avisos: Array.from(new Set(AVISOS.concat(r.avisos))) };
+    if (IMPORTADOS.length) out.datos_importados = IMPORTADOS;
+    return out;
   }
 
   /* ---------- resumir ---------- */
@@ -137,7 +261,7 @@ var ERLEN_MCP = (function () {
       case 'math': case 'chem': r.tex = corto(b.tex, 120); break;
       case 'table': r.filas = (b.rows || []).length; r.columnas = ((b.rows || [])[0] || []).length; r.encabezado = (b.rows || [])[0]; break;
       case 'bblock': r.titulo = b.btitle; r.texto = corto(b.body, 100); break;
-      case 'chart': r.clase = b.kind; r.ejes = [b.xlabel, b.ylabel]; r.filas = String(b.data || '').split('\n').length - 1; break;
+      case 'chart': r.clase = b.kind; r.ejes = [b.xlabel, b.ylabel]; r.filas = String(b.data || '').split('\n').length - 1; if (b.fuente) r.datos_de = b.fuente.nombre; break;
       case 'func': r.curvas = (b.curves || []).map(c => c.expr); break;
       case 'smart': r.clase = b.kind; r.elementos = (b.items || []).map(it => corto(it.t, 50)); break;
       case 'teorema': r.clase = b.kind; r.texto = corto(b.body, 100); break;
@@ -188,7 +312,7 @@ var ERLEN_MCP = (function () {
   }
 
   /* ---------- revisar ---------- */
-  function revisa(deck) {
+  function revisa(deck, objetivo) {
     loadDeck(deck, null);
     const cal = calidadCientifica(deck).map(f => ({ grado: f.grado, diapositiva: f.i + 1, problema: f.qué, arreglo: f.cómo, bloque: f.bid }));
     let acc = { hallazgos: [] };
@@ -207,8 +331,17 @@ var ERLEN_MCP = (function () {
       const palabras = CLAVES_ZONA.slice(0, n).reduce((a, k) => a + (sl[k] || []).reduce((x, b) => x + String(b.text || b.body || (b.items || []).map(it => it.t).join(' ') || '').split(/\s+/).filter(Boolean).length, 0), 0);
       if (palabras > 90) estructura.push({ diapositiva: i + 1, problema: 'Mucho texto (' + palabras + ' palabras)', arreglo: 'Divide en dos diapositivas, pasa detalle a las notas o usa el diseño «flujo».' });
     });
+    const minutos = deck.slides.reduce((a, s) => a + (+s.min || 0), 0);
+    const tiempo = { minutos_previstos: Math.round(minutos * 100) / 100, sin_tiempo: deck.slides.map((s, i) => s.min ? 0 : i + 1).filter(Boolean) };
+    if (objetivo > 0) {
+      tiempo.minutos_objetivo = +objetivo;
+      if (tiempo.sin_tiempo.length === deck.slides.length) tiempo.valoracion = 'Ninguna diapositiva tiene minutos: asigna «minutos» para comparar con el objetivo. Como referencia, ' + deck.slides.length + ' diapositivas suelen ocupar ' + Math.round(deck.slides.length * 1.2) + '–' + Math.round(deck.slides.length * 2) + ' min.';
+      else if (minutos > objetivo * 1.1) tiempo.valoracion = 'Excede el objetivo en ' + Math.round((minutos - objetivo) * 10) / 10 + ' min: recorta o mueve diapositivas a respaldo.';
+      else if (minutos < objetivo * 0.8) tiempo.valoracion = 'Queda corta por ' + Math.round((objetivo - minutos) * 10) / 10 + ' min.';
+      else tiempo.valoracion = 'Dentro del objetivo.';
+    }
     return {
-      calidad_cientifica: cal, accesibilidad, estructura,
+      calidad_cientifica: cal, accesibilidad, estructura, tiempo,
       exportacion: inf.warnings.map(w => ({ gravedad: w.severity, mensaje: w.message, diapositivas: w.slides, formatos: w.formats })),
       resumen: inf.summary,
       nota: 'Reglas locales y explicables; no validan el experimento. El contraste y el desbordamiento se comprueban solo con vista_previa en un navegador real.'
@@ -224,6 +357,8 @@ var ERLEN_MCP = (function () {
       const mapa = { titulo: 'title', titulo_corto: 'short', subtitulo: 'subtitle', autores: 'authors', institucion: 'institute', fecha: 'date', tema: 'theme', aspecto: 'aspect', acento: 'acento', tipografia: 'fuente' };
       Object.keys(mapa).forEach(k => { if (a[k] != null) m[mapa[k]] = String(a[k]); });
       if (a.titulo && !a.titulo_corto) m.short = String(a.titulo).slice(0, 40);
+      if (a.tema != null && !THEMES[a.tema]) falla('Tema desconocido: «' + a.tema + '». Temas: ' + Object.keys(THEMES).join(', ') + '.');
+      if (Array.isArray(a.diapositivas)) d.slides.push(...lote(a.diapositivas));
       return valida(d);
     },
     sanea: a => valida(a.deck),
@@ -246,6 +381,25 @@ var ERLEN_MCP = (function () {
       d.slides.splice(pos, 0, sl);
       const r = valida(d);
       r.resultado = { diapositiva: pos + 1, id: sl.id, zonas: zonasDe(sl.layout), encabezados: sl.zt || [] };
+      return r;
+    },
+    agregaDiapositivas: a => {
+      const d = a.deck;
+      if (!Array.isArray(a.diapositivas) || !a.diapositivas.length) falla('«diapositivas» debe ser una lista con al menos una diapositiva.');
+      const nuevas = lote(a.diapositivas);
+      const pos = a.posicion == null ? d.slides.length : clamp(Math.floor(+a.posicion) - 1, 0, d.slides.length);
+      d.slides.splice(pos, 0, ...nuevas);
+      const r = valida(d);
+      r.resultado = { diapositivas: nuevas.map((sl, k) => ({ n: pos + k + 1, id: sl.id, diseno: sl.layout, titulo: sl.title })) };
+      return r;
+    },
+    duplicaDiapositiva: a => {
+      const d = a.deck, i = indiceDiapositiva(d, a.diapositiva);
+      const c = deepCopy(d.slides[i]); c.id = uid();
+      CLAVES_ZONA.forEach(k => (c[k] || []).forEach(b => { b.id = uid(); }));
+      d.slides.splice(i + 1, 0, c);
+      const r = valida(d);
+      r.resultado = { original: i + 1, copia: i + 2, id: c.id };
       return r;
     },
     editaDiapositiva: a => {
@@ -293,8 +447,13 @@ var ERLEN_MCP = (function () {
       return r;
     },
     editaBloque: a => {
-      const d = a.deck, f = buscaBloque(d, a.bloque);
-      aplicaPropiedades(f.bloque, a.cambios || {});
+      const d = a.deck, f = buscaBloque(d, a.bloque), c = a.cambios || {};
+      /* Datos cambiados a mano: la procedencia ya no describe lo que se ve. */
+      if (f.bloque.type === 'chart' && f.bloque.fuente && (c.data != null || c.datos != null) && c.archivo_datos == null) {
+        avisa('La gráfica declaraba datos de «' + f.bloque.fuente.nombre + '» y se cambiaron a mano: se quitó la procedencia para no atribuir al archivo lo que ya no viene de él.');
+        delete f.bloque.fuente;
+      }
+      aplicaPropiedades(f.bloque, c, DATOS[c.archivo_datos]);
       const r = valida(d);
       r.resultado = { id: f.bloque.id, diapositiva: f.i + 1 };
       return r;
@@ -316,15 +475,25 @@ var ERLEN_MCP = (function () {
       r.resultado = { id: ref.id, clave: ref.clave || null };
       return r;
     },
-    revisa: a => revisa(valida(a.deck).deck),
-    beamer: a => ({ tex: toBeamer(valida(a.deck).deck) }),
+    revisa: a => revisa(valida(a.deck).deck, +a.minutos_objetivo || 0),
+    beamer: a => {
+      const d = valida(a.deck).deck, tema = THEMES[d.meta.theme] || THEMES.metropolis;
+      /* Las figuras salen con el nombre que el .tex espera (figName). */
+      loadDeck(d, null);
+      const figuras = allImageBlocks().map(b => ({ nombre: b._nom || figName(b), src: b.src,
+        estilo: !!(b.est && ((b.est.forma && b.est.forma !== 'recta') || (b.est.marco && b.est.marco !== 'none') || b.est.sombra || (b.est.filtro && b.est.filtro !== 'none'))) }));
+      if (d.meta.logo) figuras.unshift({ nombre: 'logo-erlen', src: d.meta.logo, estilo: false });
+      return { tex: toBeamer(d), motor: /metropolis|XeLaTeX/.test(tema.tex) ? 'xelatex' : 'pdflatex', figuras };
+    },
     html: a => { const v = valida(a.deck).deck; loadDeck(v, null); return { html: buildPrintableHTML(false) }; }
   };
 
   function ejecuta(op, argsJson) {
     try {
       if (!OPS[op]) falla('Operación desconocida: ' + op);
-      return JSON.stringify({ ok: OPS[op](JSON.parse(argsJson || '{}')) });
+      const args = JSON.parse(argsJson || '{}');
+      AVISOS = []; IMPORTADOS = []; DATOS = args.__datos || {};
+      return JSON.stringify({ ok: OPS[op](args) });
     } catch (e) {
       return JSON.stringify({ error: e instanceof ErrorMcp ? e.message : 'Error interno: ' + (e && e.message || e) });
     }
