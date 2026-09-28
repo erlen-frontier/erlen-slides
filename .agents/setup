@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+echo 'Checking Node.js and npm...'
+node -e 'if (Number(process.versions.node.split(".")[0]) < 22) throw new Error("Erlen Slides requires Node.js 22 or newer")'
+npm --version
+
+echo 'Installing locked npm dependencies...'
+if [[ -d node_modules ]]; then
+  # npm install checks the lockfile without deleting the restored dependency tree.
+  time npm install --prefer-offline --no-audit --no-fund
+else
+  time npm ci --no-audit --no-fund
+fi
+
+echo 'Checking Chromium for Playwright and MCP previews...'
+if [[ ! -x "$(node -e 'import("playwright-core").then(({default: pw}) => process.stdout.write(pw.chromium.executablePath()))')" ]]; then
+  time npx --no-install playwright-core install --with-deps chromium
+fi
+
+echo 'Building the local editor...'
+time npm run build
