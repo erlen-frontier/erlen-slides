@@ -4,8 +4,6 @@
    Meter contenido sin pasar por ningún menú: sueltas el archivo sobre la
    diapositiva o pegas del portapapeles y se convierte en el bloque que toca. */
 
-const MAX_IMG = 1600;
-
 function nuevoBloqueEn(tipo, ajustes) {
   const sl = curSlide();
   const n = zonasDe(sl.layout);
@@ -15,24 +13,10 @@ function nuevoBloqueEn(tipo, ajustes) {
   S.selBlock = b.id;
   return b;
 }
-/* Reduce una imagen grande antes de guardarla en el proyecto. */
-function encogeImagen(uri, tipo) {
-  return new Promise(res => {
-    const img = new Image();
-    img.onload = () => {
-      let w = img.naturalWidth, hh = img.naturalHeight;
-      if (Math.max(w, hh) <= MAX_IMG) { res(uri); return; }
-      const k = MAX_IMG / Math.max(w, hh);
-      w = Math.round(w * k); hh = Math.round(hh * k);
-      const cv = h('canvas'); cv.width = w; cv.height = hh;
-      cv.getContext('2d').drawImage(img, 0, 0, w, hh);
-      res(tipo === 'image/png' ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', 0.92));
-    };
-    img.onerror = () => res(uri);
-    img.src = uri;
-  });
-}
-const leeComoDataURL = f => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(f); });
+const leeComoDataURL = f => new Promise(res => {
+  const r = new FileReader(); r.onload = () => res(r.result); r.onerror = r.onabort = () => res(null);
+  try { r.readAsDataURL(f); } catch (error) { res(null); }
+});
 const leeComoTexto = f => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsText(f); });
 
 /* ¿El texto pegado parece una tabla de datos? */
@@ -76,6 +60,21 @@ function bloqueDeDatos(txt, nombre) {
 async function metArchivos(lista) {
   const archivos = Array.from(lista || []);
   if (!archivos.length) return;
+  const deck = S.deck, slide = curSlide();
+  /* Un lote de imágenes se prepara antes de tocar la presentación: cambiar
+     de documento durante la lectura no deja una inserción a medias. */
+  if (archivos.every(f => /^image\//.test(f.type))) {
+    const leidos = await Promise.all(archivos.map(leeComoDataURL));
+    if (S.deck !== deck || curSlide() !== slide) { toast('La diapositiva cambió; vuelve a insertar las imágenes.', 'warn'); return; }
+    let n = 0;
+    archivos.forEach((f, i) => {
+      if (!leidos[i]) return;
+      if (nuevoBloqueEn(f.type === 'image/gif' ? 'video' : 'image', {src:leidos[i], caption:''})) n++;
+    });
+    if (n) { commit(); toast(n === 1 ? 'Se insertó la imagen' : 'Se insertaron ' + n + ' elementos', null, {t:'Deshacer', fn:doUndo}); }
+    if (leidos.some(x => !x)) toast('No se pudieron leer algunas imágenes.', 'warn');
+    return;
+  }
   let n = 0, aviso = '';
   for (const f of archivos) {
     if (/\.json$/i.test(f.name) || f.type === 'application/json') {
@@ -86,11 +85,11 @@ async function metArchivos(lista) {
       return;
     }
     if (/^image\//.test(f.type)) {
-      let uri = await leeComoDataURL(f);
+      const uri = await leeComoDataURL(f);
       if (!uri) continue;
+      if (S.deck !== deck || curSlide() !== slide) { toast('La diapositiva cambió; vuelve a insertar la imagen.', 'warn'); break; }
       if (f.type === 'image/gif') { nuevoBloqueEn('video', { src: uri, caption: '' }); aviso = 'GIF'; }
       else {
-        if (f.type !== 'image/svg+xml' && f.size > 250000) uri = await encogeImagen(uri, f.type);
         nuevoBloqueEn('image', { src: uri, caption: '' });
         aviso = 'imagen';
       }
@@ -135,11 +134,11 @@ async function pegaContenido(e) {
     e.preventDefault();
     const f = img.getAsFile();
     if (!f) return true;
-    let uri = await leeComoDataURL(f);
+    const deck = S.deck, slide = curSlide(), uri = await leeComoDataURL(f);
+    if (S.deck !== deck || curSlide() !== slide) { toast('La diapositiva cambió; vuelve a pegar la imagen.', 'warn'); return true; }
     if (uri) {
-      if (f.size > 250000 && f.type !== 'image/svg+xml') uri = await encogeImagen(uri, f.type);
       if (nuevoBloqueEn('image', { src: uri, caption: '' })) { commit(); toast('Imagen pegada', null, { t: 'Deshacer', fn: doUndo }); }
-    }
+    } else toast('No se pudo leer la imagen.', 'warn');
     return true;
   }
   const dentro = e.target && e.target.closest && e.target.closest('[data-edit], input, textarea, [contenteditable]');

@@ -63,9 +63,7 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
   const imagen = async (el, uri, alt, orientacion = null, env = null) => {
     if (!el || !uri) return;
     if (/^data:image\/svg\+xml[;,]/i.test(uri)) {
-      // The classic writer only packages PNG media. Render SVG images to a
-      // PNG instead of passing their text to the base64 decoder and silently
-      // dropping them from the presentation.
+      // The classic writer rasterizes SVG images before packaging them.
       try {
         if (el.decode) await el.decode();
         if (!el.naturalWidth || !el.naturalHeight) throw new Error('Imagen vacía');
@@ -76,9 +74,10 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
         canvas.getContext('2d').drawImage(el, 0, 0, canvas.width, canvas.height);
         uri = canvas.toDataURL('image/png');
       } catch (error) { throw new Error('No se pudo incluir el SVG en PowerPoint: ' + error.message); }
-    }
+    } else uri = await imagenParaExportar(uri, FORMATOS_PPTX, el);
     const rid = await ctx.medio(uri);
-    if (rid) F.push(xmlImagen(id(), env ? sinTransformacionVisual(env, () => marco(el, raiz, esc)) : marco(el, raiz, esc), rid, alt, orientacion));
+    if (!rid) throw new Error('No se pudo incluir la imagen en PowerPoint.');
+    F.push(xmlImagen(id(), env ? sinTransformacionVisual(env, () => marco(el, raiz, esc)) : marco(el, raiz, esc), rid, alt, orientacion));
   };
   const pinta = async (el, alt) => {
     if (!el) return;
@@ -191,7 +190,7 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
       const im = el.querySelector('img');
       const env = el.querySelector('.imgwrap'), orientacion = transformacionLibreDe(b);
       const transformada = orientacion.giro || orientacion.voltearH || orientacion.voltearV;
-      if (im && b.src && transformada && env && (env.childElementCount > 1 || b.orig || imgConEstilo(b) || b.frame)) {
+      if (im && b.src && transformada && env && (env.childElementCount > 1 || imgConEstilo(b) || b.frame)) {
         const caja = sinTransformacionVisual(env, () => marco(env, raiz, esc));
         const uri = await rasteriza(env, ctx.css, 2, {sinTransformacion:true});
         if (!uri) throw new Error('No se pudo incluir la figura transformada en PowerPoint.');

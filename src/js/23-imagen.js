@@ -6,10 +6,15 @@
 
 const PROPORCIONES = [['libre', 'Libre', 0], ['169', '16:9', 16 / 9], ['43', '4:3', 4 / 3],
   ['32', '3:2', 3 / 2], ['11', '1:1', 1], ['34', '3:4', 3 / 4]];
+let solicitudRecorte = 0;
 
 function openRecorte(b) {
   const fuente = b.orig || b.src;
   if (!fuente) { toast('Primero elige una imagen'); return; }
+  const deck = S.deck, slide = curSlide(), srcInicial = b.src, origInicial = b.orig;
+  const solicitud = ++solicitudRecorte, modalPrevio = $('#modalRoot').firstElementChild;
+  const vigente = () => S.deck === deck && curSlide() === slide && findBlock(b.id)?.block === b &&
+    !b.locked && b.src === srcInicial && b.orig === origInicial;
   const img = new Image();
   let prop = b.recProp || 'libre';
   let s = 1, s0 = 1, ox = 0, oy = 0, VW = 520, VH = 300, NW = 0, NH = 0;
@@ -72,20 +77,26 @@ function openRecorte(b) {
       h('p', { class: 'hint' }, 'Arrastra la imagen para encuadrarla y usa la rueda o el deslizador para acercarla. El original se conserva, así que puedes volver a encuadrar cuando quieras.')));
 
   const aplica = () => {
+    if (!vigente()) { toast('La imagen cambió; vuelve a abrir el recorte.', 'warn'); closeModal(); return; }
     const sx = Math.max(0, -ox / s), sy = Math.max(0, -oy / s);
     const sw = Math.min(NW - sx, VW / s), sh = Math.min(NH - sy, VH / s);
-    const MAX = 1600;
     // SVGs have vector detail beyond their nominal viewport (catalog pieces
     // use 100 × 140). Rasterize those at presentation resolution when cropped.
-    const factor = MAX / Math.max(sw, sh);
-    const k = /^data:image\/svg\+xml[;,]/i.test(fuente) ? factor : Math.min(1, factor);
-    const cv = h('canvas'); cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
-    const cx = cv.getContext('2d');
-    cx.imageSmoothingQuality = 'high';
-    cx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
-    const jpg = /^data:image\/jpe?g/.test(fuente);
+    const k = /^data:image\/svg\+xml[;,]/i.test(fuente) ? 1600 / Math.max(sw, sh) : 1;
+    const ancho = Math.round(sw * k), alto = Math.round(sh * k);
+    if (!(ancho > 0 && alto > 0) || ancho > 32767 || alto > 32767 || ancho * alto > 32000000) {
+      toast('El recorte es demasiado grande para procesarlo aquí. El original se conserva.', 'warn'); return;
+    }
+    let recortada;
+    try {
+      const cv = h('canvas'); cv.width = ancho; cv.height = alto;
+      const cx = cv.getContext('2d'); if (!cx) throw new Error('sin lienzo');
+      cx.imageSmoothingQuality = 'high'; cx.drawImage(img, sx, sy, sw, sh, 0, 0, ancho, alto);
+      recortada = cv.toDataURL('image/png');
+      if (!/^data:image\/png[;,]/i.test(recortada)) throw new Error('sin imagen');
+    } catch (error) { toast('No se pudo generar el recorte. El original se conserva.', 'warn'); return; }
     if (!b.orig) b.orig = fuente;
-    b.src = jpg ? cv.toDataURL('image/jpeg', 0.92) : cv.toDataURL('image/png');
+    b.src = recortada;
     marcaRecorteCatalogo(b, true);
     b.recProp = prop;
     closeModal(); commit();
@@ -93,18 +104,25 @@ function openRecorte(b) {
   };
 
   img.onload = () => {
+    if (!vigente() || solicitud !== solicitudRecorte || $('#modalRoot').firstElementChild !== modalPrevio) return;
     NW = img.naturalWidth || 800; NH = img.naturalHeight || 600;
     openModal({
       title: 'Encuadrar la imagen', size: 'modal-lg', body: cuerpo,
       foot: [
-        b.orig ? h('button', { class: 'btn', onclick: () => { b.src = b.orig; delete b.orig; delete b.recProp; marcaRecorteCatalogo(b, false); closeModal(); commit(); toast('Recorte quitado'); } }, 'Quitar el recorte') : null,
+        b.orig ? h('button', { class: 'btn', onclick: () => {
+          if (!vigente()) { toast('La imagen cambió; vuelve a abrir el recorte.', 'warn'); closeModal(); return; }
+          b.src = b.orig; delete b.orig; delete b.recProp; marcaRecorteCatalogo(b, false); closeModal(); commit(); toast('Recorte quitado');
+        } }, 'Quitar el recorte') : null,
         h('button', { class: 'btn', onclick: closeModal }, 'Cancelar'),
         h('button', { class: 'btn btn-pri', onclick: aplica }, 'Aplicar')
       ].filter(Boolean)
     });
-    setTimeout(dimensiona, 40);
+    dimensiona();
   };
-  img.onerror = () => toast('No se pudo leer la imagen', 'warn');
+  img.onerror = () => {
+    if (vigente() && solicitud === solicitudRecorte && $('#modalRoot').firstElementChild === modalPrevio)
+      toast('No se pudo leer la imagen', 'warn');
+  };
   img.src = fuente;
 }
 

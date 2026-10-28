@@ -1469,19 +1469,46 @@ function dataUriToBlob(uri) {
   // Blob encodes text as UTF-8, while base64 already represents raw bytes.
   return { blob: new Blob([data], { type: mime }), mime };
 }
+
+/* Algunos destinos no admiten WebP u otros formatos del navegador. Solo se
+   convierte la copia que sale, con resolución y transparencia conservadas. */
+async function imagenParaExportar(src, admitidos, imagen) {
+  const tipo = /^data:(image\/[^;,]+)[;,]/i.exec(src || '');
+  if (!tipo) throw new Error('Incrusta la imagen antes de exportarla.');
+  if (admitidos.includes(tipo[1].toLowerCase())) return src;
+  try {
+    const im = imagen || new Image();
+    if (!imagen) im.src = src;
+    if (im.decode) await im.decode();
+    const w = im.naturalWidth, h = im.naturalHeight;
+    if (!(w > 0 && h > 0) || w > 32767 || h > 32767 || w * h > 32000000)
+      throw new Error('La imagen es demasiado grande para convertirla.');
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('No hay lienzo disponible.');
+    ctx.drawImage(im, 0, 0);
+    const png = canvas.toDataURL('image/png');
+    if (!/^data:image\/png[;,]/i.test(png)) throw new Error('No se pudo crear el PNG.');
+    return png;
+  } catch (error) { throw new Error('No se pudo convertir la imagen para exportar: ' + String(error.message || error)); }
+}
+const FORMATOS_FIGURA = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+const FORMATOS_PPTX = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml'];
+
 async function exportFigures() {
   /* El estilo (forma, marco, sombra, filtro) se cuece aquí: así el archivo que
      subes a Overleaf ya trae el mismo aspecto que ves en pantalla. */
   const bloques = allImageBlocks();
   const imgs = [];
-  for (const b of bloques) imgs.push({ nombre: b._nom || figName(b), src: await imagenProcesada(b, S.deck) });
-  if (S.deck.meta.logo) imgs.unshift({ nombre: 'logo-erlen', src: S.deck.meta.logo });
+  try {
+    for (const b of bloques) imgs.push({ nombre: b._nom || figName(b), src: await imagenParaExportar(await imagenProcesada(b, S.deck), FORMATOS_FIGURA) });
+    if (S.deck.meta.logo) imgs.unshift({ nombre: 'logo-erlen', src: await imagenParaExportar(S.deck.meta.logo, FORMATOS_FIGURA) });
+  } catch (error) { toast('No se pudieron exportar las figuras: ' + String(error.message || error), 'warn'); return; }
   if (!imgs.length) { toast('Esta presentación no tiene figuras'); return; }
   let n = 0;
   for (const b of imgs) {
     const d = dataUriToBlob(b.src);
     if (!d) continue;
-    const ext = d.mime.includes('svg') ? 'svg' : d.mime.includes('jpeg') ? 'jpg' : 'png';
+    const ext = /svg/i.test(d.mime) ? 'svg' : /jpe?g/i.test(d.mime) ? 'jpg' : 'png';
     await downloadFile(b.nombre + '.' + ext, d.blob, d.mime);
     n++;
     await new Promise(r => setTimeout(r, 400));
