@@ -86,6 +86,15 @@ const CSS_VP = `
   .vp-panel .vp-bar{padding:7px 14px}
 `;
 
+function estiloPresentador() {
+  const estilo = h('style', { html: CSS_VP });
+  // Tauri assigns a nonce to bundled styles; carry it to dynamically created
+  // styles so the presenter's CSS is accepted by the same policy.
+  const nonce = document.querySelector('style[nonce]')?.nonce;
+  if (nonce) estilo.nonce = nonce;
+  return estilo;
+}
+
 function armaPresentador(doc, cont, med) {
   cont.innerHTML = '';
   const crono = h('span', { class: 'vp-crono' }, cronoTexto());
@@ -189,13 +198,15 @@ function marcaRitmo() {
 function abrePresentador() {
   if (VP.win && !VP.win.closed) { try { VP.win.focus(); } catch (e) {} return true; }
   let w = null;
-  try { w = window.open('', 'erlenPresentador', 'width=1180,height=780,menubar=no,toolbar=no'); } catch (e) { w = null; }
+  // WebKit needs an explicit URL to dispatch the native new-window request.
+  const destino = window.__TAURI__?.core?.invoke ? 'about:blank' : '';
+  try { w = window.open(destino, 'erlenPresentador', 'width=1180,height=780,menubar=no,toolbar=no'); } catch (e) { w = null; }
   if (!w || !w.document) return false;
   try {
     const d = w.document;
     d.open(); d.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Erlen · presentador</title></head><body class="vp"></body></html>'); d.close();
     $$('style, link[rel="stylesheet"]').forEach(s => d.head.append(s.cloneNode(true)));
-    d.head.append(h('style', { html: CSS_VP }));
+    d.head.append(estiloPresentador());
     d.body.className = 'vp';
     const cont = h('div', { style: 'display:contents' });
     d.body.append(cont);
@@ -220,7 +231,7 @@ function panelEnPagina() {
     h('b', null, 'Ojo: si la pantalla está duplicada, el público también lo ve.'),
     h('button', { class: 'vp-cerrar', onclick: () => { cierraPanelEnPagina(); VP.enPagina = false; } }, 'Ocultar (P)')), cont);
   raiz.append(caja);
-  if (!$('#vpEstilo')) document.head.append(h('style', { id: 'vpEstilo', html: CSS_VP }));
+  if (!$('#vpEstilo')) { const estilo = estiloPresentador(); estilo.id = 'vpEstilo'; document.head.append(estilo); }
   VP.enPagina = true;
   cronoIniciar();
   armaPresentador(document, cont, cont);
@@ -230,15 +241,32 @@ function cierraPanelEnPagina() {
   if (VP.ui && VP.ui.doc === document) { VP.ui = null; clearInterval(VP.tick); }
 }
 
-function alternaPresentador() {
-  if (VP.win && !VP.win.closed) { try { VP.win.close(); } catch (e) {} VP.win = null; VP.ui = null; clearInterval(VP.tick); toast('Vista de presentador cerrada'); return; }
+let cerrandoPresentador = false;
+async function cerrarVentanaPresentador() {
+  if (!VP.win || VP.win.closed) return true;
+  const invocar = window.__TAURI__?.core?.invoke;
+  if (typeof invocar !== 'function') { try { VP.win.close(); return true; } catch (e) { return false; } }
+  cerrandoPresentador = true;
+  try { await invocar('cerrar_presentador'); return true; }
+  catch (e) { toast('No se pudo cerrar la ventana del presentador.', 'warn'); return false; }
+  finally { cerrandoPresentador = false; }
+}
+async function alternaPresentador() {
+  if (cerrandoPresentador) return;
+  if (VP.win && !VP.win.closed) {
+    if (await cerrarVentanaPresentador()) { VP.win = null; VP.ui = null; clearInterval(VP.tick); toast('Vista de presentador cerrada'); }
+    return;
+  }
   if (VP.enPagina) { cierraPanelEnPagina(); VP.enPagina = false; return; }
   if (abrePresentador()) { VP.enPagina = false; return; }
+  // In the desktop app, do not expose private notes on the projected slide
+  // if the separate presenter window could not be created.
+  if (window.__TAURI__?.core?.invoke) { toast('No se pudo abrir la ventana del presentador.', 'warn'); return; }
   panelEnPagina();
 }
 function cierraPresentador() {
   clearInterval(VP.tick); VP.tick = null;
-  if (VP.win && !VP.win.closed) { try { VP.win.close(); } catch (e) {} }
+  if (VP.win && !VP.win.closed) cerrarVentanaPresentador();
   VP.win = null; VP.doc = null; VP.ui = null;
   cierraPanelEnPagina(); VP.enPagina = false;
   cronoPausar();

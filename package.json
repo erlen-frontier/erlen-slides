@@ -15,7 +15,10 @@
     "mcp": "node mcp/servidor.mjs",
     "mcp:instalar": "node herramientas/mcp-instalar.mjs",
     "examples": "node herramientas/examples.mjs",
-    "accesibilidad": "node herramientas/accesibilidad.mjs"
+    "accesibilidad": "node herramientas/accesibilidad.mjs",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "test:rust": "cargo test -p erlen-slides-core --locked"
   },
   "repository": {
     "type": "git",
@@ -25,6 +28,7 @@
     "@axe-core/playwright": "4.14.0",
     "@floating-ui/dom": "1.8.0",
     "@rdkit/rdkit": "^2026.9.1",
+    "@tauri-apps/cli": "2.12.4",
     "3dmol": "2.5.5",
     "fabric": "7.4.0",
     "fake-indexeddb": "^6.2.6",
@@ -38,6 +42,5 @@
     "pptxtojson": "2.2.0",
     "reveal.js": "6.0.2",
     "terser": "5.51.2"
-  },
-  "dependencies": {}
+  }
 }

@@ -1235,9 +1235,29 @@ async function downloadFile(filename, text, mime, altName) {
     toast('Archivo descargado');
   } catch (e) { window.ErlenDiagnostico?.reportar('descargar'); toast('No se pudo descargar; copia el contenido', 'warn'); }
 }
-function exportJSON() {
+let guardandoProyectoEscritorio = false;
+async function exportJSON() {
   flushEdicion();
-  return downloadFile(deckSlug() + '.json', JSON.stringify(S.deck, null, 2), 'application/json');
+  const nombre = deckSlug() + '.json', contenido = JSON.stringify(S.deck, null, 2);
+  const invocar = window.__TAURI__?.core?.invoke;
+  if (typeof invocar !== 'function') return downloadFile(nombre, contenido, 'application/json');
+  if (guardandoProyectoEscritorio) { toast('Ya hay un guardado abierto', 'warn'); return; }
+  guardandoProyectoEscritorio = true;
+  const proyecto = S.deck;
+  try {
+    const guardado = await invocar('guardar_proyecto', {nombre, contenido});
+    if (guardado) {
+      if (S.deck === proyecto) flushEdicion();
+      if (S.deck !== proyecto || JSON.stringify(S.deck, null, 2) !== contenido) {
+        toast('Se guardó una versión anterior; hay cambios posteriores sin incluir.', 'warn');
+      } else toast('Proyecto guardado en «' + guardado + '»');
+    }
+  } catch (e) {
+    window.ErlenDiagnostico?.reportar('guardar-proyecto');
+    toast('No se pudo guardar el proyecto. ' + String(e?.message || e), 'warn');
+  } finally {
+    guardandoProyectoEscritorio = false;
+  }
 }
 function deckSlug() {
   return (S.deck.meta.title || 'presentacion').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
