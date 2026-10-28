@@ -22,6 +22,7 @@ function pintaSeleccionBloques() {
   const ids = idsSeleccionados();
   for (const el of document.querySelectorAll('#stageInner .blk[data-bid]')) el.classList.toggle('sel-lote', ids.has(el.dataset.bid));
   if (typeof actualizaControlesComposicion === 'function') actualizaControlesComposicion();
+  if (typeof sincronizaPanelCapas === 'function') sincronizaPanelCapas();
 }
 function duplicarSeleccionActiva() {
   if (!S.selBlock) return;

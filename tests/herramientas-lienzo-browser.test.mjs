@@ -36,7 +36,7 @@ test('free canvas tools support layers, snapping and moving several blocks in Ch
     await page.getByRole('button',{name:'Adelantar capa A'}).click();
     assert.deepEqual(await page.evaluate(()=>Array.from(renderSlide(S.deck,S.cur,'present',99).querySelectorAll('.lienzo-capa .blk[data-bid]')).map(el=>el.dataset.bid)),['b','a','c']);
     assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Adelantar capa A');
-    await page.locator('#modalRoot .mo-foot').getByRole('button',{name:'Cerrar',exact:true}).click();
+    await page.getByRole('button',{name:'Cerrar panel de capas'}).click();
     const exportado=await page.evaluate(async()=>{
       const ext=await extensionSlides('exportador'), html=await ext.creaHTML(S.deck), ppt=await ext.creaPPTX(S.deck);
       const zip=await window.JSZip.loadAsync(ppt.blob);
@@ -74,6 +74,7 @@ test('free canvas tools support layers, snapping and moving several blocks in Ch
     assert.equal(await page.evaluate(()=>document.activeElement.dataset.bid),'a');
     assert.equal((await pos('a')).x,11); assert.equal((await pos('b')).x,51);
     await page.evaluate(()=>doUndo());
+    await page.getByRole('button',{name:'Cerrar panel de capas'}).click();
   });
 
   await t.test('focus announces the remaining selection after a block becomes hidden',async()=>{

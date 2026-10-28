@@ -22,7 +22,9 @@ Arrastra el asa del bloque activo o usa las flechas para mover la selección. La
 
 La opción **Mover bloque activo a…** lleva un solo bloque a otra diapositiva o zona, aunque haya varios seleccionados. Para mover juntos los bloques dentro de la diapositiva, arrastra la selección o usa las flechas.
 
-**Capas** muestra los bloques de delante hacia atrás, incluso cuando están superpuestos. Desde la lista puedes marcar varios o usar las flechas para adelantar o retrasar una capa. Con varios bloques seleccionados, las flechas de la barra, la cinta y el panel adelantan o retrasan el conjunto sin cambiar su orden relativo. El orden se guarda en el proyecto y se conserva en la vista de presentación y el HTML autónomo.
+**Capas** abre un panel que permanece visible mientras trabajas en la diapositiva. Muestra los objetos de delante hacia atrás, con su tipo, una miniatura de las imágenes y símbolos para los demás bloques; también permite alcanzar uno que esté cubierto por otros. La selección se refleja tanto en el panel como en el lienzo. Marca varias casillas para seleccionar varios objetos y usa **Seleccionar marcados** para llevar el foco al lienzo. Los objetos ocultos por el nivel de presentación se identifican en la lista y no se pueden seleccionar hasta cambiar de nivel.
+
+Arrastra el asa de una fila para cambiar su lugar; la línea indica dónde se insertará. Las flechas ofrecen el mismo control con el teclado. Si la fila pertenece a una selección múltiple, se mueve el conjunto sin cambiar su orden interno. El candado bloquea o desbloquea esa capa; desbloquea todos los objetos seleccionados antes de reordenarlos. El orden se puede deshacer, se guarda en el proyecto y se conserva al presentar y exportar. Cierra el panel con su ✕ o, mientras el foco esté en él, con **Esc**.
 
 **Formas** inserta un rectángulo, una elipse, una línea o una flecha directamente en la diapositiva. Muévelos y cambia su tamaño como cualquier bloque. Con doble clic puedes editar su color, sus objetos y su descripción en el editor de figuras. La figura sigue editable en el proyecto JSON; en PowerPoint se incorpora como imagen.
 
