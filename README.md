@@ -76,6 +76,12 @@ Erlen Slides usa claves de almacenamiento propias. Para traer una presentación 
 
 Lee [Arquitectura](docs/desarrollo.md), [Validación](docs/validacion.md) y [Contribuciones](CONTRIBUTING.md). Las capturas proceden de Firefox; las pruebas de integración con JSDOM simulan geometría y no sustituyen la inspección visual. Las exportaciones deben revisarse antes de enviar un trabajo científico.
 
+## Escritorio en Linux
+
+La versión de escritorio está en desarrollo con Tauri y un núcleo Rust. Utiliza el WebView del sistema y conserva el editor y sus bibliotecas locales; Node.js solo se necesita para construirla. La primera operación trasladada a Rust es el guardado de proyectos JSON mediante un diálogo nativo y una escritura que conserva el archivo anterior si falla.
+
+La biblioteca de la aplicación de escritorio es independiente de la del navegador. Para llevar una presentación existente, expórtala como JSON desde el navegador e impórtala en la app. Consulta los requisitos y pasos en [Escritorio Linux](docs/escritorio-linux.md).
+
 ## Licencia y cita
 
 El código original, documentación y ejemplos de este repositorio se publican bajo **GNU Affero General Public License v3.0 únicamente**: [LICENSE](LICENSE), identificador `AGPL-3.0-only`. Los componentes de terceros conservan sus licencias y atribuciones: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

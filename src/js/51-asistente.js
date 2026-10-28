@@ -337,7 +337,7 @@ accion({ id: 'respaldo', grp: 'Exportar', n: 'Descargar el proyecto (.json)',
   d: 'Un respaldo completo del proyecto que se puede volver a abrir aquí.',
   clave: 'respaldo json backup',
   frases: 'respaldo copia json guardar proyecto backup descargar',
-  corre: () => { exportJSON(); return 'Respaldo descargado.'; } });
+  corre: () => { exportJSON(); return 'Se inició la exportación del proyecto.'; } });
 
 /* --- la app --- */
 accion({ id: 'concentracion', grp: 'La app', n: 'Modo concentración',

@@ -25,3 +25,10 @@ La licencia AGPL-3.0-only cubre el trabajo original de Erlen Slides. Las bibliot
 `licenses/components.json` registra las versiones npm utilizadas. `licenses/embedded-assets.json` identifica con SHA-256 los archivos tipográficos y KaTeX heredados. Las fuentes WOFF2 están incrustadas en CSS; el build las conserva, no las recompila. Sus creadores incluyen Bogusław Jackowski, Janusz M. Nowacki y los colaboradores de GUST e-foundry; los derivados TeX Gyre conservan los créditos de las familias originales.
 
 Los paquetes de pruebas, incluidos JSDOM y fake-indexeddb, se obtienen mediante npm y conservan sus avisos en el paquete instalado. Los ejemplos, diagramas y datos ilustrativos nuevos son originales del proyecto. No se incluyen artículos ajenos, logotipos institucionales ni investigaciones privadas.
+
+El escritorio Linux también incorpora dependencias Rust, incluidas Tauri y sus complementos. Sus atribuciones y textos correspondientes a `Cargo.lock` para `x86_64-unknown-linux-gnu` se distribuyen en [`licenses/rust-dependencies.txt`](licenses/rust-dependencies.txt), junto con los avisos anteriores. Para regenerarlos después de actualizar dependencias, instala `cargo-about` 0.9.3 y ejecuta:
+
+```sh
+cargo about generate --config about.toml --manifest-path src-tauri/Cargo.toml --target x86_64-unknown-linux-gnu --locked --format json --fail > /tmp/erlen-rust-licenses.json
+node herramientas/licencias-rust.mjs < /tmp/erlen-rust-licenses.json > licenses/rust-dependencies.txt
+```

@@ -1,0 +1,15 @@
+[package]
+name = "erlen-slides-desktop"
+version = "0.3.0"
+description = "Local scientific presentation editor"
+edition = "2021"
+license = "AGPL-3.0-only"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+erlen-slides-core = { path = "../crates/slides-core" }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"

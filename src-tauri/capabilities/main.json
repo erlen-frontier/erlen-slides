@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Local Slides editor and its native project-save command.",
+  "windows": ["main"],
+  "permissions": ["core:default", "allow-guardar-proyecto", "allow-cerrar-presentador"]
+}
