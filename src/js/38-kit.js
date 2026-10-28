@@ -113,6 +113,7 @@ function leemeKit(pgs, extra) {
     '  proyecto.json          El proyecto entero. Se abre en Tabula con Archivo → Importar.',
     '  guion.html             Tu guion con miniaturas, notas y tiempos. Ábrelo e imprímelo.',
     '  figuras/               Las imágenes sueltas, por si las necesitas en el artículo.',
+    ...(textoCreditosCatalogo(S.deck) ? ['  creditos-figuras.txt   Autoría y licencias para compartir las figuras.'] : []),
     ...(S.deck.slides.some(sl => sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
       ? ['  Aviso: el código Beamer no conserva la posición libre; revisa su acomodo.'] : []),
     ...(extra || []).filter(a => a.desc).map(a => '  ' + (a.rotulo || a.nombre).padEnd(22) + ' ' + a.desc),
@@ -150,7 +151,7 @@ async function archivosKit(extra) {
   for (let i = 0; i < S.deck.slides.length; i++) for (const b of zonas(S.deck.slides[i]).flat()) {
     if (!['image', 'chart', 'func', 'video', 'galeria', 'estruct', 'montaje', 'geo'].includes(b.type)) continue;
     figuras.push({ id: b.id || null, slide: i + 1, type: b.type, caption: b.caption || null,
-      source: b.fuente || null, dataSha256: b.data ? await huellaDe(b.data) : null });
+      source: b.fuente || null, catalog: esFuenteCatalogo(b.catalogo) ? deepCopy(b.catalogo) : null, dataSha256: b.data ? await huellaDe(b.data) : null });
   }
   const provenance = { schema: 'erlen-provenance-v1', application: 'Tabula',
     version: window.ERLEN?.version || 'desconocida', generatedAt: new Date().toISOString(),
@@ -169,6 +170,8 @@ async function archivosKit(extra) {
     { nombre: 'guion.html', datos: guionHTML() },
     { nombre: 'provenance.json', datos: JSON.stringify(provenance, null, 2) + '\n' }
   ];
+  const creditos = textoCreditosCatalogo(S.deck);
+  if (creditos) archivos.push({ nombre:'creditos-figuras.txt', datos:creditos + '\n' });
   const imgs = allImageBlocks().filter(b => b.src);
   if (S.deck.meta.logo) imgs.unshift({ id: 'logo', src: S.deck.meta.logo, caption: 'logo' });
   imgs.forEach(b => {

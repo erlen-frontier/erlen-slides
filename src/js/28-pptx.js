@@ -139,6 +139,10 @@ async function exportPPTX() {
           datos: relsDe([rel('rId1', 'notesMaster', '../notesMasters/notesMaster1.xml'), rel('rId2', 'slide', '../slides/slide' + num + '.xml')]) });
       }
     }
+  } catch (error) {
+    if (aviso?.remove) aviso.remove();
+    toast('No se pudo exportar el PowerPoint: ' + String(error.message || error), 'warn');
+    return;
   } finally { wb.remove(); }
 
   slidesXml.forEach((x, i) => archivos.push({ nombre: 'ppt/slides/slide' + (i + 1) + '.xml', datos: x }));
@@ -213,7 +217,8 @@ async function exportPPTX() {
   if (aviso && aviso.remove) aviso.remove();
   toast('PowerPoint listo · ' + n + ' diapositivas');
   if (deck.slides.some(sl => sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length)))
-    openModal({ title: 'Revisar el PowerPoint', body: h('p', null, 'La posición libre puede diferir en PowerPoint; revisa el acomodo, el orden y los recortes en el archivo descargado.'),
+    openModal({ title: 'Revisar el PowerPoint', body: h('div', null, h('p', null, 'La posición libre puede diferir en PowerPoint; revisa el acomodo, el orden y los recortes en el archivo descargado.'), avisoCreditosCatalogo(deck)),
       foot: [h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Entendido')] });
+  else recuerdaCreditosCatalogo(deck);
 }
 

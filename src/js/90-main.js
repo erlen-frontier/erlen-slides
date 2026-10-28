@@ -133,6 +133,7 @@ function initChrome() {
       item('▤', 'Guardar copia en la biblioteca…', null, saveDeckAs);
     } else item('⤓', 'Guardar como…', 'Ctrl+S', saveDeckAs);
     item('↶', 'Copias y recuperación', null, openRecuperacion);
+    item('▤', 'Créditos de figuras…', 'autoría y licencias', openCreditosCatalogo);
     menu.append(h('div', { class: 'm-sep' }));
     item('✦', 'Nueva presentación…', 'plantillas', openPlantillas);
     item('↥', 'Importar proyecto .json…', null, importJSON);
@@ -164,6 +165,7 @@ function initChrome() {
       item('▤', 'Guardar copia en la biblioteca…', null, saveDeckAs);
     } else item('⤓', 'Guardar como…', null, saveDeckAs);
     item('↶', 'Copias y recuperación', null, openRecuperacion);
+    item('▤', 'Créditos de figuras…', 'autoría y licencias', openCreditosCatalogo);
     item('⟲', 'Deshacer', 'Ctrl+Z', doUndo);
     item('⟳', 'Rehacer', 'Ctrl+Shift+Z', doRedo);
     item('✦', 'Nueva presentación…', null, openPlantillas);

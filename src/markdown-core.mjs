@@ -522,6 +522,8 @@ export function aMarkdown(deck, {zonasPorDiseno, carpetaFiguras, incrustarFigura
       }
       case 'image': {
         const src = String(b.src || '');
+        if (b.catalogo && typeof b.catalogo === 'object' && typeof b.catalogo.id === 'string')
+          avisos.push('Diapositiva ' + n + ': Markdown no conserva la procedencia editable de esta figura; guarda el proyecto JSON y comparte sus créditos.');
         let ruta;
         const dm = /^data:([^;,]+)((?:;[^,;]*)*),(.*)$/s.exec(src);
         if (dm && incrustarFiguras) ruta = src;

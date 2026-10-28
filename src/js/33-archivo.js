@@ -277,7 +277,7 @@ function openFolleto() {
   } }, h('span', { class: 'pl-ic' }, '▤'), h('span', { class: 'pl-n' }, f.lb), h('span', { class: 'pl-d' }, f.d))));
   openModal({
     title: 'Folleto para repartir', size: 'modal-sm',
-    body: h('div', null, cuerpo, h('p', { class: 'hint', style: 'margin-top:12px' },
+    body: h('div', null, cuerpo, avisoCreditosCatalogo(), h('p', { class: 'hint', style: 'margin-top:12px' },
       'Se descarga un archivo que abres en el navegador e imprimes como PDF. Las versiones de 2 y 3 por hoja llevan renglones para que el comité anote al lado.')),
     foot: [h('button', { class: 'btn', onclick: closeModal }, 'Cancelar')]
   });

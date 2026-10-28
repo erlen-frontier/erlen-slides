@@ -840,7 +840,9 @@ function initCanvasEvents() {
       onclick: e => menuOrganizaLienzo(e.currentTarget) }, 'Organizar');
     const formas = h('button', { id: 'lienzoFormasBtn', type: 'button', class: 'btn btn-sm', 'aria-label': 'Insertar formas',
       onclick: e => menuFormasLienzo(e.currentTarget) }, 'Formas');
-    pie.append(h('div', { id: 'lienzoComposicion', class: 'lienzo-composicion', hidden: true }, formas, organizar));
+    const catalogo = h('button', { id: 'lienzoCatalogoBtn', type: 'button', class: 'btn btn-sm', 'aria-label': 'Explorar figuras científicas',
+      onclick: openCatalogoFiguras }, 'Figuras');
+    pie.append(h('div', { id: 'lienzoComposicion', class: 'lienzo-composicion', hidden: true }, formas, catalogo, organizar));
   }
   inner.addEventListener('pointerdown', iniciaSeleccionPorMarco);
   /* Arrastrar una imagen dispara el arrastre nativo del navegador, que cancela
@@ -1015,6 +1017,7 @@ function pickImage(b) {
         if (S.deck !== deck || findBlock(f.block.id)?.block !== f.block) return;
         if (f.block.locked) return;
         f.block.src = url; delete f.block.cientifico; delete f.block.figura; delete f.block.formaLibre; delete f.block.orig; delete f.block.recProp;
+        if (f.block.catalogo && esFuenteCatalogo(f.block.catalogo)) delete f.block.catalogo;
         commit(); disenadorAlPonerImagen(f.block);
       };
       const rd = new FileReader();

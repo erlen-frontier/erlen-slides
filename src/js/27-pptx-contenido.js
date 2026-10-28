@@ -62,6 +62,20 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
   };
   const imagen = async (el, uri, alt) => {
     if (!el || !uri) return;
+    if (/^data:image\/svg\+xml[;,]/i.test(uri)) {
+      // The classic writer only packages PNG media. Render SVG images to a
+      // PNG instead of passing their text to the base64 decoder and silently
+      // dropping them from the presentation.
+      try {
+        if (el.decode) await el.decode();
+        if (!el.naturalWidth || !el.naturalHeight) throw new Error('Imagen vacía');
+        const rect = el.getBoundingClientRect(), w = rect.width || el.naturalWidth, h = rect.height || el.naturalHeight;
+        const scale = Math.min(2, 4096 / w, 4096 / h), canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.ceil(w * scale)); canvas.height = Math.max(1, Math.ceil(h * scale));
+        canvas.getContext('2d').drawImage(el, 0, 0, canvas.width, canvas.height);
+        uri = canvas.toDataURL('image/png');
+      } catch (error) { throw new Error('No se pudo incluir el SVG en PowerPoint: ' + error.message); }
+    }
     const rid = await ctx.medio(uri);
     if (rid) F.push(xmlImagen(id(), marco(el, raiz, esc), rid, alt));
   };

@@ -1373,6 +1373,7 @@ function openPdfHelp() {
         h('div', { class: 'help-row' }, h('span', null, 'Márgenes'), h('kbd', null, 'Ninguno')),
         h('div', { class: 'help-row' }, h('span', null, 'Escala'), h('kbd', null, '100 %')),
         h('div', { class: 'help-row' }, h('span', null, 'Gráficos de fondo'), h('kbd', null, 'Activado'))),
+      avisoCreditosCatalogo(),
       h('p', { class: 'hint', style: 'margin-top:10px' }, 'El PDF sale con texto y ecuaciones vectoriales, del mismo tamaño exacto de la diapositiva. En el celular la opción aparece como «Imprimir» y luego «Guardar como PDF». Si el cuadro de impresión no se abre (pasa dentro de algunos visores), descarga el archivo imprimible y ábrelo en tu navegador: hace lo mismo.')),
     foot: [
       h('span', { class: 'foot-note' }, '¿No se abre el cuadro? Usa el archivo imprimible.'),
@@ -1393,6 +1394,7 @@ function openTexView() {
     title: 'Código Beamer (.tex)', size: 'modal-lg',
     body: h('div', null,
       h('p', { class: 'hint', style: 'margin:0 0 10px' }, 'Este es el LaTeX real de tu presentación, listo para Overleaf. Compila tal cual, aunque todavía no subas las figuras: donde falte una, aparece un recuadro con su nombre. Descárgalas con el botón de abajo y súbelas al proyecto sin cambiarles el nombre.'),
+      avisoCreditosCatalogo(),
       S.deck.slides.some(sl => sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
         ? h('p', { class: 'hint', role: 'status' }, 'La posición libre no se conserva en Beamer: el acomodo cambia. Revisa el código y el resultado compilado.') : null,
       pre),
@@ -1426,10 +1428,14 @@ function dataUriToBlob(uri) {
   if (!m) return null;
   const mime = m[1] || 'application/octet-stream';
   const b64 = /;base64/i.test(m[2] || '');
-  const data = b64 ? atob(m[3]) : decodeURIComponent(m[3]);
-  const arr = new Uint8Array(data.length);
-  for (let i = 0; i < data.length; i++) arr[i] = data.charCodeAt(i);
-  return { blob: new Blob([arr], { type: mime }), mime };
+  let data;
+  if (b64) {
+    const binary = atob(m[3]);
+    data = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) data[i] = binary.charCodeAt(i);
+  } else data = decodeURIComponent(m[3]);
+  // Blob encodes text as UTF-8, while base64 already represents raw bytes.
+  return { blob: new Blob([data], { type: mime }), mime };
 }
 async function exportFigures() {
   /* El estilo (forma, marco, sombra, filtro) se cuece aquí: así el archivo que
@@ -1475,6 +1481,7 @@ function exportPNG() {
           document.body.append(a); a.click(); a.remove();
           setTimeout(() => URL.revokeObjectURL(u), 4000);
           toast('Imagen descargada');
+          recuerdaCreditosCatalogo();
         }, 'image/png');
         wb.innerHTML = '';
       };

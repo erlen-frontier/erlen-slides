@@ -75,7 +75,10 @@ function openRecorte(b) {
     const sx = Math.max(0, -ox / s), sy = Math.max(0, -oy / s);
     const sw = Math.min(NW - sx, VW / s), sh = Math.min(NH - sy, VH / s);
     const MAX = 1600;
-    const k = Math.min(1, MAX / Math.max(sw, sh));
+    // SVGs have vector detail beyond their nominal viewport (catalog pieces
+    // use 100 × 140). Rasterize those at presentation resolution when cropped.
+    const factor = MAX / Math.max(sw, sh);
+    const k = /^data:image\/svg\+xml[;,]/i.test(fuente) ? factor : Math.min(1, factor);
     const cv = h('canvas'); cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
     const cx = cv.getContext('2d');
     cx.imageSmoothingQuality = 'high';
@@ -83,6 +86,7 @@ function openRecorte(b) {
     const jpg = /^data:image\/jpe?g/.test(fuente);
     if (!b.orig) b.orig = fuente;
     b.src = jpg ? cv.toDataURL('image/jpeg', 0.92) : cv.toDataURL('image/png');
+    marcaRecorteCatalogo(b, true);
     b.recProp = prop;
     closeModal(); commit();
     toast('Imagen encuadrada', null, { t: 'Deshacer', fn: doUndo });
@@ -93,7 +97,7 @@ function openRecorte(b) {
     openModal({
       title: 'Encuadrar la imagen', size: 'modal-lg', body: cuerpo,
       foot: [
-        b.orig ? h('button', { class: 'btn', onclick: () => { b.src = b.orig; delete b.orig; delete b.recProp; closeModal(); commit(); toast('Recorte quitado'); } }, 'Quitar el recorte') : null,
+        b.orig ? h('button', { class: 'btn', onclick: () => { b.src = b.orig; delete b.orig; delete b.recProp; marcaRecorteCatalogo(b, false); closeModal(); commit(); toast('Recorte quitado'); } }, 'Quitar el recorte') : null,
         h('button', { class: 'btn', onclick: closeModal }, 'Cancelar'),
         h('button', { class: 'btn btn-pri', onclick: aplica }, 'Aplicar')
       ].filter(Boolean)

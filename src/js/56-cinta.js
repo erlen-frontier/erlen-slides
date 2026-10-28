@@ -100,6 +100,7 @@ function cintaInsertar() {
       grande('ins-table', 'Tabla', 'Table', insertar('table'))),
     grupoC('Más contenido',
       peque('figura-capas', 'Figura por capas', 'Layers3', () => openFiguraCapas(), { d: 'Texto, formas e imágenes editables; también con el teclado' }),
+      peque('catalogo-figuras', 'Catálogo científico', 'Images', openCatalogoFiguras, { d: 'Piezas científicas para el lienzo libre de la diapositiva' }),
       peque('diagrama-texto', 'Diagrama desde texto', 'Workflow', () => openDiagramaTexto()),
       menuC('mas-bloques', 'Más bloques', 'Blocks', opcionesBloques(['galeria', 'quote', 'bblock', 'code', 'spacer'])),
       menuC('datos-medios', 'Datos y medios', 'ChartLine', opcionesBloques(['chart', 'func', 'video', 'smart']), { d: 'Gráficas, video y diagramas' }),
@@ -282,6 +283,7 @@ function elementosArchivo() {
   item('CalendarDays', 'Bitácora del documento…', 'historial por días', openBitacora);
   sep(); titulo('Exportar');
   item('FileCheck', 'Revisar y compartir…', 'elige formato y revisa el archivo', () => openCompartir());
+  item('BookOpen', 'Créditos de figuras…', 'autoría y licencias', openCreditosCatalogo);
   item('FileText', 'PDF…', 'Ctrl+P', openPdfHelp);
   item('FileSliders', 'PowerPoint editable (.pptx)', 'texto, tablas, gráficas y diagramas compatibles', exportPPTXEditable);
   item('FileSliders', 'PowerPoint (.pptx)', 'exportador clásico', exportPPTX);
