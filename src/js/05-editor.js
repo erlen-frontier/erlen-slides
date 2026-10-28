@@ -1062,41 +1062,42 @@ function initCanvasEvents() {
 let _imgTargetId = null;
 function pickImage(b) {
   _imgTargetId = b.id;
+  // The input can outlive the document when its picker is canceled. Weak keys
+  // let it identify the original target without retaining an entire deck.
+  const identidad = objeto => {
+    const claves = pickImage._claves || (pickImage._claves = new WeakMap());
+    let n = claves.get(objeto);
+    if (!n) { n = (pickImage._siguiente || 0) + 1; pickImage._siguiente = n; claves.set(objeto, n); }
+    return n;
+  };
   let inp = $('#imgFileInput');
   if (!inp) {
     inp = h('input', { type: 'file', id: 'imgFileInput', accept: 'image/*', style: 'display:none' });
     document.body.append(inp);
     inp.addEventListener('change', () => {
+      const destino = inp._destino; inp._destino = null;
       const file = inp.files[0]; inp.value = '';
       if (!file) return;
-      const f = findBlock(_imgTargetId); if (!f) return;
-      const deck = S.deck;
+      const f = findBlock(_imgTargetId);
+      if (!destino || identidad(S.deck) !== destino.deck || identidad(curSlide()) !== destino.slide || !f || identidad(f.block) !== destino.block) {
+        toast('La diapositiva cambió; vuelve a elegir la imagen.', 'warn'); return;
+      }
+      const deck = S.deck, slide = curSlide(), lectura = inp._lectura = (inp._lectura || 0) + 1;
       const aplica = url => {
-        if (S.deck !== deck || findBlock(f.block.id)?.block !== f.block) return;
+        if (inp._lectura !== lectura || S.deck !== deck || curSlide() !== slide || findBlock(f.block.id)?.block !== f.block) return;
         if (f.block.locked) return;
         f.block.src = url; delete f.block.cientifico; delete f.block.figura; delete f.block.formaLibre; delete f.block.orig; delete f.block.recProp;
         if (f.block.catalogo && esFuenteCatalogo(f.block.catalogo)) delete f.block.catalogo;
         commit(); disenadorAlPonerImagen(f.block);
       };
       const rd = new FileReader();
-      rd.onload = () => {
-        const url = rd.result;
-        if (file.type === 'image/svg+xml' || file.size < 250000) { aplica(url); return; }
-        const img = new Image();
-        img.onload = () => {
-          const MAX = 1600;
-          let { width: w, height: hh } = img;
-          if (Math.max(w, hh) > MAX) { const k = MAX / Math.max(w, hh); w = Math.round(w * k); hh = Math.round(hh * k); }
-          const cv = h('canvas'); cv.width = w; cv.height = hh;
-          cv.getContext('2d').drawImage(img, 0, 0, w, hh);
-          aplica(file.type === 'image/png' ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', 0.9));
-        };
-        img.onerror = () => { aplica(url); };
-        img.src = url;
-      };
-      rd.readAsDataURL(file);
+      rd.onload = () => aplica(rd.result);
+      rd.onerror = rd.onabort = () => { if (inp._lectura === lectura && S.deck === deck) toast('No se pudo leer la imagen.', 'warn'); };
+      try { rd.readAsDataURL(file); } catch (error) { rd.onerror(); }
     });
   }
+  inp._destino = {deck:identidad(S.deck), slide:identidad(curSlide()), block:identidad(b)};
+  inp._lectura = (inp._lectura || 0) + 1;
   inp.click();
 }
 

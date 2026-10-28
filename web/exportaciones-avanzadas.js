@@ -128,11 +128,11 @@ window.ERLEN_EXPORTADORES = (() => {
             }
             for (const r of holder.querySelectorAll('.smart-rot')) texto(r, r.textContent);
             if (pie) texto(pie, pie.textContent);
-          } else if (b.type === 'image' && el.querySelector('.imgwrap')?.childElementCount === 1 && !b.orig && !b.est?.filtro && !b.est?.forma && !b.est?.marco && !b.frame) {
+          } else if (b.type === 'image' && el.querySelector('.imgwrap')?.childElementCount === 1 && !b.est?.filtro && !b.est?.forma && !b.est?.marco && !b.frame) {
             if (!/^data:image\//i.test(b.src || '')) throw new Error('Incrusta las imágenes remotas antes de exportar el PowerPoint editable.');
             const env = el.querySelector('.imgwrap'), im = el.querySelector('img');
             const medidas = transformada ? sinTransformacionVisual(env, () => caja(im)) : caja(im);
-            pagina.addImage({ ...medidas, data: imagenBase64(b.src), altText: b.alt || b.caption || 'Figura',
+            pagina.addImage({ ...medidas, data: imagenBase64(await imagenParaExportar(b.src, FORMATOS_PPTX, im)), altText: b.alt || b.caption || 'Figura',
               ...(transformada ? {rotate:t.giro, flipH:t.voltearH, flipV:t.voltearV} : {}) });
             if (pie) texto(pie, pie.textContent);
           } else if (transformada && el.querySelector('.imgwrap')) {
@@ -148,7 +148,7 @@ window.ERLEN_EXPORTADORES = (() => {
         }
         const fl = raiz.querySelector('.footline'); fondo(fl);
         for (const el of raiz.querySelectorAll('.footline .fl-cell,.footline>span,.pagenum,.pie-nota')) { fondo(el); texto(el, el.textContent); }
-        for (const im of raiz.querySelectorAll('.tp-logo img,.tp-logo-esq img,.footline img,.pie-logo img')) { if (!/^data:image\//i.test(im.src)) throw new Error('Incrusta el logotipo antes de exportar el PowerPoint editable.'); pagina.addImage({ ...caja(im), data: imagenBase64(im.src), altText: im.alt }); }
+        for (const im of raiz.querySelectorAll('.tp-logo img,.tp-logo-esq img,.footline img,.pie-logo img')) { if (!/^data:image\//i.test(im.src)) throw new Error('Incrusta el logotipo antes de exportar el PowerPoint editable.'); pagina.addImage({ ...caja(im), data: imagenBase64(await imagenParaExportar(im.src, FORMATOS_PPTX, im)), altText: im.alt }); }
         for (const recorte of recortesSlide(raiz)) avisos.push({ diapositiva: i + 1, bloque: recorte.bloque, motivo: 'Contenido recortado en el editor: revisa su acomodo antes de compartir.' });
       }
       return { blob: await pptx.write({ outputType: 'blob', compression: true }), avisos };

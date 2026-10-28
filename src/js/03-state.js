@@ -281,7 +281,7 @@ const saveInd = deb(() => {
   if (typeof nubeSincroniza === 'function') nubeSincroniza();
   if (!ok && !S._avisoLS) {
     S._avisoLS = true;
-    toast('La presentacion ya no cabe en el guardado autom\u00e1tico del navegador (suele ser por los videos). Guarda el proyecto .json desde Exportar.', 'warn');
+    toast('La presentación ya no cabe en el guardado automático. Guarda el proyecto como archivo .json para conservar los cambios.', 'warn');
   }
   if (typeof actualizaEstadoArchivoEscritorio === 'function') actualizaEstadoArchivoEscritorio(ok);
 }, 700);

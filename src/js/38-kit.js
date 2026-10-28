@@ -174,13 +174,13 @@ async function archivosKit(extra) {
   if (creditos) archivos.push({ nombre:'creditos-figuras.txt', datos:creditos + '\n' });
   const imgs = allImageBlocks().filter(b => b.src);
   if (S.deck.meta.logo) imgs.unshift({ id: 'logo', src: S.deck.meta.logo, caption: 'logo' });
-  imgs.forEach(b => {
-    const d = dataUriToBlob(b.src);
-    if (!d) return;
-    const ext = d.mime.includes('svg') ? 'svg' : d.mime.includes('jpeg') ? 'jpg' : 'png';
+  for (const b of imgs) {
+    const d = dataUriToBlob(await imagenParaExportar(b.src, FORMATOS_FIGURA));
+    if (!d) continue;
+    const ext = /svg/i.test(d.mime) ? 'svg' : /jpe?g/i.test(d.mime) ? 'jpg' : 'png';
     const datos = new Uint8Array(0);
     archivos.push({ nombre: 'figuras/' + (b.id === 'logo' ? 'logo' : figName(b)) + '.' + ext, blob: d.blob, datos });
-  });
+  }
   (extra || []).forEach(a => archivos.push({ nombre: a.nombre, datos: a.datos }));
   /* Los archivos que vienen como Blob se pasan a bytes antes de comprimir. */
   for (const a of archivos) if (a.blob) a.datos = new Uint8Array(await a.blob.arrayBuffer());

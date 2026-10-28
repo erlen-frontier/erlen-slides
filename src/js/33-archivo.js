@@ -233,7 +233,7 @@ function folletoHTML(porHoja) {
   const k = ancho / W;
   const celdas = S.deck.slides.map((sl, i) => {
     const clip = h('div', { class: 'fo-mini', style: `width:${ancho}px;height:${Math.round(H * k)}px` });
-    const mini = renderSlide(S.deck, i, 'thumb', 99);
+    const mini = renderSlide(S.deck, i, 'thumb', 99, {imagenOriginal:true});
     mini.style.transform = `scale(${k})`; mini.style.transformOrigin = 'top left';
     clip.append(mini);
     const renglones = h('div', { class: 'fo-lin' });

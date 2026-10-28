@@ -2,6 +2,65 @@
 'use strict';
 /* ================= render de diapositivas ================= */
 const slideDims = deck => deck.meta.aspect === '43' ? [1024, 768] : [1280, 720];
+
+/* Las vistas de trabajo son temporales: el modelo, la presentación y los
+   exportadores siempre conservan la fuente completa. Una cola limita las
+   decodificaciones simultáneas y la caché libera sus URL al expulsarlas. */
+const VISTAS_IMAGEN = new Map();
+const VISTA_LADO_MAX = 1600, VISTAS_MAX = 8, VISTAS_ORIGEN_MAX = 32 * 1024 * 1024;
+let colaVistasImagen = Promise.resolve();
+function recortaVistasImagen() {
+  let peso = 0;
+  for (const [src] of VISTAS_IMAGEN) peso += src.length;
+  while (VISTAS_IMAGEN.size > 1 && (VISTAS_IMAGEN.size > VISTAS_MAX || peso > VISTAS_ORIGEN_MAX)) {
+    const [src, entrada] = VISTAS_IMAGEN.entries().next().value;
+    VISTAS_IMAGEN.delete(src); entrada.vigente = false; peso -= src.length;
+    if (entrada.url) {
+      // A visible thumbnail may still use this URL. Restore its source before
+      // revoking it so an eviction cannot leave an image that fails to load.
+      for (const img of document.images) if (img.getAttribute('src') === entrada.url) img.src = src;
+      URL.revokeObjectURL(entrada.url);
+    }
+  }
+}
+function creaVistaImagen(src) {
+  return new Promise(resolve => {
+    const original = new Image();
+    original.onerror = () => resolve(null);
+    original.onload = () => {
+      try {
+        const w = original.naturalWidth, h = original.naturalHeight, mayor = Math.max(w, h);
+        if (!(w > 0 && h > 0) || mayor <= VISTA_LADO_MAX) { resolve(null); return; }
+        const k = VISTA_LADO_MAX / mayor, canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(w * k)); canvas.height = Math.max(1, Math.round(h * k));
+        const ctx = canvas.getContext('2d'); if (!ctx || typeof canvas.toBlob !== 'function') { resolve(null); return; }
+        ctx.imageSmoothingQuality = 'high'; ctx.drawImage(original, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(resolve, /^data:image\/jpe?g[;,]/i.test(src) ? 'image/jpeg' : 'image/png', 0.92);
+      } catch (error) { resolve(null); }
+    };
+    original.src = src;
+  });
+}
+function aplicaVistaImagen(img, src, modo) {
+  if (!['edit', 'thumb'].includes(modo) || typeof src !== 'string' || src.length < 350000 ||
+      !/^data:image\/(png|jpe?g|webp|bmp|avif)[;,]/i.test(src) || typeof URL.createObjectURL !== 'function') return;
+  let entrada = VISTAS_IMAGEN.get(src);
+  if (entrada) { VISTAS_IMAGEN.delete(src); VISTAS_IMAGEN.set(src, entrada); }
+  else {
+    entrada = {vigente:true, url:null, promesa:null}; VISTAS_IMAGEN.set(src, entrada); recortaVistasImagen();
+    const actual = entrada;
+    actual.promesa = colaVistasImagen.then(() => actual.vigente ? creaVistaImagen(src) : null).then(blob => {
+      if (!blob || !actual.vigente) return null;
+      actual.url = URL.createObjectURL(blob); return actual.url;
+    }).catch(() => null);
+    colaVistasImagen = actual.promesa;
+  }
+  const actual = entrada;
+  if (actual.url) { img.src = actual.url; return; }
+  actual.promesa.then(url => {
+    if (url && actual.vigente && img.isConnected && img.getAttribute('src') === src) img.src = url;
+  });
+}
 function sinTransformacionVisual(env, fn) {
   const anterior = env?.style.transform;
   if (!anterior || anterior === 'none') return fn();
@@ -60,7 +119,7 @@ function ajustaMarcosImagenesLibres(raiz) {
   }
 }
 
-function renderSlide(deck, idx, mode, stepShown) {
+function renderSlide(deck, idx, mode, stepShown, opciones = null) {
   const sl = deck.slides[idx];
   const m = deck.meta;
   const edit = mode === 'edit';
@@ -134,6 +193,7 @@ function renderSlide(deck, idx, mode, stepShown) {
         const fig = h('figure', null);
         if (b.src) {
           const img = h('img', { src: b.src, alt: b.alt || b.caption || 'Figura' });
+          aplicaVistaImagen(img, b.src, opciones?.imagenOriginal ? 'export' : mode);
           const marcas = typeof capaFigura === 'function' ? capaFigura(b, deck) : null;
           const escala = typeof capaEscala === 'function' ? capaEscala(b) : null;
           const env = h('div', { class: 'imgwrap', style: `width:${b.w || 70}%` }, img);
@@ -287,7 +347,7 @@ function renderSlide(deck, idx, mode, stepShown) {
         break;
       }
       case 'galeria': {
-        el = renderGaleria(b, deck, mode, availPx || bodyW);
+        el = renderGaleria(b, deck, mode, availPx || bodyW, opciones?.imagenOriginal ? 'export' : mode);
         break;
       }
       case 'refs': {

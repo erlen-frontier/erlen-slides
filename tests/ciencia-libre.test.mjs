@@ -57,7 +57,7 @@ test('Actualizar conserva el bloque y sus datos serializables, elimina el recort
 });
 test('Cambiar la imagen elimina la fuente científica y descarta cargas de otra presentación',()=>{
  let input,reader;const b={id:'b',src:'vieja',cientifico:{tipo:'molecula'},orig:'recorte',recProp:{x:1}};
- const c=vm.createContext({S:{deck:{}},$:()=>input,h:()=>input={files:[{size:10,type:'image/png'}],addEventListener:(_,fn)=>input.change=fn,click:()=>{}},document:{body:{append:()=>{}}},FileReader:class{constructor(){reader=this;}readAsDataURL(){this.result='data:image/png;base64,nueva';}},findBlock:()=>({block:b}),commit:()=>{},disenadorAlPonerImagen:()=>{}});
+ const slide={};const c=vm.createContext({S:{deck:{}},curSlide:()=>slide,$:()=>input,h:()=>input={files:[{size:10,type:'image/png'}],addEventListener:(_,fn)=>input.change=fn,click:()=>{}},document:{body:{append:()=>{}}},FileReader:class{constructor(){reader=this;}readAsDataURL(){this.result='data:image/png;base64,nueva';}},findBlock:()=>({block:b}),commit:()=>{},disenadorAlPonerImagen:()=>{}});
  const editor=readFileSync(new URL('../src/js/05-editor.js',import.meta.url),'utf8');vm.runInContext('let _imgTargetId=null;\n'+editor.match(/function pickImage\([\s\S]*?\n\}/)[0],c);
  c.pickImage(b);input.change();reader.onload();assert.equal(b.cientifico,undefined);assert.equal(b.orig,undefined);assert.equal(b.src,'data:image/png;base64,nueva');
  c.pickImage(b);input.change();c.S.deck={};reader.result='otra imagen';reader.onload();assert.equal(b.src,'data:image/png;base64,nueva');

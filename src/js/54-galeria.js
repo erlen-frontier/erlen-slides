@@ -26,7 +26,7 @@ function galDe(b) {
 const galColumnas = g => g.modo === 'tira' ? Math.max(1, g.imgs.length) : clamp(+g.cols || 2, 1, 4);
 
 /* ---------- pintar en la diapositiva ---------- */
-function renderGaleria(b, deck, mode, availPx) {
+function renderGaleria(b, deck, mode, availPx, modoImagen = mode) {
   const g = galDe(b);
   const fig = h('figure', { class: 'gal-fig', style: `width:${b.w || 92}%` });
   const rej = h('div', { class: 'gal-rej gal-' + g.modo });
@@ -39,7 +39,9 @@ function renderGaleria(b, deck, mode, availPx) {
   }
   g.imgs.forEach((im, i) => {
     const celda = h('div', { class: 'gal-celda' + (g.modo === 'mosaico' && i === 0 ? ' gal-grande' : '') });
-    const env = h('div', { class: 'gal-img' }, h('img', { src: im.src, alt: im.alt || im.cap || 'Figura ' + (i + 1) }));
+    const img = h('img', { src: im.src, alt: im.alt || im.cap || 'Figura ' + (i + 1) });
+    aplicaVistaImagen(img, im.src, modoImagen);
+    const env = h('div', { class: 'gal-img' }, img);
     if (typeof aplicaEstiloImg === 'function' && b.est) aplicaEstiloImg(env, { src: im.src, est: b.est }, deck);
     celda.append(env);
     const et = (g.letras ? '(' + LETRAS_FIG[i] + ')' : '') + (im.cap ? (g.letras ? ' ' : '') + im.cap : '');
@@ -58,20 +60,25 @@ function renderGaleria(b, deck, mode, availPx) {
 
 /* ---------- el editor ---------- */
 function openGaleria(b) {
-  const g = deepCopy(galDe(b));
+  const deck = S.deck, slide = curSlide(), g = deepCopy(galDe(b));
   const vista = h('div', { class: 'gal-vista' });
   const lista = h('div', { class: 'gal-lista' });
+  const estado = h('p', {class:'hint', role:'status'});
+  let cargando = false, cerrado = false;
+  const esperando = [];
 
   const pinta = () => {
     vista.innerHTML = '';
     const falso = { type: 'galeria', id: b.id, gal: g, w: 100, caption: b.caption, est: b.est };
-    vista.append(renderGaleria(falso, S.deck, 'export'));
+    vista.append(renderGaleria(falso, S.deck, 'edit'));
     lista.innerHTML = '';
     if (!g.imgs.length) lista.append(h('p', { class: 'hint' }, 'Todavía no hay figuras. Añade la primera con el botón de abajo, o suelta varias de golpe sobre este cuadro.'));
     g.imgs.forEach((im, i) => {
+      const mini = h('img', { class: 'gal-mini', src: im.src, alt: '' });
+      aplicaVistaImagen(mini, im.src, 'thumb');
       const fila = h('div', { class: 'gal-fila' },
         h('span', { class: 'gal-letra' }, '(' + LETRAS_FIG[i] + ')'),
-        h('img', { class: 'gal-mini', src: im.src, alt: '' }),
+        mini,
         h('input', { class: 'field', value: im.cap || '', placeholder: 'Pie de esta figura (opcional)',
           oninput: e => { im.cap = e.target.value; pinta(); } }),
         h('button', { class: 'icon-btn', title: 'Subir', onclick: () => { if (i) { g.imgs.splice(i - 1, 0, g.imgs.splice(i, 1)[0]); pinta(); } } }, '↑'),
@@ -81,30 +88,23 @@ function openGaleria(b) {
     });
   };
 
-  const meteArchivos = files => {
-    const pend = [...files].filter(f => /^image\//.test(f.type)).slice(0, 8 - g.imgs.length);
+  const meteArchivos = async files => {
+    const pend = [...files].filter(f => /^image\//.test(f.type));
     if (!pend.length) return;
-    let quedan = pend.length;
-    pend.forEach(f => {
-      const rd = new FileReader();
-      rd.onload = () => {
-        const url = rd.result;
-        const guarda = u => { g.imgs.push({ src: u, cap: '', alt: '' }); if (!--quedan) pinta(); };
-        if (f.type === 'image/svg+xml' || f.size < 220000) return guarda(url);
-        const im = new Image();
-        im.onload = () => {
-          const MAX = 1400;
-          let w = im.width, hh = im.height;
-          if (Math.max(w, hh) > MAX) { const k = MAX / Math.max(w, hh); w = Math.round(w * k); hh = Math.round(hh * k); }
-          const cv = h('canvas'); cv.width = w; cv.height = hh;
-          cv.getContext('2d').drawImage(im, 0, 0, w, hh);
-          guarda(f.type === 'image/png' ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', 0.9));
-        };
-        im.onerror = () => guarda(url);
-        im.src = url;
-      };
-      rd.readAsDataURL(f);
-    });
+    if (cargando) { esperando.push(...pend); estado.textContent = 'Leyendo imágenes…'; return; }
+    cargando = true; listo.disabled = true; estado.textContent = 'Leyendo imágenes…';
+    let lote = pend, errores = false, exceso = false;
+    while (lote.length) {
+      const cupo = 8 - g.imgs.length;
+      if (lote.length > cupo) exceso = true;
+      const leidos = await Promise.all(lote.slice(0, Math.max(0, cupo)).map(leeComoDataURL));
+      if (cerrado) return;
+      leidos.filter(Boolean).forEach(src => g.imgs.push({src, cap:'', alt:''}));
+      if (leidos.some(x => !x)) errores = true;
+      pinta(); lote = esperando.splice(0);
+    }
+    cargando = false; listo.disabled = false;
+    estado.textContent = errores ? 'No se pudieron leer algunas imágenes.' : exceso ? 'La galería admite hasta 8 imágenes.' : '';
   };
   const entrada = h('input', { type: 'file', accept: 'image/*', multiple: true, style: 'display:none',
     onchange: e => { meteArchivos(e.target.files); e.target.value = ''; } });
@@ -129,11 +129,18 @@ function openGaleria(b) {
     onchange: e => { g.letras = e.target.checked; pinta(); } }), 'Numerar (a), (b), (c)'));
 
   pinta();
-  const cuerpo = h('div', null, vista, ctr, zona, lista,
+  const cuerpo = h('div', null, vista, ctr, zona, estado, lista,
     h('p', { class: 'hint' }, 'En el .tex sale como una figura con minipages —lo mismo que se hace en un artículo— y cada pie pequeño se convierte en su subtítulo. El estilo de figura (forma, marco, filtro) se aplica a todas a la vez desde la pestaña Bloque.'));
+  const listo = h('button', { class: 'btn btn-pri', onclick: () => {
+    if (cargando) return;
+    if (S.deck !== deck || curSlide() !== slide || findBlock(b.id)?.block !== b || b.locked) {
+      toast('La diapositiva o la galería cambió; vuelve a abrirla.', 'warn'); closeModal(); return;
+    }
+    b.gal = g; commit(); closeModal();
+  } }, 'Listo');
   openModal({
     title: 'Galería de figuras', size: 'modal-lg', body: cuerpo,
-    foot: [h('button', { class: 'btn btn-pri', onclick: () => { b.gal = g; commit(); closeModal(); } }, 'Listo')]
+    foot: [listo], onclose: () => { cerrado = true; }
   });
 }
 

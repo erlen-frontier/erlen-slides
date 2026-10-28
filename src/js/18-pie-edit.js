@@ -215,7 +215,7 @@ function guionHTML() {
   const k = 360 / W;
   const filas = S.deck.slides.map((sl, i) => {
     const clip = h('div', { class: 'gu-mini', style: `width:360px;height:${Math.round(H * k)}px` });
-    const mini = renderSlide(S.deck, i, 'thumb', 99);
+    const mini = renderSlide(S.deck, i, 'thumb', 99, {imagenOriginal:true});
     mini.style.transform = `scale(${k})`; mini.style.transformOrigin = 'top left';
     clip.append(mini);
     const partes = partesNota(sl.notes);

@@ -104,10 +104,13 @@ async function exportPPTX() {
             if (!relsSlide.some(x => x.rid === y.rid)) relsSlide.push(y);
             return y.rid;
           }
+          const tipo = /^data:image\/(png|jpe?g|gif)(?:;[^,]*)?,/i.exec(uri || '');
+          if (!tipo || !/;base64,/i.test(uri)) throw new Error('Formato de imagen no compatible con PowerPoint.');
           let bytes;
           try { bytes = b64aBytes(uri); } catch (e) { return null; }
           const k = medios.length + 1;
-          const nombre = 'imagen' + k + '.png';
+          const extension = /^jpe?g$/i.test(tipo[1]) ? 'jpg' : tipo[1].toLowerCase();
+          const nombre = 'imagen' + k + '.' + extension;
           medios.push({ nombre, bytes });
           const y = { rid: 'rIdM' + k, destino: '../media/' + nombre };
           cacheMedio.set(uri, y);
@@ -183,6 +186,8 @@ async function exportPPTX() {
     '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
     '<Default Extension="xml" ContentType="application/xml"/>' +
     '<Default Extension="png" ContentType="image/png"/>' +
+    '<Default Extension="jpg" ContentType="image/jpeg"/>' +
+    '<Default Extension="gif" ContentType="image/gif"/>' +
     '<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>' +
     '<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>' +
     '<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>' +
