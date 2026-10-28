@@ -240,3 +240,27 @@ test('native close does not discard an unconfirmed equation editor draft', async
   assert.equal(app.dom.window.document.querySelector('#modalRoot textarea').value, 'E=mc^2');
   assert.match(app.dom.window.__notices.at(-1)[0], /diálogo|termina/i);
 });
+
+test('closing with pending edits offers safe in-app choices and only destroys after explicit confirmation', async t => {
+  const app = await setup(t, async cmd => cmd === 'guardar_archivo_proyecto_como' ? {id: 8, nombre:'charla.json'} : null);
+  let listener, destroyed = 0;
+  const win = {onCloseRequested: async fn => {listener=fn;}, destroy: async () => {destroyed++;}};
+  app.dom.window.__TAURI__.window = {getCurrentWindow: () => win};
+  app.run('instalaCierreNativo()');
+  await app.run('guardarProyectoEscritorio(true)');
+  app.run("S.deck.meta.title='Pendiente';");
+  app.dom.window.confirm = () => { throw new Error('Unexpected browser confirmation'); };
+  let prevented = false;
+  listener({preventDefault: () => {prevented = true;}});
+  assert.equal(prevented, true);
+  let modal = app.dom.window.document.querySelector('#modalRoot');
+  assert.match(modal.textContent, /Cambios sin guardar/);
+  [...modal.querySelectorAll('button')].find(b => /Seguir editando/.test(b.textContent)).click();
+  assert.equal(destroyed, 0);
+  assert.equal(app.run('S.deck.meta.title'), 'Pendiente');
+  listener({preventDefault: () => {}});
+  modal = app.dom.window.document.querySelector('#modalRoot');
+  [...modal.querySelectorAll('button')].find(b => /Cerrar sin guardar/.test(b.textContent)).click();
+  await Promise.resolve();
+  assert.equal(destroyed, 1);
+});

@@ -123,19 +123,27 @@ function confirmaCambioArchivo() {
   if (!hayEscritorio() || !archivoEscritorioPendiente()) return true;
   return confirm('Hay cambios que no se han guardado en un archivo. ¿Cambiar de presentación de todos modos?');
 }
-function confirmaSalidaArchivo() {
+function confirmaSalidaArchivo(ventana = null) {
   if ($('#modalRoot')?.firstChild) { toast('Termina o cancela el diálogo abierto antes de cerrar.', 'warn'); return false; }
   terminaEdicionArchivo();
   saveInd.now();
   if (operacionArchivoEscritorio || guardandoProyectoEscritorio) { toast('Espera a que termine la operación de archivo antes de cerrar.', 'warn'); return false; }
   if (!archivoEscritorioPendiente()) return true;
-  return confirm('Hay cambios que no se han guardado en un archivo. ¿Cerrar de todos modos?');
+  openModal({title:'Cambios sin guardar', size:'modal-sm',
+    body:h('p', null, 'Hay cambios que todavía no se han guardado en un archivo. Puedes seguir editando para guardarlos antes de cerrar.'),
+    foot:[h('button', {class:'btn', onclick:closeModal}, 'Seguir editando'),
+      h('button', {class:'btn btn-danger', onclick:() => {
+        closeModal();
+        if (!ventana?.destroy) { toast('No se pudo cerrar la ventana.', 'warn'); return; }
+        ventana.destroy().catch(() => toast('No se pudo cerrar la ventana.', 'warn'));
+      }}, 'Cerrar sin guardar')]});
+  return false;
 }
 function instalaCierreNativo() {
   if (!hayEscritorio()) return;
   const win = window.__TAURI__?.window?.getCurrentWindow?.();
   if (!win?.onCloseRequested) return;
-  win.onCloseRequested(e => { if (!confirmaSalidaArchivo()) e.preventDefault(); }).catch(() => {
+  win.onCloseRequested(e => { if (!confirmaSalidaArchivo(win)) e.preventDefault(); }).catch(() => {
     toast('No se pudo activar el aviso al cerrar. Guarda una copia del proyecto.', 'warn');
   });
   document.addEventListener('focusin', e => {
