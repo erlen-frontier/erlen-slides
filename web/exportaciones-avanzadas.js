@@ -103,6 +103,7 @@ window.ERLEN_EXPORTADORES = (() => {
         for (const el of raiz.querySelectorAll('.blk[data-bid]')) {
           const b = findBlockEn(deck, el.dataset.bid)?.block; if (!b || b.type === 'spacer') continue;
           const pie = el.querySelector('figcaption,.chart-cap,.smart-cap,.tab-caption');
+          const t = transformacionLibreDe(b), transformada = b.type === 'image' && (t.giro || t.voltearH || t.voltearV);
           if (['text', 'quote', 'code', 'bullets'].includes(b.type) && !el.querySelector('.katex')) {
             if (b.type === 'code') fondo(el.querySelector('pre'));
             const t = b.type === 'bullets' ? [...el.querySelectorAll('li')].map((li, j) => '  '.repeat(b.items[j]?.lvl || 0) + '• ' + li.textContent).join('\n') : el.textContent;
@@ -129,7 +130,17 @@ window.ERLEN_EXPORTADORES = (() => {
             if (pie) texto(pie, pie.textContent);
           } else if (b.type === 'image' && el.querySelector('.imgwrap')?.childElementCount === 1 && !b.orig && !b.est?.filtro && !b.est?.forma && !b.est?.marco && !b.frame) {
             if (!/^data:image\//i.test(b.src || '')) throw new Error('Incrusta las imágenes remotas antes de exportar el PowerPoint editable.');
-            pagina.addImage({ ...caja(el.querySelector('img')), data: imagenBase64(b.src), altText: b.alt || b.caption || 'Figura' });
+            const env = el.querySelector('.imgwrap'), im = el.querySelector('img');
+            const medidas = transformada ? sinTransformacionVisual(env, () => caja(im)) : caja(im);
+            pagina.addImage({ ...medidas, data: imagenBase64(b.src), altText: b.alt || b.caption || 'Figura',
+              ...(transformada ? {rotate:t.giro, flipH:t.voltearH, flipV:t.voltearV} : {}) });
+            if (pie) texto(pie, pie.textContent);
+          } else if (transformada && el.querySelector('.imgwrap')) {
+            const env = el.querySelector('.imgwrap'), medidas = sinTransformacionVisual(env, () => caja(env));
+            const uri = await rasteriza(env, css, 2, {sinTransformacion:true});
+            if (!uri) throw new Error('Diapositiva ' + (i + 1) + ': no se pudo exportar la figura transformada.');
+            pagina.addImage({ ...medidas, data:uri, altText:b.alt || b.caption || 'Figura', rotate:t.giro, flipH:t.voltearH, flipV:t.voltearV });
+            aviso(b, 'La figura conserva su apariencia como imagen; sus objetos internos no son editables en PowerPoint.');
             if (pie) texto(pie, pie.textContent);
           } else {
             await foto(el, b.alt || b.caption || b.type); aviso(b, 'La figura conserva su apariencia como imagen; sus objetos internos no son editables en PowerPoint.');
@@ -157,11 +168,9 @@ async function creaHTML(deck, incluirNotas = false) {
       const raiz = renderSlide(deck, i, 'present', 0); banco.replaceChildren(raiz);
       await document.fonts?.ready;
       await Promise.all([...raiz.querySelectorAll('img')].map(im => im.decode?.().catch(() => {}) || Promise.resolve()));
-      for (const im of raiz.querySelectorAll('.imagen-libre-recorte')) {
-        const env = im.parentElement, img = env?.querySelector('img'), marco = im.querySelector('.imagen-libre-marco');
-        if (img && marco) ajustaMarcoImagenLibre(env, img, im, marco);
-      }
+      ajustaMarcosImagenesLibres(raiz);
       await pausa();
+      ajustaPiesFiguras(raiz);
       for (const el of raiz.querySelectorAll('[contenteditable],[data-edit]')) { el.removeAttribute('contenteditable'); el.removeAttribute('data-edit'); }
       const frags = [...raiz.querySelectorAll('.frag')];
       for (const el of frags) { el.classList.remove('frag', 'on'); el.classList.add('fragment'); el.dataset.fragmentIndex = el.dataset.frag; }

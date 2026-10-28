@@ -26,6 +26,11 @@ function saneaBloque(b, avisos, deck) {
     avisos.push('un bloque tenía una posición de lienzo inválida; se usará una posición inicial visible');
     delete b.posLibre;
   }
+  if (b.bloqueaProporcion !== true) delete b.bloqueaProporcion;
+  if (b.transformacionLibre != null && (b.type !== 'image' || !transformacionLibreValida(b.transformacionLibre))) {
+    avisos.push('una figura tenía una transformación inválida; se mostrará sin giro ni volteo');
+    delete b.transformacionLibre;
+  }
   if (b.capaLibre != null && (!Number.isSafeInteger(b.capaLibre) || b.capaLibre < 0 || b.capaLibre > 1000000)) {
     avisos.push('un bloque tenía un orden de capas inválido; se usará su orden inicial');
     delete b.capaLibre;

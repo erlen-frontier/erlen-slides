@@ -284,20 +284,42 @@ function renderBlockTab_(body) {
     h('button', { class: 'icon-btn', title: 'Quitar la selección', onclick: () => selectBlock(null) }, '✕')));
 
   if (f.slide === curSlide() && f.slide.lienzoLibre) {
-    const g = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Posición en la diapositiva'));
+    const g = h('div', { class: 'igroup', id:'transformacionLibrePanel' }, h('span', { class: 'panel-label' }, 'Posición en la diapositiva'));
+    const deck = S.deck, slide = f.slide, individual = idsSeleccionados().size <= 1;
+    const seleccionIndividual = () => S.deck === deck && curSlide() === slide && S.selBlock === b.id &&
+      idsSeleccionados().size === 1 && idsSeleccionados().has(b.id);
     const p = posicionLibreDe(f.slide, b);
     const campos = h('div', { class: 'libre-campos' });
     for (const [key, nombre] of [['x', 'Izquierda'], ['y', 'Arriba'], ['w', 'Anchura'], ['h', 'Altura']]) {
       const input = h('input', { class: 'field', type: 'number', min: key === 'w' || key === 'h' ? '1' : '0', max: '100', step: '0.01',
-        value: p[key], disabled: !!b.locked, 'aria-label': nombre + ' (%)', onchange: e => {
-          if (f.slide !== curSlide() || findBlock(b.id)?.block !== b || b.locked) return;
-          const siguiente = { ...posicionLibreDe(f.slide, b), [key]: e.target.value === '' ? NaN : +e.target.value };
-          if (!posicionLibreValida(siguiente)) { e.target.value = posicionLibreDe(f.slide, b)[key]; toast('La caja debe quedar dentro de la diapositiva y medir al menos 1 %.', 'warn'); return; }
+        value: p[key], disabled: !!b.locked || !individual, 'aria-label': nombre + ' (%)', onchange: e => {
+          if (!seleccionIndividual() || findBlock(b.id)?.block !== b || b.locked) return;
+          const anterior = posicionLibreDe(f.slide, b), valor = e.target.value === '' ? NaN : +e.target.value;
+          const siguiente = b.bloqueaProporcion && ['w', 'h'].includes(key)
+            ? dimensionProporcionalLibre(anterior, key, valor) : { ...anterior, [key]: valor };
+          if (!posicionLibreValida(siguiente)) { e.target.value = anterior[key]; toast('La caja debe quedar dentro de la diapositiva y medir al menos 1 %.', 'warn'); return; }
           aplicaPosicionLibre(b.id, siguiente);
         } });
       campos.append(h('label', null, nombre + ' (%)', input));
     }
-    g.append(campos, h('p', { class: 'hint' }, 'Flechas: mover · Mayús + flechas: cambiar el tamaño.'));
+    const proporcion = h('input', {type:'checkbox', checked:b.bloqueaProporcion === true, disabled:!!b.locked || !individual,
+      onchange:e => { if (seleccionIndividual()) cambiaProporcionLibre(deck, slide, b.id, e.target.checked); }});
+    g.append(campos, h('label', {class:'check libre-proporcion'}, proporcion, ' Bloquear proporciones'),
+      h('p', { class: 'hint' }, 'Flechas: mover · Mayús + flechas: cambiar el tamaño.'));
+    if (b.type === 'image') {
+      const t = transformacionLibreDe(b), controles = h('div', {class:'libre-transformar'});
+      const giro = h('input', {class:'field', type:'number', min:'-180', max:'180', step:'1', value:t.giro,
+        disabled:!!b.locked || !individual, 'aria-label':'Giro (°)', onchange:e => {
+          const valor = e.target.value === '' ? NaN : +e.target.value;
+          if (!Number.isFinite(valor) || valor < -180 || valor > 180) { e.target.value = transformacionLibreDe(b).giro; toast('El giro debe estar entre −180 y 180 grados.', 'warn'); return; }
+          if (seleccionIndividual()) aplicaTransformacionLibre(deck, slide, b.id, {...transformacionLibreDe(b), giro:valor});
+        }});
+      controles.append(h('label', null, 'Giro (°)', giro));
+      for (const [key, texto] of [['voltearH','Voltear horizontalmente'], ['voltearV','Voltear verticalmente']])
+        controles.append(h('button', {type:'button', class:'btn btn-sm', disabled:!!b.locked || !individual,
+          'aria-pressed':String(t[key]), onclick:() => { if (seleccionIndividual()) aplicaTransformacionLibre(deck, slide, b.id, {...transformacionLibreDe(b), [key]:!transformacionLibreDe(b)[key]}); }}, texto));
+      g.append(controles);
+    }
     body.append(g);
   }
 

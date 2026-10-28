@@ -665,6 +665,8 @@ body.arrastra-ancho .blk-toolbar{opacity:.2}
 .libre-asa,.grupo-asa{position:absolute;width:36px;height:36px;min-width:36px;min-height:36px;padding:0;border:0;background:transparent;border-radius:50%;z-index:61;touch-action:none}
 .libre-asa::after,.grupo-asa::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;transform:translate(-50%,-50%);border:1.5px solid var(--acc);background:var(--panel);border-radius:50%}
 .libre-asa:hover::after,.grupo-asa:hover::after{background:var(--accSoft)}
+.libre-asa.libre-giro{left:50%;top:-18px;z-index:62;border:1.5px solid var(--acc);background:var(--panel);color:var(--acc);font-size:20px;line-height:1;cursor:grab}
+.libre-asa.libre-giro::after{content:none}.libre-asa.libre-giro:active{cursor:grabbing}
 .libre-nw{left:-18px;top:-18px;cursor:nwse-resize}.libre-se{right:-18px;bottom:-18px;cursor:nwse-resize}
 .libre-ne{right:-18px;top:-18px;cursor:nesw-resize}.libre-sw{left:-18px;bottom:-18px;cursor:nesw-resize}
 .seleccion-marco{position:absolute;box-sizing:border-box;border:1.5px solid var(--acc);pointer-events:none;z-index:55}
@@ -676,6 +678,8 @@ body.arrastra-ancho .blk-toolbar{opacity:.2}
 @media (max-width:920px){.lienzo-composicion{position:absolute;inset-inline-start:0;bottom:calc(100% + 8px)}}
 .libre-campos{display:grid;grid-template-columns:1fr 1fr;gap:8px}.libre-campos label{font-size:var(--t1);color:var(--mut)}
 .libre-campos input{width:100%;margin-top:4px}
+.libre-proporcion{margin-top:10px}.libre-transformar{display:flex;flex-wrap:wrap;align-items:end;gap:8px;margin-top:10px}
+.libre-transformar label{font-size:var(--t1);color:var(--mut)}.libre-transformar input{display:block;width:90px;margin-top:4px}
 
 /* ---------- encuadre de imagen ---------- */
 .rec-cuerpo{display:grid;grid-template-columns:auto 1fr;gap:var(--e4);align-items:start}

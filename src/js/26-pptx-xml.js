@@ -73,14 +73,16 @@ function variablesHeredadas(el, css) {
 const _atrXml = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /* Rasteriza un trozo de la diapositiva a PNG con la misma pinta que en pantalla. */
-function rasteriza(el, css, escala) {
+function rasteriza(el, css, escala, opciones = {}) {
   return new Promise(res => {
-    const r = el.getBoundingClientRect();
+    const mide = () => ({rect:el.getBoundingClientRect(), clon:el.cloneNode(true)});
+    const medida = opciones.sinTransformacion ? sinTransformacionVisual(el, mide) : mide();
+    const r = medida.rect;
     const w = Math.max(1, Math.round(r.width)), hh = Math.max(1, Math.round(r.height));
-    const clon = el.cloneNode(true);
+    const clon = medida.clon;
     clon.style.margin = '0';
     let contenido = clon;
-    const libre = el.classList?.contains('blk') && el.closest('.lienzo-capa');
+    const libre = el.closest('.lienzo-capa') && (el.classList?.contains('blk') || opciones.sinTransformacion);
     if (libre) {
       /* El foreignObject ya mide la caja del bloque: sus coordenadas de página
          no deben aplicarse por segunda vez dentro de esa caja. Las copias de
@@ -101,7 +103,7 @@ function rasteriza(el, css, escala) {
     if (clon.querySelectorAll) Array.prototype.push.apply(svgs, clon.querySelectorAll('svg'));
     svgs.forEach(s => s.setAttribute('xmlns', 'http://www.w3.org/2000/svg'));
     const estilo = 'width:' + w + 'px;height:' + hh + 'px;' + variablesHeredadas(el, css);
-    const fragmento = libre ? new XMLSerializer().serializeToString(contenido) : htmlAXml(clon.outerHTML);
+    const fragmento = libre || opciones.sinTransformacion ? new XMLSerializer().serializeToString(contenido) : htmlAXml(clon.outerHTML);
     const html = '<div xmlns="http://www.w3.org/1999/xhtml" style="' + _atrXml(estilo) + '">' + fragmento + '</div>';
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + hh + '">' +
       '<defs><style type="text/css"><![CDATA[' + css + ']]></style></defs>' +
@@ -152,11 +154,13 @@ function xmlRect(id, f, relleno, radio) {
     '<a:solidFill><a:srgbClr val="' + relleno + '"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>' +
     '<p:txBody><a:bodyPr/><a:lstStyle/><a:p/></p:txBody></p:sp>';
 }
-function xmlImagen(id, f, rid, alt) {
+function xmlImagen(id, f, rid, alt, orientacion = null) {
+  const atributos = orientacion ? (orientacion.giro ? ' rot="' + Math.round((orientacion.giro < 0 ? orientacion.giro + 360 : orientacion.giro) * 60000) + '"' : '') +
+    (orientacion.voltearH ? ' flipH="1"' : '') + (orientacion.voltearV ? ' flipV="1"' : '') : '';
   return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="Imagen ' + id + '" descr="' + xesc(alt || '') + '"/>' +
     '<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>' +
     '<p:blipFill><a:blip r:embed="' + rid + '"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>' +
-    '<p:spPr><a:xfrm><a:off x="' + f.x + '" y="' + f.y + '"/><a:ext cx="' + f.w + '" cy="' + f.h + '"/></a:xfrm>' +
+    '<p:spPr><a:xfrm' + atributos + '><a:off x="' + f.x + '" y="' + f.y + '"/><a:ext cx="' + f.w + '" cy="' + f.h + '"/></a:xfrm>' +
     '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>';
 }
 function xmlTabla(id, f, filas, opt) {

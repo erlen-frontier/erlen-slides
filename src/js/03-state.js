@@ -75,6 +75,46 @@ function posicionLibreValida(p) {
     p.x >= 0 && p.y >= 0 && p.x + p.w <= 100 && p.y + p.h <= 100;
 }
 const redondeaLibre = n => Math.round(n * 100) / 100;
+function transformacionLibreValida(t) {
+  return !!t && typeof t === 'object' && !Array.isArray(t) &&
+    typeof t.giro === 'number' && Number.isFinite(t.giro) && t.giro >= -180 && t.giro <= 180 &&
+    typeof t.voltearH === 'boolean' && typeof t.voltearV === 'boolean';
+}
+function transformacionLibreDe(b) {
+  return b?.type === 'image' && transformacionLibreValida(b.transformacionLibre)
+    ? b.transformacionLibre : { giro: 0, voltearH: false, voltearV: false };
+}
+function cssTransformacionLibre(t) {
+  return t.giro || t.voltearH || t.voltearV
+    ? `rotate(${t.giro}deg) scaleX(${t.voltearH ? -1 : 1}) scaleY(${t.voltearV ? -1 : 1})` : '';
+}
+function aplicaTransformacionLibre(deck, slide, id, t) {
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre || !transformacionLibreValida(t)) return false;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  const f = findBlock(id);
+  if (deck !== S.deck || slide !== curSlide() || !f || f.slide !== slide || f.block.type !== 'image' || f.block.locked ||
+      (typeof bloqueVisible === 'function' && !bloqueVisible(f.block, deck))) return false;
+  const actual = transformacionLibreDe(f.block), nueva = {giro:redondeaLibre(t.giro), voltearH:t.voltearH, voltearV:t.voltearV};
+  if (actual.giro === nueva.giro && actual.voltearH === nueva.voltearH && actual.voltearV === nueva.voltearV) return false;
+  if (!nueva.giro && !nueva.voltearH && !nueva.voltearV) delete f.block.transformacionLibre;
+  else f.block.transformacionLibre = nueva;
+  commit(); return true;
+}
+function cambiaProporcionLibre(deck, slide, id, fijada) {
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre || typeof fijada !== 'boolean') return false;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  const f = findBlock(id);
+  if (deck !== S.deck || slide !== curSlide() || !f || f.slide !== slide || f.block.locked ||
+      (typeof bloqueVisible === 'function' && !bloqueVisible(f.block, deck)) || !!f.block.bloqueaProporcion === fijada) return false;
+  if (fijada) f.block.bloqueaProporcion = true; else delete f.block.bloqueaProporcion;
+  commit(); return true;
+}
+function dimensionProporcionalLibre(p, eje, valor) {
+  if (!posicionLibreValida(p) || !['w', 'h'].includes(eje) || !Number.isFinite(valor) || valor <= 0) return null;
+  const otro = eje === 'w' ? 'h' : 'w', nueva = {...p, [eje]:redondeaLibre(valor)};
+  nueva[otro] = redondeaLibre(p[otro] * valor / p[eje]);
+  return posicionLibreValida(nueva) ? nueva : null;
+}
 function posicionLibreDe(sl, b) {
   if (posicionLibreValida(b.posLibre)) return b.posLibre;
   const i = Math.max(0, zonas(sl).flat().findIndex(x => x.id === b.id));

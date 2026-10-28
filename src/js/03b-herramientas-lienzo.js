@@ -60,7 +60,7 @@ function mueveSeleccionLibre(deck, slide, ids, dx, dy) {
 /* Escala de manera uniforme alrededor de la esquina opuesta. El límite se
    calcula para todo el conjunto, antes de cambiar cualquier bloque. */
 function calculaEscalaLibre(posiciones, esquina, factor) {
-  if (!Array.isArray(posiciones) || posiciones.length < 2 || !posiciones.every(posicionLibreValida) ||
+  if (!Array.isArray(posiciones) || posiciones.length < 1 || !posiciones.every(posicionLibreValida) ||
       !['nw', 'ne', 'sw', 'se'].includes(esquina) || !Number.isFinite(factor)) return null;
   const caja = posiciones.reduce((a, p) => ({ izq: Math.min(a.izq, p.x), arriba: Math.min(a.arriba, p.y),
     der: Math.max(a.der, p.x + p.w), abajo: Math.max(a.abajo, p.y + p.h) }), { izq: 100, arriba: 100, der: 0, abajo: 0 });

@@ -261,7 +261,7 @@ function guionHTML() {
     '<div class="tip">Imprime este archivo (Ctrl+P / Cmd+P) y elige «Guardar como PDF».</div>' +
     '<div class="gu-head"><h1>' + esc(S.deck.meta.title || 'Presentación') + '</h1><p>Guion del orador · ' +
     S.deck.slides.length + ' diapositivas' + (tot ? ' · ' + mmss(tot) + ' min previstos' : '') + '</p></div>' +
-    filas.join('') + '</body></html>';
+    filas.join('') + scriptAjustesFiguras() + '</body></html>';
 }
 function exportGuion() {
   downloadFile(deckSlug() + '-guion.html', guionHTML(), 'text/html;charset=utf-8');

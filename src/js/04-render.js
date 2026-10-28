@@ -2,11 +2,35 @@
 'use strict';
 /* ================= render de diapositivas ================= */
 const slideDims = deck => deck.meta.aspect === '43' ? [1024, 768] : [1280, 720];
+function sinTransformacionVisual(env, fn) {
+  const anterior = env?.style.transform;
+  if (!anterior || anterior === 'none') return fn();
+  env.style.transform = 'none';
+  try { return fn(); } finally { env.style.transform = anterior; }
+}
+/* El giro no cambia el tamaño de la caja flex. Desplaza el pie lo necesario
+   para que la imagen rotada no lo cubra, sin alterar la geometría guardada. */
+function ajustaPieImagen(env, cap) {
+  if (!env?.isConnected || !cap?.isConnected) return;
+  const visual = env.querySelector(':scope > img') || env;
+  const base = sinTransformacionVisual(env, () => ({env:env.getBoundingClientRect(), visual:visual.getBoundingClientRect()}));
+  const girada = visual.getBoundingClientRect(), escala = base.env.width / (env.offsetWidth || base.env.width);
+  if (!(base.env.width > 0 && base.visual.height > 0 && escala > 0)) return;
+  const extra = Math.max(0, (girada.bottom - base.visual.bottom) / escala);
+  cap.style.transform = extra > .01 ? 'translateY(' + extra + 'px)' : '';
+}
+function ajustaPiesFiguras(raiz) {
+  for (const env of raiz.querySelectorAll('.imgwrap[data-giro-figura]')) {
+    const cap = env.parentElement?.querySelector(':scope > figcaption');
+    if (cap) ajustaPieImagen(env, cap);
+  }
+}
 
 /* Las anotaciones usan coordenadas de la imagen, no del hueco que puede
    quedar a sus lados al contenerla en una caja de otra proporción. */
 function ajustaMarcoImagenLibre(env, img, recorte, marco) {
   if (!env.isConnected || !img.naturalWidth || !img.naturalHeight) return;
+  return sinTransformacionVisual(env, () => {
   const e = env.getBoundingClientRect(), r = img.getBoundingClientRect();
   if (!(e.width > 0 && e.height > 0 && r.width > 0 && r.height > 0)) return;
   const cs = getComputedStyle(img), sx = r.width / (img.offsetWidth || r.width), sy = r.height / (img.offsetHeight || r.height);
@@ -26,6 +50,14 @@ function ajustaMarcoImagenLibre(env, img, recorte, marco) {
   const px = fraccion(posicion[0], .5), py = fraccion(posicion[1], .5);
   Object.assign(marco.style, { left: ((w - dw) * px / w * 100) + '%', top: ((h - dh) * py / h * 100) + '%',
     width: (dw / w * 100) + '%', height: (dh / h * 100) + '%' });
+  });
+}
+
+function ajustaMarcosImagenesLibres(raiz) {
+  for (const recorte of raiz.querySelectorAll('.imagen-libre-recorte')) {
+    const env = recorte.parentElement, img = env?.querySelector('img'), marco = recorte.querySelector('.imagen-libre-marco');
+    if (img && marco) ajustaMarcoImagenLibre(env, img, recorte, marco);
+  }
 }
 
 function renderSlide(deck, idx, mode, stepShown) {
@@ -128,6 +160,9 @@ function renderSlide(deck, idx, mode, stepShown) {
             if (img.complete && img.naturalWidth) Promise.resolve().then(ajusta);
           } else { if (marcas) env.append(marcas); if (escala) env.append(escala); }
           if (typeof aplicaEstiloImg === 'function') aplicaEstiloImg(env, b, deck);
+          const orientacion = transformacionLibreDe(b);
+          env.style.transform = cssTransformacionLibre(orientacion);
+          if (orientacion.giro) env.setAttribute('data-giro-figura', '');
           fig.append(env);
           /* Antes / después: la segunda imagen se funde sobre la primera como un paso. */
           if (b.despues && b.despues.src && typeof renderDespues === 'function') {
@@ -140,6 +175,17 @@ function renderSlide(deck, idx, mode, stepShown) {
           const cap = h('figcaption', null, h('span', { class: 'cap-label' }, `Figura ${ctx.fig + 1}: `),
             h('span', Object.assign({ class: emptyCls(capTxt).trim(), html: inlineRich(capTxt) }, ed(`b:${b.id}:cap`, 'Pie de figura…'))));
           fig.append(cap);
+          const env = fig.querySelector('.imgwrap[data-giro-figura]'), img = env?.querySelector('img');
+          if (env && img) {
+            const ajusta = () => ajustaPieImagen(env, cap);
+            img.addEventListener('load', ajusta);
+            if (img.decode) img.decode().then(ajusta, () => {});
+            if (typeof ResizeObserver !== 'undefined') {
+              const observador = new ResizeObserver(() => { if (!env.isConnected) observador.disconnect(); else ajusta(); });
+              observador.observe(env);
+            }
+            if (img.complete && img.naturalWidth) Promise.resolve().then(ajusta);
+          }
         }
         el = h('div', { class: `blk b-image${b.frame ? ' imgframe' : ''}${esFormaLibre(b) ? ' b-forma-libre' : ''}` }, fig);
         break;
