@@ -261,9 +261,16 @@ function openBlockProps(b) {
   });
 }
 function cuerpoProps(b, op) {
-  if (b.locked) return h('div', null, h('p', { class: 'hint' }, 'Bloque protegido contra cambios. Desbloquéalo para editarlo.'), h('button', { class: 'btn', onclick: () => { b.locked = false; closeModal(); commit(); } }, 'Desbloquear'));
   op = op || {};
   const enPanel = !!op.panel;
+  if (b.locked) {
+    const varias = enPanel && curSlide().lienzoLibre && S.selBlock === b.id && idsSeleccionados().size > 1;
+    return h('div', null, h('p', { class: 'hint' }, 'Bloque protegido contra cambios. Desbloquéalo para editarlo.'),
+      h('button', { class: 'btn', onclick: () => {
+        if (enPanel && S.selBlock === b.id) cambiaBloqueoSeleccion(false);
+        else { b.locked = false; closeModal(); commit(); }
+      } }, varias ? 'Desbloquear selección' : 'Desbloquear'));
+  }
   const cierra = () => { if (!enPanel) closeModal(); };
   const body = h('div');
   const row = (lab, ctrl) => body.append(h('div', { class: 'irow' }, h('label', null, lab), h('div', { style: 'flex:1.4' }, ctrl)));

@@ -211,6 +211,7 @@ function grupo(id, titulo, hijos, opts) {
 }
 
 function renderInspector() {
+  aplicaCambioPanelPendiente();
   /* La cinta solo se refresca (sin repintar); con la cinta puesta, el panel
      de la derecha se pinta únicamente cuando está abierto como panel de detalles. */
   actualizaCinta();
@@ -272,6 +273,11 @@ function renderBlockTab(body) {
     body.append(g);
   }
 }
+let _cambioPanelPendiente = null;
+function aplicaCambioPanelPendiente() {
+  if (!_cambioPanelPendiente) return;
+  const pendiente = _cambioPanelPendiente; _cambioPanelPendiente = null; pendiente.now();
+}
 function renderBlockTab_(body) {
   const f = findBlock(S.selBlock);
   if (!f) { renderInsertTab(body); return; }
@@ -329,24 +335,33 @@ function renderBlockTab_(body) {
   cuerpo.classList.add('blk-props');
   /* Un solo oyente para todo el cuerpo: así los controles de la ventana
      sirven tal cual, sin duplicar la lógica de cada uno. */
-  const vivo = deb(() => { renderCanvas(); commit({ skipInsp: true }); }, 200);
-  cuerpo.addEventListener('input', vivo);
-  cuerpo.addEventListener('change', vivo);
-  cuerpo.addEventListener('click', e => { if (e.target.closest('.seg button, label.check')) vivo(); });
+  const deckPanel = S.deck;
+  const vivo = deb(() => {
+    if (_cambioPanelPendiente === vivo) _cambioPanelPendiente = null;
+    if (S.deck !== deckPanel) return;
+    renderCanvas(); commit({ skipInsp: true });
+  }, 200);
+  const programa = () => {
+    if (_cambioPanelPendiente && _cambioPanelPendiente !== vivo) aplicaCambioPanelPendiente();
+    _cambioPanelPendiente = vivo; vivo();
+  };
+  cuerpo.addEventListener('input', programa);
+  cuerpo.addEventListener('change', programa);
+  cuerpo.addEventListener('click', e => { if (e.target.closest('.seg button, label.check')) programa(); });
   body.append(cuerpo);
 
   const g = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Acciones'));
   const subir = f.slide.lienzoLibre
-    ? h('button', { class: 'btn btn-sm', disabled: !!b.locked, onclick: () => mueveCapaLibre(S.deck, f.slide, b.id, 'adelante') }, '↑ Adelantar capa')
+    ? h('button', { class: 'btn btn-sm', disabled: !!b.locked, onclick: () => mueveCapasSeleccionadas('adelante') }, idsSeleccionados().size > 1 ? '↑ Adelantar selección' : '↑ Adelantar capa')
     : h('button', { class: 'btn btn-sm', onclick: () => moveBlock(S.selBlock, -1) }, '↑ Subir');
   const bajar = f.slide.lienzoLibre
-    ? h('button', { class: 'btn btn-sm', disabled: !!b.locked, onclick: () => mueveCapaLibre(S.deck, f.slide, b.id, 'atras') }, '↓ Retrasar capa')
+    ? h('button', { class: 'btn btn-sm', disabled: !!b.locked, onclick: () => mueveCapasSeleccionadas('atras') }, idsSeleccionados().size > 1 ? '↓ Retrasar selección' : '↓ Retrasar capa')
     : h('button', { class: 'btn btn-sm', onclick: () => moveBlock(S.selBlock, 1) }, '↓ Bajar');
   g.append(h('div', { style: 'display:flex;gap:7px;flex-wrap:wrap' },
     subir, bajar,
-    h('button', { class: 'btn btn-sm', onclick: () => dupBlock(S.selBlock) }, '⧉ Duplicar'),
-    h('button', { class: 'btn btn-sm', onclick: () => openMoverBloque(b) }, '⇥ Mover a…'),
-    h('button', { class: 'btn btn-sm btn-danger', onclick: () => delBlock(S.selBlock) }, '✕ Eliminar')));
+    h('button', { class: 'btn btn-sm', onclick: duplicarSeleccionActiva }, curSlide().lienzoLibre && idsSeleccionados().size > 1 ? '⧉ Duplicar selección' : '⧉ Duplicar'),
+    h('button', { class: 'btn btn-sm', onclick: () => openMoverBloque(b) }, curSlide().lienzoLibre && idsSeleccionados().size > 1 ? '⇥ Mover bloque activo a…' : '⇥ Mover a…'),
+    h('button', { class: 'btn btn-sm btn-danger', onclick: eliminarSeleccionActiva }, curSlide().lienzoLibre && idsSeleccionados().size > 1 ? '✕ Eliminar selección' : '✕ Eliminar')));
   body.append(g);
 }
 

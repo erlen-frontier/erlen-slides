@@ -302,6 +302,9 @@ function commit(opts) {
 }
 function snapNow() { S._snap = snapDeck(S.deck); }
 function doUndo() {
+  if (typeof aplicaCambioPanelPendiente === 'function') aplicaCambioPanelPendiente();
+  if (!S.undo.length && !(typeof escrituraPendienteEnLienzo === 'function' && escrituraPendienteEnLienzo())) return;
+  if (typeof flushEdicion === 'function') flushEdicion();
   if (!S.undo.length) return;
   recActual(true);
   if (typeof invalidaCitas === 'function') invalidaCitas();
@@ -312,6 +315,8 @@ function doUndo() {
   saveInd(); renderAll();
 }
 function doRedo() {
+  if (!S.redo.length) return;
+  if (typeof flushEdicion === 'function') flushEdicion();
   if (!S.redo.length) return;
   recActual(true);
   if (typeof invalidaCitas === 'function') invalidaCitas();

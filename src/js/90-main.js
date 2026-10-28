@@ -83,11 +83,7 @@ function initShortcuts() {
     }
     if (e.key === 'Delete' && S.selBlock) {
       e.preventDefault();
-      const ids = idsSeleccionados();
-      if (curSlide().lienzoLibre && ids.has(S.selBlock) && ids.size > 1) {
-        try { aplicaLoteBloques(S.deck, curSlide(), [...ids], 'eliminar'); }
-        catch (error) { toast(error.message, 'warn'); }
-      } else delBlock(S.selBlock);
+      eliminarSeleccionActiva();
       return;
     }
     if (e.key === 'Escape') {

@@ -23,6 +23,30 @@ function pintaSeleccionBloques() {
   for (const el of document.querySelectorAll('#stageInner .blk[data-bid]')) el.classList.toggle('sel-lote', ids.has(el.dataset.bid));
   if (typeof actualizaControlesComposicion === 'function') actualizaControlesComposicion();
 }
+function duplicarSeleccionActiva() {
+  if (!S.selBlock) return;
+  if (!curSlide().lienzoLibre) { dupBlock(S.selBlock); return; }
+  const ids = idsSeleccionados();
+  const elegidos = ids.has(S.selBlock) ? [...ids] : [S.selBlock];
+  try { aplicaLoteBloques(S.deck, curSlide(), elegidos, 'duplicar'); }
+  catch (error) { toast(error.message, 'warn'); }
+}
+function eliminarSeleccionActiva() {
+  if (!S.selBlock) return;
+  const ids = idsSeleccionados();
+  if (!curSlide().lienzoLibre || !ids.has(S.selBlock) || ids.size <= 1) { delBlock(S.selBlock); return; }
+  try {
+    aplicaLoteBloques(S.deck, curSlide(), [...ids], 'eliminar');
+    toast('Bloques eliminados', null, { t:'Deshacer', fn:doUndo });
+  } catch (error) { toast(error.message, 'warn'); }
+}
+function cambiaBloqueoSeleccion(bloquear) {
+  const f = S.selBlock && findBlock(S.selBlock); if (!f || f.slide !== curSlide()) return;
+  if (!f.slide.lienzoLibre) { f.block.locked = bloquear; commit(); return; }
+  const ids = idsSeleccionados(), elegidos = ids.has(S.selBlock) ? [...ids] : [S.selBlock];
+  try { aplicaLoteBloques(S.deck, f.slide, elegidos, bloquear ? 'bloquear' : 'desbloquear'); }
+  catch (error) { toast(error.message, 'warn'); }
+}
 /* Todas las operaciones son atómicas en el historial y solo afectan al mazo
    y a la diapositiva que originaron la selección. Un bloqueo no cambia datos. */
 function aplicaLoteBloques(deck, slide, ids, accion, valor) {
@@ -30,6 +54,7 @@ function aplicaLoteBloques(deck, slide, ids, accion, valor) {
   if (deck !== S.deck || slide !== curSlide()) throw new Error('La diapositiva cambió. Abre de nuevo Organizar bloques.');
   const elegidos = new Set(ids), bloques = zonas(slide).flat().filter(b => elegidos.has(b.id));
   if (!bloques.length) throw new Error('Selecciona al menos un bloque.');
+  if (bloques.length !== elegidos.size) throw new Error('La selección cambió. Selecciona de nuevo los bloques.');
   const acciones = ['bloquear', 'desbloquear', 'agrupar', 'desagrupar', 'alinear', 'ancho', 'mover', 'duplicar', 'eliminar'];
   if (!acciones.includes(accion)) throw new Error('Acción desconocida.');
   if (accion === 'alinear' && !['left', 'center', 'right'].includes(valor)) throw new Error('Alineación desconocida.');
@@ -43,11 +68,35 @@ function aplicaLoteBloques(deck, slide, ids, accion, valor) {
   else if (accion === 'alinear') bloques.forEach(b => { b.blockAlign = valor; });
   else if (accion === 'ancho') bloques.forEach(b => { b.w = valor; });
   else if (accion === 'duplicar') {
-    const grupos = new Map();
+    const libre = !!slide.lienzoLibre, grupos = new Map(), copias = new Map();
+    if (libre) materializaPosicionesLibres(slide);
+    const orden = libre ? bloquesEnCapas(slide) : null;
+    const posiciones = libre ? bloques.map(b => ({...posicionLibreDe(slide, b)})) : [];
+    const limites = libre ? posiciones.reduce((a, p) => ({ izq:Math.min(a.izq,p.x), arriba:Math.min(a.arriba,p.y),
+      der:Math.max(a.der,p.x+p.w), abajo:Math.max(a.abajo,p.y+p.h) }), {izq:100, arriba:100, der:0, abajo:0}) : null;
+    const desplazamiento = (inicio, fin) => {
+      const adelante = Math.max(0, 100 - fin), atras = Math.max(0, inicio);
+      if (adelante >= 2) return 2;
+      if (atras >= 2) return -2;
+      return adelante >= atras ? adelante : -atras;
+    };
+    const dx = libre ? desplazamiento(limites.izq, limites.der) : 0;
+    const dy = libre ? desplazamiento(limites.arriba, limites.abajo) : 0;
     for (const arr of zonas(slide)) for (let i = arr.length - 1; i >= 0; i--) if (elegidos.has(arr[i].id)) {
       const copia = deepCopy(arr[i]); copia.id = uid();
       if (copia.group) { if (!grupos.has(copia.group)) grupos.set(copia.group, uid()); copia.group = grupos.get(copia.group); }
+      if (libre) {
+        const p = posicionLibreDe(slide, arr[i]);
+        copia.posLibre = {...p, x:clamp(p.x + dx, 0, 100 - p.w), y:clamp(p.y + dy, 0, 100 - p.h)};
+        copias.set(arr[i].id, copia);
+      }
       arr.splice(i + 1, 0, copia);
+    }
+    if (libre) {
+      const nuevas = orden.filter(b => copias.has(b.id)).map(b => copias.get(b.id));
+      [...orden, ...nuevas].forEach((b, i) => { b.capaLibre = i; });
+      const activa = copias.get(S.selBlock) || nuevas.at(-1), seleccion = idsSeleccionados();
+      seleccion.clear(); nuevas.forEach(b => seleccion.add(b.id)); S.selBlock = activa?.id || null;
     }
   } else {
     for (const arr of zonas(slide)) for (let i = arr.length - 1; i >= 0; i--) if (elegidos.has(arr[i].id)) arr.splice(i, 1);
