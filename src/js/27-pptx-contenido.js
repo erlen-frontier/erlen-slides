@@ -60,7 +60,7 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
       parrafos: parrafosDe(txt, {}, { al: st.al, desp: 200 })
     }, extra || {})));
   };
-  const imagen = async (el, uri, alt) => {
+  const imagen = async (el, uri, alt, orientacion = null, env = null) => {
     if (!el || !uri) return;
     if (/^data:image\/svg\+xml[;,]/i.test(uri)) {
       // The classic writer only packages PNG media. Render SVG images to a
@@ -69,7 +69,8 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
       try {
         if (el.decode) await el.decode();
         if (!el.naturalWidth || !el.naturalHeight) throw new Error('Imagen vacía');
-        const rect = el.getBoundingClientRect(), w = rect.width || el.naturalWidth, h = rect.height || el.naturalHeight;
+        const rect = env ? sinTransformacionVisual(env, () => el.getBoundingClientRect()) : el.getBoundingClientRect();
+        const w = rect.width || el.naturalWidth, h = rect.height || el.naturalHeight;
         const scale = Math.min(2, 4096 / w, 4096 / h), canvas = document.createElement('canvas');
         canvas.width = Math.max(1, Math.ceil(w * scale)); canvas.height = Math.max(1, Math.ceil(h * scale));
         canvas.getContext('2d').drawImage(el, 0, 0, canvas.width, canvas.height);
@@ -77,7 +78,7 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
       } catch (error) { throw new Error('No se pudo incluir el SVG en PowerPoint: ' + error.message); }
     }
     const rid = await ctx.medio(uri);
-    if (rid) F.push(xmlImagen(id(), marco(el, raiz, esc), rid, alt));
+    if (rid) F.push(xmlImagen(id(), env ? sinTransformacionVisual(env, () => marco(el, raiz, esc)) : marco(el, raiz, esc), rid, alt, orientacion));
   };
   const pinta = async (el, alt) => {
     if (!el) return;
@@ -188,7 +189,15 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
       if (pie) texto(pie, pie.textContent);
     } else if (b.type === 'image') {
       const im = el.querySelector('img');
-      if (im && b.src) await imagen(im, b.src, b.alt || b.caption || '');
+      const env = el.querySelector('.imgwrap'), orientacion = transformacionLibreDe(b);
+      const transformada = orientacion.giro || orientacion.voltearH || orientacion.voltearV;
+      if (im && b.src && transformada && env && (env.childElementCount > 1 || b.orig || imgConEstilo(b) || b.frame)) {
+        const caja = sinTransformacionVisual(env, () => marco(env, raiz, esc));
+        const uri = await rasteriza(env, ctx.css, 2, {sinTransformacion:true});
+        if (!uri) throw new Error('No se pudo incluir la figura transformada en PowerPoint.');
+        const rid = await ctx.medio(uri); if (!rid) throw new Error('No se pudo incluir la figura transformada en PowerPoint.');
+        F.push(xmlImagen(id(), caja, rid, b.alt || b.caption || '', orientacion));
+      } else if (im && b.src) await imagen(im, b.src, b.alt || b.caption || '', transformada ? orientacion : null, transformada ? env : null);
       if (pie) texto(pie, pie.textContent);
     } else {
       const visual = el.querySelector('.chart-box, .smart-box, .vid-wrap, .katex-display') || el.firstElementChild || el;

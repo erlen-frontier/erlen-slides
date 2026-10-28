@@ -266,7 +266,7 @@ function folletoHTML(porHoja) {
     '<div class="fo-cab"><h1>' + esc(m.title || 'Presentación') + '</h1><p>' +
     esc([m.authors, m.date].filter(Boolean).join(' · ')) + (m.authors || m.date ? ' · ' : '') +
     S.deck.slides.length + ' diapositivas · ' + porHoja + ' por hoja</p></div>' +
-    '<div class="fo-hoja">' + celdas.join('') + '</div></body></html>';
+    '<div class="fo-hoja">' + celdas.join('') + '</div>' + scriptAjustesFiguras() + '</body></html>';
 }
 function openFolleto() {
   const cuerpo = h('div', { class: 'fo-grid' });

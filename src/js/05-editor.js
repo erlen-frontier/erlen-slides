@@ -151,6 +151,8 @@ function mountToolbar() {
   if (curSlide().lienzoLibre) {
     add('↑', 'Adelantar capa', () => mueveCapaLibre(S.deck, curSlide(), S.selBlock, 'adelante'));
     add('↓', 'Retrasar capa', () => mueveCapaLibre(S.deck, curSlide(), S.selBlock, 'atras'));
+    if (idsSeleccionados().size === 1) bar.append(h('button', { type:'button', title:'Transformar objeto', 'aria-label':'Transformar objeto',
+      onclick: e => { e.stopPropagation(); abrePanelLateral('bloque', 'Posición en la diapositiva'); } }, '↻'));
   } else {
     add('↑', 'Subir bloque', () => moveBlock(S.selBlock, -1));
     add('↓', 'Bajar bloque', () => moveBlock(S.selBlock, 1));
@@ -373,6 +375,60 @@ function montaManijasLibres(el, b) {
     asa.addEventListener('pointerdown', e => iniciaGestoLibre(e, b.id, lado));
     el.append(asa);
   }
+  if (b.type === 'image' && b.src) {
+    const giro = h('button', {type:'button', class:'libre-asa libre-giro', 'aria-label':'Girar figura',
+      title:'Arrastra para girar; usa Intro para ajustar el ángulo', style:`transform:translateX(-50%) scale(${k})`}, '↻');
+    giro.addEventListener('click', e => { e.stopPropagation(); if (e.detail === 0) abrePanelLateral('bloque', 'Posición en la diapositiva'); });
+    giro.addEventListener('pointerdown', e => iniciaGiroLibre(e, b.id));
+    el.append(giro);
+  }
+}
+
+function iniciaGiroLibre(ev, id) {
+  if (ev.button > 0) return;
+  const deck = S.deck, slide = curSlide(), f = findBlock(id), seleccion = idsSeleccionados();
+  const env = document.querySelector('#stageInner .blk[data-bid="' + id + '"] .imgwrap');
+  if (!slide.lienzoLibre || S.selBlock !== id || seleccion.size !== 1 || !seleccion.has(id) ||
+      !f || f.slide !== slide || f.block.type !== 'image' || f.block.locked || !env) return;
+  const r = env.getBoundingClientRect(); if (!(r.width > 0 && r.height > 0)) return;
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2, x0 = ev.clientX, y0 = ev.clientY;
+  const inicio = Math.atan2(y0 - cy, x0 - cx), anterior = {...transformacionLibreDe(f.block)};
+  const posicion = {...posicionLibreDe(slide, f.block)}, pointer = ev.pointerId;
+  let actual = anterior, activo = false;
+  const mismo = e => pointer == null || e.pointerId === pointer;
+  const vigente = () => deck === S.deck && slide === curSlide() && slide.lienzoLibre && S.selBlock === id &&
+    idsSeleccionados().size === 1 && idsSeleccionados().has(id) && findBlock(id)?.block === f.block && !f.block.locked &&
+    ['x','y','w','h'].every(k => posicionLibreDe(slide, f.block)[k] === posicion[k]) &&
+    ['giro','voltearH','voltearV'].every(k => transformacionLibreDe(f.block)[k] === anterior[k]);
+  const cap = env.parentElement?.querySelector(':scope > figcaption');
+  const restaura = () => { if (env.isConnected) { env.style.transform = cssTransformacionLibre(transformacionLibreDe(f.block)); if (cap) ajustaPieImagen(env, cap); } };
+  const quita = () => {
+    document.removeEventListener('pointermove', mueve); document.removeEventListener('pointerup', suelta);
+    document.removeEventListener('pointercancel', cancela); document.removeEventListener('keydown', escapa, true);
+    document.body.classList.remove('arrastra-bloque');
+  };
+  const cancela = e => { if (e?.type === 'pointercancel' && !mismo(e)) return; quita(); restaura(); };
+  const escapa = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancela(); } };
+  const mueve = e => {
+    if (!mismo(e)) return;
+    if (!vigente()) { cancela(); return; }
+    if (!activo && Math.hypot(e.clientX - x0, e.clientY - y0) < 3) return;
+    activo = true;
+    let grados = anterior.giro + (Math.atan2(e.clientY - cy, e.clientX - cx) - inicio) * 180 / Math.PI;
+    if (e.shiftKey) grados = Math.round(grados / 15) * 15;
+    grados = redondeaLibre(((grados + 180) % 360 + 360) % 360 - 180);
+    actual = {...anterior, giro:grados}; env.style.transform = cssTransformacionLibre(actual); if (cap) ajustaPieImagen(env, cap);
+  };
+  const suelta = e => {
+    if (!mismo(e)) return;
+    quita();
+    if (!activo || !vigente() || !aplicaTransformacionLibre(deck, slide, id, actual)) restaura();
+  };
+  ev.preventDefault(); ev.stopPropagation();
+  try { ev.currentTarget.setPointerCapture(pointer); } catch (e) {}
+  document.body.classList.add('arrastra-bloque');
+  document.addEventListener('pointermove', mueve); document.addEventListener('pointerup', suelta);
+  document.addEventListener('pointercancel', cancela); document.addEventListener('keydown', escapa, true);
 }
 
 function pintaMarcoSeleccionLibre(marco, posiciones) {
@@ -475,6 +531,7 @@ function iniciaGestoLibre(ev, id, accion) {
   if (!(rect.width > 0 && rect.height > 0)) return;
   ev.preventDefault(); ev.stopPropagation();
   const posiciones = bloques.map(b => ({ ...posicionLibreDe(sl, b) }));
+  const proporcionInicial = ids.length === 1 && bloques[0].bloqueaProporcion === true;
   const p0 = posiciones[0], pointer = ev.pointerId;
   const limites = posiciones.reduce((a, p) => ({xMin:Math.min(a.xMin,p.x), yMin:Math.min(a.yMin,p.y),
     xMax:Math.max(a.xMax,p.x+p.w), yMax:Math.max(a.yMax,p.y+p.h)}), {xMin:100,yMin:100,xMax:0,yMax:0});
@@ -512,12 +569,12 @@ function iniciaGestoLibre(ev, id, accion) {
         x:clamp(q.x + dxFinal, 0, 100 - q.w), y:clamp(q.y + dyFinal, 0, 100 - q.h)}));
       pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), posiciones.map(q => ({...q, x:q.x + dxFinal, y:q.y + dyFinal})));
       return;
-    } else if (ids.length > 1) {
+    } else if (ids.length > 1 || proporcionInicial) {
       const anchoPx = caja.w / 100 * rect.width, altoPx = caja.h / 100 * rect.height;
       const vx = (accion.includes('e') ? 1 : -1) * anchoPx, vy = (accion.includes('s') ? 1 : -1) * altoPx;
       factorFinal = 1 + ((e.clientX - x0) * vx + (e.clientY - y0) * vy) / (vx * vx + vy * vy);
       const nuevas = calculaEscalaLibre(posiciones, accion, factorFinal);
-      if (nuevas) { nuevas.forEach((q, i) => pinta(elementos[i], q)); pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), nuevas); }
+      if (nuevas) { nuevas.forEach((q, i) => pinta(elementos[i], q)); if (ids.length === 1) previa = nuevas[0]; pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), nuevas); }
       return;
     } else {
       if (accion.includes('e')) p.w = clamp(p0.w + dx, 1, 100 - p0.x);
@@ -553,6 +610,7 @@ function iniciaGestoLibre(ev, id, accion) {
     const vigente = S.deck === deck && curSlide() === sl && S.selBlock === id &&
       seleccionActual.size === ids.length && ids.every(k => seleccionActual.has(k)) &&
       bloques.every((b, i) => findBlock(ids[i])?.block === b && !b.locked &&
+        (ids.length > 1 || (b.bloqueaProporcion === true) === proporcionInicial) &&
         (typeof bloqueVisible !== 'function' || bloqueVisible(b, deck)) &&
         ['x','y','w','h'].every(k => posicionLibreDe(sl, b)[k] === posiciones[i][k]));
     if (activo && vigente) {

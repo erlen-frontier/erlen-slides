@@ -71,6 +71,11 @@ function initShortcuts() {
           else mueveSeleccionLibre(S.deck, f.slide, [...seleccion], dx, dy);
           return;
         }
+        if (e.shiftKey && f.block.bloqueaProporcion) {
+          const eje = dx ? 'w' : 'h', cambio = dx || dy;
+          const nueva = calculaEscalaLibre([p], 'se', (p[eje] + cambio) / p[eje]);
+          e.preventDefault(); if (nueva) aplicaPosicionLibre(f.block.id, nueva[0]); return;
+        }
         if (e.shiftKey) { p.w = clamp(p.w + dx, 1, 100 - p.x); p.h = clamp(p.h + dy, 1, 100 - p.y); }
         else { p.x = clamp(p.x + dx, 0, 100 - p.w); p.y = clamp(p.y + dy, 0, 100 - p.h); }
         e.preventDefault(); aplicaPosicionLibre(f.block.id, p); return;

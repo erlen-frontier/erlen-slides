@@ -44,4 +44,4 @@
 
 .mask{z-index:300}
 
-body:has(.erlen-marco-cajon .inspector),body:has(#modalRoot .mask) .bz-boton{display:none}
+body:has(.erlen-marco-cajon .inspector) .bz-boton,body:has(#modalRoot .mask) .bz-boton{display:none}

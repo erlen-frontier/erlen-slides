@@ -99,14 +99,24 @@ function registroColores() {
   };
 }
 const figName = b => b._nom || ('figura-' + String(b.id || 'x').slice(0, 8));
+function orientaFiguraTex(figura, b) {
+  const t = transformacionLibreDe(b);
+  if (t.voltearH || t.voltearV) figura = `\\scalebox{${t.voltearH ? -1 : 1}}[${t.voltearV ? -1 : 1}]{${figura}}`;
+  if (t.giro) figura = `\\rotatebox[origin=c]{${-t.giro}}{${figura}}`;
+  return figura;
+}
 /* La figura, con su barra de escala encima si la tiene. */
 function figTex(b) {
   const w = ((b.w || 70) / 100).toFixed(2);
-  if (typeof figAdaptada === 'function' && figAdaptada(b)) return figuraConMarcasTex(b, '');
+  let figura;
+  if (typeof figAdaptada === 'function' && figAdaptada(b)) figura = figuraConMarcasTex(b, '');
   const e = b.escala;
-  if (!e || !e.porPx || !e.anchoImg) return `\\erlenfig{${w}}{${figName(b)}}`;
-  const frac = (e.largo / e.porPx / e.anchoImg) * (b.w || 70) / 100;
-  return `\\erlenescala{${w}}{${figName(b)}}{${frac.toFixed(4)}}{${texEscape(e.largo + ' ' + (e.unidad || 'µm'))}}`;
+  if (!figura && (!e || !e.porPx || !e.anchoImg)) figura = `\\erlenfig{${w}}{${figName(b)}}`;
+  if (!figura) {
+    const frac = (e.largo / e.porPx / e.anchoImg) * (b.w || 70) / 100;
+    figura = `\\erlenescala{${w}}{${figName(b)}}{${frac.toFixed(4)}}{${texEscape(e.largo + ' ' + (e.unidad || 'µm'))}}`;
+  }
+  return orientaFiguraTex(figura, b);
 }
 const zt = (sl, i) => ((sl.zt || [])[i] || '');
 /* Beamer exige [fragile] en todo frame con un entorno verbatim; sin él el .tex
@@ -994,7 +1004,9 @@ function toBeamer(deck) {
       L.push('\\begin{frame}[plain]');
       L.push('  \\begin{tikzpicture}[remember picture, overlay]');
       if (fig && fig.type === 'image') {
-        L.push('    \\node[anchor=center, inner sep=0] at (current page.center) {\\erlensangre{' + figName(fig) + '}};');
+        let imagen = '\\erlensangre{' + figName(fig) + '}';
+        if (typeof figAdaptada === 'function' && figAdaptada(fig)) imagen = figuraConMarcasTex(fig, '', imagen);
+        L.push('    \\node[anchor=center, inner sep=0] at (current page.center) {' + orientaFiguraTex(imagen, fig) + '};');
       } else if (fig) {
         L.push('    \\node[anchor=center, inner sep=0] at (current page.center) {%');
         L.push('      \\resizebox{\\paperwidth}{!}{%');
@@ -1267,7 +1279,7 @@ function deckSlug() {
 }
 
 /* ---------- PDF por impresión ---------- */
-function exportPDF() {
+async function exportPDF() {
   flushEdicion();
   const area = $('#printArea');
   area.innerHTML = '';
@@ -1276,9 +1288,29 @@ function exportPDF() {
     #printArea .pr-page{width:${W}px;height:${H}px}`);
   area.append(style);
   S.deck.slides.forEach((sl, i) => { if (typeof fueraDeRama === 'function' && fueraDeRama(sl)) return; area.append(h('div', { class: 'pr-page' }, renderSlide(S.deck, i, 'export', 99))); });
+  /* La zona se oculta en pantalla: se mide fuera del visor una vez que las
+     imágenes cargan para que el cuadro de impresión reciba marcas y pies. */
+  const propiedades = ['position', 'left', 'top', 'display', 'visibility'];
+  const previas = Object.fromEntries(propiedades.map(k => [k, area.style[k]]));
+  Object.assign(area.style, {position:'fixed', left:'-99999px', top:'0', display:'block', visibility:'hidden'});
+  try {
+    await document.fonts?.ready;
+    await Promise.all([...area.querySelectorAll('img')].map(im => im.decode?.().catch(() => {}) || Promise.resolve()));
+    ajustaMarcosImagenesLibres(area); ajustaPiesFiguras(area);
+  } catch (e) {
+    area.innerHTML = ''; toast('No se pudo preparar la impresión.', 'warn'); return;
+  } finally { Object.assign(area.style, previas); }
   const done = () => { setTimeout(() => { area.innerHTML = ''; }, 800); window.removeEventListener('afterprint', done); };
   window.addEventListener('afterprint', done);
   setTimeout(() => { window.print(); }, 260);
+}
+
+/* Los documentos HTML autónomos se miden cuando sus imágenes ya cargaron. */
+function scriptAjustesFiguras(autoPrint = false) {
+  const funciones = [sinTransformacionVisual, ajustaPieImagen, ajustaPiesFiguras,
+    ajustaMarcoImagenLibre, ajustaMarcosImagenesLibres].map(fn => fn.toString()).join('\n');
+  return '<script>' + funciones + '\nwindow.addEventListener("load",()=>{ajustaMarcosImagenesLibres(document);ajustaPiesFiguras(document);' +
+    (autoPrint ? 'setTimeout(()=>window.print(),400);' : '') + '});<\/script>';
 }
 
 /* Reúne todo el CSS de la app (KaTeX incluido, con sus fuentes incrustadas).
@@ -1329,7 +1361,7 @@ function buildPrintableHTML(autoPrint) {
     '@media print{.tip{display:none}.pr-page{margin:0}body{background:#fff}}</style></head><body>' +
     '<div class="tip">Imprime este archivo (Ctrl+P / Cmd+P) y elige «Guardar como PDF», con márgenes «Ninguno» y gráficos de fondo activados.</div>' +
     '<div id="printArea">' + pages.join('') + '</div>' +
-    (autoPrint ? '<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),400))<\/script>' : '') +
+    scriptAjustesFiguras(autoPrint) +
     '</body></html>';
 }
 

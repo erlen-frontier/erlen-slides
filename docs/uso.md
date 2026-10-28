@@ -8,7 +8,9 @@ En **Ver todas** puedes reorganizar la diapositiva actual con **Mover antes** y 
 
 En una diapositiva que admita bloques, activa **Lienzo libre** debajo de la diapositiva. Se conservan sus bloques y su acomodo anterior: vuelve a pulsarlo para regresar. En una diapositiva **En blanco** puedes componer el contenido desde cero. La portada, las secciones y los índices que no admiten bloques conservan su comportamiento anterior.
 
-Selecciona un bloque y arrastra su asa para moverlo o sus esquinas para cambiar su tamaño. Las flechas lo mueven; Mayús y las flechas cambian su tamaño. El panel de propiedades permite escribir posición y tamaño en porcentaje. Comprueba los avisos de recorte si reduces cajas con texto o figuras complejas.
+Selecciona un bloque y arrastra su asa para moverlo o sus esquinas para cambiar su tamaño. Las flechas lo mueven; Mayús y las flechas cambian su tamaño. **Transformar objeto** abre el panel donde puedes escribir posición y tamaño en porcentaje. Activa **Bloquear proporciones** para conservar la relación entre anchura y altura al usar las esquinas, el teclado o los campos numéricos. Comprueba los avisos de recorte si reduces cajas con texto o figuras complejas.
+
+En una imagen o figura seleccionada, arrastra la manija **Girar figura**; mantén Mayús para ajustar el giro en pasos de 15°. También puedes escribir un ángulo entre −180° y 180° en el panel y voltearla horizontal o verticalmente. El pie permanece legible y las anotaciones giran con la imagen. Los cambios se pueden deshacer; la imagen original, la autoría y los créditos se conservan. La revisión avisa si la figura o su pie quedan fuera de la diapositiva.
 
 Al mover un bloque, **Imán** muestra guías y lo ajusta a los bordes o centros de la diapositiva y de otros bloques visibles. Puedes desactivarlo con el botón o mantener **Alt** durante un arrastre para omitirlo. Esc cancela el gesto.
 
@@ -20,7 +22,7 @@ Arrastra el asa del bloque activo o usa las flechas para mover la selección. La
 
 **Formas** inserta un rectángulo, una elipse, una línea o una flecha directamente en la diapositiva. Muévelos y cambia su tamaño como cualquier bloque. Con doble clic puedes editar su color, sus objetos y su descripción en el editor de figuras. La figura sigue editable en el proyecto JSON; en PowerPoint se incorpora como imagen.
 
-El proyecto JSON conserva la geometría y el orden de capas. La vista de presentación y el HTML usan el mismo acomodo; versiones anteriores pueden abrir el contenido pero ignorar sus posiciones o capas. La exportación Beamer y Markdown avisa de que cambia la colocación; revisa también el PowerPoint exportado, cuya apariencia puede diferir.
+El proyecto JSON conserva la geometría, la orientación, el bloqueo de proporciones y el orden de capas. La vista de presentación, el HTML y el archivo para imprimir usan el mismo acomodo; versiones anteriores pueden abrir el contenido pero ignorar estas propiedades. PowerPoint conserva el giro y el volteo; las figuras con anotaciones se exportan como una imagen. Beamer conserva la orientación, pero Beamer y Markdown avisan de que cambia la colocación; revisa el archivo final antes de compartirlo.
 
 ## Conversar con IA
 

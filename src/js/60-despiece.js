@@ -266,12 +266,12 @@ async function reparteEnDiapositivas(b, paneles, tapas, marcas, citaId) {
 /* ---------- a LaTeX ----------
    La imagen va dentro de un tikzpicture y el sistema de coordenadas se pone
    sobre ella, de 0 a 1, así que las tapas y las marcas caen en su sitio. */
-function figuraConMarcasTex(b, p) {
+function figuraConMarcasTex(b, p, imagen) {
   const w = ((b.w || 70) / 100).toFixed(2);
   const th = temaDe(TEX_DECK || S.deck);
   const L = [];
   L.push(p + '\\begin{tikzpicture}');
-  L.push(p + `  \\node[inner sep=0] (tpfig) {\\erlenfig{${w}}{${figName(b)}}};`);
+  L.push(p + `  \\node[inner sep=0] (tpfig) {${imagen || `\\erlenfig{${w}}{${figName(b)}}`}};`);
   L.push(p + '  \\begin{scope}[shift={(tpfig.south west)},');
   L.push(p + '      x={($(tpfig.south east)-(tpfig.south west)$)},');
   L.push(p + '      y={($(tpfig.north west)-(tpfig.south west)$)}]');

@@ -18,11 +18,24 @@ const contraste = (a, b) => {
 /* Un bloque flex puede encogerse y recortar su tabla sin aumentar scrollHeight
    del cuerpo. Medimos también sus hijos contra cada ancestro que recorta. */
 function recortesSlide(raiz) {
+  /* La revisión puede correr antes del próximo cuadro de render. Coloca el
+     pie sin esperar al observador para medir el mismo resultado visible. */
+  ajustaPiesFiguras(raiz);
   const encontrados = new Map();
   const rectValido = r => r && r.width > 0 && r.height > 0;
-  for (const el of raiz.querySelectorAll('.fbody, .blk, table, tr, td, th, img, svg, svg text, .ft-t, .ft-s, .smart-rot')) {
-    const propio = el.getBoundingClientRect();
-    let exceso = Math.max(0, (el.scrollHeight || 0) - (el.clientHeight || 0), (el.scrollWidth || 0) - (el.clientWidth || 0));
+  for (const el of raiz.querySelectorAll('.fbody, .blk, table, tr, td, th, img, figcaption, svg, svg text, .ft-t, .ft-s, .smart-rot')) {
+    const propio = el.getBoundingClientRect(), estilo = getComputedStyle(el);
+    const recorta = valor => /hidden|clip|auto|scroll/.test(valor);
+    let exceso = Math.max(0,
+      recorta(estilo.overflowY || estilo.overflow) ? (el.scrollHeight || 0) - (el.clientHeight || 0) : 0,
+      recorta(estilo.overflowX || estilo.overflow) ? (el.scrollWidth || 0) - (el.clientWidth || 0) : 0);
+    let contenido = null;
+    if (el.classList.contains('blk') &&
+        ((!recorta(estilo.overflowY || estilo.overflow) && el.scrollHeight > el.clientHeight + 3) ||
+         (!recorta(estilo.overflowX || estilo.overflow) && el.scrollWidth > el.clientWidth + 3))) {
+      const rango = document.createRange(); rango.selectNodeContents(el);
+      if (typeof rango.getBoundingClientRect === 'function') contenido = rango.getBoundingClientRect();
+    }
     if (rectValido(propio)) {
       for (let p = el.parentElement; p && raiz.contains(p); p = p.parentElement) {
         const r = p.getBoundingClientRect(), cs = getComputedStyle(p);
@@ -31,6 +44,10 @@ function recortesSlide(raiz) {
         const cortaY = /hidden|clip|auto|scroll/.test(cs.overflowY || cs.overflow);
         if (cortaX) exceso = Math.max(exceso, r.left - propio.left, propio.right - r.right);
         if (cortaY) exceso = Math.max(exceso, r.top - propio.top, propio.bottom - r.bottom);
+        if (rectValido(contenido) && cortaX && !recorta(estilo.overflowX || estilo.overflow))
+          exceso = Math.max(exceso, r.left - contenido.left, contenido.right - r.right);
+        if (rectValido(contenido) && cortaY && !recorta(estilo.overflowY || estilo.overflow))
+          exceso = Math.max(exceso, r.top - contenido.top, contenido.bottom - r.bottom);
       }
     }
     if (exceso <= 3) continue;
@@ -107,6 +124,12 @@ function revisaMazo() {
         add('sugerencia', i, 'El título «' + sl.title.trim() + '» no dice nada',
         'Escribe en el título el mensaje de la diapositiva: «La banda prohibida baja con el yodo» en vez de «Resultados». Es lo que más sube la retención según la regla 3 de las diez de PLOS.');
       if (!bloques.length) add('error', i, 'Diapositiva vacía', 'Añade contenido o quítala antes de presentar.');
+    }
+    for (const img of raiz.querySelectorAll('.imgwrap[data-giro-figura] > img')) {
+      if (img.complete && img.naturalWidth) continue;
+      add('aviso', i, 'No se pudo revisar la figura todavía',
+        'Comprueba que la imagen se haya cargado y vuelve a revisar la presentación.');
+      fallos[fallos.length - 1].bloque = img.closest('.blk[data-bid]')?.dataset.bid || null;
     }
     for (const recorte of recortesSlide(raiz)) {
       add('error', i, (recorte.tabla ? 'La tabla queda recortada' : 'El contenido no cabe') + ' (' + recorte.px + ' px de más)',
