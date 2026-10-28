@@ -33,6 +33,7 @@ function saneaBloque(b, avisos, deck) {
   if (b.locked !== true) delete b.locked;
   if (typeof b.group !== 'string' || b.group.length > 80) delete b.group;
   if (!['left', 'center', 'right'].includes(b.blockAlign)) delete b.blockAlign;
+  if (b.type !== 'image' || !b.figura || !['rect', 'circle', 'line', 'arrow'].includes(b.formaLibre)) delete b.formaLibre;
   if (b.type === 'bullets') {
     if (!Array.isArray(b.items)) b.items = [];
     b.items = b.items.map(it => typeof it === 'string' ? { t: it, lvl: 0 } : { t: String((it || {}).t || ''), lvl: clamp(+(it || {}).lvl || 0, 0, 2) });

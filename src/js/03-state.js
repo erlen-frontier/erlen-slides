@@ -139,13 +139,16 @@ function sectionsOf(deck) {
    diapositivas anteriores y renderSlide para los de la propia diapositiva: si
    cada uno tuviera su lista, la numeración se saltaría o repetiría números. */
 const TIPOS_FIGURA = ['image', 'chart', 'func', 'video', 'smart', 'estruct', 'montaje', 'geo'];
+function esFormaLibre(b) {
+  return b?.type === 'image' && !!b.figura && ['rect', 'circle', 'line', 'arrow'].includes(b.formaLibre);
+}
 function countersFor(deck, idx) {
   let fig = 0, tab = 0, secN = 0, secName = '';
   for (let i = 0; i < idx; i++) {
     const sl = deck.slides[i];
     if (sl.layout === 'section') { secN++; secName = sl.title || ''; }
     for (const arr of zonas(sl)) for (const b of arr) {
-      if (TIPOS_FIGURA.includes(b.type)) fig++;
+      if (TIPOS_FIGURA.includes(b.type) && (!esFormaLibre(b) || b.caption)) fig++;
       if (b.type === 'table') tab++;
     }
   }

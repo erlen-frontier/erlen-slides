@@ -69,6 +69,7 @@ function renderCanvas() {
     iman.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout));
     iman.setAttribute('aria-pressed', String(S.prefs?.imanLienzo !== false));
   }
+  actualizaControlesComposicion();
   mountToolbar();
   pintaSeleccionBloques();
   if (restaurarFoco) {
@@ -98,6 +99,7 @@ function selectBlock(id, aditiva = false) {
   const tb = $('#stageInner .blk-toolbar'); if (tb) tb.remove();
   $$('#stageInner .ancho-asa').forEach(e => e.remove());
   $$('#stageInner .libre-asa').forEach(e => e.remove());
+  $$('#stageInner .seleccion-marco').forEach(e => e.remove());
   if (id) {
     const el = $(`#stageInner .blk[data-bid="${id}"]`);
     if (el) { el.classList.add('sel'); mountToolbar(); }
@@ -107,6 +109,7 @@ function selectBlock(id, aditiva = false) {
   if (id && S.tab !== 'bloque') { S.tabPrev = S.tab; S.tab = 'bloque'; }
   else if (!id && S.tab === 'bloque') S.tab = S.tabPrev || 'insert';
   if (id !== antes || S.tab === 'bloque') renderInspector();
+  actualizaControlesComposicion();
 }
 function etiquetaBloqueLibre(id, b) {
   const nombre = (BLOCK_DEFS.find(d => d.id === b?.type) || {}).name || b?.type || 'Bloque';
@@ -114,7 +117,7 @@ function etiquetaBloqueLibre(id, b) {
   const varios = seleccion.has(id) && seleccion.size > 1;
   const bloqueada = varios && [...seleccion].some(k => findBlock(k)?.block.locked);
   return varios
-    ? seleccion.size + ' bloques seleccionados, ' + nombre + ' activo. ' + (bloqueada ? 'Desbloquea la selección antes de moverla.' : 'Usa las flechas para moverlos juntos.')
+    ? seleccion.size + ' bloques seleccionados, ' + nombre + ' activo. ' + (bloqueada ? 'Desbloquea la selección antes de moverla.' : 'Usa las flechas para moverlos juntos y Mayús con flechas para cambiar el tamaño de la selección.')
     : nombre + (b?.locked ? ', bloqueado' : ', usa las flechas para mover y Mayús con flechas para cambiar el tamaño');
 }
 function enfocaBloqueLibre(id) {
@@ -129,10 +132,12 @@ function mountToolbar() {
   const old = $('#stageInner .blk-toolbar'); if (old) old.remove();
   $$('#stageInner .ancho-asa').forEach(e => e.remove());
   $$('#stageInner .libre-asa').forEach(e => e.remove());
+  $$('#stageInner .seleccion-marco').forEach(e => e.remove());
   if (!S.selBlock) return;
   const el = $(`#stageInner .blk[data-bid="${S.selBlock}"]`);
   const f = findBlock(S.selBlock);
   if (!el || !f) return;
+  if (curSlide().lienzoLibre && idsSeleccionados().size > 1) montaMarcoSeleccionLibre();
   if (f.block.locked) {
     el.append(h('div', { class: 'blk-toolbar' }, h('button', { onclick: () => { f.block.locked = false; commit(); } }, 'Desbloquear'))); return;
   }
@@ -370,6 +375,33 @@ function montaManijasLibres(el, b) {
   }
 }
 
+function pintaMarcoSeleccionLibre(marco, posiciones) {
+  if (!marco || !posiciones.length) return;
+  const x = Math.min(...posiciones.map(p => p.x)), y = Math.min(...posiciones.map(p => p.y));
+  const der = Math.max(...posiciones.map(p => p.x + p.w)), abajo = Math.max(...posiciones.map(p => p.y + p.h));
+  Object.assign(marco.style, { left: x + '%', top: y + '%', width: (der - x) + '%', height: (abajo - y) + '%' });
+}
+
+function montaMarcoSeleccionLibre() {
+  const sl = curSlide(), raiz = $('#stageInner .slide'), ids = [...idsSeleccionados()];
+  const bloques = ids.map(id => findBlock(id)?.block);
+  if (!raiz || ids.length < 2 || bloques.some(b => !b)) return;
+  const bloqueada = bloques.some(b => b.locked), marco = h('div', { class: 'seleccion-marco', 'aria-hidden': bloqueada ? 'true' : null });
+  pintaMarcoSeleccionLibre(marco, bloques.map(b => posicionLibreDe(sl, b)));
+  if (!bloqueada) {
+    const nombres = { nw: 'superior izquierda', ne: 'superior derecha', sw: 'inferior izquierda', se: 'inferior derecha' };
+    const k = clamp(1 / effZoom(), 0.6, 2.4);
+    for (const lado of Object.keys(nombres)) {
+      const asa = h('button', { type: 'button', class: 'grupo-asa libre-' + lado,
+        'aria-label': 'Cambiar tamaño de la selección: esquina ' + nombres[lado], title: 'Cambiar tamaño de la selección', style: `transform:scale(${k})` });
+      asa.addEventListener('click', e => e.stopPropagation());
+      asa.addEventListener('pointerdown', e => iniciaGestoLibre(e, S.selBlock, lado));
+      marco.append(asa);
+    }
+  }
+  raiz.append(marco);
+}
+
 /* Una lista independiente de la posición permite alcanzar también elementos
    completamente cubiertos por otros o al trabajar solo con teclado. */
 function openObjetosLienzo() {
@@ -432,7 +464,7 @@ function iniciaGestoLibre(ev, id, accion) {
   const seleccion = idsSeleccionados();
   if (!seleccion.has(id)) { seleccion.clear(); seleccion.add(id); }
   const ids = seleccion.has(id) && seleccion.size > 1 ? [...seleccion] : [id];
-  if (ids.length > 1 && accion !== 'mover') { toast('Selecciona un solo bloque para cambiar su tamaño.', 'warn'); return; }
+  if (accion !== 'mover' && !['nw', 'ne', 'sw', 'se'].includes(accion)) return;
   const porId = new Map(zonas(sl).flat().map(b => [b.id, b]));
   const bloques = ids.map(k => porId.get(k) || null);
   if (bloques.some(b => !b || b.locked)) { toast('Desbloquea los bloques seleccionados antes de moverlos.', 'warn'); return; }
@@ -449,7 +481,7 @@ function iniciaGestoLibre(ev, id, accion) {
   const {xMin, yMin, xMax, yMax} = limites;
   const caja = {x:xMin, y:yMin, w:xMax-xMin, h:yMax-yMin};
   const x0 = ev.clientX, y0 = ev.clientY;
-  let previa = p0, dxFinal = 0, dyFinal = 0, activo = false;
+  let previa = p0, dxFinal = 0, dyFinal = 0, factorFinal = 1, activo = false;
   try { ev.currentTarget.setPointerCapture(pointer); } catch (e) {}
   const mismo = e => pointer == null || e.pointerId === pointer;
   const pinta = (n, p) => Object.assign(n.style, { left: p.x + '%', top: p.y + '%', width: p.w + '%', height: p.h + '%' });
@@ -478,6 +510,14 @@ function iniciaGestoLibre(ev, id, accion) {
       }
       posiciones.forEach((q, i) => pinta(elementos[i], {...q,
         x:clamp(q.x + dxFinal, 0, 100 - q.w), y:clamp(q.y + dyFinal, 0, 100 - q.h)}));
+      pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), posiciones.map(q => ({...q, x:q.x + dxFinal, y:q.y + dyFinal})));
+      return;
+    } else if (ids.length > 1) {
+      const anchoPx = caja.w / 100 * rect.width, altoPx = caja.h / 100 * rect.height;
+      const vx = (accion.includes('e') ? 1 : -1) * anchoPx, vy = (accion.includes('s') ? 1 : -1) * altoPx;
+      factorFinal = 1 + ((e.clientX - x0) * vx + (e.clientY - y0) * vy) / (vx * vx + vy * vy);
+      const nuevas = calculaEscalaLibre(posiciones, accion, factorFinal);
+      if (nuevas) { nuevas.forEach((q, i) => pinta(elementos[i], q)); pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), nuevas); }
       return;
     } else {
       if (accion.includes('e')) p.w = clamp(p0.w + dx, 1, 100 - p0.x);
@@ -496,11 +536,14 @@ function iniciaGestoLibre(ev, id, accion) {
     document.body.classList.remove('arrastra-bloque');
     quitaGuias();
   };
-  const restaura = () => elementos.forEach((n, i) => {
-    if (!n.isConnected) return;
-    const actual = S.deck === deck && curSlide() === sl && findBlock(ids[i])?.block === bloques[i] ? posicionLibreDe(sl, bloques[i]) : posiciones[i];
-    pinta(n, actual);
-  });
+  const restaura = () => {
+    const actuales = elementos.map((n, i) => {
+      const actual = S.deck === deck && curSlide() === sl && findBlock(ids[i])?.block === bloques[i] ? posicionLibreDe(sl, bloques[i]) : posiciones[i];
+      if (n.isConnected) pinta(n, actual);
+      return actual;
+    });
+    if (raiz.isConnected) pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), actuales);
+  };
   const cancela = e => { if (e && e.type === 'pointercancel' && !mismo(e)) return; quita(); restaura(); };
   const escapa = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancela(); } };
   const suelta = e => {
@@ -514,8 +557,10 @@ function iniciaGestoLibre(ev, id, accion) {
         ['x','y','w','h'].every(k => posicionLibreDe(sl, b)[k] === posiciones[i][k]));
     if (activo && vigente) {
       if (accion === 'mover') { if (!mueveSeleccionLibre(deck, sl, ids, dxFinal, dyFinal)) restaura(); }
+      else if (ids.length > 1) { if (!escalaSeleccionLibre(deck, sl, ids, accion, factorFinal)) restaura(); }
       else if (!aplicaPosicionLibre(id, previa)) restaura();
     } else restaura();
+    if (raiz.isConnected) pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), bloques.map(b => posicionLibreDe(sl, b)));
   };
   document.body.classList.add('arrastra-bloque');
   document.addEventListener('pointermove', mueve);
@@ -668,6 +713,116 @@ function arrastraCuerpo(ev, id, el) {
   document.addEventListener('pointercancel', quita);
 }
 
+function actualizaControlesComposicion() {
+  const barra = $('#lienzoComposicion'); if (!barra) return;
+  barra.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout));
+  const organizar = $('#lienzoOrganizarBtn');
+  if (organizar) organizar.disabled = idsSeleccionados().size < 2;
+}
+
+function menuOrganizaLienzo(anchor) {
+  const deck = S.deck, slide = curSlide(), ids = [...idsSeleccionados()];
+  const bloqueada = ids.some(id => findBlock(id)?.block.locked);
+  const menu = h('div', { class: 'menu' });
+  for (const [texto, accion] of [
+    ['Alinear a la izquierda', 'izquierda'], ['Alinear al centro', 'centro'], ['Alinear a la derecha', 'derecha'],
+    ['Alinear arriba', 'arriba'], ['Alinear en medio', 'medio'], ['Alinear abajo', 'abajo'],
+    ['Distribuir horizontalmente', 'distribuir-h'], ['Distribuir verticalmente', 'distribuir-v']
+  ]) menu.append(h('button', { type: 'button', disabled: bloqueada || ids.length < (accion.startsWith('distribuir') ? 3 : 2), onclick: () => {
+    closeMenus();
+    const actuales = idsSeleccionados();
+    if (S.deck !== deck || curSlide() !== slide || actuales.size !== ids.length || !ids.every(id => actuales.has(id))) {
+      toast('La selección cambió. Vuelve a abrir Organizar.', 'warn'); return;
+    }
+    if (!organizaSeleccionLibre(deck, slide, ids, accion)) toast('No hay cambios que aplicar a la selección.', 'warn');
+    if (S.selBlock) enfocaBloqueLibre(S.selBlock);
+  } }, texto));
+  showMenu(menu, anchor);
+}
+
+function menuFormasLienzo(anchor) {
+  const menu = h('div', { class: 'menu' });
+  for (const [texto, tipo] of [['Rectángulo', 'rect'], ['Elipse', 'circle'], ['Línea', 'line'], ['Flecha', 'arrow']]) {
+    menu.append(h('button', { type: 'button', onclick: () => {
+      closeMenus();
+      insertaFormaLibre(tipo).catch(error => toast(error.message || 'No se pudo insertar la forma.', 'warn'));
+    } }, texto));
+  }
+  showMenu(menu, anchor);
+}
+
+let ignoraClicLibre = false;
+/* La selección por recuadro no interfiere con un clic, texto editable ni
+   desplazamiento táctil. La selección solo se escribe al soltar el puntero. */
+function iniciaSeleccionPorMarco(ev) {
+  if (ev.button !== 0 || ev.pointerType === 'touch' || ev.ctrlKey || ev.metaKey ||
+      ev.target.closest('.blk,.blk-toolbar,.grupo-asa,[data-nueva-z],[data-edit],button,input,select,textarea,a')) return;
+  const raizInicial = ev.target.closest('.slide');
+  if (!raizInicial || !curSlide().lienzoLibre) return;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  const deck = S.deck, slide = curSlide(), raiz = $('#stageInner .slide'), inner = $('#stageInner');
+  if (!raiz || !slide.lienzoLibre) return;
+  const rect = raiz.getBoundingClientRect(); if (!(rect.width > 0 && rect.height > 0)) return;
+  const inicial = new Set(idsSeleccionados()), activoInicial = S.selBlock, aditiva = ev.shiftKey;
+  const punto = e => ({ x: clamp((e.clientX - rect.left) / rect.width * 100, 0, 100), y: clamp((e.clientY - rect.top) / rect.height * 100, 0, 100) });
+  const desde = punto(ev), pointer = ev.pointerId, x0 = ev.clientX, y0 = ev.clientY;
+  let marco = null, limites = null, activo = false;
+  const mismo = e => pointer == null || e.pointerId === pointer;
+  const quita = () => {
+    document.removeEventListener('pointermove', mueve); document.removeEventListener('pointerup', suelta);
+    document.removeEventListener('pointercancel', cancela); document.removeEventListener('keydown', escapa, true);
+    if (marco) marco.remove();
+  };
+  const mueve = e => {
+    if (!mismo(e)) return;
+    if (!activo && Math.abs(e.clientX - x0) < 4 && Math.abs(e.clientY - y0) < 4) return;
+    activo = true; const hasta = punto(e);
+    limites = { x: Math.min(desde.x, hasta.x), y: Math.min(desde.y, hasta.y),
+      w: Math.abs(hasta.x - desde.x), h: Math.abs(hasta.y - desde.y) };
+    if (!marco) { marco = h('div', { class: 'lienzo-marquee', 'aria-hidden': 'true' }); raiz.append(marco); }
+    Object.assign(marco.style, {left: limites.x + '%', top: limites.y + '%', width: limites.w + '%', height: limites.h + '%'});
+    e.preventDefault();
+  };
+  const evitaClicAlSoltar = () => {
+    ignoraClicLibre = true;
+    setTimeout(() => { ignoraClicLibre = false; }, 0);
+  };
+  const cancela = e => {
+    if (e?.type === 'pointercancel' && !mismo(e)) return;
+    if (activo && e?.type === 'keydown') {
+      ignoraClicLibre = true;
+      const alSoltar = up => { if (!mismo(up)) return; document.removeEventListener('pointerup', alSoltar, true); evitaClicAlSoltar(); };
+      document.addEventListener('pointerup', alSoltar, true);
+    }
+    quita();
+  };
+  const escapa = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancela(e); } };
+  const suelta = e => {
+    if (!mismo(e)) return;
+    quita(); if (!activo || !limites) return;
+    evitaClicAlSoltar();
+    const actuales = idsSeleccionados();
+    if (S.deck !== deck || curSlide() !== slide || !slide.lienzoLibre || S.selBlock !== activoInicial ||
+        actuales.size !== inicial.size || [...inicial].some(id => !actuales.has(id))) return;
+    const bloques = zonas(slide).flat().filter(b => typeof bloqueVisible !== 'function' || bloqueVisible(b, deck));
+    const encontrados = bloques.filter(b => {
+      const p = posicionLibreDe(slide, b);
+      return p.x < limites.x + limites.w && p.x + p.w > limites.x && p.y < limites.y + limites.h && p.y + p.h > limites.y;
+    });
+    const grupos = new Set(encontrados.map(b => b.group).filter(Boolean));
+    const ids = aditiva ? new Set(inicial) : new Set();
+    for (const b of bloques) if (encontrados.includes(b) || (b.group && grupos.has(b.group))) ids.add(b.id);
+    const ultimo = encontrados.at(-1)?.id || (aditiva ? [...ids].at(-1) : null);
+    selectBlock(ultimo);
+    const seleccion = idsSeleccionados(); seleccion.clear(); for (const id of ids) seleccion.add(id);
+    pintaSeleccionBloques(); mountToolbar(); actualizaControlesComposicion();
+    if (ultimo) enfocaBloqueLibre(ultimo);
+  };
+  try { inner.setPointerCapture(pointer); } catch (e) {}
+  document.addEventListener('pointermove', mueve); document.addEventListener('pointerup', suelta);
+  document.addEventListener('pointercancel', cancela); document.addEventListener('keydown', escapa, true);
+}
+
 function initCanvasEvents() {
   const inner = $('#stageInner');
   const pie = $('.canvas-foot .foot-izq');
@@ -680,6 +835,14 @@ function initCanvasEvents() {
       S.prefs.imanLienzo = S.prefs.imanLienzo === false; guardaPrefs();
       e.currentTarget.setAttribute('aria-pressed', String(S.prefs.imanLienzo));
     } }, 'Imán'));
+  if (pie && !$('#lienzoComposicion')) {
+    const organizar = h('button', { id: 'lienzoOrganizarBtn', type: 'button', class: 'btn btn-sm', 'aria-label': 'Organizar selección',
+      onclick: e => menuOrganizaLienzo(e.currentTarget) }, 'Organizar');
+    const formas = h('button', { id: 'lienzoFormasBtn', type: 'button', class: 'btn btn-sm', 'aria-label': 'Insertar formas',
+      onclick: e => menuFormasLienzo(e.currentTarget) }, 'Formas');
+    pie.append(h('div', { id: 'lienzoComposicion', class: 'lienzo-composicion', hidden: true }, formas, organizar));
+  }
+  inner.addEventListener('pointerdown', iniciaSeleccionPorMarco);
   /* Arrastrar una imagen dispara el arrastre nativo del navegador, que cancela
      el puntero a media gesto. El lienzo tiene el suyo propio, con sus guías. */
   inner.addEventListener('dragstart', e => e.preventDefault());
@@ -717,6 +880,7 @@ function initCanvasEvents() {
     }
   });
   inner.addEventListener('click', e => {
+    if (ignoraClicLibre) { e.preventDefault(); e.stopPropagation(); ignoraClicLibre = false; return; }
     if (e.target.closest('[data-nueva-z]')) return;
     if (e.ctrlKey || e.metaKey || e.shiftKey) return;
     const blk = e.target.closest('.blk');
@@ -850,7 +1014,7 @@ function pickImage(b) {
       const aplica = url => {
         if (S.deck !== deck || findBlock(f.block.id)?.block !== f.block) return;
         if (f.block.locked) return;
-        f.block.src = url; delete f.block.cientifico; delete f.block.figura; delete f.block.orig; delete f.block.recProp;
+        f.block.src = url; delete f.block.cientifico; delete f.block.figura; delete f.block.formaLibre; delete f.block.orig; delete f.block.recProp;
         commit(); disenadorAlPonerImagen(f.block);
       };
       const rd = new FileReader();

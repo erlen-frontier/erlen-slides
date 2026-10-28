@@ -21,6 +21,7 @@ function marcaSeleccionBloques(id, aditiva) {
 function pintaSeleccionBloques() {
   const ids = idsSeleccionados();
   for (const el of document.querySelectorAll('#stageInner .blk[data-bid]')) el.classList.toggle('sel-lote', ids.has(el.dataset.bid));
+  if (typeof actualizaControlesComposicion === 'function') actualizaControlesComposicion();
 }
 /* Todas las operaciones son atómicas en el historial y solo afectan al mazo
    y a la diapositiva que originaron la selección. Un bloqueo no cambia datos. */
