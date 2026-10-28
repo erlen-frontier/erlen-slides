@@ -18,20 +18,40 @@ function bloquesEnCapas(sl, deck = S.deck) {
   return bloques.map((b, i) => ({b, i, capa: Number.isSafeInteger(b.capaLibre) && b.capaLibre >= 0 && b.capaLibre <= 1000000 ? b.capaLibre : siguiente + i}))
     .sort((a, b) => a.capa - b.capa || a.i - b.i).map(x => x.b);
 }
-function mueveCapaLibre(deck, slide, id, direccion) {
+function mueveCapasLibres(deck, slide, ids, direccion) {
   if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre) return false;
   if (typeof flushEdicion === 'function') flushEdicion();
   if (deck !== S.deck || slide !== curSlide()) return false;
-  const lista = bloquesEnCapas(slide), desde = lista.findIndex(b => b.id === id);
-  if (desde < 0 || lista[desde].locked) return false;
-  const destinos = {atras: desde - 1, adelante: desde + 1, fondo: 0, frente: lista.length - 1};
-  if (!Object.hasOwn(destinos, direccion)) return false;
-  const hasta = destinos[direccion];
-  if (hasta < 0 || hasta >= lista.length || hasta === desde) return false;
-  const [bloque] = lista.splice(desde, 1); lista.splice(hasta, 0, bloque);
+  if (!Array.isArray(ids) || !ids.length || !['atras', 'adelante', 'fondo', 'frente'].includes(direccion)) return false;
+  const elegidos = new Set(ids), lista = bloquesEnCapas(slide), antes = lista.slice();
+  const seleccion = lista.filter(b => elegidos.has(b.id));
+  if (seleccion.length !== elegidos.size || seleccion.some(b => b.locked)) return false;
+  if (direccion === 'adelante') {
+    for (let i = lista.length - 2; i >= 0; i--) if (elegidos.has(lista[i].id) && !elegidos.has(lista[i + 1].id))
+      [lista[i], lista[i + 1]] = [lista[i + 1], lista[i]];
+  } else if (direccion === 'atras') {
+    for (let i = 1; i < lista.length; i++) if (elegidos.has(lista[i].id) && !elegidos.has(lista[i - 1].id))
+      [lista[i - 1], lista[i]] = [lista[i], lista[i - 1]];
+  } else {
+    const otros = lista.filter(b => !elegidos.has(b.id));
+    lista.splice(0, lista.length, ...(direccion === 'frente' ? [...otros, ...seleccion] : [...seleccion, ...otros]));
+  }
+  if (lista.every((b, i) => b === antes[i])) return false;
   lista.forEach((b, i) => { b.capaLibre = i; });
   commit();
   return true;
+}
+function mueveCapaLibre(deck, slide, id, direccion) {
+  return mueveCapasLibres(deck, slide, [id], direccion);
+}
+function mueveCapasSeleccionadas(direccion) {
+  const ids = idsSeleccionados();
+  const elegidos = ids.has(S.selBlock) ? [...ids] : S.selBlock ? [S.selBlock] : [];
+  if (elegidos.some(id => findBlock(id)?.block.locked)) {
+    toast('Desbloquea los bloques seleccionados antes de cambiar su orden.', 'warn');
+    return false;
+  }
+  return mueveCapasLibres(S.deck, curSlide(), elegidos, direccion);
 }
 
 /* Desplazar el grupo completo, no cada bloque por separado: así un borde no

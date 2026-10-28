@@ -16,9 +16,13 @@ Al mover un bloque, **Imán** muestra guías y lo ajusta a los bordes o centros 
 
 Con **Ctrl**, **⌘** o **Mayús** y clic puedes marcar varios bloques. También puedes arrastrar desde un espacio vacío para dibujar un recuadro que selecciona los bloques visibles que toca; mantén **Mayús** para añadirlos a la selección y pulsa **Esc** para cancelar el gesto.
 
-Arrastra el asa del bloque activo o usa las flechas para mover la selección. Las manijas del marco conjunto cambian proporcionalmente el tamaño y la posición de todos los bloques; con el bloque activo enfocado, **Mayús + flechas** también permite reducir o ampliar el conjunto. **Organizar** alinea los bordes o centros y distribuye los espacios entre tres o más bloques. Cada operación se deshace en un solo paso. **Supr** elimina la selección. Si alguno está bloqueado, desbloquéalo antes de transformar o eliminar la selección.
+Arrastra el asa del bloque activo o usa las flechas para mover la selección. Las manijas del marco conjunto cambian proporcionalmente el tamaño y la posición de todos los bloques; con el bloque activo enfocado, **Mayús + flechas** también permite reducir o ampliar el conjunto. **Organizar** alinea los bordes o centros y distribuye los espacios entre tres o más bloques. Cada operación se deshace en un solo paso.
 
-**Capas** muestra los bloques de delante hacia atrás, incluso cuando están superpuestos. Desde la lista puedes marcar varios o usar las flechas para adelantar o retrasar una capa. El orden se guarda en el proyecto y se conserva en la vista de presentación y el HTML autónomo.
+**Duplicar selección** crea copias seleccionadas por delante de los originales y, cuando hay espacio, las desplaza juntas para que sean visibles. Los grupos copiados quedan separados de sus originales. **Eliminar selección**, en la barra, la cinta o el panel, y la tecla **Supr** eliminan los mismos bloques. En **Más acciones** puedes bloquear la selección; usa **Desbloquear selección** para volver a editarla. Si alguno está bloqueado, desbloquéalo antes de transformar, ordenar, duplicar o eliminar la selección.
+
+La opción **Mover bloque activo a…** lleva un solo bloque a otra diapositiva o zona, aunque haya varios seleccionados. Para mover juntos los bloques dentro de la diapositiva, arrastra la selección o usa las flechas.
+
+**Capas** muestra los bloques de delante hacia atrás, incluso cuando están superpuestos. Desde la lista puedes marcar varios o usar las flechas para adelantar o retrasar una capa. Con varios bloques seleccionados, las flechas de la barra, la cinta y el panel adelantan o retrasan el conjunto sin cambiar su orden relativo. El orden se guarda en el proyecto y se conserva en la vista de presentación y el HTML autónomo.
 
 **Formas** inserta un rectángulo, una elipse, una línea o una flecha directamente en la diapositiva. Muévelos y cambia su tamaño como cualquier bloque. Con doble clic puedes editar su color, sus objetos y su descripción en el editor de figuras. La figura sigue editable en el proyecto JSON; en PowerPoint se incorpora como imagen.
 

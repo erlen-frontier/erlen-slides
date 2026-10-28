@@ -227,7 +227,7 @@ function cintaContextual() {
   const b = blq();
   if (!b) return [];
   const def = BLOCK_DEFS.find(x => x.id === b.type) || { name: 'Bloque' };
-  if (b.locked) return [{ id: 'bloque', etiqueta: def.name, grupos: [grupoC('Bloque protegido', peque('desbloquear-bloque', 'Desbloquear', 'LockOpen', () => { const x = blq(); if (x) { x.locked = false; commit(); } }))] }];
+  if (b.locked) return [{ id: 'bloque', etiqueta: def.name, grupos: [grupoC('Bloque protegido', peque('desbloquear-bloque', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Desbloquear selección' : 'Desbloquear', 'LockOpen', () => cambiaBloqueoSeleccion(false)))] }];
   const figura = () => { const x = blq(); return !!(x && x.type === 'image' && x.src); };
   const animables = () => { const x = blq(); return ANIMS.filter(a => a.id !== 'draw' || (x && ['chart', 'func', 'smart', 'geo'].includes(x.type))); };
   return [{ id: 'bloque', etiqueta: def.name, grupos: [
@@ -248,11 +248,11 @@ function cintaContextual() {
       menuC('velocidad', 'Velocidad', 'Gauge', () => ANIM_VEL.map(v => opc(v.n, conBloque(x => { x.animVel = v.id; commit(); }), () => { const x = blq(); return !!x && (x.animVel || 'normal') === v.id; }, v.ms + ' ms')),
         { d: 'Duración del efecto' })),
     grupoC('Orden',
-      peque('subir', 'Subir', 'ArrowUp', () => moveBlock(S.selBlock, -1)),
-      peque('bajar', 'Bajar', 'ArrowDown', () => moveBlock(S.selBlock, 1)),
-      peque('duplicar-bloque', 'Duplicar', 'CopyPlus', () => dupBlock(S.selBlock), { d: 'Duplicar este bloque' }),
-      peque('mover-bloque', 'Mover a…', 'ArrowRightToLine', conBloque(openMoverBloque), { d: 'Llevarlo a otra diapositiva' }),
-      peque('eliminar-bloque', 'Eliminar', 'Delete', () => delBlock(S.selBlock), { atajo: 'Supr', d: 'Eliminar este bloque' }))
+      peque('subir', curSlide().lienzoLibre ? (idsSeleccionados().size > 1 ? 'Adelantar selección' : 'Adelantar capa') : 'Subir', 'ArrowUp', () => curSlide().lienzoLibre ? mueveCapasSeleccionadas('adelante') : moveBlock(S.selBlock, -1)),
+      peque('bajar', curSlide().lienzoLibre ? (idsSeleccionados().size > 1 ? 'Retrasar selección' : 'Retrasar capa') : 'Bajar', 'ArrowDown', () => curSlide().lienzoLibre ? mueveCapasSeleccionadas('atras') : moveBlock(S.selBlock, 1)),
+      peque('duplicar-bloque', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Duplicar selección' : 'Duplicar', 'CopyPlus', duplicarSeleccionActiva, { d: 'Duplicar la selección' }),
+      peque('mover-bloque', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Mover bloque activo a…' : 'Mover a…', 'ArrowRightToLine', conBloque(openMoverBloque), { d: 'Llevar el bloque activo a otra diapositiva' }),
+      peque('eliminar-bloque', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Eliminar selección' : 'Eliminar', 'Delete', eliminarSeleccionActiva, { atajo: 'Supr', d: 'Eliminar la selección' }))
   ] }];
 }
 

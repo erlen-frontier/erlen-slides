@@ -139,18 +139,23 @@ function mountToolbar() {
   if (!el || !f) return;
   if (curSlide().lienzoLibre && idsSeleccionados().size > 1) montaMarcoSeleccionLibre();
   if (f.block.locked) {
-    el.append(h('div', { class: 'blk-toolbar' }, h('button', { onclick: () => { f.block.locked = false; commit(); } }, 'Desbloquear'))); return;
+    const varias = curSlide().lienzoLibre && idsSeleccionados().size > 1;
+    el.append(h('div', { class: 'blk-toolbar' }, h('button', { onclick: () => cambiaBloqueoSeleccion(false) }, varias ? 'Desbloquear selección' : 'Desbloquear'))); return;
   }
   const k = clamp(1 / effZoom(), 0.6, 2.4);   // en móvil el zoom es bajo: la barra no debe volverse gigante
   const bar = h('div', { class: 'blk-toolbar', style: `top:-8px;right:0;transform:translateY(-100%) scale(${k});transform-origin:bottom right` });
-  const add = (txt, title, fn, cls) => bar.append(h('button', { title, class: cls || '', onclick: e => { e.stopPropagation(); fn(e); } }, txt));
-  const asa = h('button', { class: 'tb-asa', title: 'Arrastra para colocarlo en otro sitio o suéltalo sobre una miniatura' }, '⠿');
+  /* Perder el foco repinta el lienzo. Mantenerlo hasta el clic evita que el
+     botón desaparezca antes de ejecutar su acción; esta vacía la edición. */
+  bar.addEventListener('pointerdown', e => { if (rawEl && e.target.closest('button')) e.preventDefault(); });
+  const add = (txt, title, fn, cls) => bar.append(h('button', { title, 'aria-label': title, class: cls || '', onclick: e => { e.stopPropagation(); fn(e); } }, txt));
+  const asa = h('button', { class: 'tb-asa', title: 'Arrastra para colocarlo en otro sitio o suéltalo sobre una miniatura', 'aria-label': 'Mover bloque' }, '⠿');
   asa.addEventListener('pointerdown', ev => curSlide().lienzoLibre ? iniciaGestoLibre(ev, S.selBlock, 'mover') : iniciaArrastre(ev, S.selBlock));
   asa.addEventListener('click', ev => ev.stopPropagation());
   bar.append(asa);
   if (curSlide().lienzoLibre) {
-    add('↑', 'Adelantar capa', () => mueveCapaLibre(S.deck, curSlide(), S.selBlock, 'adelante'));
-    add('↓', 'Retrasar capa', () => mueveCapaLibre(S.deck, curSlide(), S.selBlock, 'atras'));
+    const varias = idsSeleccionados().size > 1;
+    add('↑', varias ? 'Adelantar selección' : 'Adelantar capa', () => mueveCapasSeleccionadas('adelante'));
+    add('↓', varias ? 'Retrasar selección' : 'Retrasar capa', () => mueveCapasSeleccionadas('atras'));
     if (idsSeleccionados().size === 1) bar.append(h('button', { type:'button', title:'Transformar objeto', 'aria-label':'Transformar objeto',
       onclick: e => { e.stopPropagation(); abrePanelLateral('bloque', 'Posición en la diapositiva'); } }, '↻'));
   } else {
@@ -175,7 +180,7 @@ function mountToolbar() {
   bar.append(h('div', { class: 'tb-sep2' }));
   add('⋯', 'Más acciones…', ev => menuBloque(f, ev));
   add('⚙', 'Propiedades en el panel', () => { S.tab = 'bloque'; renderInspector(); openDrawer(true); });
-  add('✕', 'Eliminar bloque', () => delBlock(S.selBlock), 'tb-danger');
+  add('✕', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Eliminar selección' : 'Eliminar bloque', eliminarSeleccionActiva, 'tb-danger');
   el.append(bar);
   if (ARRASTRA_CUERPO[f.block.type]) {
     el.classList.add('blk-movible');
@@ -233,8 +238,13 @@ function menuBloque(f, ev) {
     hubo = true;
   }
   if (hubo) menu.append(h('div', { class: 'm-sep' }));
-  it('⧉', 'Duplicar el bloque', null, () => dupBlock(S.selBlock));
-  it('⇥', 'Mover a otra diapositiva o zona…', null, () => openMoverBloque(f.block));
+  it('⧉', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Duplicar selección' : 'Duplicar el bloque', null, duplicarSeleccionActiva);
+  if (curSlide().lienzoLibre) {
+    const seleccion = [...idsSeleccionados()], varias = seleccion.length > 1;
+    const bloqueada = seleccion.some(id => findBlock(id)?.block.locked);
+    it('▣', (bloqueada ? 'Desbloquear ' : 'Bloquear ') + (varias ? 'selección' : 'bloque'), null, () => cambiaBloqueoSeleccion(!bloqueada));
+  }
+  it('⇥', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Mover bloque activo a otra diapositiva o zona…' : 'Mover a otra diapositiva o zona…', null, () => openMoverBloque(f.block));
   menu.append(h('div', { class: 'm-sep' }));
   it('⚙', 'Propiedades', 'en el panel derecho', () => { S.tab = 'bloque'; renderInspector(); openDrawer(true); });
   it('▣', 'Propiedades en una ventana', null, () => openBlockProps(f.block));
@@ -355,6 +365,7 @@ function leaveRaw(el, nextEk) {
    ningún otro sitio perdía el texto: el guardado solo llegaba al perder el foco. */
 function flushEdicion() {
   if (rawEl) { const el = rawEl; try { el.blur(); } catch (e) { /* nada */ } if (rawEl === el) leaveRaw(el); }
+  if (typeof aplicaCambioPanelPendiente === 'function') aplicaCambioPanelPendiente();
 }
 function focusEdit(ek) {
   const el = $(`#stageInner [data-ek="${ek}"]`);
