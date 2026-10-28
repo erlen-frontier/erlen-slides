@@ -154,12 +154,13 @@ async function openDatosLibres(original) {
 function cienciaFuenteValida(d){
  if(!d||d.v!==1)return false;
  const texto=(s,max)=>typeof s==='string'&&s.trim().length>0&&s.length<=max;
+ if(d.tipo==='diagrama')return fuenteDiagramaValida(d.texto);
  if(d.tipo==='molecula')return texto(d.mol,250000);
  if(d.tipo==='3d')return texto(d.texto,500000)&&['xyz','sdf','pdb','mol2'].includes(d.formato)&&['stick','sphere','cartoon'].includes(d.estilo)&&(!d.vista||(Array.isArray(d.vista)&&d.vista.length===8&&d.vista.every(Number.isFinite)));
  if(d.tipo==='datos'){try{cienciaPuntos(d.texto);return ['markers','lines+markers'].includes(d.modo)&&typeof d.x==='string'&&d.x.length<=100&&typeof d.y==='string'&&d.y.length<=100;}catch{return false;}}
  return false;
 }
-function cienciaReabrir(b){if(!cienciaFuenteValida(b.cientifico)){toast('Los datos científicos no tienen un formato compatible. La imagen se conserva.');return;}const t=b.cientifico?.tipo;if(t==='molecula')openMoleculaLibre(b);else if(t==='3d')openMolecular3D(b);else if(t==='datos')openDatosLibres(b);}
+function cienciaReabrir(b){if(b.locked){toast('Desbloquea la figura antes de editarla.');return;}if(!cienciaFuenteValida(b.cientifico)){toast('Los datos científicos no tienen un formato compatible. La imagen se conserva.');return;}const t=b.cientifico?.tipo;if(t==='molecula')openMoleculaLibre(b);else if(t==='3d')openMolecular3D(b);else if(t==='datos')openDatosLibres(b);else if(t==='diagrama')openDiagramaTexto(b);}
 
 function cienciaIdiomaKekule(){
  const K=Kekule.Localization;

@@ -7,6 +7,9 @@
 .erlen-cinta button,.erlen-cinta-menu button{min-height:0;margin:0;padding:0;border:1px solid transparent;border-radius:var(--erlen-radio-campo);background:transparent;color:inherit;font:inherit;line-height:1.2;cursor:pointer;text-decoration:none;box-shadow:none;transform:none}
 .erlen-cinta button:disabled,.erlen-cinta-menu button:disabled{opacity:.45;cursor:default}
 .erlen-cinta :focus-visible,.erlen-cinta-menu :focus-visible{outline:3px solid var(--erlen-foco);outline-offset:1px}
+/* Resalte de Mey: la ayuda señala durante unos segundos el botón del comando encontrado.
+   Sin animación a propósito: también cumple su función con prefers-reduced-motion. */
+.erlen-cinta [data-erlen-mey-resalta]{outline:3px solid var(--erlen-foco);outline-offset:2px}
 .erlen-cinta-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 
 /* Pestañas: una fila de cápsulas; la activa se eleva como una lente de cristal con el texto en el acento, «Archivo» a la izquierda. */
@@ -70,13 +73,21 @@
  .erlen-cinta .erlen-cinta-boton[data-tipo=grande]{min-height:64px;min-width:56px}
  .erlen-cinta-fila{padding-inline:var(--erlen-esp-1)}
 }
-@media (pointer:coarse){
- .erlen-cinta .erlen-cinta-pestana,.erlen-cinta .erlen-cinta-plegar,.erlen-cinta .erlen-cinta-archivo{min-height:44px}
- .erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]){min-height:44px}
+@media (max-width:920px),(any-pointer:coarse){
+ /* Objetivo táctil completo: 44×44 también en anchura. Las variantes con :not y [data-tipo]
+    replican la especificidad de las reglas compactas de arriba para poder superarlas. */
+ .erlen-cinta .erlen-cinta-boton{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
+ .erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]){min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
+ .erlen-cinta .erlen-cinta-boton[data-tipo=grande]{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
+ .erlen-cinta .erlen-cinta-pestana,.erlen-cinta .erlen-cinta-plegar,.erlen-cinta .erlen-cinta-archivo{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
  .erlen-cinta-columna{flex-direction:row}
- .erlen-cinta-menu .erlen-cinta-opcion{min-height:44px}
+ .erlen-cinta-menu .erlen-cinta-opcion{min-height:var(--erlen-alto-control)}
 }
 @media (prefers-reduced-motion:reduce){.erlen-cinta .erlen-cinta-boton,.erlen-cinta .erlen-cinta-pestana{transition:none}}
 /* Colores forzados: la lente de la pestaña activa pierde su sombra; se marca con el borde del sistema. */
 @media (forced-colors:active){.erlen-cinta .erlen-cinta-pestana[aria-selected=true]{border-color:Highlight}.erlen-cinta .erlen-cinta-archivo{border:1px solid ButtonText}}
 @media print{.erlen-cinta,.erlen-cinta-menu{display:none}}
+
+/* Los controles compactos conservan todo el espacio de lectura al elevarse. */
+:root[data-erlen-estilo] .erlen-cinta :is(.erlen-cinta-boton:hover:not(:disabled),.erlen-cinta-pestana[aria-selected="true"]){box-shadow:var(--erlen-control-relieve)}
+:root[data-erlen-estilo] .erlen-cinta :is(.erlen-cinta-boton,.erlen-cinta-archivo,.erlen-cinta-pestana):active:not(:disabled){box-shadow:var(--erlen-control-presionado)}

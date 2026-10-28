@@ -38,7 +38,9 @@
    opción  = {etiqueta, icono?, descripcion?, atajo?, accion, marcado?:()=>bool,
               deshabilitado?:()=>bool} | {separador:true}
    icono: texto (un glifo), un nodo, o una cadena SVG escrita por la propia app.
-   Devuelve {elemento, actualizar(), seleccionar(id), plegar(bool), destruir()}. */
+   Devuelve {elemento, actualizar(), seleccionar(id), plegar(bool), comandos(), enfocar(clave,pestana?), destruir()}.
+   comandos() lista los comandos ejecutables del estado actual (fuente única para ayudas como Mey);
+   enfocar(clave,pestana?) lleva el foco al botón del comando y lo resalta unos segundos. */
 const TIPOS=['grande','pequeno','interruptor','menu'];
 let contador=0;
 
@@ -50,7 +52,12 @@ export function mountCinta(host,config){
  const clave='erlen.cinta.'+(config.app||'app')+'.plegada';
  const leer=()=>{try{return win.localStorage.getItem(clave)==='1';}catch{return false;}};
  const guardar=v=>{try{win.localStorage.setItem(clave,v?'1':'0');}catch{}};
- let activa=config.inicial||config.pestanas[0].id,plegada=leer(),menu=null,firmaPestanas='',firmaPanel='';
+ // Paisaje corto (teléfono girado, mismo criterio que marco.css): sin preferencia guardada la cinta arranca plegada para
+ // dejar sitio al trabajo. Es un plegado automático: no se guarda y se deshace al tocar una pestaña.
+ const mqBaja=win.matchMedia?win.matchMedia('(max-width:920px) and (max-height:500px)'):null;
+ const sinPreferencia=()=>{try{return win.localStorage.getItem(clave)===null;}catch{return true;}};
+ let plegadoAuto=!!(mqBaja&&mqBaja.matches&&sinPreferencia());
+ let activa=config.inicial||config.pestanas[0].id,plegada=plegadoAuto||leer(),menu=null,firmaPestanas='',firmaPanel='';
  const vivos=new Map();   // botón → control, para refrescar estados sin repintar
 
  const raiz=el('div',{class:'erlen-cinta'});
@@ -81,14 +88,14 @@ export function mountCinta(host,config){
  function pintarPestanas(ps){
   fila.replaceChildren();lista.replaceChildren();
   if(config.archivo){
-   const b=el('button',{type:'button',class:'erlen-cinta-archivo'},config.archivo.etiqueta||'Archivo');
+   const b=el('button',{type:'button',class:'erlen-cinta-archivo','data-control':'archivo'},config.archivo.etiqueta||'Archivo');
    b.addEventListener('click',()=>config.archivo.accion&&config.archivo.accion(b));
    fila.append(b);
   }
   fila.append(lista);
   for(const p of ps){
    const b=el('button',{type:'button',role:'tab',class:'erlen-cinta-pestana',id:uid+'-tab-'+p.id,'aria-controls':uid+'-panel','aria-selected':'false',tabindex:'-1','data-pestana':p.id,'data-contextual':p.contextual?'true':null},p.etiqueta);
-   b.addEventListener('click',()=>{if(plegada)fijarPlegado(false);seleccionar(p.id,true);});
+   b.addEventListener('click',()=>{if(plegada)fijarPlegado(false,!plegadoAuto);seleccionar(p.id,true);});
    b.addEventListener('dblclick',()=>fijarPlegado(!plegada));
    lista.append(b);
   }
@@ -211,13 +218,16 @@ export function mountCinta(host,config){
   m.style.left=Math.max(8,Math.min(r.left,vw-w-8))+'px';
   m.style.top=(r.bottom+4+h>vh-8&&r.top-4-h>8?r.top-4-h:r.bottom+4)+'px';
   const fuera=e=>{if(!m.contains(e.target)&&e.target!==ancla&&!ancla.contains(e.target))cerrarMenu();};
-  win.setTimeout(()=>doc.addEventListener('pointerdown',fuera),0);
-  menu={m,ancla,fuera};
+  // El listener de «fuera» espera al mismo tick para no tragarse el clic que abre: si el menú se
+  // cierra o la cinta se destruye antes, se cancela el temporizador y no queda ningún listener tardío.
+  const temporizador=win.setTimeout(()=>doc.addEventListener('pointerdown',fuera),0);
+  menu={m,ancla,fuera,temporizador};
   const primero=m.querySelector('.erlen-cinta-opcion:not([disabled])');
   if(primero)primero.focus();
  }
  function cerrarMenu(devolverFoco){
   if(!menu)return;
+  win.clearTimeout(menu.temporizador);
   doc.removeEventListener('pointerdown',menu.fuera);
   menu.m.remove();
   menu.ancla.setAttribute('aria-expanded','false');
@@ -225,14 +235,21 @@ export function mountCinta(host,config){
   menu=null;
  }
 
- function fijarPlegado(v){
-  plegada=!!v;guardar(plegada);
+ function fijarPlegado(v,persistir=true){
+  plegada=!!v;if(persistir){guardar(plegada);plegadoAuto=false;}
   raiz.toggleAttribute('data-plegada',plegada);
   panel.hidden=plegada;
   firmaPestanas='';actualizar();
  }
  const atajo=e=>{if(e.key==='F1'&&(e.ctrlKey||e.metaKey)&&raiz.isConnected&&!raiz.closest('[inert]')){e.preventDefault();fijarPlegado(!plegada);}};
  doc.addEventListener('keydown',atajo);
+ // Al girar el teléfono con la app abierta: plegar al pasar a horizontal bajo y desplegar al volver,
+ // solo mientras la persona no haya elegido (plegado automático, nunca guardado).
+ const alGirar=()=>{
+  if(mqBaja.matches){if(!plegada&&sinPreferencia()){plegadoAuto=true;fijarPlegado(true,false);}}
+  else if(plegadoAuto){plegadoAuto=false;fijarPlegado(false,false);}
+ };
+ if(mqBaja&&mqBaja.addEventListener)mqBaja.addEventListener('change',alGirar);
 
  function actualizar(){
   const ps=todas();
@@ -256,16 +273,107 @@ export function mountCinta(host,config){
   if(cambia&&delUsuario&&config.alCambiar)config.alCambiar(id);
  }
 
+ // Comandos ejecutables del estado actual: la misma identidad que data-control, sin duplicar
+ // declaraciones. Se recalcula en cada llamada porque las pestañas contextuales y los estados
+ // oculto/deshabilitado cambian. listarComandos() añade a cada entrada el botón padre (la clave
+ // del control) para que enfocar pueda localizarlo cuando el comando es una opción de menú.
+ function ancla(clave){
+  return [...raiz.querySelectorAll('[data-control]')].find(b=>b.dataset.control===clave)||raiz;
+ }
+ function listarComandos(){
+  const lista=[];
+  for(const p of todas())for(const g of p.grupos)for(const c of g.controles){
+   if(c.oculto&&c.oculto())continue;
+   const clave=c.id||c.etiqueta,habilitado=!(c.deshabilitado&&c.deshabilitado());
+   if(c.tipo==='menu'){
+    const opciones=typeof c.opciones==='function'?c.opciones():(c.opciones||[]);
+    for(const o of opciones){
+     if(o.separador)continue;
+     lista.push({comando:{
+      clave:clave+' › '+o.etiqueta,pestana:p.id,etiqueta:c.etiqueta+' › '+o.etiqueta,
+      ruta:[p.etiqueta,g.etiqueta],atajo:o.atajo,titulo:o.descripcion,
+      habilitado:habilitado&&!(o.deshabilitado&&o.deshabilitado()),
+      ejecutar:()=>{o.accion&&o.accion(ancla(clave));actualizar();}
+     },padre:clave});
+    }
+   }else{
+    lista.push({comando:{
+     clave,pestana:p.id,etiqueta:c.etiqueta,ruta:[p.etiqueta,g.etiqueta],
+     atajo:c.atajo,titulo:c.titulo,habilitado,
+     ejecutar:()=>{c.accion&&c.accion(ancla(clave));actualizar();}
+    },padre:clave});
+   }
+  }
+  if(config.archivo)lista.push({comando:{
+   clave:'archivo',pestana:'',etiqueta:config.archivo.etiqueta||'Archivo',ruta:[],habilitado:true,
+   ejecutar:()=>config.archivo.accion&&config.archivo.accion(ancla('archivo'))
+  }});
+  return lista;
+ }
+ let resalte=null,resaltado=null;
+ function resaltar(b){
+  if(resalte)win.clearTimeout(resalte);
+  if(resaltado&&resaltado.isConnected)resaltado.removeAttribute('data-erlen-mey-resalta');
+  resaltado=b;
+  b.setAttribute('data-erlen-mey-resalta','');
+  resalte=win.setTimeout(()=>{resalte=null;resaltado=null;b.removeAttribute('data-erlen-mey-resalta');},2400);
+ }
+ function enfocar(clave,pestana){
+  const hallado=listarComandos().find(x=>x.comando.clave===clave&&(!pestana||x.comando.pestana===pestana));
+  if(!hallado)return false;
+  const comando=hallado.comando;
+  if(plegada)fijarPlegado(false,!plegadoAuto);
+  if(comando.pestana)seleccionar(comando.pestana,false);
+  const b=ancla(comando.pestana===''?'archivo':(hallado.padre||comando.clave));
+  b.focus({preventScroll:false});
+  resaltar(b);
+  return true;
+ }
+
  raiz.toggleAttribute('data-plegada',plegada);
  panel.hidden=plegada;
+ // Indicador de desborde en la tira de pestañas: el mismo atributo data-desborde que el marco
+ // vigila para controles y pie; marco.css pinta el degradado del borde. Un MutationObserver
+ // vuelve a medir cuando las pestañas se repintan (la caja no cambia de tamaño). Se libera en
+ // destruir().
+ let pendienteFila=false;
+ const medirFila=()=>{
+  pendienteFila=false;
+  const inicio=fila.scrollLeft>1,fin=fila.scrollLeft+fila.clientWidth<fila.scrollWidth-1;
+  fila.dataset.desborde=inicio&&fin?'ambos':inicio?'inicio':fin?'fin':'';
+ };
+ const programaFila=()=>{
+  if(pendienteFila)return;
+  pendienteFila=true;
+  if(win.requestAnimationFrame)win.requestAnimationFrame(medirFila);else medirFila();
+ };
+ programaFila();
+ fila.addEventListener('scroll',programaFila,{passive:true});
+ win.addEventListener('resize',programaFila);
+ let observadorFila=null,mutadorFila=null;
+ if(win.ResizeObserver){observadorFila=new win.ResizeObserver(programaFila);observadorFila.observe(fila);}
+ if(win.MutationObserver){mutadorFila=new win.MutationObserver(programaFila);mutadorFila.observe(fila,{childList:true,subtree:true});}
  actualizar();
  return {
   elemento:raiz,
   actualizar,
   seleccionar:id=>seleccionar(id,false),
   plegar:v=>fijarPlegado(v),
+  comandos:()=>listarComandos().map(x=>x.comando),
+  enfocar,
   get activa(){return activa;},
-  destruir(){cerrarMenu();doc.removeEventListener('keydown',atajo);raiz.remove();}
+  destruir(){
+   cerrarMenu();
+   if(resalte)win.clearTimeout(resalte);
+   resaltado=null;
+   fila.removeEventListener('scroll',programaFila);
+   win.removeEventListener('resize',programaFila);
+   if(observadorFila)observadorFila.disconnect();
+   if(mutadorFila)mutadorFila.disconnect();
+   doc.removeEventListener('keydown',atajo);
+   if(mqBaja&&mqBaja.removeEventListener)mqBaja.removeEventListener('change',alGirar);
+   raiz.remove();
+  }
  };
 }
 

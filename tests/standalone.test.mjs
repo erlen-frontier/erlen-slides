@@ -41,7 +41,18 @@ test('The suite menu appears only when mounted at /slides/, and links out withou
   const host=montado.dom.window.document.querySelector('erlen-suite-nav');
   assert.ok(host,'El menú no se montó bajo /slides/.');
   const enlaces=[...host.shadowRoot.querySelectorAll('a')];
-  assert.equal(enlaces.length,14,'Inicio de Erlen y las trece aplicaciones del paquete de diseño 1.7.0.');
+  // Con catálogo de despliegue: sus apps más la portada; sin él, la lista standalone del paquete.
+  const embebido=montado.dom.window.document.getElementById('erlen-suite-catalog');
+  if(embebido){
+   const catalogo=JSON.parse(embebido.textContent);
+   assert.equal(enlaces.length,catalogo.items.length+1,'La portada y cada app del catálogo de despliegue.');
+   for(const item of catalogo.items)assert.ok(enlaces.some(a=>a.getAttribute('href')===item.href),'Falta el enlace del catálogo: '+item.id);
+  }else{
+   const rutas=enlaces.map(a=>a.getAttribute('href'));
+   assert.equal(new Set(rutas).size,rutas.length,'El menú no repite enlaces.');
+   for(const ruta of ['/','/slides/','/notes/','/documents/','/figures/','/doe/'])
+    assert.ok(rutas.includes(ruta),'Falta una ruta de la suite: '+ruta);
+  }
   assert.equal(host.shadowRoot.querySelector('[aria-current]').getAttribute('href'),'/slides/');
   assert.equal(host.shadowRoot.querySelector('details').open,false,'El menú abre cerrado.');
   for(const a of enlaces.filter(a=>!a.hasAttribute('aria-current')))assert.equal(a.target,'_blank');

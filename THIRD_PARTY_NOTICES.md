@@ -14,6 +14,13 @@ La licencia AGPL-3.0-only cubre el trabajo original de Erlen Slides. Las bibliot
 | Floating UI | Posicionamiento de interfaz | MIT · https://github.com/floating-ui/floating-ui |
 | Intercambio de copias de Erlen Suite (`web/exchange-v2.mjs`) | Leer la copia que DoE envía a Slides | MIT · Erlen contributors; aviso íntegro en el propio archivo y en `src/js/88d-intercambio.js` |
 | Lucide | Iconos de interfaz | ISC; ver texto que incluye atribuciones adicionales · https://github.com/lucide-icons/lucide |
+| PptxGenJS 4.0.1 | PowerPoint editable | MIT · https://github.com/gitbrent/PptxGenJS |
+| Reveal.js 6.0.2 | Presentación HTML autónoma | MIT · https://github.com/hakimel/reveal.js |
+| Mermaid 12.2.0 | Diagramas desde texto | MIT · https://github.com/mermaid-js/mermaid |
+| pptxtojson 2.2.0 | Leer PPTX localmente en un worker | MIT · https://github.com/pipipi-pikachu/pptxtojson |
+| Fabric.js 7.4.0 | Lienzo de figuras por capas | MIT · https://github.com/fabricjs/fabric.js |
+
+`public/licenses/presentation-components.json` registra las versiones y avisos de los componentes de presentación y sus dependencias. Sus textos de licencia se copian junto a los recursos locales; el build falla si falta alguno. El modelo de figura, la adaptación de importación y las interfaces accesibles son originales de Erlen.
 
 `licenses/components.json` registra las versiones npm utilizadas. `licenses/embedded-assets.json` identifica con SHA-256 los archivos tipográficos y KaTeX heredados. Las fuentes WOFF2 están incrustadas en CSS; el build las conserva, no las recompila. Sus creadores incluyen Bogusław Jackowski, Janusz M. Nowacki y los colaboradores de GUST e-foundry; los derivados TeX Gyre conservan los créditos de las familias originales.
 

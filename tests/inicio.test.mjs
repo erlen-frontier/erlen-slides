@@ -21,7 +21,7 @@ test('The home screen is the synced suite component and its stylesheet is inline
  assert.ok(html.includes(inicioCss),'inicio.css del paquete, íntegro en el build');
  assert.ok(html.indexOf(inicioCss)>html.indexOf(cinta),'inicio.css va tras cinta.css');
  assert.ok(html.includes('const erlenInicio=(()=>{'));
- assert.ok(Buffer.byteLength(html)<=3.25*1024*1024,'El HTML único no pasa de 3,25 MiB (el paquete 1.8.0 añade el recreo de Mey): '+Buffer.byteLength(html));
+ assert.ok(Buffer.byteLength(html)<=3.6*1024*1024,'El HTML único no pasa de 3,6 MiB (tipografías variables y recorrido compartido de Mey): '+Buffer.byteLength(html));
  const css=readFileSync(new URL('../src/css/_orden.txt',import.meta.url),'utf8').trim().split('\n').map(n=>readFileSync(new URL('../src/css/'+n,import.meta.url),'utf8')).join('\n');
  assert.doesNotMatch(css,/\.(suite-(shell|sidebar|brand|topbar|content|welcome|archive-[a-z]+|search|page-heading)|slides-(showcase|example|new-card)|ws-(shell|hero|card|grid|thumb|empty|section-head|controls|eyebrow|note)|workspace)\b/,'No queda CSS de la portada antigua');
  assert.doesNotMatch(readFileSync(new URL('../src/cuerpo.html',import.meta.url),'utf8'),/workspaceRoot/);
@@ -31,7 +31,7 @@ test('Slides opens on its home screen: inert editor, focus on the h1, frozen sta
  const d=dom.window.document,w=dom.window;
  assert.equal(raiz(d).hidden,false,'Al abrir se ve el inicio, no el editor vacío');
  assert.equal(w.location.hash,'#suite/inicio');
- assert.equal(d.querySelector('#app').inert,true,'El editor queda inerte bajo el inicio');
+ assert.equal(d.querySelector('.erlen-marco').hasAttribute('inert'),true,'El editor queda inerte bajo el inicio');
  assert.ok(d.body.classList.contains('erlen-inicio-abierto'));
  assert.equal(d.activeElement,raiz(d).querySelector('h1'),'El foco va al h1');
  assert.equal(raiz(d).querySelector('h1').textContent,'Presentaciones científicas');
@@ -61,7 +61,7 @@ test('Slides opens on its home screen: inert editor, focus on the h1, frozen sta
  assert.equal(run('S.deck.slides.length'),n);assert.equal(d.querySelector('#app').classList.contains('concentrado'),false);
  // «Abrir ejemplo» entra al editor con el ejemplo y devuelve el foco al título.
  ejemplos[0].querySelector('button').click();
- assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('#app').inert);
+ assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('.erlen-marco').hasAttribute('inert'));
  assert.equal(run('S.deck.meta.title'),'Calibración UV–Vis');assert.equal(w.location.hash,'#presentaciones');
  assert.equal(d.activeElement,d.querySelector('#deckTitleInput'));
  assert.equal(d.title,'Erlen Slides · Presentaciones científicas','Al cerrar se devuelve el título de la pestaña');
@@ -80,7 +80,7 @@ test('Hash routes keep their historical names and follow the component navigatio
  const titulos=[...raiz(d).querySelectorAll('.erlen-inicio-ejemplo h2')].map(h=>h.textContent);
  assert.equal(titulos.length,12,'Los doce ejemplos editables');
  await aHash(w,'#presentaciones');
- assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('#app').inert);
+ assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('.erlen-marco').hasAttribute('inert'));
  await aHash(w,'#suite/servicio');
  assert.equal(run('INICIO.vista'),'acerca');assert.match(raiz(d).textContent,/versión 0\.3\.0/);assert.match(raiz(d).textContent,/AGPLv3/);
  await aHash(w,'#suite/nada');assert.equal(run('INICIO.vista'),'inicio','Una vista desconocida cae en Inicio');
@@ -91,7 +91,7 @@ test('Opening the home screen keeps the draft; the library opens, duplicates in 
  const d=dom.window.document;
  run("wsNueva();S.deck.meta.title='Seminario';S.deck.slides[0].title='Borrador sin guardar';saveInd()");
  // La marca de la barra vuelve al inicio sin perder el borrador.
- d.querySelector('#inicioBtn').click();
+ d.querySelector('.erlen-marco-marca').click();
  assert.equal(raiz(d).hidden,false);assert.equal(run("decksStore().Seminario.deck.slides[0].title"),'Borrador sin guardar');
  assert.ok(boton(d,'Continuar presentación'),'Se ofrece continuar la presentación empezada');
  assert.ok([...raiz(d).querySelectorAll('.erlen-inicio-recientes strong')].some(s=>s.textContent==='Seminario'),'Aparece en Recientes');

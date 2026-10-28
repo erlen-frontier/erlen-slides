@@ -263,6 +263,12 @@ function renderSlide(deck, idx, mode, stepShown) {
       }
     }
     el.dataset.bid = b.id;
+    if (b.blockAlign) el.dataset.alineacion = b.blockAlign;
+    if (edit && b.locked) {
+      el.dataset.bloqueado = 'true';
+      for (const nodo of el.querySelectorAll('[contenteditable],[data-edit]')) { nodo.removeAttribute('contenteditable'); nodo.removeAttribute('data-edit'); }
+      for (const nodo of el.querySelectorAll('input,button,select,textarea')) nodo.disabled = true;
+    }
     if (edit && sel) el.classList.add('sel');
     /* El pie ya se escribió con el número de este bloque: el siguiente de la
        misma diapositiva lleva el siguiente. Sin esto, dos figuras juntas
@@ -625,5 +631,4 @@ function stepCount(deck, idx) {
   }
   return n;
 }
-
 

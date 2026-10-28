@@ -1,6 +1,6 @@
 # Publicar versiones y conservarlas en Zenodo
 
-Repositorio público previsto: `erlen-frontier/erlen-slides`. El repositorio privado `project-memories` no forma parte de esta distribución ni debe enviarse a Zenodo.
+Repositorio público: `erlen-frontier/erlen-slides`. El repositorio privado `project-memories` no forma parte de esta distribución ni debe enviarse a Zenodo.
 
 ## Crear una versión revisable
 
@@ -9,11 +9,12 @@ Repositorio público previsto: `erlen-frontier/erlen-slides`. El repositorio pri
 3. Revisa capturas y exportaciones, licencia, datos de ejemplo y ausencia de secretos.
 4. Ejecuta `python3 herramientas/package-release.py` para obtener el ZIP web y su checksum.
 5. Escribe las notas en `docs/publicacion-<version>.md`.
-6. Empuja la etiqueta `v<version>`. El workflow **Publish release** vuelve a construir
-   desde la etiqueta, repite las pruebas y publica la release con esas notas, el ZIP y
-   su suma sha256. Si prefieres crear la release desde la interfaz de GitHub, hazlo con
-   esa misma etiqueta: el workflow completa entonces las notas y adjunta los archivos.
-   La etiqueta debe coincidir con la versión de package.json o el workflow se detiene.
+6. Tras la revisión del propietario, publica manualmente una release con la etiqueta
+   `v<version>`, las notas, el ZIP y su suma SHA-256. La etiqueta debe coincidir con la
+   versión de `package.json`. La política actual retira GitHub Actions y la publicación
+   automática, pero este repositorio aún conserva workflows históricos. Antes de crear
+   una etiqueta o release, comprueba que Actions esté deshabilitado en el repositorio;
+   de lo contrario esos workflows podrían ejecutarse.
 
 ## Zenodo
 

@@ -34,7 +34,7 @@ const TRANSFER_LIMIT=16*1024*1024;
 const TOTAL_LIMIT=64*1024*1024;
 const COUNT_LIMIT=50;
 const DB='erlen-suite-exchange-v2';
-const APPS=['slides','notes','documents','pentagrama','spreadsheets','figures','ftir','doe','xrd','lens'];
+const APPS=['slides','notes','documents','pentagrama','spreadsheets','figures','ftir','doe','xrd','lens','rmn'];
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const utf8=new TextEncoder();
 const bytes=s=>utf8.encode(s).length;

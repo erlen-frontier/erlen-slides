@@ -6,6 +6,12 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 
 - `src/js/_orden.txt`: orden explícito de los módulos del editor; comparten un ámbito léxico.
 - `src/css/_orden.txt`: estilos en orden, incluidos los del espacio inicial.
+- `src/markdown-core.mjs`: analizador y serializador compartidos por navegador y MCP; no depende de Node.
+- `src/pptx-core.mjs` inspecciona el ZIP antes de descomprimir. `web/pptx-worker.mjs` ejecuta pptxtojson fuera del hilo de edición; cancelar o agotar el plazo termina el worker. `web/importar-presentacion.js` adapta contenido, conserva parejas x/y y notas, informa pérdidas de formato y guarda solo al confirmar. Las copias DoE reutilizan su receptor verificado.
+- `src/figuras-core.mjs` valida un modelo propio de objetos permitidos, genera SVG escapado y detecta objetos fuera del marco. `web/figuras-editor.js` usa Fabric.js solo para el lienzo; no carga JSON arbitrario de Fabric. La lista de objetos y los controles ofrecen una alternativa al arrastre. `image.figura` es una propiedad opcional compatible con JSON v1; `src` conserva la representación para motores anteriores. Adaptar una figura científica crea un bloque nuevo.
+- `web/compartir-presentacion.js` reúne revisión de contenido y formato, controles de notas optativos y descarga. La firma del documento impide exportar una revisión anterior a un cambio. `openModal` deja inerte también el marco completo de la suite y conserva el foco al cerrar.
+- `src/js/85-edicion-lote.js`: selección y operaciones atómicas sobre bloques; `locked`, `group` y `blockAlign` son propiedades opcionales compatibles con JSON v1.
+- `src/js/85-flujos.js`: cargador local y entradas de las herramientas opcionales. `web/flujos-editor.js` contiene sus interfaces y `web/exportaciones-avanzadas.js`, los adaptadores PptxGenJS/Reveal.js. El build copia bibliotecas, chunks Mermaid y licencias a `public/`, con versiones y SHA-256 en `libre/manifest.json`. El runtime de funciones del HTML se ensambla desde el mismo motor del editor. Terser compacta módulos propios de revisión, cinta, accesibilidad y flujos sin renombrar los símbolos que usa MCP.
 - `src/js/45-estructura.js`, `src/js/45b-estructura-dibujo.js` y `src/js/46-estructura-edit.js`: las estructuras químicas, partidas en modelo, motor y lienzo (ver «Editores de figura»).
 - `src/js/47-lab-catalogo.js`, `src/js/47b-lab.js` y `src/js/48-lab-edit.js`: el montaje de laboratorio, partido en catálogo, motor y editor (ver «Editores de figura»).
 - `src/js/87-ejemplos.js`: doce ejemplos científicos construidos con los bloques reales.
@@ -47,7 +53,7 @@ El cromo usa el material de cristal del paquete (`docs/COHERENCIA-APPS.md` §0.1
 1. Ejecuta build y los tests afectados.
 2. Si cambias ejemplos, ejecuta `npm run examples` y revisa los archivos generados.
 3. Comprueba visualmente escritorio y móvil cuando cambie el diseño.
-4. Accesibilidad: `npx playwright-core install chromium` una vez y `npm run accesibilidad` (axe en inicio, editor y ayuda, claro y oscuro; falla con violaciones serias o críticas). La CI lo ejecuta en el job `accesibilidad`.
+4. Accesibilidad: `npx playwright-core install chromium` una vez y `npm run accesibilidad` (axe en inicio, editor y ayuda, claro y oscuro; falla con violaciones serias o críticas). Ejecútala localmente cuando esté disponible Chromium.
 4. Si modificas un exportador, inspecciona el archivo exportado, no solo su nombre o extensión.
 
 Para el PowerPoint, «inspeccionar» significa abrirlo con algo que no sea la propia rutina que lo escribió: un paquete puede tener el ZIP intacto, el XML bien formado y las partes declaradas, y aun así llegar con una diapositiva en blanco. Un lector OOXML independiente (`python-pptx`) dice si las formas están; convertirlo a PDF con LibreOffice Impress (`soffice --headless --convert-to pdf`) dice si además se ven. Así se encontraron las dos averías que documenta `docs/validacion.md`: el SmartArt sin cajas y la diapositiva que se vaciaba en dos de cada cinco exportaciones.

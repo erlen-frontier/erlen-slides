@@ -55,6 +55,8 @@
 53-imagen-estilo.js
 54-galeria.js
 55-disenador.js
+../diseno/suite-color.js
+../diseno/suite-marco.js
 ../diseno/suite-cinta.js
 56-cinta.js
 57-citas.js
@@ -82,6 +84,8 @@
 81-quimica.js
 83-edicion.js
 84-calidad.js
+85-edicion-lote.js
+85-flujos.js
 87-ejemplos.js
 ../diseno/suite-inicio.js
 88-workspace.js
