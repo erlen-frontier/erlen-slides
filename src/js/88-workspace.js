@@ -242,15 +242,63 @@ function wsReporte() {
 function wsServicio(body) {
  body.append(h('h2',null,'Erlen Slides · Presentaciones científicas'),h('p',{class:'ws-lead'},'Editor científico libre, versión '+edVersion()+'. Tus presentaciones se guardan en este navegador.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:ERLEN_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:ERLEN_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
 }
+/* ---------- el marco común de la suite ----------
+   erlenMarco (src/diseno/suite-marco.js) reorganiza los nodos que la app ya tiene —sin
+   clonarlos ni reconstruirlos— en la forma común de COHERENCIA-APPS §4: cabecera (marca,
+   nombre, menú de suite, título, estado, acciones y utilidades), cinta, tira de
+   diapositivas a la izquierda, lienzo al centro y panel de detalles a la derecha. La
+   marca del marco vuelve al inicio común; el editor se queda con sus listeners, su
+   historial y sus atajos. */
+let MARCO = null;
+const MARCA_SLIDES = '<svg class="marca-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M25 8h14v16l14 26a4 4 0 0 1-3.6 5.6H14.6A4 4 0 0 1 11 50l14-26z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M19 42h26l5.5 9.5H13.5z" fill="var(--acc)"/></svg>';
+/* Catálogo de despliegue embebido por herramientas/build.mjs (ERLEN_SUITE_CATALOG):
+   {items, home} para el menú de la suite. Sin él, el componente conserva su
+   detección standalone: nunca se inventan enlaces. */
+function catalogoSuite() { return erlenSuiteNavigation.catalogoDe(document) || undefined; }
+function montaMarco() {
+  MARCO = erlenMarco($('#app'), {
+    app: 'slides', nombre: 'Erlen Slides',
+    inicio: () => wsInicio(),
+    elementos: {
+      titulo: $('#deckTitleInput'),
+      estado: $('#saveInd'),
+      acciones: $('#cabecera-acciones'),
+      utilidades: $('#cabecera-utilidades'),
+      cinta: $('#cinta'),
+      navegacion: $('.filmstrip'),
+      trabajo: $('.canvas-wrap'),
+      detalles: $('#inspector')
+    },
+    navegacionSuite: catalogoSuite(),
+    /* Mey: guía local que ejecuta con tu clic. CINTA se anula con la disposición «lado»
+       (de ahí la función); «nueva» es un menú, así que su paso apunta a una de sus opciones. */
+    ayuda: {
+      cinta: () => CINTA,
+      pasos: () => [
+        { control: 'nueva › ' + LAYOUTS.find(l => l.id === 'content').name, pestana: 'inicio', texto: 'Añadir una diapositiva' },
+        { control: 'ins-text', pestana: 'insertar', texto: 'Insertar texto' },
+        { control: 'ins-image', pestana: 'insertar', texto: 'Insertar una imagen' },
+        { control: 'buscar', pestana: 'inicio', texto: 'Buscar y reemplazar' },
+        { control: 'paleta', pestana: 'inicio', texto: 'Ir a / hacer: cualquier comando' }
+      ],
+      extras: comandosArchivo
+    }
+  });
+}
+
 function wsInit() {
+  /* Menú de suite solo con catálogo de despliegue y con esta app en él: sin catálogo,
+     navegación local segura y jamás enlaces inventados. */
+  const catalogo = catalogoSuite();
   INICIO = erlenInicio($('#inicioRoot'), {
+    app: 'slides',
     nombre: 'Erlen Slides', corto: 'SLIDES', objetos: 'presentaciones',
-    marca: $('#inicioBtn .marca-svg').outerHTML,
+    marca: MARCA_SLIDES,
     estado: 'Disponible · beta', subtitulo: 'Presentaciones científicas',
     eyebrow: 'ARCHIVO CIENTÍFICO · ERLEN SLIDES', titulo: ['Presentaciones ', 'científicas'],
     lead: 'Crea, explora y conserva historias visuales para comunicar datos, métodos y resultados con precisión.',
     nuevo: {etiqueta:'Nueva presentación', detalle:'Lienzo científico en blanco', accion:() => wsNueva()},
-    importar: {etiqueta:'Importar proyecto', accion:importJSON},
+    importar: {etiqueta:'Importar proyecto', accion:openImportarPresentacion},
     continuar: () => deckEnBlanco() ? null : {etiqueta:'Continuar presentación', accion:() => {}},
     get ejemplos() { return wsEjemplos(); },
     biblioteca: {listar:wsBiblioteca, vacio:{titulo:'Aquí empieza tu próxima charla', texto:'Crea una presentación o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'}},
@@ -258,17 +306,15 @@ function wsInit() {
     acerca: {texto:'Editor científico libre, versión ' + edVersion() + '. Tus presentaciones se guardan en este navegador: descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos. Software libre con licencia AGPLv3.',
       enlaces:[{etiqueta:'Código fuente · AGPLv3', url:ERLEN_SOURCE_URL}, {etiqueta:'Manual, ejemplos y límites conocidos', url:ERLEN_SOURCE_URL + '/blob/main/docs/uso.md'}]},
     fuente: {url:ERLEN_SOURCE_URL, licencia:'AGPLv3'},
-    editor: $('#app'),
-    menuSuite: host => erlenSuiteNavigation(host, 'slides'),
+    editor: MARCO.elemento,   /* todo el cromo del marco queda inert detrás del inicio */
+    menuSuite: catalogo && catalogo.items.some(i => i.id === 'slides') ? host => erlenSuiteNavigation(host, 'slides', catalogo) : undefined,
     alAbrir: () => { openDrawer(false); closeMenus(); },
     alCerrar: wsAlEditor
   });
   /* La navegación interna del componente no toca la URL: se refleja aquí, tras cada clic. */
   INICIO.elemento.addEventListener('click', () => { if (INICIO.abierta) suiteUrl(SUITE_RUTAS[INICIO.vista]); });
-  $('#inicioBtn').addEventListener('click',()=>wsInicio());
   window.addEventListener('hashchange',suiteDesdeUrl);
   $('#edicionBadge').addEventListener('click',openEdicion);
-  $('#drawerClose').addEventListener('click',()=>cierraDrawer());
   pintaEdicion();
   /* ?plantilla=<id>: el portal enlaza así los ejemplos. Se consume una vez y se retira de la URL. */
   const params=new URLSearchParams(location.search);

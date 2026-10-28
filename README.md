@@ -17,30 +17,21 @@ Escribe ecuaciones, dibuja química, explica datos y prepara tu próxima charla.
 - **Comunicación científica:** ecuaciones LaTeX, reacciones, estructuras químicas, tablas, gráficas con datos editables —con barras de error y ejes logarítmicos—, diagramas y montajes de laboratorio.
 - **Preparación:** notas del orador, tiempos, revisión del contenido, orden de diapositivas y modos de ensayo/presentación.
 - **Archivos propios:** biblioteca local, proyecto JSON, plantillas personales, identidad institucional y copias de recuperación.
+- **Guion y edición visual:** importar/exportar Markdown, previsualizar temas con tu contenido, agrupar, bloquear, alinear y mover varios bloques, y crear diagramas Mermaid con su fuente guardada.
+- **Importación y figuras:** una entrada para JSON, PPTX y Markdown, con vista previa antes de guardar una copia. PowerPoint se adapta a bloques de Erlen; sus gráficas se recuperan como tablas de datos. Las figuras por capas conservan objetos editables y pueden crearse mediante lista y controles de teclado.
+- **Compartir con revisión:** elige formato y revisa recortes, descripciones accesibles, recursos externos y límites de edición. Las notas privadas se incluyen en PowerPoint y HTML solo si marcas la opción; el proyecto JSON siempre las conserva.
 - **Desde Erlen DoE:** el informe de un análisis llega como presentación nueva para la reunión de grupo, con vista previa, tablas recortadas a lo que cabe, gráficas editables y la procedencia en la última diapositiva. [Cómo funciona](docs/uso.md#un-informe-de-erlen-doe-como-presentación).
-- **Exportaciones:** PDF mediante impresión, PowerPoint, fuente Beamer, SVG científico, informe JSON de advertencias y HTML imprimible. Cada formato tiene [límites documentados](docs/uso.md#exportaciones).
-- **Herramientas libres:** KaTeX, RDKit, Kekule.js, 3Dmol.js y Plotly. Los componentes científicos adicionales se cargan desde los archivos de la propia aplicación.
+- **Exportaciones:** PDF mediante impresión, PowerPoint con objetos compatibles editables, fuente Beamer, SVG científico, Markdown, HTML imprimible y presentación HTML autónoma con funciones interactivas. Grabación local con micrófono opcional. Cada formato tiene [límites documentados](docs/uso.md#exportaciones).
+- **Herramientas libres:** KaTeX, RDKit, Kekule.js, 3Dmol.js, Plotly, Mermaid, Reveal.js, PptxGenJS, pptxtojson y Fabric.js. Los componentes adicionales se cargan desde los archivos de la propia aplicación.
 
 El asistente integrado localiza herramientas mediante reglas; **no es un modelo generativo de IA**. Si quieres trabajar con uno, el [servidor MCP](docs/mcp.md) deja que Claude u otro asistente cree, revise y exporte presentaciones con el mismo motor, en tu máquina; `npm run mcp:instalar` lo conecta a Claude Desktop o Claude Code. Esta publicación no incorpora cuentas, cobro, sincronización en la nube ni coedición simultánea.
 
 ## Empezar
 
-Descarga el paquete `erlen-slides-0.3.0-web.zip` desde [Releases](https://github.com/erlen-frontier/erlen-slides/releases). Incluye la aplicación ya construida:
-
-1. Descomprime el ZIP.
-2. Para el editor básico, abre `erlen-slides-offline.html`.
-3. Para usar también RDKit, Kekule, 3Dmol y Plotly, sirve la carpeta con un servidor estático local; por ejemplo, si tienes Python:
+La versión actual se ejecuta desde el código fuente; necesitas Node.js 22 o superior y npm:
 
 ```sh
-python3 -m http.server 8130 --bind 127.0.0.1
-```
-
-Abre `http://127.0.0.1:8130`. Una vez descargado el paquete, este servidor local no requiere contratar un servicio.
-
-Desde el código fuente, necesitas Node.js 22 o superior y npm:
-
-```sh
-git clone https://github.com/erlen-frontier-ops/erlen-slides.git
+git clone https://github.com/erlen-frontier/erlen-slides.git
 cd erlen-slides
 npm ci
 npm run build
@@ -49,6 +40,10 @@ npm start
 ```
 
 El servidor escucha únicamente en `127.0.0.1:8130`. La instalación inicial descarga dependencias; después la edición y el cálculo local pueden funcionar sin Internet. Las consultas voluntarias a Crossref o Zotero Web sí necesitan conexión.
+
+El build también genera `public/erlen-slides-offline.html` para la edición básica. Las bibliotecas científicas, Markdown, Mermaid, PowerPoint editable y la presentación HTML autónoma necesitan servir la carpeta `public` completa, como hace `npm start`.
+
+En [Releases](https://github.com/erlen-frontier/erlen-slides/releases) está disponible la versión histórica 0.1.0; no contiene necesariamente las funciones descritas para el código actual. Todavía no hay un paquete 0.3.0 publicado allí.
 
 ## Doce ejemplos completos
 
@@ -89,6 +84,6 @@ La interfaz contiene un enlace visible al código fuente. Si modificas y desplie
 
 [CITATION.cff](CITATION.cff) y [.zenodo.json](.zenodo.json) describen la versión. El depósito de Zenodo se documentará con su DOI **cuando esté confirmado**; no hay un DOI provisional inventado. [Proceso de publicación](docs/publicacion.md).
 
-## Integración continua con Erlen Suite
+## Código y verificación
 
-Cada push a `main`, incluidos los merges, avisa a Suite con `suite-sync.yml`. Suite resuelve el SHA actual, construye y prueba esa revisión, conserva el ZIP intacto identificado por SHA256 y lo despliega después de sus verificaciones. El número de versión puede permanecer igual: el commit distingue las revisiones. Una comprobación horaria recupera avisos perdidos. No se crean tags ni releases automáticamente.
+Esta actualización incorpora la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`, junto con los recursos compartidos necesarios para ejecutarla de forma autónoma. La política actual retira la sincronización automática con Suite; la compilación y las pruebas se ejecutan localmente. El repositorio conserva workflows históricos: comprueba la configuración de Actions antes de publicar una etiqueta.

@@ -1,3 +1,4 @@
+/* Vidrio mineral · decisión del usuario 2026-09-30. Tipografía original de Erlen: Latin Modern y Computer Modern; se conserva también en documentos y exportación. */
 /* Erlen Suite · paquete de diseño 2.0.0 · tokens (docs/DISENO-PAQUETE.md, docs/GUIA-DISENO.md §0 y §2–§6).
    Fuente única en el portal: diseno/tokens.css. Los valores viven aquí y solo aquí; el cromo de cada app usa var(--erlen-*), nunca literales.
    2.0.0 · cristal (vidrio líquido): el material de la capa de controles también vive aquí, con sus respaldos opacos (sin
@@ -5,15 +6,16 @@
    Claro por defecto; oscuro por prefers-color-scheme (salvo [data-theme="light"]) o por [data-theme="dark"]. Licencia: licencias/MIT.txt */
 :root{color-scheme:light;
  /* Paleta: papel, tinta, verde, ámbar, peligro, línea, superficie */
- --erlen-papel:#faf9f5;--erlen-superficie:#fffefa;--erlen-superficie-2:#f7f9f3;
- --erlen-tinta:#243c32;--erlen-tinta-suave:#54665c;
- --erlen-verde:#245b43;--erlen-verde-suave:#e9f0e2;--erlen-verde-contraste:#fffefa;
+ --erlen-papel:#f8f8f4;--erlen-superficie:#fdfdfb;--erlen-superficie-2:#f1f4f0;
+ --erlen-tinta:#202824;--erlen-tinta-suave:#536159;
+ --erlen-verde:#225747;--erlen-verde-suave:#e9efea;--erlen-verde-contraste:#fdfdfb;
  --erlen-ambar:#94621e;--erlen-ambar-suave:#fff4d6;
  --erlen-peligro:#a22d26;--erlen-peligro-suave:#fce8e3;
  --erlen-linea:#dbe2d8;--erlen-linea-fuerte:#c4d1bf;
  --erlen-foco:var(--erlen-ambar);
+ --erlen-mey-ojos:#18171b;--erlen-mey-reflejo:#fdfdfd;
  /* Sobre oscuro (hero y franjas del portal; en las apps solo si una sección lo pide) */
- --erlen-espacio-fondo:#070a12;--erlen-espacio-tinta:#e9ecef;--erlen-espacio-acento:#7fc8a9;--erlen-espacio-borde:#ffffff1f;
+ --erlen-espacio-fondo:#070a12;--erlen-espacio-tinta:#ecf0eb;--erlen-espacio-acento:#adcabd;--erlen-espacio-borde:#ffffff1f;
  /* Tipografía (familia de Knuth, fuentes.css) */
  --erlen-font-titulo:"LM Roman",Georgia,"Times New Roman",serif;
  --erlen-font-cuerpo:"CMU Concrete",Georgia,"Times New Roman",serif;
@@ -26,7 +28,7 @@
  /* Espaciado */
  --erlen-esp-1:4px;--erlen-esp-2:8px;--erlen-esp-3:12px;--erlen-esp-4:16px;--erlen-esp-5:24px;--erlen-esp-6:32px;--erlen-esp-7:48px;--erlen-esp-8:64px;
  /* Radios: concéntricos (interior = exterior − relleno); cápsula para pestañas, navegación y acciones */
- --erlen-radio-campo:10px;--erlen-radio-pequeno:10px;--erlen-radio-tarjeta:16px;--erlen-radio-panel:22px;--erlen-radio-badge:999px;--erlen-radio-capsula:999px;
+ --erlen-radio-campo:8px;--erlen-radio-pequeno:8px;--erlen-radio-tarjeta:18px;--erlen-radio-panel:24px;--erlen-radio-badge:999px;--erlen-radio-capsula:999px;
  /* Sombras: paneles destacados, menús flotantes y tarjetas de cristal */
  --erlen-sombra-tarjeta:0 10px 30px #284b3014;--erlen-sombra-menu:0 14px 36px #183b3229;--erlen-sombra-panel:0 20px 55px #284b3014;
  /* Cristal (vidrio líquido, 2.0.0). Solo la capa de controles: cinta, cabeceras, menús, diálogos, paneles y tarjetas del inicio.
@@ -34,20 +36,20 @@
     --erlen-vidrio: sobre la atmósfera o sobre papel (barra lateral, tarjetas, paneles).
     --erlen-vidrio-fuerte: sobre contenido que cambia (cinta, cabeceras fijas, menús, diálogos); legible sobre negro puro (test).
     --erlen-vidrio-filtro: el desenfoque; úsalo solo en capas que flotan sobre contenido y nunca en áreas grandes que se desplazan. */
- --erlen-vidrio:color-mix(in srgb,var(--erlen-superficie) 66%,transparent);
- --erlen-vidrio-fuerte:color-mix(in srgb,var(--erlen-superficie) 88%,transparent);
+ --erlen-vidrio:color-mix(in srgb,var(--erlen-superficie) 84%,transparent);
+ --erlen-vidrio-fuerte:color-mix(in srgb,var(--erlen-superficie) 94%,transparent);
  --erlen-vidrio-tinte:color-mix(in srgb,var(--erlen-verde) 10%,transparent);
- --erlen-vidrio-borde:#ffffffb3;--erlen-vidrio-contorno:#243c3224;
- --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff8c 0,#ffffff29 38%,#ffffff00 62%);
- --erlen-vidrio-relieve:inset 0 1px 0 #ffffff,inset 0 0 0 1px #ffffff66,inset 0 -1px 0 #ffffff40,0 1px 2px #1b2e2514,0 10px 28px #1b2e2521;
- --erlen-vidrio-filtro:blur(18px) saturate(160%);
+ --erlen-vidrio-borde:#ffffffb3;--erlen-vidrio-contorno:#20282424;
+ --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff38 0,#ffffff0d 38%,#ffffff00 62%);
+ --erlen-vidrio-relieve:inset 0 1px 0 #ffffff99,0 4px 18px #1b2e2510;
+ --erlen-vidrio-filtro:blur(18px) saturate(115%);
  /* Brillo especular sobre rellenos del acento (botón principal, «Archivo», «+»): tenue para que su texto siga ≥ 4,5:1 (test) */
- --erlen-vidrio-reflejo-acento:linear-gradient(180deg,#ffffff38 0,#ffffff0d 45%,#ffffff00 60%);
+ --erlen-vidrio-reflejo-acento:linear-gradient(180deg,#ffffff14 0,#ffffff05 45%,#ffffff00 60%);
  /* Atmósfera: luz de color detrás del cromo (inicio de las apps, portal); nunca detrás del contenido del usuario */
  /* --erlen-luz: versión luminosa del acento (la misma en claro y oscuro); la eligen también los acentos personales */
- --erlen-luz:#7fc8a9;
- --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 36%,transparent);
- --erlen-atmosfera-b:color-mix(in srgb,#bea4ed 30%,transparent);
+ --erlen-luz:#adcabd;
+ --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 14%,transparent);
+ --erlen-atmosfera-b:color-mix(in srgb,#d2c1e3 8%,transparent);
  --erlen-atmosfera:radial-gradient(60% 70% at 0% 0%,var(--erlen-atmosfera-a) 0,transparent 72%),radial-gradient(55% 60% at 100% 0%,var(--erlen-atmosfera-b) 0,transparent 70%),radial-gradient(70% 55% at 75% 100%,var(--erlen-atmosfera-a) 0,transparent 70%),radial-gradient(50% 45% at 15% 95%,var(--erlen-atmosfera-b) 0,transparent 70%),var(--erlen-papel);
  /* Movimiento: micro 120 ms, estados 180 ms, entradas 300 ms */
  --erlen-dur-micro:.12s;--erlen-dur:.18s;--erlen-dur-entrada:.3s;--erlen-ease:cubic-bezier(.2,.7,.2,1);
@@ -55,46 +57,232 @@
  --erlen-alto-control:44px;--erlen-ancho-lectura:72ch}
 /* Modo oscuro: se redefinen papel, superficie, tinta, línea y sombras (GUIA-DISENO §2); el verde pasa al acento sobre oscuro, y el ámbar y el peligro (con sus fondos suaves) se aclaran para superar 4,5:1 como texto (autorizado por Jorge el 2026-09-22), para conservar contraste. */
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
- --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
- --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
- --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
+ --erlen-papel:#121815;--erlen-superficie:#1c2520;--erlen-superficie-2:#242f28;
+ --erlen-tinta:#ecf0eb;--erlen-tinta-suave:#b2bcb5;
+ --erlen-verde:#adcabd;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#121815;
  --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
  --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 14px 36px #00000080;--erlen-sombra-panel:0 20px 55px #00000066;
  --erlen-vidrio-borde:#ffffff24;--erlen-vidrio-contorno:#ffffff1f;
  --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff17 0,#ffffff08 38%,#ffffff00 62%);
  --erlen-vidrio-relieve:inset 0 1px 0 #ffffff2e,inset 0 0 0 1px #ffffff0d,inset 0 -1px 0 #ffffff0d,0 1px 2px #00000040,0 10px 28px #00000059;
- --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 16%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#bea4ed 11%,transparent)}}
+ --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 7%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#d2c1e3 5%,transparent)}}
 :root[data-theme="dark"]{color-scheme:dark;
- --erlen-papel:#0d1411;--erlen-superficie:#141c18;--erlen-superficie-2:#1a2420;
- --erlen-tinta:#e9ecef;--erlen-tinta-suave:#b3c0b8;
- --erlen-verde:#7fc8a9;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#0d1411;
+ --erlen-papel:#121815;--erlen-superficie:#1c2520;--erlen-superficie-2:#242f28;
+ --erlen-tinta:#ecf0eb;--erlen-tinta-suave:#b2bcb5;
+ --erlen-verde:#adcabd;--erlen-verde-suave:#1f2f28;--erlen-verde-contraste:#121815;
  --erlen-ambar:#e3aa5c;--erlen-ambar-suave:#2f2514;--erlen-peligro:#f2877b;--erlen-peligro-suave:#3b1e1b;
  --erlen-linea:#ffffff1f;--erlen-linea-fuerte:#ffffff33;
  --erlen-sombra-tarjeta:0 10px 30px #00000059;--erlen-sombra-menu:0 14px 36px #00000080;--erlen-sombra-panel:0 20px 55px #00000066;
  --erlen-vidrio-borde:#ffffff24;--erlen-vidrio-contorno:#ffffff1f;
  --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff17 0,#ffffff08 38%,#ffffff00 62%);
  --erlen-vidrio-relieve:inset 0 1px 0 #ffffff2e,inset 0 0 0 1px #ffffff0d,inset 0 -1px 0 #ffffff0d,0 1px 2px #00000040,0 10px 28px #00000059;
- --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 16%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#bea4ed 11%,transparent)}
+ --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 7%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#d2c1e3 5%,transparent)}
 /* La preferencia de color solo toca el acento del cromo, no documentos, Mey, iconos o
    --erlen-foco. Contraste mínimo 4,5:1 en ambas superficies de las apps. */
-:root[data-erlen-color="violeta"]{--erlen-verde:#59368b;--erlen-verde-suave:#eee8f6;--erlen-luz:#bea4ed}
-:root[data-erlen-color="azul"]{--erlen-verde:#24559c;--erlen-verde-suave:#e6effb;--erlen-luz:#94bcf0}
-:root[data-erlen-color="cobre"]{--erlen-verde:#85502e;--erlen-verde-suave:#f5ebe2;--erlen-luz:#e8ad7d}
+:root[data-erlen-color="violeta"]{--erlen-verde:#624b7b;--erlen-verde-suave:#eee8f6;--erlen-luz:#d2c1e3}
+:root[data-erlen-color="azul"]{--erlen-verde:#244e73;--erlen-verde-suave:#e6effb;--erlen-luz:#b9d2e8}
+:root[data-erlen-color="cobre"]{--erlen-verde:#6a532b;--erlen-verde-suave:#f5ebe2;--erlen-luz:#e0cca4}
 @media(prefers-color-scheme:dark){
- :root:not([data-theme="light"])[data-erlen-color="violeta"]{--erlen-verde:#bea4ed;--erlen-verde-suave:#31273d}
- :root:not([data-theme="light"])[data-erlen-color="azul"]{--erlen-verde:#94bcf0;--erlen-verde-suave:#203047}
- :root:not([data-theme="light"])[data-erlen-color="cobre"]{--erlen-verde:#e8ad7d;--erlen-verde-suave:#37291f}
+ :root:not([data-theme="light"])[data-erlen-color="violeta"]{--erlen-verde:#d2c1e3;--erlen-verde-suave:#31273d}
+ :root:not([data-theme="light"])[data-erlen-color="azul"]{--erlen-verde:#b9d2e8;--erlen-verde-suave:#203047}
+ :root:not([data-theme="light"])[data-erlen-color="cobre"]{--erlen-verde:#e0cca4;--erlen-verde-suave:#37291f}
 }
-:root[data-theme="dark"][data-erlen-color="violeta"]{--erlen-verde:#bea4ed;--erlen-verde-suave:#31273d}
-:root[data-theme="dark"][data-erlen-color="azul"]{--erlen-verde:#94bcf0;--erlen-verde-suave:#203047}
-:root[data-theme="dark"][data-erlen-color="cobre"]{--erlen-verde:#e8ad7d;--erlen-verde-suave:#37291f}
+:root[data-theme="dark"][data-erlen-color="violeta"]{--erlen-verde:#d2c1e3;--erlen-verde-suave:#31273d}
+:root[data-theme="dark"][data-erlen-color="azul"]{--erlen-verde:#b9d2e8;--erlen-verde-suave:#203047}
+:root[data-theme="dark"][data-erlen-color="cobre"]{--erlen-verde:#e0cca4;--erlen-verde-suave:#37291f}
+:root[data-erlen-color="platino"]{--erlen-verde:#3f4b53;--erlen-verde-suave:#e8edf0;--erlen-luz:#c3d0d8}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"])[data-erlen-color="platino"]{--erlen-verde:#c3d0d8;--erlen-verde-suave:#273239}}
+:root[data-theme="dark"][data-erlen-color="platino"]{--erlen-verde:#c3d0d8;--erlen-verde-suave:#273239}
+/* Estilos opt-in: solo material, contornos, radios y sombras del cromo. Sin atributo,
+   todos los valores originales de arriba permanecen idénticos. Paleta, fuentes, foco
+   y superficies opacas de contenido se conservan en todos los estilos. */
+:root[data-erlen-estilo="glassmorfismo"]{
+ --erlen-vidrio:color-mix(in srgb,var(--erlen-superficie) 74%,transparent);
+ --erlen-vidrio-fuerte:color-mix(in srgb,var(--erlen-superficie) 90%,transparent);
+ --erlen-vidrio-filtro:blur(28px) saturate(160%);
+ --erlen-radio-campo:16px;--erlen-radio-tarjeta:28px;--erlen-radio-panel:32px;
+ --erlen-vidrio-reflejo:linear-gradient(135deg,color-mix(in srgb,var(--erlen-vidrio-borde) 65%,transparent),transparent 55%);
+ --erlen-vidrio-relieve:inset 0 0 0 1px var(--erlen-vidrio-borde),inset 0 -1px 0 color-mix(in srgb,var(--erlen-vidrio-borde) 45%,transparent),0 16px 40px color-mix(in srgb,var(--erlen-espacio-fondo) 20%,transparent);
+ --erlen-control-relieve:inset 0 0 0 1px var(--erlen-vidrio-borde),0 4px 12px color-mix(in srgb,var(--erlen-espacio-fondo) 16%,transparent);
+ --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 70%,transparent);
+ --erlen-atmosfera-b:color-mix(in srgb,#d2c1e3 55%,transparent);
+}
+/* La luz detrás del cristal conserva la lectura del héroe en oscuro. */
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"])[data-erlen-estilo="glassmorfismo"]{--erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 18%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#d2c1e3 12%,transparent)}}
+:root[data-theme="dark"][data-erlen-estilo="glassmorfismo"]{--erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 18%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#d2c1e3 12%,transparent)}
+:root[data-erlen-estilo="neumorfismo"]{
+ --erlen-vidrio:var(--erlen-superficie-2);--erlen-vidrio-fuerte:var(--erlen-superficie-2);
+ --erlen-vidrio-filtro:none;--erlen-vidrio-reflejo:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:18px;--erlen-radio-tarjeta:28px;--erlen-radio-panel:32px;
+ --erlen-vidrio-contorno:color-mix(in srgb,var(--erlen-linea) 45%,transparent);
+ --erlen-vidrio-relieve:-10px -10px 24px color-mix(in srgb,var(--erlen-superficie) 75%,var(--erlen-vidrio-borde)),10px 10px 24px color-mix(in srgb,var(--erlen-espacio-fondo) 22%,transparent);
+ --erlen-control-relieve:-3px -3px 8px color-mix(in srgb,var(--erlen-superficie) 75%,var(--erlen-vidrio-borde)),3px 3px 8px color-mix(in srgb,var(--erlen-espacio-fondo) 22%,transparent);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-superficie-2);
+}
+:root[data-erlen-estilo="neobrutalismo"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);
+ --erlen-vidrio-filtro:none;--erlen-vidrio-reflejo:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:0px;--erlen-radio-pequeno:0px;--erlen-radio-tarjeta:0px;--erlen-radio-panel:0px;--erlen-radio-badge:0px;--erlen-radio-capsula:0px;
+ --erlen-vidrio-contorno:var(--erlen-tinta);--erlen-vidrio-borde:var(--erlen-tinta);
+ --erlen-vidrio-relieve:inset 0 0 0 2px var(--erlen-tinta),6px 6px 0 var(--erlen-tinta);
+ --erlen-control-relieve:inset 0 0 0 2px var(--erlen-tinta),3px 3px 0 var(--erlen-tinta);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="minimalismo"]{
+ --erlen-vidrio:var(--erlen-papel);--erlen-vidrio-fuerte:var(--erlen-papel);
+ --erlen-vidrio-filtro:none;--erlen-vidrio-reflejo:none;--erlen-vidrio-reflejo-acento:none;--erlen-vidrio-relieve:none;
+ --erlen-control-relieve:none;
+ --erlen-vidrio-contorno:var(--erlen-linea-fuerte);--erlen-vidrio-borde:var(--erlen-linea-fuerte);
+ --erlen-radio-campo:2px;--erlen-radio-pequeno:2px;--erlen-radio-tarjeta:0px;--erlen-radio-panel:0px;--erlen-radio-capsula:2px;
+ --erlen-sombra-tarjeta:none;--erlen-sombra-menu:none;--erlen-sombra-panel:none;
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="art-deco"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-filtro:none;
+ --erlen-radio-campo:0px;--erlen-radio-pequeno:0px;--erlen-radio-tarjeta:0px;--erlen-radio-panel:0px;--erlen-radio-capsula:0px;--erlen-radio-badge:0px;
+ --erlen-vidrio-contorno:var(--erlen-ambar);--erlen-vidrio-borde:var(--erlen-ambar);
+ --erlen-vidrio-reflejo:linear-gradient(135deg,transparent 85%,color-mix(in srgb,var(--erlen-ambar) 15%,transparent) 85%,transparent 86%),linear-gradient(315deg,transparent 85%,color-mix(in srgb,var(--erlen-ambar) 15%,transparent) 85%,transparent 86%);
+ --erlen-vidrio-relieve:inset 0 0 0 4px var(--erlen-superficie),inset 0 0 0 5px var(--erlen-ambar),inset 0 0 0 8px var(--erlen-superficie),inset 0 0 0 9px color-mix(in srgb,var(--erlen-ambar) 55%,transparent);
+ --erlen-control-relieve:inset 0 0 0 2px var(--erlen-superficie),inset 0 0 0 3px var(--erlen-ambar);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+/* Ocho expresiones adicionales: materiales estáticos y paleta personal; solo cromo. */
+:root[data-erlen-estilo="claymorfismo"]{
+ --erlen-vidrio:var(--erlen-superficie-2);--erlen-vidrio-fuerte:var(--erlen-superficie-2);--erlen-vidrio-filtro:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:22px;--erlen-radio-pequeno:22px;--erlen-radio-tarjeta:32px;--erlen-radio-panel:36px;--erlen-radio-capsula:22px;--erlen-radio-badge:22px;
+ --erlen-vidrio-reflejo:linear-gradient(145deg,color-mix(in srgb,var(--erlen-superficie) 70%,transparent),transparent 65%);
+ --erlen-vidrio-contorno:var(--erlen-linea);
+ --erlen-vidrio-relieve:inset 3px 3px 6px color-mix(in srgb,var(--erlen-superficie) 80%,transparent),inset -4px -4px 8px color-mix(in srgb,var(--erlen-espacio-fondo) 12%,transparent),0 9px 0 color-mix(in srgb,var(--erlen-verde) 14%,var(--erlen-superficie-2)),0 14px 22px color-mix(in srgb,var(--erlen-espacio-fondo) 14%,transparent);
+ --erlen-control-relieve:inset 2px 2px 3px var(--erlen-superficie),inset -2px -2px 4px color-mix(in srgb,var(--erlen-espacio-fondo) 12%,transparent),0 3px 0 color-mix(in srgb,var(--erlen-verde) 20%,var(--erlen-superficie-2));
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="bauhaus"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-filtro:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:0px;--erlen-radio-pequeno:0px;--erlen-radio-tarjeta:0px;--erlen-radio-panel:0px;--erlen-radio-capsula:0px;--erlen-radio-badge:0px;
+ --erlen-vidrio-reflejo:radial-gradient(circle at 100% 0,color-mix(in srgb,var(--erlen-verde) 8%,transparent) 0 54px,transparent 55px),linear-gradient(90deg,color-mix(in srgb,var(--erlen-ambar) 7%,transparent) 0 10px,transparent 10px);
+ --erlen-vidrio-contorno:var(--erlen-verde);
+ --erlen-vidrio-relieve:inset 0 0 0 2px var(--erlen-verde),inset 10px 0 0 var(--erlen-ambar);
+ --erlen-control-relieve:inset 0 -3px 0 var(--erlen-ambar),inset 0 0 0 1px var(--erlen-verde);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="frutiger-aero"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-filtro:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:18px;--erlen-radio-pequeno:18px;--erlen-radio-tarjeta:26px;--erlen-radio-panel:30px;--erlen-radio-capsula:999px;--erlen-radio-badge:999px;
+ --erlen-vidrio-reflejo:radial-gradient(ellipse at 24% 0,color-mix(in srgb,var(--erlen-superficie) 90%,transparent),transparent 62%),linear-gradient(180deg,color-mix(in srgb,var(--erlen-luz) 9%,transparent) 0 48%,transparent 49%,color-mix(in srgb,var(--erlen-verde) 6%,transparent) 100%);
+ --erlen-vidrio-contorno:color-mix(in srgb,var(--erlen-verde) 42%,var(--erlen-linea));
+ --erlen-vidrio-relieve:inset 0 2px 0 var(--erlen-superficie),inset 0 -3px 0 color-mix(in srgb,var(--erlen-verde) 20%,transparent),0 8px 22px color-mix(in srgb,var(--erlen-verde) 20%,transparent);
+ --erlen-control-relieve:inset 0 2px 0 color-mix(in srgb,var(--erlen-superficie) 60%,transparent),inset 0 -2px 0 color-mix(in srgb,var(--erlen-verde) 25%,transparent),0 3px 8px color-mix(in srgb,var(--erlen-verde) 20%,transparent);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="esqueuomorfismo"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-filtro:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:6px;--erlen-radio-pequeno:6px;--erlen-radio-tarjeta:8px;--erlen-radio-panel:10px;--erlen-radio-capsula:6px;--erlen-radio-badge:6px;
+ --erlen-vidrio-reflejo:repeating-linear-gradient(0deg,color-mix(in srgb,var(--erlen-tinta) 3%,transparent) 0 1px,transparent 1px 4px),linear-gradient(180deg,color-mix(in srgb,var(--erlen-superficie) 70%,transparent),transparent 55%,color-mix(in srgb,var(--erlen-espacio-fondo) 5%,transparent));
+ --erlen-vidrio-contorno:var(--erlen-linea-fuerte);
+ --erlen-vidrio-relieve:inset 0 2px 0 var(--erlen-superficie),inset 0 -3px 0 var(--erlen-linea-fuerte),0 4px 0 var(--erlen-linea),0 7px 12px color-mix(in srgb,var(--erlen-espacio-fondo) 18%,transparent);
+ --erlen-control-relieve:inset 0 1px 0 var(--erlen-superficie),inset 0 -2px 0 var(--erlen-linea-fuerte),0 2px 0 var(--erlen-linea-fuerte);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="retro-digital"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-filtro:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:0px;--erlen-radio-pequeno:0px;--erlen-radio-tarjeta:0px;--erlen-radio-panel:0px;--erlen-radio-capsula:0px;--erlen-radio-badge:0px;
+ --erlen-vidrio-reflejo:repeating-linear-gradient(180deg,color-mix(in srgb,var(--erlen-tinta) 2%,transparent) 0 1px,transparent 1px 3px);
+ --erlen-vidrio-contorno:var(--erlen-tinta);
+ --erlen-vidrio-relieve:inset 2px 2px 0 var(--erlen-superficie),inset -2px -2px 0 var(--erlen-linea-fuerte),3px 0 0 var(--erlen-tinta),0 3px 0 var(--erlen-tinta),6px 6px 0 var(--erlen-linea-fuerte);
+ --erlen-control-relieve:inset 2px 2px 0 var(--erlen-linea),inset -2px -2px 0 var(--erlen-tinta),2px 2px 0 var(--erlen-linea-fuerte);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="y2k"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-filtro:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:14px;--erlen-radio-pequeno:14px;--erlen-radio-tarjeta:24px;--erlen-radio-panel:28px;--erlen-radio-capsula:999px;--erlen-radio-badge:999px;
+ --erlen-vidrio-reflejo:linear-gradient(165deg,transparent 0 20%,color-mix(in srgb,var(--erlen-tinta) 6%,transparent) 24%,color-mix(in srgb,var(--erlen-superficie) 85%,transparent) 32%,color-mix(in srgb,var(--erlen-tinta) 7%,transparent) 40%,transparent 48% 68%,color-mix(in srgb,var(--erlen-luz) 10%,transparent) 76%,transparent 90%);
+ --erlen-vidrio-contorno:color-mix(in srgb,var(--erlen-tinta) 55%,var(--erlen-linea));
+ --erlen-vidrio-relieve:inset 0 2px 0 var(--erlen-superficie),inset 0 -2px 0 var(--erlen-linea-fuerte),inset 2px 0 0 var(--erlen-linea),inset -2px 0 0 var(--erlen-linea),0 6px 16px color-mix(in srgb,var(--erlen-espacio-fondo) 18%,transparent);
+ --erlen-control-relieve:inset 0 2px 0 color-mix(in srgb,var(--erlen-superficie) 65%,transparent),inset 0 -2px 0 var(--erlen-linea-fuerte),0 2px 5px color-mix(in srgb,var(--erlen-espacio-fondo) 18%,transparent);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="cyberpunk"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-filtro:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:2px;--erlen-radio-pequeno:2px;--erlen-radio-tarjeta:2px;--erlen-radio-panel:2px;--erlen-radio-capsula:2px;--erlen-radio-badge:2px;
+ --erlen-vidrio-reflejo:repeating-linear-gradient(135deg,transparent 0 20px,color-mix(in srgb,var(--erlen-verde) 4%,transparent) 20px 22px,transparent 22px 42px);
+ --erlen-vidrio-contorno:var(--erlen-verde);
+ --erlen-vidrio-relieve:inset 0 0 0 1px var(--erlen-verde),inset 4px 0 0 var(--erlen-verde),inset -4px 0 0 var(--erlen-verde),0 0 18px color-mix(in srgb,var(--erlen-verde) 35%,transparent);
+ --erlen-control-relieve:inset 0 0 0 1px var(--erlen-verde),0 0 8px color-mix(in srgb,var(--erlen-verde) 40%,transparent);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+:root[data-erlen-estilo="blueprint"]{
+ --erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-filtro:none;--erlen-vidrio-reflejo-acento:none;
+ --erlen-radio-campo:0px;--erlen-radio-pequeno:0px;--erlen-radio-tarjeta:2px;--erlen-radio-panel:2px;--erlen-radio-capsula:0px;--erlen-radio-badge:0px;
+ --erlen-vidrio-reflejo:repeating-linear-gradient(0deg,color-mix(in srgb,var(--erlen-verde) 6%,transparent) 0 1px,transparent 1px 20px),repeating-linear-gradient(90deg,color-mix(in srgb,var(--erlen-verde) 6%,transparent) 0 1px,transparent 1px 20px);
+ --erlen-vidrio-contorno:var(--erlen-verde);
+ --erlen-vidrio-relieve:inset 0 0 0 1px var(--erlen-verde),inset 0 0 0 5px var(--erlen-superficie),inset 0 0 0 6px color-mix(in srgb,var(--erlen-verde) 45%,transparent);
+ --erlen-control-relieve:inset 0 0 0 1px var(--erlen-verde),inset 0 -3px 0 color-mix(in srgb,var(--erlen-verde) 18%,transparent);
+ --erlen-sombra-tarjeta:var(--erlen-vidrio-relieve);--erlen-sombra-menu:var(--erlen-vidrio-relieve);--erlen-sombra-panel:var(--erlen-vidrio-relieve);
+ --erlen-atmosfera:var(--erlen-papel);
+}
+/* Identidad elegida: atmósfera amplia e iconos de controles. Nunca contenido científico. */
+:root[data-erlen-estilo]{--erlen-cromo-luz:color-mix(in srgb,var(--erlen-luz) 42%,var(--erlen-papel));--erlen-cromo-acento:color-mix(in srgb,var(--erlen-verde) 12%,var(--erlen-papel));--erlen-cromo-fondo:var(--erlen-cromo-trama),var(--erlen-papel);--erlen-atmosfera:var(--erlen-cromo-fondo);--erlen-icono-relieve:inset 0 0 0 1px var(--erlen-vidrio-contorno);--erlen-icono-render:auto}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"])[data-erlen-estilo]{--erlen-cromo-luz:color-mix(in srgb,var(--erlen-luz) 12%,var(--erlen-papel))}}
+:root[data-theme="dark"][data-erlen-estilo]{--erlen-cromo-luz:color-mix(in srgb,var(--erlen-luz) 12%,var(--erlen-papel))}
+:root[data-erlen-estilo="bauhaus"]{--erlen-cromo-trama:radial-gradient(circle at 88% 20%,var(--erlen-cromo-luz) 0 160px,transparent 162px),linear-gradient(90deg,var(--erlen-cromo-acento) 0 12%,transparent 12% 78%,var(--erlen-cromo-acento) 78%);--erlen-icono-grosor:2.9;--erlen-icono-terminal:butt;--erlen-icono-union:bevel;--erlen-icono-guion:none;--erlen-icono-filtro:none;--erlen-icono-radio:0px;--erlen-icono-placa:linear-gradient(90deg,var(--erlen-cromo-luz) 0 50%,var(--erlen-superficie) 50%)}
+:root[data-erlen-estilo="glassmorfismo"]{--erlen-cromo-trama:radial-gradient(circle at 12% 18%,var(--erlen-cromo-luz) 0 120px,transparent 122px),radial-gradient(circle at 88% 75%,var(--erlen-cromo-acento) 0 220px,transparent 222px);--erlen-icono-grosor:1.4;--erlen-icono-terminal:round;--erlen-icono-union:round;--erlen-icono-guion:none;--erlen-icono-filtro:drop-shadow(0 1px 1px var(--erlen-superficie));--erlen-icono-radio:16px;--erlen-icono-placa:var(--erlen-vidrio-reflejo)}
+:root[data-erlen-estilo="neumorfismo"]{--erlen-cromo-trama:linear-gradient(135deg,var(--erlen-superficie-2) 0 42%,var(--erlen-papel) 42% 58%,var(--erlen-cromo-acento) 58%);--erlen-icono-grosor:2.1;--erlen-icono-terminal:round;--erlen-icono-union:round;--erlen-icono-guion:none;--erlen-icono-filtro:drop-shadow(1px 1px 1px var(--erlen-linea-fuerte));--erlen-icono-radio:10px;--erlen-icono-placa:linear-gradient(135deg,var(--erlen-superficie),var(--erlen-superficie-2))}
+:root[data-erlen-estilo="neobrutalismo"]{--erlen-cromo-trama:repeating-linear-gradient(135deg,var(--erlen-cromo-acento) 0 32px,var(--erlen-papel) 32px 96px);--erlen-icono-grosor:3;--erlen-icono-terminal:square;--erlen-icono-union:miter;--erlen-icono-guion:none;--erlen-icono-filtro:none;--erlen-icono-radio:0px;--erlen-icono-placa:linear-gradient(90deg,var(--erlen-cromo-luz) 0 50%,var(--erlen-superficie) 50%)}
+:root[data-erlen-estilo="minimalismo"]{--erlen-cromo-trama:linear-gradient(90deg,var(--erlen-cromo-acento) 0 2px,transparent 2px);--erlen-icono-grosor:1.1;--erlen-icono-terminal:butt;--erlen-icono-union:miter;--erlen-icono-guion:none;--erlen-icono-filtro:none;--erlen-icono-radio:0px;--erlen-icono-placa:none}
+:root[data-erlen-estilo="art-deco"]{--erlen-cromo-trama:repeating-linear-gradient(45deg,transparent 0 38px,var(--erlen-cromo-luz) 38px 40px,transparent 40px 78px),repeating-linear-gradient(135deg,transparent 0 38px,var(--erlen-cromo-luz) 38px 40px,transparent 40px 78px);--erlen-icono-grosor:1.8;--erlen-icono-terminal:square;--erlen-icono-union:bevel;--erlen-icono-guion:none;--erlen-icono-filtro:none;--erlen-icono-radio:0px;--erlen-icono-placa:linear-gradient(135deg,var(--erlen-cromo-luz) 0 24%,transparent 24% 76%,var(--erlen-cromo-luz) 76%)}
+:root[data-erlen-estilo="claymorfismo"]{--erlen-cromo-trama:radial-gradient(ellipse at 0 0,var(--erlen-cromo-luz) 0 34%,transparent 35%),radial-gradient(ellipse at 100% 100%,var(--erlen-cromo-acento) 0 32%,transparent 33%);--erlen-icono-grosor:2.7;--erlen-icono-terminal:round;--erlen-icono-union:round;--erlen-icono-guion:none;--erlen-icono-filtro:drop-shadow(0 2px 0 var(--erlen-linea-fuerte));--erlen-icono-radio:12px;--erlen-icono-placa:linear-gradient(145deg,var(--erlen-superficie),var(--erlen-cromo-luz))}
+:root[data-erlen-estilo="frutiger-aero"]{--erlen-cromo-trama:radial-gradient(ellipse at 50% 110%,var(--erlen-cromo-luz) 0 48%,transparent 49%),radial-gradient(ellipse at 100% -20%,var(--erlen-cromo-acento) 0 52%,transparent 53%);--erlen-icono-grosor:2.2;--erlen-icono-terminal:round;--erlen-icono-union:round;--erlen-icono-guion:none;--erlen-icono-filtro:drop-shadow(0 1px 0 var(--erlen-superficie));--erlen-icono-radio:999px;--erlen-icono-placa:linear-gradient(180deg,var(--erlen-superficie) 0 48%,var(--erlen-cromo-luz) 49% 100%)}
+:root[data-erlen-estilo="esqueuomorfismo"]{--erlen-cromo-trama:repeating-linear-gradient(0deg,var(--erlen-cromo-acento) 0 1px,transparent 1px 5px),linear-gradient(90deg,var(--erlen-superficie-2),var(--erlen-papel));--erlen-icono-grosor:2;--erlen-icono-terminal:round;--erlen-icono-union:bevel;--erlen-icono-guion:none;--erlen-icono-filtro:drop-shadow(0 1px 0 var(--erlen-superficie));--erlen-icono-radio:4px;--erlen-icono-placa:repeating-linear-gradient(0deg,var(--erlen-cromo-luz) 0 1px,var(--erlen-superficie) 1px 3px)}
+:root[data-erlen-estilo="retro-digital"]{--erlen-cromo-trama:repeating-linear-gradient(0deg,var(--erlen-cromo-acento) 0 2px,transparent 2px 8px),repeating-linear-gradient(90deg,var(--erlen-cromo-luz) 0 2px,transparent 2px 8px);--erlen-icono-grosor:2.8;--erlen-icono-terminal:square;--erlen-icono-union:miter;--erlen-icono-guion:none;--erlen-icono-filtro:none;--erlen-icono-radio:0px;--erlen-icono-placa:repeating-linear-gradient(0deg,var(--erlen-cromo-luz) 0 2px,var(--erlen-superficie) 2px 4px)}
+:root[data-erlen-estilo="y2k"]{--erlen-cromo-trama:linear-gradient(155deg,var(--erlen-papel) 0 22%,var(--erlen-cromo-luz) 24%,var(--erlen-superficie) 31%,var(--erlen-cromo-acento) 39%,var(--erlen-papel) 48% 68%,var(--erlen-cromo-luz) 76%,var(--erlen-papel) 90%);--erlen-icono-grosor:2.4;--erlen-icono-terminal:round;--erlen-icono-union:bevel;--erlen-icono-guion:none;--erlen-icono-filtro:drop-shadow(1px 0 0 var(--erlen-superficie)) drop-shadow(-1px 0 0 var(--erlen-linea-fuerte));--erlen-icono-radio:8px;--erlen-icono-placa:linear-gradient(155deg,var(--erlen-superficie) 0 25%,var(--erlen-cromo-luz) 40%,var(--erlen-superficie) 55%,var(--erlen-cromo-acento) 80%)}
+:root[data-erlen-estilo="cyberpunk"]{--erlen-cromo-trama:repeating-linear-gradient(90deg,var(--erlen-cromo-acento) 0 2px,transparent 2px 64px),repeating-linear-gradient(0deg,var(--erlen-cromo-acento) 0 2px,transparent 2px 64px);--erlen-icono-grosor:2.5;--erlen-icono-terminal:square;--erlen-icono-union:bevel;--erlen-icono-guion:none;--erlen-icono-filtro:drop-shadow(0 0 3px currentColor);--erlen-icono-radio:2px;--erlen-icono-placa:linear-gradient(135deg,var(--erlen-cromo-luz) 0 12%,transparent 12% 88%,var(--erlen-cromo-luz) 88%)}
+:root[data-erlen-estilo="blueprint"]{--erlen-cromo-trama:repeating-linear-gradient(90deg,var(--erlen-cromo-luz) 0 1px,transparent 1px 24px),repeating-linear-gradient(0deg,var(--erlen-cromo-luz) 0 1px,transparent 1px 24px),repeating-linear-gradient(90deg,var(--erlen-cromo-acento) 0 2px,transparent 2px 120px),repeating-linear-gradient(0deg,var(--erlen-cromo-acento) 0 2px,transparent 2px 120px);--erlen-icono-grosor:1.35;--erlen-icono-terminal:butt;--erlen-icono-union:miter;--erlen-icono-guion:3 1;--erlen-icono-filtro:none;--erlen-icono-radio:0px;--erlen-icono-placa:repeating-linear-gradient(90deg,var(--erlen-cromo-luz) 0 1px,transparent 1px 8px),repeating-linear-gradient(0deg,var(--erlen-cromo-luz) 0 1px,transparent 1px 8px)}
+ :root[data-erlen-estilo="neobrutalismo"]{--erlen-icono-relieve:inset 0 0 0 1px currentColor,2px 2px 0 currentColor}
+:root[data-erlen-estilo="minimalismo"]{--erlen-icono-relieve:none}
+:root[data-erlen-estilo="art-deco"]{--erlen-icono-relieve:inset 0 0 0 1px var(--erlen-ambar),inset 0 0 0 3px var(--erlen-superficie),inset 0 0 0 2.5px var(--erlen-ambar)}
+:root[data-erlen-estilo="claymorfismo"]{--erlen-icono-relieve:inset 1px 1px 2px var(--erlen-superficie),inset -1px -1px 2px var(--erlen-linea-fuerte),0 2px 0 var(--erlen-linea-fuerte)}
+:root[data-erlen-estilo="retro-digital"]{--erlen-icono-render:crispEdges;--erlen-icono-relieve:inset 1px 1px 0 var(--erlen-superficie),inset -1px -1px 0 var(--erlen-tinta)}
+:root[data-erlen-estilo="cyberpunk"]{--erlen-icono-relieve:inset 0 0 0 1px currentColor,0 0 6px color-mix(in srgb,var(--erlen-verde) 30%,transparent)}
+/* Relieve de pulsación a escala de control: sin desplazar etiquetas ni alterar estados. */
+:root[data-erlen-estilo="glassmorfismo"]{--erlen-control-presionado:inset 0 0 0 1px var(--erlen-vidrio-borde),inset 0 3px 8px var(--erlen-vidrio-contorno)}
+:root[data-erlen-estilo="neumorfismo"]{--erlen-control-presionado:inset 3px 3px 7px var(--erlen-vidrio-contorno),inset -3px -3px 7px var(--erlen-vidrio-borde)}
+:root[data-erlen-estilo="neobrutalismo"]{--erlen-control-presionado:inset 0 0 0 2px var(--erlen-tinta),1px 1px 0 var(--erlen-tinta)}
+:root[data-erlen-estilo="minimalismo"]{--erlen-control-presionado:inset 0 -2px 0 var(--erlen-verde)}
+:root[data-erlen-estilo="art-deco"]{--erlen-control-presionado:inset 0 0 0 1px var(--erlen-ambar),inset 0 -2px 0 var(--erlen-ambar)}
+:root[data-erlen-estilo="claymorfismo"]{--erlen-control-presionado:inset 2px 2px 6px var(--erlen-vidrio-contorno),inset -2px -2px 4px var(--erlen-vidrio-borde)}
+:root[data-erlen-estilo="bauhaus"]{--erlen-control-presionado:inset 3px 0 0 var(--erlen-ambar),inset 0 0 0 2px var(--erlen-verde)}
+:root[data-erlen-estilo="frutiger-aero"]{--erlen-control-presionado:inset 0 2px 4px var(--erlen-vidrio-contorno),inset 0 -1px 0 var(--erlen-vidrio-borde)}
+:root[data-erlen-estilo="esqueuomorfismo"]{--erlen-control-presionado:inset 0 2px 3px var(--erlen-linea-fuerte),inset 0 -1px 0 var(--erlen-superficie)}
+:root[data-erlen-estilo="retro-digital"]{--erlen-control-presionado:inset 2px 2px 0 var(--erlen-tinta),inset -2px -2px 0 var(--erlen-linea)}
+:root[data-erlen-estilo="y2k"]{--erlen-control-presionado:inset 0 3px 4px var(--erlen-linea-fuerte),inset 0 -2px 0 var(--erlen-superficie)}
+:root[data-erlen-estilo="cyberpunk"]{--erlen-control-presionado:inset 0 0 0 2px var(--erlen-verde),0 0 7px var(--erlen-vidrio-tinte)}
+:root[data-erlen-estilo="blueprint"]{--erlen-control-presionado:inset 0 0 0 2px var(--erlen-verde),inset 0 -3px 0 var(--erlen-cromo-luz)}
+:root[data-erlen-estilo="minimalismo"]{--erlen-icono-grosor:1.4}
+:root[data-erlen-estilo="bauhaus"]{--erlen-icono-grosor:2.6}
+:root[data-erlen-estilo="neobrutalismo"]{--erlen-icono-grosor:2.7}
+:root[data-erlen-estilo="retro-digital"]{--erlen-icono-grosor:2.5}
 /* Cristal accesible: sin backdrop-filter, con menos transparencia, más contraste, colores forzados o
    [data-erlen-material="solido"] (elección de la persona), el material pasa a superficie opaca, sin reflejos ni desenfoque.
    :root:root sube la especificidad para ganar a los bloques del modo oscuro, que también redefinen el cristal. */
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie)}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root:root{--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie)}}
 @media (prefers-reduced-transparency:reduce){:root:root{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none}}
 @media (prefers-contrast:more){:root:root{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-tinte:var(--erlen-verde-suave);--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none;--erlen-vidrio-borde:var(--erlen-linea-fuerte);--erlen-vidrio-contorno:var(--erlen-tinta);--erlen-vidrio-relieve:0 0 0 1px var(--erlen-tinta);--erlen-atmosfera:var(--erlen-papel)}}
 @media (forced-colors:active){:root:root{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:Canvas;--erlen-vidrio-fuerte:Canvas;--erlen-vidrio-tinte:Canvas;--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none;--erlen-vidrio-borde:CanvasText;--erlen-vidrio-contorno:CanvasText;--erlen-vidrio-relieve:none;--erlen-atmosfera:Canvas}}
 :root[data-erlen-material="solido"]{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none;--erlen-atmosfera:var(--erlen-papel)}
 @media print{:root:root{--erlen-vidrio-reflejo-acento:none;--erlen-vidrio:var(--erlen-superficie);--erlen-vidrio-fuerte:var(--erlen-superficie);--erlen-vidrio-reflejo:none;--erlen-vidrio-filtro:none;--erlen-vidrio-relieve:none;--erlen-atmosfera:none}}
+
+/* Los respaldos eliminan también tramas, brillo y placas de los iconos. */
+:root:root[data-erlen-estilo][data-erlen-material="solido"]{--erlen-control-presionado:none;--erlen-control-relieve:none;--erlen-cromo-trama:none;--erlen-cromo-fondo:var(--erlen-superficie);--erlen-atmosfera:var(--erlen-superficie);--erlen-icono-placa:none;--erlen-icono-relieve:none;--erlen-icono-filtro:none;--erlen-icono-guion:none;--erlen-icono-render:auto;--erlen-icono-grosor:1.6;--erlen-icono-terminal:round;--erlen-icono-union:round}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active),print{:root:root[data-erlen-estilo]{--erlen-control-presionado:none;--erlen-control-relieve:none;--erlen-cromo-trama:none;--erlen-cromo-fondo:var(--erlen-superficie);--erlen-atmosfera:var(--erlen-superficie);--erlen-icono-placa:none;--erlen-icono-relieve:none;--erlen-icono-filtro:none;--erlen-icono-guion:none;--erlen-icono-render:auto;--erlen-icono-grosor:1.6;--erlen-icono-terminal:round;--erlen-icono-union:round}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root:root[data-erlen-estilo]{--erlen-control-presionado:none;--erlen-control-relieve:none;--erlen-cromo-trama:none;--erlen-cromo-fondo:var(--erlen-superficie);--erlen-atmosfera:var(--erlen-superficie);--erlen-icono-placa:none;--erlen-icono-relieve:none;--erlen-icono-filtro:none;--erlen-icono-guion:none;--erlen-icono-render:auto;--erlen-icono-grosor:1.6;--erlen-icono-terminal:round;--erlen-icono-union:round}}

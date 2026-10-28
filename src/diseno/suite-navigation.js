@@ -1,5 +1,132 @@
-/* erlen-diseno 2.0.1 · generado por herramientas/diseno-sync.mjs --modo iife; no editar a mano */
+/* erlen-diseno 2.11.10 · generado por @erlen/design/tools/generate; no editar a mano */
 const erlenSuiteNavigation=(()=>{
+// Acento personal de Erlen y tema claro/oscuro/sistema. El CSS del portal y el paquete comparten
+// estos nombres; cada uno fija colores legibles en claro y oscuro sin recolorear a Mey ni los
+// documentos. Importarlo una vez desde la app junto a tokens.css: aplica las preferencias al
+// cargar y las sincroniza entre pestañas del mismo origen. Claves de almacenamiento y respaldo en
+// memoria cuando el almacenamiento está bloqueado: nunca falla ni pide permisos. El tema escribe
+// data-theme en <html> y lo resuelven los tokens existentes (tokens.css); no se crea ningún
+// almacenamiento sincronizado entre orígenes. La clave del tema es opt-in: mientras la app no
+// guarde una preferencia con guardarTema, este módulo no toca data-theme y el tema sigue siendo
+// de la app (muchas ya escriben data-theme desde su propio almacén).
+const coloresErlen=['verde','violeta','azul','cobre','platino'];
+const temasErlen=['sistema','claro','oscuro'];
+// Materiales opcionales del cromo. Original no añade ningún atributo ni cambia el tema,
+// la paleta o el contenido. Los nombres son también el catálogo de los controles.
+const estilosErlen=[
+ {id:'original',nombre:'Original'},
+ {id:'glassmorfismo',nombre:'Glassmorfismo'},
+ {id:'neumorfismo',nombre:'Neumorfismo'},
+ {id:'neobrutalismo',nombre:'Neobrutalismo'},
+ {id:'minimalismo',nombre:'Minimalismo'},
+ {id:'art-deco',nombre:'Art déco'},
+ {id:'claymorfismo',nombre:'Claymorfismo'},
+ {id:'bauhaus',nombre:'Bauhaus'},
+ {id:'frutiger-aero',nombre:'Frutiger Aero'},
+ {id:'esqueuomorfismo',nombre:'Esqueuomorfismo'},
+ {id:'retro-digital',nombre:'Retro digital'},
+ {id:'y2k',nombre:'Y2K'},
+ {id:'cyberpunk',nombre:'Cyberpunk'},
+ {id:'blueprint',nombre:'Blueprint'}
+];
+const clave='erlen-color';
+const claveTema='erlen-tema';
+const claveEstilo='erlen-estilo';
+// Los IIFE de menú, marco y color pueden coexistir: comparten el respaldo y un solo
+// listener por ventana, incluso con localStorage bloqueado.
+const memoriaEstilo=Symbol.for('erlen.estilo.memoria');
+const escuchaColor=Symbol.for('erlen.color.escucha');
+const respaldo=Symbol.for('erlen.color.memoria');
+const respaldoTema=Symbol.for('erlen.tema.memoria');
+
+const erlenColor={
+ estilos:estilosErlen,
+ leer(ventana){
+  if(ventana?.[respaldo])return ventana[respaldo];
+  try{
+   const almacen=ventana?.localStorage;
+   if(almacen){const valor=almacen.getItem(clave);return coloresErlen.includes(valor)?valor:'verde';}
+  }catch{}
+  return 'verde';
+ },
+ aplicar(ventana){
+  const color=this.leer(ventana);
+  if(color==='verde')delete ventana.document.documentElement.dataset.erlenColor;
+  else ventana.document.documentElement.dataset.erlenColor=color;
+  return color;
+ },
+ guardar(ventana,color){
+  if(!coloresErlen.includes(color))throw new Error('erlen: color desconocido: '+color);
+  try{ventana.localStorage.setItem(clave,color);delete ventana[respaldo];}
+  catch{ventana[respaldo]=color;}
+  this.aplicar(ventana);
+  ventana.dispatchEvent(new ventana.Event('erlen-color'));
+ },
+ leerTema(ventana){
+  // Preferencia compartida guardada, o null si la app aún no usa esta clave: en ese caso el
+  // tema lo sigue resolviendo la propia app y este módulo no toca data-theme.
+  if(ventana?.[respaldoTema])return ventana[respaldoTema];
+  try{
+   const almacen=ventana?.localStorage;
+   if(almacen){const valor=almacen.getItem(claveTema);return valor===null?null:(temasErlen.includes(valor)?valor:null);}
+  }catch{}
+  return null;
+ },
+ aplicarTema(ventana){
+  const tema=this.leerTema(ventana);
+  if(tema===null)return null;
+  if(tema==='sistema')delete ventana.document.documentElement.dataset.theme;
+  else ventana.document.documentElement.dataset.theme=tema==='claro'?'light':'dark';
+  return tema;
+ },
+ guardarTema(ventana,tema){
+  if(!temasErlen.includes(tema))throw new Error('erlen: tema desconocido: '+tema);
+  try{ventana.localStorage.setItem(claveTema,tema);delete ventana[respaldoTema];}
+  catch{ventana[respaldoTema]=tema;}
+  this.aplicarTema(ventana);
+  ventana.dispatchEvent(new ventana.Event('erlen-tema'));
+ },
+ leerEstilo(ventana){
+  let valor;
+  try{valor=ventana?.localStorage?.getItem(claveEstilo);}catch{}
+  valor=ventana?.[memoriaEstilo]??valor;
+  return estilosErlen.some(estilo=>estilo.id===valor)?valor:'original';
+ },
+ aplicarEstilo(ventana){
+  const estilo=this.leerEstilo(ventana);
+  const raiz=ventana?.document?.documentElement;
+  if(raiz){
+   if(estilo==='original')delete raiz.dataset.erlenEstilo;
+   else raiz.dataset.erlenEstilo=estilo;
+  }
+  return estilo;
+ },
+ guardarEstilo(ventana,estilo){
+  if(!estilosErlen.some(opcion=>opcion.id===estilo))throw new Error('erlen: estilo desconocido: '+estilo);
+  try{ventana.localStorage.setItem(claveEstilo,estilo);delete ventana[memoriaEstilo];}
+  catch{ventana[memoriaEstilo]=estilo;}
+  this.aplicarEstilo(ventana);
+  ventana.dispatchEvent(new ventana.Event('erlen-estilo'));
+ }
+};
+
+if(typeof window!=='undefined'){
+ erlenColor.aplicar(window);
+ erlenColor.aplicarTema(window);
+ erlenColor.aplicarEstilo(window);
+ if(!window[escuchaColor]){
+ window[escuchaColor]=true;
+ window.addEventListener('storage',evento=>{
+  if(evento.key===clave||evento.key===null){delete window[respaldo];erlenColor.aplicar(window);window.dispatchEvent(new Event('erlen-color'));}
+  if(evento.key===claveTema||evento.key===null){delete window[respaldoTema];erlenColor.aplicarTema(window);window.dispatchEvent(new Event('erlen-tema'));}
+  if(evento.key===claveEstilo||evento.key===null){
+   delete window[memoriaEstilo];
+   erlenColor.aplicarEstilo(window);window.dispatchEvent(new Event('erlen-estilo'));
+  }
+ });
+ }
+}
+
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,17 +146,55 @@ const erlenSuiteNavigation=(()=>{
  * SOFTWARE.
  */
 // Fuente única del menú de suite: diseno/suite-nav.mjs (docs/DISENO-PAQUETE.md). Colores como var(--erlen-*, valor) de tokens.css; las custom properties atraviesan el shadow DOM.
-// Explicit navigation only: no storage access, transfers or background requests.
-const apps=[['slides','Slides'],['notes','Notes'],['lens','Lens'],['pentagrama','Pentagrama'],['documents','Documents'],['spreadsheets','Spreadsheets'],['figures','Figures'],['ftir','FTIR Studio'],['doe','DoE'],['xrd','XRD Studio'],['methods','Methods'],['dft','DFT Studio'],['learn','Learn']];
-function mountSuiteNavigation(parent,current){
- if(!parent||!apps.some(([id])=>id===current))throw Error('Aplicación de la suite inválida.');
+// Navegación explícita y preferencias locales de apariencia; sin transferencias ni peticiones.
+const apps=[['slides','Slides'],['notes','Notes'],['lens','Lens'],['pentagrama','Pentagrama'],['documents','Documents'],['spreadsheets','Spreadsheets'],['figures','Figures'],['ftir','FTIR Studio'],['doe','DoE'],['xrd','XRD Studio'],['xps','XPS Studio'],['thermal','Thermal'],['methods','Methods'],['dft','DFT Studio'],['fem','FEM Studio'],['learn','Learn']];
+const escapar=texto=>String(texto).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// Misma validación que usa el menú: sin ella, un catálogo embebido mal formado pasaría la lectura
+// y luego haría fallar a mountSuiteNavigation en el arranque.
+function entradaValida(item,vistos){
+ return !!item&&typeof item.id==='string'&&/^[a-z][a-z0-9-]*$/.test(item.id)&&typeof item.label==='string'&&!!item.label&&typeof item.href==='string'&&!!item.href&&!vistos.has(item.id);
+}
+// Catálogo de despliegue embebido por el build (<script type="application/json" id="erlen-suite-catalog">):
+// devuelve {items,home} o null si no está o no tiene esa forma — nunca lanza ni hace peticiones.
+function catalogoDe(doc){
+ try{
+  const texto=doc?.getElementById?.('erlen-suite-catalog')?.textContent;
+  if(!texto)return null;
+  const dato=JSON.parse(texto);
+  if(!dato||!Array.isArray(dato.items)||!dato.items.length||!dato.home||typeof dato.home.href!=='string'||!dato.home.href)return null;
+  const vistos=new Set();
+  for(const item of dato.items){if(!entradaValida(item,vistos))return null;vistos.add(item.id);}
+  return {items:dato.items.map(({id,label,href})=>({id,label,href})),home:{id:dato.home.id||'portal',label:dato.home.label||'Inicio de Erlen',href:dato.home.href}};
+ }catch{return null;}
+}
+function mountSuiteNavigation(parent,current,opciones={}){
+ if(!parent)throw Error('Aplicación de la suite inválida.');
+ // Catálogo explícito {items:[{id,label,href}],home:{href}} desde el build; sin él, la lista
+ // histórica de la suite con rutas locales y la detección standalone de siempre.
+ let entradas,home;
+ if(opciones&&(opciones.items||opciones.home)){
+  if(!Array.isArray(opciones.items)||!opciones.items.length||!opciones.home||typeof opciones.home.href!=='string')throw Error('Aplicación de la suite inválida.');
+  const vistos=new Set();
+  entradas=opciones.items.map(item=>{
+   if(!item||typeof item.id!=='string'||!/^[a-z][a-z0-9-]*$/.test(item.id)||typeof item.label!=='string'||!item.label||typeof item.href!=='string'||!item.href||vistos.has(item.id))throw Error('Aplicación de la suite inválida.');
+   vistos.add(item.id);return [item.id,item.label,item.href];
+  });
+  home={href:opciones.home.href,label:opciones.home.label||'Inicio de Erlen'};
+ }else{
+  entradas=apps.map(([id,label])=>[id,label,'/'+id+'/']);
+  home={href:'/',label:'Inicio de Erlen'};
+ }
+ const actual=entradas.find(([id])=>id===current);
+ if(!actual)throw Error('Aplicación de la suite inválida.');
  // Standalone releases have no sibling apps. Do not create broken file/root links.
- if(!parent.ownerDocument.defaultView.location.pathname.startsWith('/'+current+'/'))return null;
+ const absoluta=/^[a-z][a-z0-9+.-]*:/i.test(actual[2]);
+ if(!absoluta&&!parent.ownerDocument.defaultView.location.pathname.startsWith(actual[2]))return null;
  if(parent.querySelector('erlen-suite-nav'))return parent.querySelector('erlen-suite-nav');
  const doc=parent.ownerDocument,host=doc.createElement('erlen-suite-nav');
  const root=host.attachShadow({mode:'open'});
  const salida='<svg class="salida" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10M7 17 17 7"/></svg>';
- root.innerHTML=`<style>
+ const filas=Math.max(1,Math.ceil(entradas.length/2));
+ const css=`
 :host{display:inline-block;font:14px/1.5 var(--erlen-font-ui,system-ui,sans-serif);color:var(--erlen-tinta,#243c32)}
 *{box-sizing:border-box}
 summary{display:inline-flex;align-items:center;gap:8px;cursor:pointer;min-height:44px;padding:9px 14px 9px 16px;border:1px solid var(--erlen-vidrio-contorno,#c4d1bf);border-radius:var(--erlen-radio-capsula,7px);background:var(--erlen-superficie,#f7f9f3);box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde,transparent),0 1px 2px var(--erlen-vidrio-contorno,transparent);list-style:none;font-weight:600}
@@ -44,17 +209,56 @@ a{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 12px;color
 a:hover,a:focus-visible{background:var(--erlen-verde-suave,#e9f0e2)}
 a[aria-current]{font-weight:700;background:var(--erlen-verde-suave,#e9f0e2)}
 .salida{width:16px;height:16px;flex:none;margin-left:auto}
-.apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(7,auto);grid-auto-flow:column;gap:2px 8px}
+.apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(${filas},auto);grid-auto-flow:column;gap:2px 8px}
 .home{border-bottom:1px solid var(--erlen-linea,#dbe2d8);border-radius:0;margin-bottom:8px}
 small{display:block;margin-top:8px;padding:8px 12px;border-top:1px solid var(--erlen-linea,#dbe2d8);font-size:12px;line-height:1.5;color:var(--erlen-tinta-suave,#53644d)}
 .oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav{background:color-mix(in srgb,var(--erlen-superficie,#fffefa) 88%,transparent);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}}
+.apariencia{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px;padding:12px;border-top:1px solid var(--erlen-linea,#dbe2d8)}
+.apariencia label{display:grid;gap:4px;min-width:0;font-size:12px}
+.apariencia .estilo{grid-column:1/-1}
+.apariencia select,.apariencia button{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid var(--erlen-linea-fuerte,#c4d1bf);border-radius:var(--erlen-radio-campo,8px);background:var(--erlen-superficie,#fffefa);color:var(--erlen-tinta,#243c32);font:inherit}
+.apariencia button{grid-column:1/-1;cursor:pointer;font-size:12px}
+.apariencia button:disabled{cursor:default;opacity:.6}
+.apariencia :focus-visible{outline:3px solid var(--erlen-foco,#94621e);outline-offset:2px}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav{background:var(--erlen-vidrio-fuerte,color-mix(in srgb,var(--erlen-superficie,#fffefa) 94%,transparent));-webkit-backdrop-filter:var(--erlen-vidrio-filtro,blur(18px) saturate(115%));backdrop-filter:var(--erlen-vidrio-filtro,blur(18px) saturate(115%))}}
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active){nav{background:var(--erlen-superficie,#fffefa);-webkit-backdrop-filter:none;backdrop-filter:none}}
 @media (max-width:540px){.apps{display:block}}
 @media (prefers-reduced-motion:reduce){summary svg{transition:none}}
 @media print{nav{display:none!important;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}}
-</style><details><summary aria-label="Cambiar de aplicación de Erlen">Suite<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><nav aria-label="Aplicaciones Erlen"><a class="home" href="/" target="_blank" rel="noopener">Inicio de Erlen${salida}<span class="oculto">(se abre en otra pestaña)</span></a><div class="apps">${apps.map(([id,label])=>`<a href="/${id}/" ${id===current?'aria-current="page"':'target="_blank" rel="noopener"'}>${label}${id===current?' · actual':salida+'<span class="oculto">(se abre en otra pestaña)</span>'}</a>`).join('')}</div><small>Las otras apps se abren en otra pestaña. Tu trabajo sigue aquí.</small></nav></details>`;
+`;
+ // Hoja construible: el CSSOM no cuenta como estilo inline y sigue funcionando bajo una CSP con
+ // style-src 'self' (Lens y Learn); un <style> dentro del shadow root la incumpliría y el menú
+ // saldría sin estilos. Sin hojas construibles (navegadores antiguos, jsdom) se usa el <style>.
+ let hoja=null;
+ try{const Hoja=doc.defaultView.CSSStyleSheet;if(Hoja&&'adoptedStyleSheets' in root){hoja=new Hoja();hoja.replaceSync(css);}}catch{hoja=null;}
+ root.innerHTML=(hoja?'':`<style>${css}</style>`)+`<details><summary aria-label="Cambiar de aplicación de Erlen">Suite<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><nav aria-label="Aplicaciones Erlen"><a class="home" href="${escapar(home.href)}" target="_blank" rel="noopener">${escapar(home.label)}${salida}<span class="oculto">(se abre en otra pestaña)</span></a><div class="apps">${entradas.map(([id,label,href])=>`<a href="${escapar(href)}" ${id===current?'aria-current="page"':'target="_blank" rel="noopener"'}>${escapar(label)}${id===current?' · actual':salida+'<span class="oculto">(se abre en otra pestaña)</span>'}</a>`).join('')}</div><small>Las otras apps se abren en otra pestaña. Tu trabajo sigue aquí.</small></nav></details>`;
+ if(hoja)root.adoptedStyleSheets=[hoja];
  const details=root.querySelector('details'),summary=root.querySelector('summary'),nav=root.querySelector('nav');
+ // En el menú existente: no se añade una barra o un botón a la interfaz de trabajo.
+ const win=doc.defaultView,panel=doc.createElement('section');
+ panel.className='apariencia';panel.setAttribute('aria-label','Apariencia');
+ const elegir=(nombre,opciones,clase)=>{
+  const etiqueta=doc.createElement('label');etiqueta.textContent=nombre;
+  if(clase)etiqueta.className=clase;
+  const select=doc.createElement('select');
+  for(const [valor,texto] of opciones){const opcion=doc.createElement('option');opcion.value=valor;opcion.textContent=texto;select.append(opcion);}
+  etiqueta.append(select);panel.append(etiqueta);return select;
+ };
+ const estilo=elegir('Estilo visual',estilosErlen.map(({id,nombre})=>[id,nombre]),'estilo');
+ const color=elegir('Color de acento',[['verde','Jade'],['platino','Platino'],['azul','Hielo'],['violeta','Iris'],['cobre','Champagne']]);
+ const tema=elegir('Luz',[['sistema','Según tu dispositivo'],['claro','Claro'],['oscuro','Oscuro']]);
+ const restaurar=doc.createElement('button');restaurar.type='button';restaurar.textContent='Restaurar estilo original';panel.append(restaurar);nav.append(panel);
+ const sincronizar=()=>{
+  estilo.value=erlenColor.leerEstilo(win);color.value=erlenColor.leer(win);tema.value=erlenColor.leerTema(win)||'sistema';
+  restaurar.disabled=estilo.value==='original';
+ };
+ estilo.addEventListener('change',()=>erlenColor.guardarEstilo(win,estilo.value));
+ color.addEventListener('change',()=>erlenColor.guardar(win,color.value));
+ tema.addEventListener('change',()=>erlenColor.guardarTema(win,tema.value));
+ restaurar.addEventListener('click',()=>{erlenColor.guardarEstilo(win,'original');estilo.focus();});
+ const eventos=['erlen-estilo','erlen-color','erlen-tema'];
+ for(const evento of eventos)win.addEventListener(evento,sincronizar);
+ erlenColor.aplicarEstilo(win);sincronizar();
  function position(){if(!details.open)return;const r=summary.getBoundingClientRect(),w=Math.min(448,doc.defaultView.innerWidth-24);nav.style.left=Math.max(12,Math.min(r.right-w,doc.defaultView.innerWidth-w-12))+'px';nav.style.top=Math.min(r.bottom+6,doc.defaultView.innerHeight-100)+'px';nav.style.maxHeight=Math.max(88,doc.defaultView.innerHeight-r.bottom-18)+'px';}
  details.addEventListener('toggle',position);
  root.addEventListener('keydown',e=>{if(e.key==='Escape'&&details.open){details.open=false;summary.focus();}});
@@ -62,8 +266,10 @@ small{display:block;margin-top:8px;padding:8px 12px;border-top:1px solid var(--e
  const outside=e=>{if(!e.composedPath().includes(host))details.open=false;};
  const onScroll=()=>{if(!details.open)return;const r=summary.getBoundingClientRect();if(r.bottom<0||r.top>doc.defaultView.innerHeight)details.open=false;else position();};
  doc.addEventListener('pointerdown',outside);doc.defaultView.addEventListener('resize',position);doc.defaultView.addEventListener('scroll',onScroll,{passive:true});
- host.dispose=()=>{doc.removeEventListener('pointerdown',outside);doc.defaultView.removeEventListener('resize',position);doc.defaultView.removeEventListener('scroll',onScroll);host.remove();};
+ host.dispose=()=>{for(const evento of eventos)win.removeEventListener(evento,sincronizar);doc.removeEventListener('pointerdown',outside);doc.defaultView.removeEventListener('resize',position);doc.defaultView.removeEventListener('scroll',onScroll);host.remove();};
  parent.append(host);return host;
 }
+// Los IIFE devuelven solo mountSuiteNavigation: el lector de catálogo viaja como propiedad.
+mountSuiteNavigation.catalogoDe=catalogoDe;
 
 return mountSuiteNavigation;})();

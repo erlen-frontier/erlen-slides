@@ -5,6 +5,7 @@ const LS_AUTO = 'erlen-slides.autosave';
 const LS_DECKS = 'erlen-slides.decks';
 const LS_PREFS = 'erlen-slides.prefs';
 const LS_ESTILOS = 'erlen-slides.estilos';
+const meyEvento=tipo=>window.dispatchEvent(new window.CustomEvent('erlen-mey-evento',{detail:{tipo}}));
 
 /* ---------- preferencias de la app (no viajan en el .json del proyecto) ---------- */
 /* barras: 'arriba' = cinta (de fábrica), 'lado' = panel a la derecha. Si el
@@ -120,7 +121,7 @@ const esMedio = v => typeof v === 'string' && v.length > 1024 && v.slice(0, 5) =
 /* Copia ligera del deck: los medios se sustituyen por su referencia. */
 function snapDeck(deck) {
   return JSON.stringify(deck, function(k, v) {
-    const fuente = this && this.v === 1 && ['molecula','3d','datos'].includes(this.tipo) && ['mol','texto'].includes(k) && typeof v === 'string' && v.length > 1024;
+    const fuente = this && this.v === 1 && ['molecula','3d','datos','diagrama'].includes(this.tipo) && ['mol','texto'].includes(k) && typeof v === 'string' && v.length > 1024;
     if (!esMedio(v) && !fuente) return v;
     const base = claveMedio(v); let c = base, intento = 0;
     // Dos fuentes distintas pueden coincidir en las muestras de la huella.
@@ -164,6 +165,7 @@ const saveInd = deb(() => {
   const el = $('#saveInd');
   recActual();
   const ok = lsSet(LS_AUTO, { deck: S.deck, deckName: S.deckName, respaldoId:S.respaldoId, when: Date.now(), sitio: marcaSitio() });
+  meyEvento(ok?'guardado':'error');
   if (el) { el.textContent = ok ? 'Guardado aquí ✓' : 'Sin guardar'; el.classList.toggle('on', ok); }
   if (S.deckName) {
     const store = decksStore();
@@ -296,7 +298,7 @@ function addBlockToSlide_(type, col) {
   else if (type === 'galeria') openGaleria(b);
 }
 function delBlock(id) {
-  const f = findBlock(id); if (!f) return;
+  const f = findBlock(id); if (!f || f.block.locked) return;
   const tipo = (BLOCK_DEFS.find(b => b.id === f.block.type) || {}).name || 'Bloque';
   f.arr.splice(f.i, 1);
   if (S.selBlock === id) S.selBlock = null;
@@ -304,7 +306,7 @@ function delBlock(id) {
   toast(tipo + ' eliminado', null, { t: 'Deshacer', fn: doUndo });
 }
 function moveBlock(id, dir) {
-  const f = findBlock(id); if (!f) return;
+  const f = findBlock(id); if (!f || f.block.locked) return;
   const j = f.i + dir;
   if (j < 0 || j >= f.arr.length) return;
   f.arr.splice(f.i, 1); f.arr.splice(j, 0, f.block);
@@ -318,7 +320,7 @@ function dupBlock(id) {
 
 /* Manda un bloque a otra diapositiva o a otra zona de la misma. */
 function moveBlockToSlide(id, idxDest, zonaDest, posDest) {
-  const f = findBlock(id); if (!f) return false;
+  const f = findBlock(id); if (!f || f.block.locked) return false;
   const dest = S.deck.slides[idxDest]; if (!dest) return false;
   const nz = zonasDe(dest.layout);
   if (!nz) { toast('Esa diapositiva no admite bloques'); return false; }

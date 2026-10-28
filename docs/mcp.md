@@ -9,7 +9,7 @@ El servidor corre en tu máquina, por stdio. No abre puertos a la red (la vista 
 Necesitas Node.js 22 o superior y una copia del código fuente:
 
 ```sh
-git clone https://github.com/erlen-frontier-ops/erlen-slides.git
+git clone https://github.com/erlen-frontier/erlen-slides.git
 cd erlen-slides
 npm ci
 npm run build

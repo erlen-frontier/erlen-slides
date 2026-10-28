@@ -2,6 +2,24 @@
 
 ## Crear una charla
 
+**Inicio → Importar proyecto**, o **Archivo → Importar presentación**, acepta JSON, PowerPoint `.pptx` y Markdown `.md`. Elige el archivo, revisa la vista previa y pulsa **Abrir copia editable**. Cancelar deja intacta la presentación abierta. Se crea un nombre libre en tu biblioteca; un fallo de almacenamiento impide abrir la copia y avisa. Las copias descargadas desde Erlen DoE pasan por su comprobación y vista previa habitual.
+
+El PowerPoint se lee localmente, sin subirlo. Textos, imágenes PNG/JPEG/GIF/WebP incrustadas, tablas, ecuaciones compatibles y notas se convierten a bloques. Las gráficas se recuperan como **tablas de datos**, incluidas las parejas x/y; después puedes crear una gráfica y elegir sus ejes y unidades. Los objetos agrupados se separan y las tablas largas repiten el encabezado. El acomodo, las fuentes y los efectos se adaptan al estilo de Erlen: la importación no reproduce la apariencia exacta de Office. Revisa los avisos sobre formas, patrones, celdas combinadas, recortes y medios no compatibles. Límites: 25 MiB de archivo, 100 MiB descomprimidos y hasta 200 diapositivas antes y después de adaptar. En el HTML suelto abierto con `file:`, la entrada conserva la importación JSON anterior; las herramientas adicionales requieren servir la carpeta completa.
+
+**Insertar → Figura por capas** crea una composición de texto, rectángulos, elipses, flechas e imágenes. Añade un objeto y selecciónalo en la lista; cambia texto, color y orden. **Posición, tamaño y giro** despliega los controles numéricos. Los botones de movimiento y de deshacer/rehacer permiten trabajar sin arrastrar. Escribe una descripción accesible antes de insertar. El proyecto JSON guarda los objetos; un doble clic o **Editar capas** permite volver a editarlos. Las imágenes nuevas deben ser PNG/JPEG/WebP y pesar hasta 8 MiB; una figura admite hasta 100 objetos. Una copia grande puede superar la cuota de almacenamiento del navegador: descarga el proyecto si aparece el aviso de guardado.
+
+Seleccionar una imagen existente y elegir **Anotar una copia** conserva el bloque original y su fuente científica. La copia incorpora la imagen como objeto bloqueado, que puedes desbloquear si necesitas moverlo; las anotaciones son otros objetos. Al adaptar un SVG se genera una representación PNG para el lienzo de la copia. Los datos científicos del bloque original permanecen intactos.
+
+Si creas una figura o un diagrama desde una portada o sección, al insertar se añade una diapositiva en blanco para mostrarlo. Cancelar no añade nada y la inserción completa se deshace en un paso.
+
+**Inicio → Desde Markdown** abre un guion con vista previa. Usa `# Título` para la portada y `## Título` para las diapositivas; admite listas, tablas, ecuaciones, notas y columnas con el mismo [formato del servidor MCP](mcp.md). «Crear presentación» añade un documento nuevo a la biblioteca y conserva la charla abierta. Para traer figuras desde el guion, incrústalas como `data:image/...`; los archivos locales se insertan después. Archivo → Guion Markdown exporta imágenes incrustadas y avisa si un bloque necesita el proyecto JSON para conservar todas sus propiedades.
+
+**Inicio → Organizar bloques** permite agrupar, desagrupar, bloquear, alinear, duplicar, eliminar o trasladar una selección a otra zona. Ctrl/⌘/Mayús + clic añade bloques a la selección; un grupo se selecciona junto. Cada operación tiene un solo paso de deshacer. Bloquear protege los controles del editor; desbloquea antes de cambiar el contenido. Diseño → Vista previa de temas enseña los estilos sobre la diapositiva actual.
+
+**Insertar → Diagrama desde texto** dibuja flujos, secuencias, relaciones y cronogramas con Mermaid. Pulsa «Dibujar», revisa etiquetas y conexiones e inserta la figura. El JSON conserva SVG y fuente; «Datos científicos…» o doble clic la reabre. Se rechazan enlaces y configuración embebida. Los diagramas existentes se siguen viendo sin cargar Mermaid.
+
+**Presentar → Grabar presentación** solicita compartir una pestaña o pantalla y, opcionalmente, el micrófono. «Detener y descargar» guarda WebM o MP4 según el navegador. También se detiene al terminar la captura desde el navegador. Requiere localhost o HTTPS y compatibilidad con MediaRecorder; el archivo se guarda en tu equipo.
+
 En Inicio elige **Nueva presentación**, **Explorar ejemplos** o **Importar proyecto**. Un documento nuevo empieza con una portada vacía. Pon un título y añade diapositivas desde la tira lateral. Puedes reordenarlas, cambiar el diseño o abrir la vista general.
 
 En una pantalla vertical la diapositiva se coloca arriba, sus controles quedan en una barra debajo y las miniaturas se reparten en dos columnas; en horizontal y en el ordenador la tira sigue a un lado. Haz clic sobre el texto de la diapositiva para editar, o sobre una zona vacía —incluida cada columna o celda de los diseños de varias zonas— para escribir ahí mismo; el doble clic en el hueco de una zona añade otro texto. Una figura seleccionada se arrastra agarrándola y se estrecha o ensancha con las manijas de sus lados. Las herramientas están en la cinta de arriba: «Archivo» (abrir, guardar, exportar y acerca de) y las pestañas Inicio, Insertar, Diseño, Diapositiva, Presentar y Vista; al seleccionar un bloque aparece otra pestaña con el nombre de su tipo (Ecuación, Figura, Tabla…). Lo que necesita un formulario largo se abre en el panel de detalles de la derecha, que se cierra con ✕ o Escape. Si prefieres las propiedades siempre a la vista, Vista → Herramientas → Panel a la derecha (o Ctrl+Shift+B); la elección se recuerda. Las ecuaciones reciben LaTeX; las reacciones reciben sintaxis mhchem. Por ejemplo: `A = \\varepsilon l c` en la documentación representa la orden LaTeX `A = \varepsilon l c` que debes escribir en el editor.
@@ -73,11 +91,18 @@ Usa Presentar o F5. Avanza con las flechas; Esc vuelve al editor. N muestra nota
 
 ## Exportaciones
 
+**Archivo → Revisar y compartir** reúne el formato y su revisión en un diálogo. También se abre al elegir PowerPoint editable o presentación HTML. Muestra problemas de contenido, accesibilidad, recursos externos y objetos fuera del borde de una figura. Cada hallazgo te lleva a su diapositiva o propiedades; **Volver a revisar** actualiza el resultado. La lista muestra primero problemas que corregir; el filtro permite ver también límites del formato. Los avisos orientan, no impiden descargar por sí solos.
+
+**Incluir notas del orador** empieza desmarcado en PowerPoint y HTML: quien reciba el archivo podrá leerlas si las incluyes. El proyecto JSON siempre conserva las notas y los datos para continuar editando. Las figuras por capas se exportan como imagen en PowerPoint; sus objetos internos siguen editables en el JSON. Compara el archivo final en el equipo donde lo presentarás. La revisión de accesibilidad del editor no certifica un PDF etiquetado ni un archivo PowerPoint plenamente accesible.
+
 | Formato | Uso | Revisión necesaria |
 |---|---|---|
 | JSON | Conservar y volver a editar en Erlen | Es la copia de trabajo recomendada |
 | PDF | Compartir una copia visual | Usa Imprimir/Guardar como PDF y revisa tamaño, fondos y recortes |
 | PPTX | Abrir en software de presentaciones | Algunos elementos complejos se convierten en imágenes; revisa tipografías y alineación en el programa destino |
+| PPTX editable | Continuar editando texto, tablas, gráficas XY/barras y diagramas compatibles | Archivo → PowerPoint editable usa PptxGenJS. Incertidumbres, ajustes, anotaciones, escalas especiales, ecuaciones y funciones conservan la apariencia como imagen con aviso por diapositiva. Sigue disponible el exportador clásico. El JSON conserva las fuentes originales |
+| Markdown | Editar el guion como texto y volver a importarlo | Imágenes incrustadas; los avisos indican bloques que requieren JSON para una reedición completa |
+| HTML autónomo | Presentar sin conexión, con pasos, vista general y deslizadores de funciones | Archivo → Presentación HTML autónoma usa Reveal.js y el motor científico de Erlen. Incrusta imágenes/vídeos primero. Las notas se excluyen por defecto; al incluirlas pasan a formar parte del archivo compartido |
 | Beamer / TEX | Continuar un flujo con LaTeX | Requiere una distribución de LaTeX; temas y elementos especiales pueden diferir de la vista web |
 | SVG científico | Reutilizar una gráfica o función en un artículo | Selecciona una figura científica y usa Exportar → SVG científico; incluye ejes, trazos, etiquetas y `metadata` de procedencia, sin depender del CSS de la app |
 | Informe de exportación (JSON) | Revisar riesgos antes de compartir | Exportar → Informe de exportación lista errores, advertencias e información por diapositiva y por formato |
@@ -86,6 +111,8 @@ Usa Presentar o F5. Avanza con las flechas; Esc vuelve al editor. N muestra nota
 Los paquetes de figura y el **kit de defensa** incluyen `provenance.json` con la versión de Erlen, los identificadores de figuras, las fuentes disponibles y la huella SHA-256 de los datos. Es un registro de trazabilidad, no una copia de los datos que no hayas incluido.
 
 No se ha certificado compatibilidad visual idéntica con todas las versiones de PowerPoint ni con todos los motores LaTeX. La validación específica de esta publicación está en [validacion.md](validacion.md).
+
+La revisión de desbordes comprueba tablas, figuras y etiquetas contra sus contenedores internos. Una tabla puede quedar recortada aunque el cuerpo general no desborde: corrige los avisos de «tabla recortada» antes de compartir.
 
 ## Referencias y conexiones voluntarias
 

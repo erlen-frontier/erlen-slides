@@ -8,3 +8,4 @@ dist/
 src/js/_glass-map-gen.js
 src/js/_informe-limites-gen.js
 .amp/portals/
+.local/

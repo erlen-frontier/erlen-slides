@@ -26,7 +26,7 @@ function openModal(opts) {
   closeModal();
   _focoPrevio = document.activeElement;
   _modalCleanup = opts.onclose || null;
-  _modalFondos = [$('#app'), $('#inicioRoot .erlen-inicio')].filter(Boolean).map(el => [el, el.inert]);
+  _modalFondos = [...new Set([$('#app'), $('.erlen-marco'), $('#inicioRoot .erlen-inicio')].filter(Boolean))].map(el => [el, el.inert]);
   _modalFondos.forEach(([el]) => { el.inert = true; });
   const tid = 'mo-t-' + Math.random().toString(36).slice(2, 8);
   const box = h('div', { class: 'modal ' + (opts.size || ''), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': tid, tabindex: '-1' },
@@ -261,6 +261,7 @@ function openBlockProps(b) {
   });
 }
 function cuerpoProps(b, op) {
+  if (b.locked) return h('div', null, h('p', { class: 'hint' }, 'Bloque protegido contra cambios. Desbloquéalo para editarlo.'), h('button', { class: 'btn', onclick: () => { b.locked = false; closeModal(); commit(); } }, 'Desbloquear'));
   op = op || {};
   const enPanel = !!op.panel;
   const cierra = () => { if (!enPanel) closeModal(); };
@@ -292,6 +293,7 @@ function cuerpoProps(b, op) {
     row('Texto alterno', h('input', { class: 'field', value: b.alt || '', placeholder: 'Qué muestra la imagen, para quien no la ve',
       onchange: e => b.alt = e.target.value }));
     body.append(h('p', { class: 'hint' }, 'El texto alterno describe la imagen para lectores de pantalla y viaja al archivo imprimible y al PowerPoint. Es distinto del pie de figura, que sí se ve en la diapositiva.'));
+    if (b.src) body.append(h('button', { class: 'btn btn-sm', onclick: () => { cierra(); openFiguraCapas(b); } }, b.figura ? 'Editar capas de la figura' : 'Anotar una copia de la figura'));
     body.append(h('div', { style: 'display:flex;gap:7px;margin-top:6px' },
       h('button', { class: 'btn btn-sm', onclick: () => { cierra(); pickImage(b); } }, 'Cambiar imagen…'),
       b.src ? h('button', { class: 'btn btn-sm', onclick: () => { cierra(); openRecorte(b); } }, '⛶ Encuadrar…') : null,

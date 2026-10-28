@@ -52,7 +52,7 @@ const grupoC = (etiqueta, ...controles) => ({ etiqueta, controles: controles.fil
 const opc = (etiqueta, accion, marcado, descripcion) => ({ etiqueta, accion, descripcion: descripcion || undefined, marcado });
 
 const blq = () => { const f = S.selBlock && findBlock(S.selBlock); return f ? f.block : null; };
-const conBloque = fn => () => { const b = blq(); if (b) fn(b); };
+const conBloque = fn => () => { const b = blq(); if (b && !b.locked) fn(b); };
 const insertar = id => () => addBlockToSlide(id, S.insCol || 1);
 const opcionesBloques = ids => () => BLOCK_DEFS.filter(d => ids.includes(d.id))
   .map(d => ({ etiqueta: d.name, accion: insertar(d.id) }));
@@ -70,6 +70,8 @@ function cintaInicio() {
       peque('quitar-diapo', 'Eliminar', 'Trash2', () => delSlide(S.cur), { d: 'Eliminar esta diapositiva', deshabilitado: () => S.deck.slides.length <= 1 }),
       peque('esquema', 'Desde un esquema', 'ListTree', openEsquema, { d: 'Pega tu índice y se vuelve diapositivas' })),
     grupoC('Edición',
+      peque('organizar-bloques', 'Organizar bloques', 'Group', openOrganizarBloques, { d: 'Seleccionar, agrupar, bloquear y alinear varios bloques' }),
+      peque('guion-markdown', 'Desde Markdown', 'FileInput', openMarkdown),
       peque('buscar', 'Buscar y reemplazar', 'Search', () => openBuscar(), { atajo: 'Ctrl+F' }),
       peque('paleta', 'Ir a / hacer', 'Command', openPaleta, { atajo: 'Ctrl+K', d: 'Cualquier orden por su nombre' })),
     grupoC('Argumento',
@@ -97,6 +99,8 @@ function cintaInsertar() {
       grande('ins-image', 'Figura', 'Image', insertar('image')),
       grande('ins-table', 'Tabla', 'Table', insertar('table'))),
     grupoC('Más contenido',
+      peque('figura-capas', 'Figura por capas', 'Layers3', () => openFiguraCapas(), { d: 'Texto, formas e imágenes editables; también con el teclado' }),
+      peque('diagrama-texto', 'Diagrama desde texto', 'Workflow', () => openDiagramaTexto()),
       menuC('mas-bloques', 'Más bloques', 'Blocks', opcionesBloques(['galeria', 'quote', 'bblock', 'code', 'spacer'])),
       menuC('datos-medios', 'Datos y medios', 'ChartLine', opcionesBloques(['chart', 'func', 'video', 'smart']), { d: 'Gráficas, video y diagramas' }),
       menuC('quimica-lab', 'Química y laboratorio', 'FlaskConical', () => [
@@ -116,6 +120,7 @@ function cintaDiseno() {
   const m = () => S.deck.meta;
   return { id: 'diseno', etiqueta: 'Diseño', grupos: [
     grupoC('Tema',
+      peque('temas-visuales', 'Vista previa de temas', 'GalleryHorizontalEnd', openTemasVisuales),
       menuC('tema', 'Tema', 'Palette', () => Object.keys(THEMES).map(k => opc(THEMES[k].name, () => { m().theme = k; commit(); }, () => m().theme === k, THEMES[k].desc)),
         { d: 'Los temas Beamer' }),
       peque('acento', 'Color de acento…', 'Droplet', () => abrePanelLateral('design', 'Tema Beamer'), { d: 'El color de tu universidad o de tu laboratorio' }),
@@ -177,6 +182,7 @@ function cintaPresentar() {
       peque('desde-aqui', 'Desde aquí', 'StepForward', () => startPresent(true), { atajo: 'Mayús+F5' }),
       peque('presentador', 'Vista de presentador', 'Presentation', () => { startPresent(false); alternaPresentador(); }, { d: 'Segunda ventana con cronómetro y notas' })),
     grupoC('Ensayo',
+      peque('grabar', 'Grabar presentación', 'Video', openGrabacion),
       peque('ensayar', 'Ensayar', 'Timer', presentaEnsayo, { d: 'Mide tu tiempo real por diapositiva' }),
       peque('ajustar-tiempo', 'Ajustar al tiempo', 'Hourglass', openAjustarTiempo, { d: 'Cuadrar la charla al tiempo que te dan' })),
     grupoC('Revisar',
@@ -220,6 +226,7 @@ function cintaContextual() {
   const b = blq();
   if (!b) return [];
   const def = BLOCK_DEFS.find(x => x.id === b.type) || { name: 'Bloque' };
+  if (b.locked) return [{ id: 'bloque', etiqueta: def.name, grupos: [grupoC('Bloque protegido', peque('desbloquear-bloque', 'Desbloquear', 'LockOpen', () => { const x = blq(); if (x) { x.locked = false; commit(); } }))] }];
   const figura = () => { const x = blq(); return !!(x && x.type === 'image' && x.src); };
   const animables = () => { const x = blq(); return ANIMS.filter(a => a.id !== 'draw' || (x && ['chart', 'func', 'smart', 'geo'].includes(x.type))); };
   return [{ id: 'bloque', etiqueta: def.name, grupos: [
@@ -229,6 +236,7 @@ function cintaContextual() {
       peque('propiedades', 'Propiedades…', 'SlidersHorizontal', () => abrePanelLateral('bloque'), { d: 'Todas las propiedades de este bloque en el panel de detalles' }),
       peque('datos-cientificos', 'Datos científicos…', 'Atom', conBloque(cienciaReabrir), { d: 'Editar los datos y su procedencia', oculto: () => { const x = blq(); return !x || !x.cientifico; } })),
     grupoC('Figura',
+      peque('editar-capas', b.figura ? 'Editar capas' : 'Anotar una copia', 'Layers2', conBloque(openFiguraCapas), { d: 'Objetos, texto y anotaciones editables', oculto: () => !figura() }),
       peque('despiece', 'Del artículo', 'Scissors', conBloque(openDespiece), { d: 'Partir en paneles, tapar leyendas y señalar', oculto: () => !figura() }),
       peque('encuadrar', 'Encuadrar', 'Crop', conBloque(openRecorte), { d: 'Recorte y zoom', oculto: () => !figura() }),
       peque('escala', 'Barra de escala', 'Ruler', conBloque(openEscala), { d: 'Barra de escala de micrografía', oculto: () => !figura() })),
@@ -248,12 +256,13 @@ function cintaContextual() {
 }
 
 /* ---------- «Archivo» ---------- */
-function abreArchivo(ancla) {
-  const menu = h('div', { class: 'menu', role: 'menu', 'aria-label': 'Archivo' });
-  const item = (ic, etiqueta, sub, fn) => menu.append(h('button', { type: 'button', role: 'menuitem', onclick: () => { closeMenus(); fn(); } },
-    h('span', { class: 'mi', 'aria-hidden': 'true' }, icNodo(ic)), h('span', null, etiqueta), sub ? h('span', { class: 'msub' }, sub) : null));
-  const sep = () => menu.append(h('div', { class: 'm-sep', role: 'separator' }));
-  const titulo = t => menu.append(h('div', { class: 'menu-t', role: 'presentation' }, t));
+/* Los ítems del menú Archivo, una sola vez: los pinta el menú y también los ofrece
+   Mey (extras de la ayuda), así que un rótulo nuevo aparece en ambos sitios. */
+function elementosArchivo() {
+  const el = [];
+  const item = (ic, etiqueta, sub, fn) => el.push({ ic, etiqueta, sub, fn });
+  const sep = () => el.push({ sep: true });
+  const titulo = t => el.push({ titulo: t });
   item('House', 'Inicio y biblioteca', null, () => wsInicio());
   item('FolderOpen', 'Mis presentaciones…', null, openDecks);
   item('FilePlus', 'Nueva presentación…', 'plantillas', openPlantillas);
@@ -261,12 +270,17 @@ function abreArchivo(ancla) {
   item('Save', 'Guardar como…', 'Ctrl+S', saveDeckAs);
   if (S.archivo) item('HardDrive', 'Dejar de guardar en el archivo', S.archivoNombre, sueltaArchivo);
   else item('HardDrive', 'Guardar en un archivo…', 'se mantiene al día solo', eligeArchivo);
-  item('Upload', 'Importar proyecto .json…', null, importJSON);
+  item('Upload', 'Importar presentación…', 'JSON, PPTX o Markdown', openImportarPresentacion);
+  item('FileCode', 'Crear desde Markdown…', 'vista previa', openMarkdown);
   item('History', 'Copias y recuperación', null, openRecuperacion);
   item('CalendarDays', 'Bitácora del documento…', 'historial por días', openBitacora);
   sep(); titulo('Exportar');
+  item('FileCheck', 'Revisar y compartir…', 'elige formato y revisa el archivo', () => openCompartir());
   item('FileText', 'PDF…', 'Ctrl+P', openPdfHelp);
-  item('FileSliders', 'PowerPoint (.pptx)', 'texto y tablas editables', exportPPTX);
+  item('FileSliders', 'PowerPoint editable (.pptx)', 'texto, tablas, gráficas y diagramas compatibles', exportPPTXEditable);
+  item('FileSliders', 'PowerPoint (.pptx)', 'exportador clásico', exportPPTX);
+  item('FileCode', 'Presentación HTML autónoma…', 'gráficos interactivos sin conexión', openHTMLPresentacion);
+  item('FileText', 'Guion Markdown (.md)', 'imágenes incrustadas', exportMarkdownUI);
   item('FileCode', 'Código Beamer (.tex)', 'Overleaf', openTexView);
   item('FilePen', 'Esqueleto de artículo (.tex)', 'afirmaciones → secciones', exportArticulo);
   item('Printer', 'Folleto para repartir…', '2, 3 o 6 por hoja', openFolleto);
@@ -279,6 +293,28 @@ function abreArchivo(ancla) {
   sep();
   item('Info', 'Acerca de Erlen Slides', 'versión y licencia', openEdicion);
   item('HelpCircle', 'Ayuda y atajos', null, () => openHelp());
+  return el;
+}
+/* Comandos de Mey: los mismos ítems, con el rótulo de su sección («Exportar › PDF…»). */
+function comandosArchivo() {
+  let grupo = '';
+  const out = [];
+  for (const e of elementosArchivo()) {
+    if (e.sep) { grupo = ''; continue; }
+    if (e.titulo) { grupo = e.titulo; continue; }
+    out.push({ clave: 'archivo › ' + e.etiqueta, pestana: '', etiqueta: grupo ? grupo + ' › ' + e.etiqueta : e.etiqueta,
+      ruta: [], titulo: e.sub || undefined, habilitado: true, ejecutar: e.fn });
+  }
+  return out;
+}
+function abreArchivo(ancla) {
+  const menu = h('div', { class: 'menu', role: 'menu', 'aria-label': 'Archivo' });
+  for (const e of elementosArchivo()) {
+    if (e.sep) menu.append(h('div', { class: 'm-sep', role: 'separator' }));
+    else if (e.titulo) menu.append(h('div', { class: 'menu-t', role: 'presentation' }, e.titulo));
+    else menu.append(h('button', { type: 'button', role: 'menuitem', onclick: () => { closeMenus(); e.fn(); } },
+      h('span', { class: 'mi', 'aria-hidden': 'true' }, icNodo(e.ic)), h('span', null, e.etiqueta), e.sub ? h('span', { class: 'msub' }, e.sub) : null));
+  }
   showMenu(menu, ancla);
   ancla.setAttribute('aria-expanded', 'true');
   const vigila = new MutationObserver(() => { if (!menu.isConnected) { ancla.setAttribute('aria-expanded', 'false'); vigila.disconnect(); } });
@@ -329,6 +365,7 @@ function actualizaCinta() {
 let detallesFoco = null;
 function abrePanelLateral(tab, seccion) {
   const body = document.body;
+  const visiblesAntes = detallesEstado() !== null;
   if (!body.classList.contains('panel-temporal')) detallesFoco = document.activeElement;
   /* Con la cinta, «Insertar» vive solo en la cinta: el panel abre en Diapositiva. */
   S.tab = tab === 'bloque' && !blq() ? 'slide' : tab;
@@ -336,9 +373,9 @@ function abrePanelLateral(tab, seccion) {
   const yaAbierto = body.classList.contains('panel-temporal');
   if (enCinta()) body.classList.add('panel-temporal');
   renderInspector();
-  openDrawer(true);   // en pantallas estrechas, cajón con foco atrapado
+  openDrawer(true);   // en pantallas estrechas, el cajón del marco con foco atrapado
   /* En escritorio el panel quita ancho al lienzo: se vuelve a ajustar la diapositiva. */
-  if (enCinta() && !yaAbierto && !$('#inspector').classList.contains('open') && S.deck) { S.zoom = null; renderCanvas(); }
+  if (enCinta() && !yaAbierto && !visiblesAntes && S.deck) { S.zoom = null; renderCanvas(); }
   const insp = $('#inspector');
   let destino = null;
   if (seccion) {
@@ -347,7 +384,7 @@ function abrePanelLateral(tab, seccion) {
     if (g && g.classList.contains('cerrado')) { const cab = g.querySelector('.g-cab'); if (cab) cab.click(); g = busca(); }
     if (g) { g.scrollIntoView({ block: 'start' }); destino = $$(FOCABLES, g).find(x => !x.classList.contains('g-cab')) || g.querySelector('.g-cab'); }
   }
-  if (!insp.classList.contains('open')) (destino || $('#detallesCerrar'))?.focus();
+  if (detallesEstado() !== 'cajon') (destino || $('#detallesCerrar'))?.focus();
   actualizaCinta();
 }
 function cierraPanelDetalles() {
@@ -360,11 +397,12 @@ function cierraPanelDetalles() {
   if (detallesFoco && document.contains(detallesFoco) && !$('#inspector').contains(detallesFoco)) detallesFoco.focus();
   detallesFoco = null;
 }
-/* Escape dentro del panel de detalles (en escritorio; el cajón móvil tiene el suyo). */
+/* Escape dentro del panel de detalles (en escritorio; el cajón de estrecho lo cierra el
+   marco y la escucha de captura de 90-main devuelve el panel a su estado). */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || !document.body.classList.contains('panel-temporal')) return;
   const insp = $('#inspector');
-  if (!insp || insp.classList.contains('open') || $('#modalRoot').firstChild || !insp.contains(e.target)) return;
+  if (!insp || detallesEstado() === 'cajon' || $('#modalRoot').firstChild || !insp.contains(e.target)) return;
   e.preventDefault(); e.stopPropagation();
   cierraPanelDetalles();
 }, true);
@@ -385,4 +423,7 @@ function aplicaDisposicion() {
   /* Cambiar de disposición cambia el ancho disponible: sin volver a ajustar,
      el lienzo se queda con la escala anterior hasta el siguiente redibujo. */
   if (S.deck) { S.zoom = null; renderCanvas(); }
+  /* La disposición decide si el panel de detalles es columna permanente («lado»)
+     o panel temporal (con la cinta): el marco la acompaña. */
+  sincronizaDetalles();
 }

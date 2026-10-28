@@ -20,9 +20,7 @@
   --h-ico:calc(30px + 4px * var(--holg));   /* botón de icono   34 / 30 */
   --h-ctl:calc(32px + 4px * var(--holg));   /* botón y campo    36 / 32 */
   --h-blq:calc(46px + 12px * var(--holg));  /* botón de bloque  58 / 46 */
-  --h-barra:calc(50px + 8px * var(--holg)); /* barra superior   58 / 50 */
-  --w-tira:calc(196px + 12px * var(--holg));   /* tira de diapositivas 208 / 196 */
-  --w-panel:calc(302px + 20px * var(--holg));  /* panel derecho        322 / 302 */
+  /* La barra superior y las columnas las mide el marco común (diseno/marco.css). */
   /* ---- radios: los del paquete de la suite (diseno/tokens.css) ---- */
   --r1:var(--erlen-radio-campo); --r2:var(--erlen-radio-pequeno); --r3:var(--erlen-radio-tarjeta); --r4:var(--erlen-radio-panel);
   /* ---- escala tipográfica: corta y respetada; nada por debajo de 12 px ---- */
@@ -104,24 +102,27 @@ button{font-family:var(--ui)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
 
-/* ---------- shell ---------- */
+/* ---------- shell ----------
+   El armazón lo pone el marco común (diseno/marco.css): #app aloja .erlen-marco y los
+   nodos del editor viven en sus huecos. Aquí solo cómo se reparte cada nodo dentro del
+   hueco que le toca. */
 .app{display:flex;flex-direction:column;height:100dvh}
-.main{flex:1;display:grid;grid-template-columns:var(--w-tira) minmax(0,1fr) var(--w-panel);min-height:0}
+.erlen-marco-navegacion>.filmstrip{height:100%;border-right:0}
+.erlen-marco-trabajo>.canvas-wrap{height:100%}
+.erlen-marco-detalles>.inspector{height:100%;border-left:0}
 
-/* ---------- top bar ----------
-   El cristal en flujo llega con la clase .vidrio en cuerpo.html (sin
-   desenfoque: contiene el menú de la suite); aquí solo queda la geometría y
-   el canto inferior del contorno del cristal. */
-.topbar{display:flex;align-items:center;gap:var(--e2);height:var(--h-barra);padding:0 var(--e4);
-  border-bottom:1px solid var(--glass-edge);flex:none;position:relative;z-index:40}
-.wordmark{font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.01em;color:var(--ink);
-  display:flex;align-items:baseline;user-select:none;white-space:nowrap}
-/* El matraz lleva el color del acento en el líquido; el nombre va en serifa, como antes. */
-.wordmark{gap:7px;align-items:center}
-.wordmark .marca-svg{width:22px;height:22px;flex:none}
-.wordmark .marca-txt{letter-spacing:-.005em}
+/* ---------- controles de la cabecera ----------
+   El cristal del marco trae su propio fondo; aquí solo la geometría de los controles
+   que la app presta a los huecos del marco (título, estado, acciones y utilidades). */
 .tb-sep{width:1px;height:24px;background:var(--line);flex:none;margin:0 var(--e1)}
-.deck-title{flex:1;min-width:60px;border:1px solid transparent;background:transparent;color:var(--ink);
+/* Las acciones y las utilidades de la cabecera van siempre en una sola fila, centradas con el
+   resto de la cabecera: como bloques con hijos en línea, el separador (un div) cortaba la fila
+   y «Presentar» caía a una segunda, y la línea de base inflaba la altura de la cabecera. */
+.cabecera-acciones,.cabecera-utilidades{display:flex;align-items:center;flex-wrap:nowrap;gap:var(--erlen-esp-2)}
+.cabecera-acciones>*,.cabecera-utilidades>*{flex:none}
+.cabecera-acciones .btn,.cabecera-acciones .icon-btn{min-height:var(--erlen-alto-control)}
+.cabecera-acciones .icon-btn{min-width:var(--erlen-alto-control)}
+.deck-title{flex:1;width:8rem;min-width:60px;border:1px solid transparent;background:transparent;color:var(--ink);
   font:600 var(--t3) var(--ui);padding:var(--e2) var(--e3);border-radius:var(--r2);text-overflow:ellipsis;
   min-height:var(--h-ctl);transition:background .12s,border-color .12s}
 .deck-title:hover{border-color:var(--line);background:var(--panel2)}
@@ -161,7 +162,7 @@ button{font-family:var(--ui)}
 .btn-danger{color:var(--danger);border-color:var(--line)}
 .btn-danger:hover{background:var(--dangerSoft);border-color:var(--danger)}
 .btn-sm{padding:0 var(--e3);font-size:var(--t1);border-radius:var(--r1);min-height:calc(var(--h-ctl) - 8px)}
-.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:var(--h-ico);height:var(--h-ico);
+.icon-btn{padding:0;display:inline-flex;align-items:center;justify-content:center;width:var(--h-ico);height:var(--h-ico);
   border-radius:var(--r2);border:1px solid transparent;background:transparent;color:var(--mut);cursor:pointer;
   font-size:var(--t3);flex:none;transition:background .12s,color .12s}
 .icon-btn:hover{background:var(--accSoft);color:var(--ink)}
@@ -210,12 +211,17 @@ button{font-family:var(--ui)}
 .fs-add{margin:0 var(--e4) var(--e4);flex:none}
 
 /* ---------- canvas ---------- */
-.canvas-wrap{position:relative;background:var(--canvas);min-width:0;min-height:0;display:flex;flex-direction:column}
+.canvas-wrap{position:relative;background:var(--canvas);min-width:0;min-height:0;display:flex;flex-direction:column;
+  --cod-alto:0px;
+  /* Franja que ocupan los chips flotantes (posición y zoom): 12 px de margen al borde del
+     área de trabajo, el alto del cuadro de zoom y otros 12 px de aire. El lienzo la reserva
+     como relleno inferior para que la diapositiva —y sus manijas de esquina— nunca queden debajo. */
+  --pie-lienzo:calc(var(--h-ico) + 2 * var(--e1) + 2px + 24px)}
 .canvas-scroll{flex:1;overflow:auto;display:grid;place-items:center;padding:var(--e5)}
 .stage{position:relative;flex:none;filter:drop-shadow(0 2px 8px rgba(10,14,30,.13)) drop-shadow(0 16px 38px rgba(10,14,30,.11))}
 .stage-inner{transform-origin:top left}
-.canvas-foot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:var(--e2);
-  padding:var(--e3) var(--e4);pointer-events:none;justify-content:space-between}
+.canvas-foot{position:absolute;inset-inline:12px;bottom:calc(var(--cod-alto) + 12px);display:flex;align-items:center;gap:var(--e2);
+  padding:0;pointer-events:none;justify-content:space-between}
 .canvas-foot>*{pointer-events:auto}
 .zoombox{display:flex;align-items:center;gap:var(--e1);background:var(--panel);border:1px solid var(--line);
   border-radius:var(--r3);padding:var(--e1);box-shadow:var(--shadow)}
@@ -425,30 +431,20 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
 
 /* mobile */
 .hamb{display:none}
-.drawer-mask{display:none}
 .only-narrow,.only-narrow-i{display:none}
 @media (max-width:920px){
-  .main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
-  .filmstrip{order:2;flex-direction:row;border-right:none;border-top:1px solid var(--line);height:92px;align-items:center}
-  .fs-head{display:none}
-  .fs-list{flex-direction:row;padding:var(--e2) var(--e3);gap:var(--e2);overflow-x:auto;overflow-y:hidden;align-items:center}
-  .fs-item{width:100px;flex:none}
-  .fs-add{margin:0 var(--e3) 0 0;order:-1;width:40px;height:40px;padding:0;justify-content:center;font-size:19px;flex:none}
-  .inspector{position:fixed;top:0;right:0;bottom:0;width:min(320px,88vw);z-index:120;transform:translateX(105%);
-    transition:transform .2s ease;box-shadow:var(--shadow-lg)}
-  .inspector.open{transform:none}
-  .drawer-mask.open{display:block;position:fixed;inset:0;background:rgba(10,13,24,.4);z-index:110}
   .hamb{display:inline-flex}
   .only-wide,.only-wide-i{display:none!important}
   .only-narrow{display:inline-flex}
   .only-narrow-i{display:inline}
-  .topbar{gap:var(--e1);padding:0 var(--e2);height:calc(var(--h-barra) - 6px)}
-  .wordmark{font-size:18px}
+  /* En la barra inferior del marco hay ancho de sobra: «Presentar» lleva su texto, no solo el icono. */
+  .erlen-marco-barra-accion .only-wide-i{display:inline!important}
+  .erlen-marco-barra-accion .only-narrow-i{display:none!important}
   .deck-title{min-width:0;font-size:var(--t2);padding:var(--e1) var(--e2)}
   .save-ind{display:none}
   /* el ajuste de zoom reserva 22 px en total: el aire de aquí no puede pasarse */
   .canvas-scroll{padding:var(--e2)}
-  .canvas-foot{padding:var(--e2)}
+  .canvas-foot{inset-inline:var(--e2);bottom:calc(var(--cod-alto) + var(--e2))}
   .slide-pos{font-size:var(--t0);padding:var(--e1) var(--e2)}
   .mo-head,.mo-foot{padding:var(--e3) var(--e4)}
   .mo-body{padding:var(--e4)}
@@ -460,7 +456,6 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
   .eq-preview{min-height:70px;padding:var(--e3)}
 }
 @media (max-width:400px){
-  .wordmark{display:none}
   .tb-sep{display:none}
 }
 @media print{
@@ -885,11 +880,12 @@ textarea.field.es-area{min-height:300px;font:var(--t2)/1.6 var(--mono);white-spa
 .pd-item .icon-btn{flex:none;width:24px;height:24px;font-size:var(--t1)}
 
 /* ---------- modo concentración ---------- */
-.app.concentrado .filmstrip,
-.app.concentrado .inspector,
-.app.concentrado .topbar{display:none}
-.app.concentrado .main{grid-template-columns:minmax(0,1fr)}
-.app.concentrado .canvas-scroll{padding:var(--e5)}
+.app.concentrado .erlen-app-header,
+.app.concentrado .erlen-marco-cinta,
+.app.concentrado .erlen-marco-navegacion,
+.app.concentrado .erlen-marco-detalles{display:none}
+.app.concentrado .erlen-marco-cuerpo{grid-template-columns:minmax(0,1fr)}
+.app.concentrado .canvas-scroll{padding:var(--e5) var(--e5) var(--pie-lienzo)}
 
 /* ---------- simulacro de sala ---------- */
 .sala-barra{display:flex;gap:var(--e2);flex-wrap:wrap;align-items:center;margin-bottom:var(--e4)}
@@ -945,7 +941,7 @@ textarea.field.es-area{min-height:300px;font:var(--t2)/1.6 var(--mono);white-spa
   border-left:2px solid var(--acc);border-right:2px solid var(--acc);pointer-events:none}
 
 /* ---------- código de la diapositiva ---------- */
-.canvas-wrap.con-codigo .canvas-scroll{padding-bottom:var(--e2)}
+.canvas-wrap.con-codigo{--cod-alto:min(38vh,320px)}
 .cod-panel{flex:none;height:min(38vh,320px);border-top:1px solid var(--line);background:var(--panel);
   display:flex;flex-direction:column;min-height:0}
 .cod-cab{display:flex;align-items:center;gap:var(--e2);padding:var(--e2) var(--e3) var(--e1);border-bottom:1px solid var(--line2);flex:none}
@@ -1195,19 +1191,12 @@ body.con-dis .app{width:calc(100% - 372px);transition:width .22s cubic-bezier(.3
 .menu .menu-t{padding:var(--e2) var(--e3) var(--e1);font:600 var(--t0) var(--ui);color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
 .menu button .mi svg{width:16px;height:16px;display:block}
 /* Con la cinta (disposición de fábrica) el inspector es un panel de detalles temporal:
-   se abre desde la cinta y se cierra con ✕ o Escape. Lo que ya está en la cinta sale
-   de la barra superior (una herramienta, un sitio). */
-body.con-cinta #inspector{display:none}
-body.con-cinta.panel-temporal #inspector{display:flex}
+   se abre desde la cinta y se cierra con ✕ o Escape; el marco lo enseña como columna de
+   detalles mientras está abierto. Lo que ya está en la cinta sale de los controles
+   (una herramienta, un sitio). */
 body.con-cinta #decksBtn,body.con-cinta #exportBtn,body.con-cinta #moreBtn,body.con-cinta #temaBtn,
 body.con-cinta #buscarBtn,body.con-cinta #densChk,body.con-cinta .dens-btn{display:none}
-@media (min-width:921px){
-  body.con-cinta .main{grid-template-columns:var(--w-tira) minmax(0,1fr) 0}
-  body.con-cinta.panel-temporal .main{grid-template-columns:var(--w-tira) minmax(0,1fr) var(--w-panel)}
-  body.con-cinta .app.concentrado .main{grid-template-columns:minmax(0,1fr)}
-}
-.app.concentrado .cinta,body.con-cinta .app.concentrado #inspector{display:none}
-/* En el cajón móvil ya está el ✕ de su cabecera. */
+/* En el cajón del marco ya está el ✕ de su cabecera. */
 @media (max-width:920px){ body.con-cinta .cinta-cerrar{display:none} }
 
 /* ---------- referencias ---------- */

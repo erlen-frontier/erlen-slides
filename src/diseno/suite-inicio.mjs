@@ -1,3 +1,4 @@
+import {aplicarIconoAplicacion} from './productos.mjs';
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,6 +34,10 @@ import {mey} from './mey.mjs';
      nuevo: {etiqueta:'Nueva página', detalle:'Página en blanco', accion},
      importar?: {etiqueta:'Importar…', accion},
      continuar?: () => ({etiqueta:'Seguir con «X»', accion}) | null,
+     objetivos?: [{id, titulo, descripcion?, etiqueta?, accion}], // tareas con datos propios; no ejemplos
+     guardado?: 'sesion' | 'explicito', // sin él, la app guarda sola y el inicio lo afirma («Guardado local activo»).
+                                   // 'sesion': no guarda nada; vive en la pestaña. 'explicito': guarda solo si la persona lo pide.
+                                   // En ambos el inicio no afirma «Guardado local activo» ni «tu trabajo se queda en este navegador»
      ejemplos?: [{id, disciplina, arte?, imagen?, titulo, descripcion?, accion, etiqueta?}],
      // arte: SVG del contenido o texto; imagen: archivo local relativo a la raíz de la app
      // (p. ej. 'ejemplos/muestra.webp'). Nunca URLs externas, absolutas ni data:.
@@ -46,9 +51,8 @@ import {mey} from './mey.mjs';
      editor?: Element,            // se vuelve inert mientras el inicio está abierto
      menuSuite?: contenedor => {}, // monta <erlen-suite-nav> en la cabecera
      app?: 'notes',                // perfil de Mey; por defecto, corto en minúsculas
-     mey?: false | pose => '<svg…>', // por defecto Mey viva (<erlen-mey lugar="vacio">): dormida
-                                   // en la biblioteca vacía y pensando si la búsqueda no encuentra;
-                                   // false la quita; una función (paquete 1.4–1.5) pinta ese SVG quieto
+     mey?: false | pose => '<svg…>', // una presencia compartida entre inicio y editor; false la quita.
+                                   // La función SVG solo se usa como respaldo sin animación disponible.
      alAbrir?, alCerrar?
    })
    Devuelve {elemento, abrir(vista), cerrar(), actualizar(), avisar(texto,{error}), abierta, vista, destruir()}.
@@ -61,6 +65,7 @@ export function mountInicio(host,config){
  if(!host||!host.ownerDocument)throw Error('mountInicio necesita un elemento anfitrión.');
  if(!config||typeof config.nombre!=='string'||!config.nuevo||typeof config.nuevo.accion!=='function')throw Error('mountInicio necesita nombre y nuevo.accion.');
  const doc=host.ownerDocument;
+ aplicarIconoAplicacion(doc,(config.app||config.corto||'').toLowerCase());
  const objetos=config.objetos||'documentos';
  const nombres={inicio:'Inicio',biblioteca:'Mis '+objetos,ejemplos:'Ejemplos editables',recursos:'Recursos y respaldos',acerca:'Acerca de'};
  const disponibles=VISTAS.filter(v=>v==='inicio'||v==='acerca'||(v==='biblioteca'&&config.biblioteca)||(v==='ejemplos'&&config.ejemplos&&config.ejemplos.length)||(v==='recursos'&&config.recursos&&config.recursos.length));
@@ -74,9 +79,9 @@ export function mountInicio(host,config){
  };
  const boton=(texto,accion,clase='',attrs={})=>{const b=el('button',{type:'button',class:('erlen-inicio-boton '+clase).trim(),...attrs},typeof texto==='string'?el('span',{class:'erlen-inicio-boton-texto'},texto):texto);if(typeof texto==='string'&&!attrs.title)b.title=texto;b.addEventListener('click',accion);return b;};
  const marca=()=>{const s=el('span',{class:'erlen-inicio-marca-icono','aria-hidden':'true'});if(config.marca)s.innerHTML=config.marca;return s;};
- // Mey solo si la app la pasa (config.mey): este módulo no importa nada para seguir sirviendo como IIFE.
+ // El recorrido compartido es la única presencia; el SVG es un respaldo sin RAF.
  const ilustracion=pose=>{
-  if(config.mey===false)return null;
+  if(config.mey===false||doc.defaultView?.requestAnimationFrame)return null;
   const s=el('span',{class:'erlen-inicio-mey','aria-hidden':'true'});
   if(typeof config.mey==='function'){s.innerHTML=config.mey(pose);return s;}
   // Mey viva del paquete: se adapta sola al hueco y al perfil de la app, y toma cada mejora de diseno/mey.mjs.
@@ -103,7 +108,7 @@ export function mountInicio(host,config){
    nav,
    el('div',{class:'erlen-inicio-lateral-pie'},acerca,
     config.fuente?el('a',{class:'erlen-inicio-fuente',href:config.fuente.url,target:'_blank',rel:'noopener'},'Código fuente · '+(config.fuente.licencia||'')):null,
-    config.estado?el('p',{class:'erlen-inicio-estado'},config.estado,el('span',null,'Sin cuenta · tu trabajo se queda en este navegador.')):null));
+    config.estado?el('p',{class:'erlen-inicio-estado'},config.estado,el('span',null,{sesion:'Sin cuenta · lo que cargues vive solo en esta pestaña.',explicito:'Sin cuenta · se guarda en este navegador solo si pulsas Guardar.'}[config.guardado]||'Sin cuenta · tu trabajo se queda en este navegador.')):null));
   const acciones=el('div',{class:'erlen-inicio-cabecera-acciones'},el('span',{class:'erlen-inicio-local'},'En este navegador'));
   const cont=config.continuar&&config.continuar();
   if(cont)acciones.append(boton(cont.etiqueta,alEditor(cont.accion),'secundario'));
@@ -142,13 +147,17 @@ export function mountInicio(host,config){
  }
  function pintarInicio(c){
   const buscar=el('input',{type:'search',class:'erlen-inicio-campo',placeholder:'Buscar un ejemplo…','aria-label':'Buscar ejemplos'});
-  const rejilla=el('section',{class:'erlen-inicio-rejilla erlen-inicio-coleccion','aria-label':'Colección de inicio'},tarjetaNueva(),(config.ejemplos||[]).map(tarjetaEjemplo));
+  const objetivos=(config.objetivos||[]).map(o=>el('article',{class:'erlen-inicio-objetivo','data-objetivo':o.id},
+   el('span',{class:'erlen-inicio-eyebrow'},'Con tus datos'),el('h2',null,o.titulo),
+   o.descripcion?el('p',null,o.descripcion):null,
+   boton(o.etiqueta||'Empezar',alEditor(o.accion),'secundario',{'aria-label':(o.etiqueta||'Empezar')+' · '+o.titulo})));
+  const rejilla=el('section',{class:'erlen-inicio-rejilla erlen-inicio-coleccion','aria-label':'Colección de inicio'},tarjetaNueva(),objetivos,(config.ejemplos||[]).map(tarjetaEjemplo));
   buscar.addEventListener('input',()=>{const q=buscar.value.trim().toLowerCase();for(const t of rejilla.querySelectorAll('.erlen-inicio-ejemplo'))t.hidden=!!q&&!t.dataset.busqueda.includes(q);});
   const [texto,em]=Array.isArray(config.titulo)?config.titulo:[config.titulo||config.nombre];
   c.append(el('div',{class:'erlen-inicio-bienvenida'},
    el('div',null,config.eyebrow?el('span',{class:'erlen-inicio-eyebrow'},config.eyebrow):null,titulo(texto,em),config.lead?el('p',{class:'erlen-inicio-lead'},config.lead):null),
    config.ejemplos&&config.ejemplos.length?el('label',{class:'erlen-inicio-buscar'},buscar):null));
-  if(config.mey!==false&&typeof config.mey!=='function'&&mey.definir(doc.defaultView))
+  if(config.mey!==false&&!doc.defaultView?.requestAnimationFrame&&typeof config.mey!=='function'&&mey.definir(doc.defaultView))
    c.append(el('div',{class:'erlen-inicio-recreo','aria-hidden':'true'},el('erlen-mey',{lugar:'recreo',app:config.app||(config.corto||'').toLowerCase()||null})));
   const accionesMeta=el('div',{class:'erlen-inicio-acciones'});
   if(config.ejemplos&&config.ejemplos.length>3)accionesMeta.append(boton('Explorar ejemplos',()=>abrir('ejemplos'),'secundario'));
@@ -159,7 +168,7 @@ export function mountInicio(host,config){
    const ver=el('a',{href:'#',class:'erlen-inicio-enlace-texto'},'Ver todo');ver.addEventListener('click',e=>{e.preventDefault();abrir('biblioteca');});
    c.append(el('div',{class:'erlen-inicio-meta'},el('h2',null,'Recientes'),ver),el('ul',{class:'erlen-inicio-recientes'},recientes.map(r=>{const b=boton([el('strong',null,r.titulo||'Sin título'),r.detalle||r.fecha?el('small',null,[r.detalle,r.fecha].filter(Boolean).join(' · ')):null],alEditor(r.abrir),'reciente');return el('li',null,b);})));
   }
-  if(config.ejemplos&&config.ejemplos.length)c.append(el('footer',{class:'erlen-inicio-pie'},el('p',null,'Ejemplos didácticos · sustituye los datos por los de tu investigación.'),el('span',{class:'erlen-inicio-activo'},'Guardado local activo')));
+  if(config.ejemplos&&config.ejemplos.length)c.append(el('footer',{class:'erlen-inicio-pie'},el('p',null,'Ejemplos didácticos · sustituye los datos por los de tu investigación.'),el('span',{class:'erlen-inicio-activo'+({sesion:' sesion',explicito:' sesion'}[config.guardado]||'')},{sesion:'Sin guardado en el navegador',explicito:'Guardado solo si lo pides'}[config.guardado]||'Guardado local activo')));
  }
  function pintarBiblioteca(c){
   cabeceraVista(c,nombres.biblioteca);
@@ -225,20 +234,27 @@ export function mountInicio(host,config){
    a.enlaces&&a.enlaces.length?el('ul',null,a.enlaces.map(l=>el('li',null,el('a',{href:l.url,target:'_blank',rel:'noopener'},l.etiqueta)))):null));
  }
 
+ let recorridoLibre=null,recorridoPropio=false,pausaAnterior=null;
  function abrir(v='inicio'){
   const nueva=disponibles.includes(v)?v:'inicio';
   if(nueva!==vista)aviso=null;
   vista=nueva;
-  if(!abierta){tituloPrevio=doc.title;abierta=true;raiz.hidden=false;if(config.editor)config.editor.inert=true;doc.body.classList.add('erlen-inicio-abierto');if(config.alAbrir)config.alAbrir();}
+  if(!abierta){tituloPrevio=doc.title;abierta=true;raiz.hidden=false;if(config.editor)config.editor.setAttribute('inert','');doc.body.classList.add('erlen-inicio-abierto');if(config.alAbrir)config.alAbrir();}
   pintar();
   raiz.scrollTop=0;
+  if(config.mey!==false&&doc.defaultView?.requestAnimationFrame){
+   if(!recorridoLibre?.elemento.isConnected){recorridoPropio=!mey.recorridoActual(doc);recorridoLibre=mey.recorrerPagina({documento:doc});}
+   if(recorridoLibre?.pausa.classList.contains('mey-libre-pausa--integrada')){pausaAnterior=recorridoLibre.pausa.parentElement;recorridoLibre.ubicarPausa(null);}
+  }
   doc.title=nombres[vista]+' · '+config.nombre;
   raiz.querySelector('.erlen-inicio-titulo')?.focus({preventScroll:true});
  }
  function cerrar(){
   if(!abierta)return;
   abierta=false;raiz.hidden=true;aviso=null;
-  if(config.editor)config.editor.inert=false;
+  if(pausaAnterior?.isConnected)recorridoLibre?.ubicarPausa(pausaAnterior);pausaAnterior=null;
+  if(recorridoPropio)recorridoLibre?.actualizar({evitar:config.editor?[config.editor]:[]});
+  if(config.editor)config.editor.removeAttribute('inert');
   doc.body.classList.remove('erlen-inicio-abierto');
   if(tituloPrevio!==null)doc.title=tituloPrevio;
   if(config.alCerrar)config.alCerrar();
@@ -249,6 +265,6 @@ export function mountInicio(host,config){
   avisar(texto,{error=false}={}){aviso=texto?{texto:String(texto),error:!!error}:null;if(abierta)pintar();},
   get abierta(){return abierta;},
   get vista(){return vista;},
-  destruir(){cerrar();raiz.remove();}
+  destruir(){cerrar();if(recorridoPropio)recorridoLibre?.detener();recorridoLibre=null;raiz.remove();}
  };
 }

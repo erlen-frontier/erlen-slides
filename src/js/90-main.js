@@ -182,17 +182,16 @@ function initChrome() {
   });
   /* Con la cinta, el botón del cajón abre el panel de detalles en la pestaña actual. */
   $('#hambBtn').addEventListener('click', () => {
-    if ($('#inspector').classList.contains('open')) cierraDrawer();
+    if (detallesEstado()) cierraDrawer();
     else if (enCinta()) abrePanelLateral(S.tab);
     else openDrawer(true);
   });
-  $('#drawerMask').addEventListener('click', () => cierraDrawer());
   window.addEventListener('resize', deb(() => {
     const movil = matchMedia('(max-width:920px)').matches;
     if (!movil) openDrawer(false);
     /* Al pasar a móvil, un panel de detalles abierto en columna no se queda
        medio visible: se cierra, y el botón del cajón lo vuelve a abrir. */
-    else if (document.body.classList.contains('panel-temporal') && !$('#inspector').classList.contains('open')) cierraPanelDetalles();
+    else if (document.body.classList.contains('panel-temporal') && detallesEstado() !== 'cajon') cierraPanelDetalles();
     renderFilmstrip(); renderCanvas();
   }, 150));
   window.addEventListener('beforeunload', () => { flushEdicion(); saveInd.now(); });
@@ -203,38 +202,58 @@ function cierraDrawer() {
   if (document.body.classList.contains('panel-temporal')) cierraPanelDetalles();
   else openDrawer(false);
 }
+/* Estado real del panel de detalles según el marco: el cajón accesible en pantallas
+   estrechas o la columna de detalles a todo ancho. El marco cierra su cajón también por
+   su cuenta (su ✕, su máscara o Escape), y estos caminos se reflejan abajo en la escucha
+   de captura, así que la app y el marco nunca llevan estados distintos. */
+function detallesEstado() {
+  const insp = $('#inspector');
+  if (!insp) return null;
+  if (window.matchMedia('(max-width:920px)').matches) return insp.closest('.erlen-marco-cajon') ? 'cajon' : null;
+  return insp.closest('.erlen-marco-cuerpo')?.classList.contains('con-detalles') ? 'columna' : null;
+}
+/* El marco enseña u oculta el panel (abrirDetalles/cerrarDetalles) según el estado de la
+   app: idempotente, y conserva la selección y el foco del editor al mover los nodos. */
+function sincronizaDetalles() {
+  if (!MARCO) return;
+  const movil = window.matchMedia('(max-width:920px)').matches;
+  const visible = movil ? $('#inspector').classList.contains('open') : (!enCinta() || document.body.classList.contains('panel-temporal'));
+  const deseado = visible ? (movil ? 'cajon' : 'columna') : null;
+  if (detallesEstado() === deseado) return;
+  if (deseado) MARCO.abrirDetalles(); else MARCO.cerrarDetalles();
+}
 function openDrawer(on) {
   const movil = window.matchMedia('(max-width:920px)').matches;
   on = !!on && movil;
   const panel = $('#inspector');
   const antes = panel.classList.contains('open');
   panel.classList.toggle('open', on);
-  $('#drawerMask').classList.toggle('open', on);
   $('#hambBtn').setAttribute('aria-expanded', String(on));
-  [$('.topbar'),$('#cinta'),$('.filmstrip'),$('.canvas-wrap')].forEach(el=>{if(el)el.inert=on;});
+  sincronizaDetalles();
   if (on) {
     if (!antes) drawerFoco = document.activeElement;
-    panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true');
-    if (!antes) $('#drawerClose').focus();
-  } else {
-    panel.removeAttribute('role'); panel.removeAttribute('aria-modal');
-    if (antes && drawerFoco && document.contains(drawerFoco)) drawerFoco.focus();
-  }
+  } else if (antes && drawerFoco && document.contains(drawerFoco)) drawerFoco.focus();
 }
 document.addEventListener('keydown', e => {
   const panel = $('#inspector');
   if (!panel?.classList.contains('open') || $('#modalRoot').firstChild) return;
-  /* Escape cierra solo el cajón: no suelta además el bloque seleccionado. */
-  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cierraDrawer(); }
-  if (e.key === 'Tab') {
-    const f = $$(FOCABLES,panel).filter(x=>x.getClientRects().length);
-    if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f[f.length-1]?.focus();}
-    else if(!e.shiftKey&&document.activeElement===f[f.length-1]){e.preventDefault();f[0]?.focus();}
-  }
-});
+  /* Escape cierra solo el cajón: no suelta además el bloque seleccionado. Se escucha en
+     captura para que el estado del panel quede al día antes de que el cajón del marco —
+     que también lo cierra— procese la tecla. */
+  if (e.key === 'Escape') { e.preventDefault(); cierraDrawer(); }
+}, true);
+/* El cajón del marco se cierra también con su ✕ o su máscara, y su botón de navegación lo
+   sustituye por el otro cajón: en captura se devuelve el panel a su estado de la app. */
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (!(t instanceof Element) || !$('#inspector')?.classList.contains('open')) return;
+  if (t.closest('.erlen-marco-cajon-cerrar') || t.closest('.erlen-marco-mascara')) cierraDrawer();
+  else if (t.closest('.erlen-marco-abrir-cajon')) openDrawer(false);
+}, true);
 
 /* ---------- arranque ---------- */
 function boot() {
+  montaMarco();
   S.prefs = cargaPrefs();
   aplicaTemaApp();
   const auto = lsGet(LS_AUTO, null);
@@ -280,9 +299,6 @@ function boot() {
   if (rescatado && rescatado.length) setTimeout(() => openAvisosImport(rescatado), 400);
   avisaAutoRoto();
   wsInit();
-  // Menú de la suite también en la barra del editor, junto al nombre de la app
-  // (docs/COHERENCIA-APPS.md §4 del portal); solo se monta bajo /slides/.
-  if (typeof erlenSuiteNavigation === 'function' && $('#tbSuite')) erlenSuiteNavigation($('#tbSuite'), 'slides');
   recInicia();
   cienciaIconos();
 }

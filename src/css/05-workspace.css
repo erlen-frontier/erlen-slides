@@ -1,37 +1,25 @@
-/* Erlen: espacio de trabajo y adaptación del editor, sin alterar las diapositivas. */
+/* Erlen: espacio de trabajo y adaptación del editor, sin alterar las diapositivas.
+   El armazón de la suite (diseno/marco.css) pone la cabecera, la cinta, las columnas y el
+   pie; aquí solo cómo se reparten los nodos del editor en sus huecos y su adaptación a
+   pantallas estrechas (el cajón de navegación y el de detalles los abre el marco). */
 :root { --h-ico:36px; --h-ctl:40px; }
-.topbar {gap:6px}
-.wordmark {border:0;background:none;cursor:pointer;padding:4px;color:var(--ink)}
 .ed-badge {font:600 var(--t0) var(--ui);border:1px solid var(--accLine);background:var(--accSoft);color:var(--acc);border-radius:6px;padding:5px 8px;cursor:pointer}
 .ws-lead {color:var(--mut);font-size:16px;line-height:1.6;max-width:620px}
-.drawer-close {display:none}
 @media (min-width:921px) and (max-width:1180px) {
-  :root {--w-tira:164px;--w-panel:280px}
-  .topbar .tb-sep,.topbar #buscarBtn,.topbar #helpBtn,.topbar .save-ind {display:none}
+  #buscarBtn,#helpBtn,.save-ind {display:none}
   .fs-list {padding-left:8px;padding-right:8px}
 }
 @media (max-width:920px) {
-  .topbar {height:auto;min-height:104px;flex-wrap:wrap;padding:8px 12px;gap:4px}
-  .topbar .wordmark {display:flex;font-size:20px}
-  .topbar .deck-title {order:20;flex:1 0 calc(100% - 140px);width:0;font-size:16px;min-height:40px;padding:4px 0}
-  .topbar .save-ind {display:block;order:21;min-width:0;width:130px;overflow:hidden;text-overflow:ellipsis;font-size:var(--t0)}
-  .topbar .tb-sep,.topbar #buscarBtn,.topbar #asisBtn {display:none}
-  .topbar #presentBtn {margin-left:auto}
-  .topbar .icon-btn,.topbar .btn,.topbar .ed-badge {min-width:44px;min-height:44px}
-  .topbar .ed-badge {font-size:var(--t0);padding:4px;max-width:82px;overflow:hidden;text-overflow:ellipsis}
-  .topbar #undoBtn,.topbar #redoBtn {width:34px;min-width:34px}
-  .inspector {width:min(390px,100vw);visibility:hidden}
-  .inspector.open {visibility:visible}
-  .drawer-close {display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--line)}
-  .drawer-close span {font-weight:600}
+  .tb-sep,#buscarBtn,#asisBtn {display:none}
+  .erlen-marco-controles .save-ind {display:block;min-width:0;width:130px;overflow:hidden;text-overflow:ellipsis;font-size:var(--t0)}
+  #presentBtn {margin-left:auto}
+  .erlen-marco-controles .icon-btn,.erlen-marco-controles .btn,.erlen-marco-controles .ed-badge {min-width:44px;min-height:44px}
+  .erlen-marco-controles .ed-badge {font-size:var(--t0);padding:4px;max-width:82px;overflow:hidden;text-overflow:ellipsis}
   .canvas-foot {gap:4px;flex-wrap:wrap}
   .foot-izq {min-width:0}
   .zoombox {margin-left:auto;gap:0}
   .zoombox .icon-btn {width:36px;height:40px}
   .prep-ind {max-width:90px;overflow:hidden;text-overflow:ellipsis}
-  .filmstrip {height:104px;padding-bottom:env(safe-area-inset-bottom)}
-  .fs-list {min-width:0}
-  .fs-add {width:44px;height:44px;margin-right:4px}
   .menu,.pop {max-width:calc(100vw - 16px);max-height:calc(100dvh - 24px);overflow:auto}
   .modal {width:calc(100vw - 24px);max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
   .mo-body {min-width:0;overflow-x:hidden;overflow-wrap:anywhere}
@@ -44,49 +32,9 @@
   .insp-body button,.itab,.mo-body button {min-height:44px}
 }
 @media (max-width:600px) {
-  .topbar {padding:6px 8px}
-  .topbar .wordmark .marca-svg {display:none}
-  .topbar .ed-badge {display:none}
+  .ed-badge {display:none}
   .zoombox #concBtn {display:none}
-}
-/* ---------- vertical: el lienzo ocupa lo que mide la diapositiva ----------
-   En retrato una diapositiva 16:9 cabe de sobra a lo ancho y deja un tercio de
-   pantalla vacío alrededor si el lienzo se queda con toda la altura. Aquí el
-   lienzo se ciñe a la diapositiva, los controles pasan a ser una barra debajo
-   —no pastillas flotando sobre el vacío— y el hueco que sobra se lo lleva la
-   tira, que deja de ser un friso de sellos y pasa a rejilla de dos columnas. */
-@media (max-width:920px) and (orientation:portrait){
-  .main{grid-template-rows:auto minmax(0,1fr)}
-  .canvas-wrap{min-height:0}
-  .canvas-scroll{flex:none;padding:var(--e3) var(--e2)}
-  .canvas-foot{position:static;padding:0 var(--e2) var(--e2);flex-wrap:nowrap;gap:var(--e2)}
-  .canvas-foot .foot-izq{min-width:0;flex:1 1 auto;overflow:hidden}
-  .zoombox{flex:none}
-  .zoombox .zlabel{min-width:38px}
-  .filmstrip{order:2;height:auto;border-top:1px solid var(--line);min-height:0;
-    flex-direction:column;align-items:stretch}
-  .fs-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-    justify-content:center;align-content:start;gap:var(--e3);
-    padding:var(--e3) var(--e3) var(--e5);overflow-y:auto;overflow-x:hidden}
-  .fs-item{width:auto;justify-self:center}
-  .fs-sec{grid-column:1/-1}
-  /* El botón vuelve a ser un botón con su nombre, debajo de la rejilla. */
-  .fs-add{order:2;margin:0 var(--e3) var(--e3);width:auto;height:var(--h-ctl);padding:0 var(--e4);font-size:var(--t2)}
-  .fs-add .only-wide-i{display:inline!important}
-  .fs-add .only-narrow-i{display:none}
-  .fs-item.dragover-before::before{top:auto;bottom:auto;left:calc(var(--e3) / -2 - 1px);right:auto;
-    width:3px;height:100%}
-  .fs-item.dragover-after::after{top:auto;bottom:auto;right:calc(var(--e3) / -2 - 1px);left:auto;
-    width:3px;height:100%}
-}
-/* Los ajustes de móvil de este archivo son los últimos en cargarse: el bloque
-   vertical vive aquí para poder con ellos. */
-@media (max-width:920px) and (orientation:portrait){
-  .filmstrip {height:auto;padding-bottom:env(safe-area-inset-bottom)}
-  .fs-add {width:auto;height:var(--h-ctl);margin:0 12px 12px}
-  .prep-ind {max-width:none}
-  .zoombox {margin-left:0}
-  .canvas-foot {flex-wrap:nowrap}
+  #undoBtn,#redoBtn {display:none}
 }
 
 /* Pantalla de inicio común (src/diseno/inicio.css, z-index 300): lo que se abre desde ella
@@ -95,6 +43,5 @@
 .erlen-inicio-abierto .bz-boton{display:none}
 
 .mask{z-index:300}
-@media(max-width:600px){.topbar #undoBtn,.topbar #redoBtn{display:none}}
 
-body:has(.inspector.open) .bz-boton,body:has(#modalRoot .mask) .bz-boton{display:none}
+body:has(.erlen-marco-cajon .inspector),body:has(#modalRoot .mask) .bz-boton{display:none}

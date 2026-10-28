@@ -15,6 +15,33 @@ const contraste = (a, b) => {
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 };
 
+/* Un bloque flex puede encogerse y recortar su tabla sin aumentar scrollHeight
+   del cuerpo. Medimos también sus hijos contra cada ancestro que recorta. */
+function recortesSlide(raiz) {
+  const encontrados = new Map();
+  const rectValido = r => r && r.width > 0 && r.height > 0;
+  for (const el of raiz.querySelectorAll('.fbody, .blk, table, tr, td, th, img, svg, svg text, .ft-t, .ft-s, .smart-rot')) {
+    const propio = el.getBoundingClientRect();
+    let exceso = Math.max(0, (el.scrollHeight || 0) - (el.clientHeight || 0), (el.scrollWidth || 0) - (el.clientWidth || 0));
+    if (rectValido(propio)) {
+      for (let p = el.parentElement; p && raiz.contains(p); p = p.parentElement) {
+        const r = p.getBoundingClientRect(), cs = getComputedStyle(p);
+        if (!rectValido(r)) continue;
+        const cortaX = /hidden|clip|auto|scroll/.test(cs.overflowX || cs.overflow);
+        const cortaY = /hidden|clip|auto|scroll/.test(cs.overflowY || cs.overflow);
+        if (cortaX) exceso = Math.max(exceso, r.left - propio.left, propio.right - r.right);
+        if (cortaY) exceso = Math.max(exceso, r.top - propio.top, propio.bottom - r.bottom);
+      }
+    }
+    if (exceso <= 3) continue;
+    const bloque = el.closest('.blk[data-bid]');
+    const clave = bloque?.dataset.bid || (el.classList.contains('fbody') ? 'cuerpo' : 'titulo');
+    const anterior = encontrados.get(clave);
+    if (!anterior || exceso > anterior.px) encontrados.set(clave, { bloque: bloque?.dataset.bid || null, px: Math.ceil(exceso), tabla: !!(bloque?.classList.contains('b-table')) });
+  }
+  return [...encontrados.values()];
+}
+
 /* El fondo que de verdad hay detrás de un elemento: se sube por los padres
    hasta encontrar uno con relleno opaco. */
 function fondoEfectivo(el, raiz) {
@@ -81,11 +108,10 @@ function revisaMazo() {
         'Escribe en el título el mensaje de la diapositiva: «La banda prohibida baja con el yodo» en vez de «Resultados». Es lo que más sube la retención según la regla 3 de las diez de PLOS.');
       if (!bloques.length) add('error', i, 'Diapositiva vacía', 'Añade contenido o quítala antes de presentar.');
     }
-    /* desborde del cuerpo */
-    const cuerpo = raiz.querySelector('.fbody');
-    if (cuerpo && cuerpo.scrollHeight > cuerpo.clientHeight + 3) {
-      add('error', i, 'El contenido no cabe (' + (cuerpo.scrollHeight - cuerpo.clientHeight) + ' px de más)',
-        'Baja el tamaño del texto, estrecha los márgenes o pasa a un diseño de columnas.');
+    for (const recorte of recortesSlide(raiz)) {
+      add('error', i, (recorte.tabla ? 'La tabla queda recortada' : 'El contenido no cabe') + ' (' + recorte.px + ' px de más)',
+        recorte.tabla ? 'Reparte las filas o columnas en varias diapositivas. Los datos originales se conservan.' : 'Baja el tamaño del texto, revisa el título o cambia el acomodo.');
+      fallos[fallos.length - 1].bloque = recorte.bloque;
     }
     /* Contraste de cada texto contra el fondo que de verdad tiene detrás:
        el título del marco va sobre su barra, no sobre el fondo del papel. */
@@ -186,4 +212,3 @@ function openRevision() {
   }, 60);
   return caja;
 }
-

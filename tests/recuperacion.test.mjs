@@ -126,7 +126,7 @@ test('Autoguardado roto abre un borrador nuevo sin reutilizar la identidad anter
  vm.runInContext(main.match(/function boot\(\) \{[\s\S]*?\n\}/)[0],s.ctx);
  const auto={deck:deck('roto'),respaldoId:'borrador:previo'};
  Object.assign(s.ctx,{lsGet:()=>auto,LS_AUTO:'auto',cargaPrefs:()=>({}),saneaDeck:()=>{throw new Error('roto');},blankDeck:()=>deck('nuevo'),THEMES:{metropolis:{},revista:{}},pieDe:()=>'',notasDe:()=>'',aplicaSitio:()=>false,document:{addEventListener:()=>{}},deb:f=>f,$:()=>null,console:{error:()=>{}}});
- for(const name of ['aplicaTemaApp','snapNow','initChrome','initCanvasEvents','initShortcuts','initPresentTouch','initEntrada','initWake','initPistas','initHistoria','arrancaSesion','renderAll','avisaAutoRoto','wsInit','cienciaIconos'])s.ctx[name]=()=>{};
+ for(const name of ['montaMarco','aplicaTemaApp','snapNow','initChrome','initCanvasEvents','initShortcuts','initPresentTouch','initEntrada','initWake','initPistas','initHistoria','arrancaSesion','renderAll','avisaAutoRoto','wsInit','cienciaIconos'])s.ctx[name]=()=>{};
  s.ctx.S.deckName=null;s.ctx.S.respaldoId=auto.respaldoId;
  await s.ctx.recGuardar(deck('inicial'),null);await s.ctx.recGuardar(deck('reciente'),null);
  s.ctx.S.deck=null;s.ctx.boot();await s.run('RECUP.cola');

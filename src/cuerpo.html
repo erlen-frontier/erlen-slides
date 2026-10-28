@@ -1,13 +1,14 @@
+<!-- Armazón de la suite Erlen (docs/COHERENCIA-APPS.md del portal). El marco común
+     (src/diseno/suite-marco.js) mueve estos nodos a sus huecos — cabecera con la marca,
+     el nombre y el menú de suite; título editable, estado de guardado, acciones y
+     utilidades; cinta; tira de diapositivas a la izquierda; lienzo al centro; panel de
+     detalles a la derecha — sin clonarlos ni reconstruirlos, así que los listeners, la
+     selección y el foco del editor se conservan. La pantalla de inicio común se monta
+     aparte, sobre <body>, y deja todo esto inerte mientras está abierta. -->
 <div class="app" id="app">
-  <div class="topbar vidrio">
-    <button class="icon-btn hamb" id="hambBtn" aria-controls="inspector" aria-expanded="false" title="Panel de edición" aria-label="Abrir panel de edición">☰</button>
-    <button id="inicioBtn" aria-label="Abrir Erlen Slides" class="wordmark" title="Volver a Erlen Slides"><svg class="marca-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M25 8h14v16l14 26a4 4 0 0 1-3.6 5.6H14.6A4 4 0 0 1 11 50l14-26z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M19 42h26l5.5 9.5H13.5z" fill="var(--acc)"/></svg><span class="marca-txt">Erlen</span></button>
-    <h1 class="editor-producto">Presentaciones</h1>
-    <span class="tb-suite" id="tbSuite"></span>
-    <button id="edicionBadge" class="ed-badge" aria-label="Acerca de Erlen Slides">AGPLv3</button>
-    <div class="tb-sep"></div>
-    <input class="deck-title" id="deckTitleInput" aria-label="Título de la presentación" title="Título de la presentación" placeholder="Presentación sin título">
-    <span class="save-ind" id="saveInd" role="status" aria-live="polite"></span>
+  <input class="deck-title" id="deckTitleInput" aria-label="Título de la presentación" title="Título de la presentación" placeholder="Presentación sin título">
+  <span class="save-ind" id="saveInd" role="status" aria-live="polite"></span>
+  <div class="cabecera-acciones" id="cabecera-acciones">
     <button class="icon-btn" id="undoBtn" title="Deshacer (Ctrl+Z)" aria-label="Deshacer">⟲</button>
     <button class="icon-btn" id="redoBtn" title="Rehacer (Ctrl+Shift+Z)" aria-label="Rehacer">⟳</button>
     <div class="tb-sep"></div>
@@ -15,6 +16,10 @@
     <button class="btn only-wide" id="exportBtn" title="Exportar">Exportar</button>
     <button class="icon-btn only-narrow" id="moreBtn" title="Archivo, exportar y ayuda" aria-label="Más opciones">⋯</button>
     <button class="btn btn-pri" id="presentBtn" aria-label="Presentar" title="Presentar (F5)"><span class="only-wide-i">▶ Presentar</span><span class="only-narrow-i">▶</span></button>
+  </div>
+  <div class="cabecera-utilidades" id="cabecera-utilidades">
+    <button class="icon-btn hamb" id="hambBtn" aria-controls="inspector" aria-expanded="false" title="Panel de edición" aria-label="Abrir panel de edición">☰</button>
+    <button id="edicionBadge" class="ed-badge" aria-label="Acerca de Erlen Slides">AGPLv3</button>
     <button class="icon-btn" id="buscarBtn" title="Buscar y reemplazar (Ctrl+F)" aria-label="Buscar">⌕</button>
     <button class="icon-btn only-wide" id="temaBtn" title="Apariencia del editor" aria-label="Apariencia del editor">◐</button>
     <input type="checkbox" id="densChk" class="dens-chk only-wide" aria-label="Interfaz compacta">
@@ -24,42 +29,38 @@
     <button class="icon-btn only-wide" id="helpBtn" title="Ayuda y atajos" aria-label="Ayuda">?</button>
   </div>
   <div class="cinta" id="cinta" role="region" aria-label="Cinta de herramientas" hidden></div>
-  <div class="main">
-    <div class="filmstrip">
-      <div class="fs-head"><span class="panel-label">Diapositivas</span></div>
-      <div class="fs-list" id="fsList" role="list" aria-label="Diapositivas"></div>
-      <button class="btn fs-add" id="addSlideBtn" title="Nueva diapositiva"><span class="only-wide-i">+ Nueva diapositiva</span><span class="only-narrow-i">+</span></button>
+  <div class="filmstrip">
+    <div class="fs-head"><span class="panel-label">Diapositivas</span></div>
+    <div class="fs-list" id="fsList" role="list" aria-label="Diapositivas"></div>
+    <button class="btn fs-add" id="addSlideBtn" title="Nueva diapositiva"><span class="only-wide-i">+ Nueva diapositiva</span><span class="only-narrow-i">+</span></button>
+  </div>
+  <div class="canvas-wrap">
+    <div class="canvas-scroll" id="canvasScroll">
+      <div class="stage" id="stage"><div class="stage-inner" id="stageInner"></div></div>
     </div>
-    <div class="canvas-wrap">
-      <div class="canvas-scroll" id="canvasScroll">
-        <div class="stage" id="stage"><div class="stage-inner" id="stageInner"></div></div>
+    <div class="canvas-foot">
+      <div class="foot-izq">
+        <span class="slide-pos" id="slidePos" role="status" aria-live="polite"></span>
+        <button class="prep-ind" id="prepInd" title="Qué falta para que esté lista"></button>
       </div>
-      <div class="canvas-foot">
-        <div class="foot-izq">
-          <span class="slide-pos" id="slidePos" role="status" aria-live="polite"></span>
-          <button class="prep-ind" id="prepInd" title="Qué falta para que esté lista"></button>
-        </div>
-        <div class="zoombox">
-          <button class="icon-btn" id="zoomOut" title="Alejar" aria-label="Alejar">−</button>
-          <span class="zlabel" id="zoomLabel">100%</span>
-          <button class="icon-btn" id="zoomIn" title="Acercar" aria-label="Acercar">+</button>
-          <button class="icon-btn" id="zoomFit" title="Ajustar a la ventana" aria-label="Ajustar">⤢</button>
-          <button class="icon-btn" id="sorterBtn" title="Ver todas las diapositivas (Ctrl+G)" aria-label="Ver todas las diapositivas">⊞</button>
-          <button class="icon-btn" id="concBtn" title="Modo concentración (F9)" aria-label="Modo concentración">⛶</button>
-        </div>
+      <div class="zoombox">
+        <button class="icon-btn" id="zoomOut" title="Alejar" aria-label="Alejar">−</button>
+        <span class="zlabel" id="zoomLabel">100%</span>
+        <button class="icon-btn" id="zoomIn" title="Acercar" aria-label="Acercar">+</button>
+        <button class="icon-btn" id="zoomFit" title="Ajustar a la ventana" aria-label="Ajustar">⤢</button>
+        <button class="icon-btn" id="sorterBtn" title="Ver todas las diapositivas (Ctrl+G)" aria-label="Ver todas las diapositivas">⊞</button>
+        <button class="icon-btn" id="concBtn" title="Modo concentración (F9)" aria-label="Modo concentración">⛶</button>
       </div>
     </div>
-    <div class="drawer-mask" id="drawerMask"></div>
-    <div class="inspector" id="inspector" aria-label="Herramientas de edición">
-      <div class="drawer-close"><span>Herramientas</span><button class="icon-btn" id="drawerClose" aria-label="Cerrar herramientas">✕</button></div>
-      <div class="insp-tabs" role="tablist" aria-label="Pestañas de herramientas">
-        <button class="itab on" role="tab" aria-selected="true" aria-controls="inspBody" tabindex="0" data-tab="insert">Insertar</button>
-        <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="slide">Diapositiva</button>
-        <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="design">Diseño</button>
-        <button class="itab itab-blk" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="bloque" hidden>Bloque</button>
-      </div>
-      <div class="insp-body" id="inspBody"></div>
+  </div>
+  <div class="inspector" id="inspector" aria-label="Herramientas de edición">
+    <div class="insp-tabs" role="tablist" aria-label="Pestañas de herramientas">
+      <button class="itab on" role="tab" aria-selected="true" aria-controls="inspBody" tabindex="0" data-tab="insert">Insertar</button>
+      <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="slide">Diapositiva</button>
+      <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="design">Diseño</button>
+      <button class="itab itab-blk" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="bloque" hidden>Bloque</button>
     </div>
+    <div class="insp-body" id="inspBody"></div>
   </div>
 </div>
 <div id="inicioRoot"></div>

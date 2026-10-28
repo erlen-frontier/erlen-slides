@@ -1321,12 +1321,16 @@ function openExport(anchor) {
   item('⌾', 'Comprobar el archivo final', 'resolución, fuentes, páginas', () => openComprobacion());
   item('⏱', 'Ensayar con cronómetro', 'mide tu tiempo real por diapositiva', () => presentaEnsayo());
   menu.append(h('div', { class: 'm-sep' }));
+  item('⌾', 'Revisar y compartir', 'formato, accesibilidad y límites', () => openCompartir());
   item('▤', 'PDF (imprimir)', 'vectorial', () => { openPdfHelp(); });
   item('∑', 'Código Beamer (.tex)', 'Overleaf', () => openTexView());
   item('{}', 'Proyecto (.json)', 'respaldo', () => exportJSON());
   item('§', 'Esqueleto de artículo (.tex)', 'afirmaciones → secciones, notas → prosa', () => exportArticulo());
   menu.append(h('div', { class: 'm-sep' }));
-  item('▦', 'PowerPoint (.pptx)', 'texto y tablas editables', () => exportPPTX());
+  item('▦', 'PowerPoint editable (.pptx)', 'texto, tablas y gráficas compatibles', exportPPTXEditable);
+  item('▦', 'PowerPoint clásico (.pptx)', 'exportador anterior', exportPPTX);
+  item('⌘', 'Presentación HTML autónoma', 'gráficos interactivos sin conexión', openHTMLPresentacion);
+  item('¶', 'Guion Markdown (.md)', 'imágenes incrustadas', exportMarkdownUI);
   item('▦', 'Kit de defensa (.zip)', 'tex, 4:3, json, guion y figuras', () => kitDefensa());
   item('▤', 'Folleto para repartir', '2, 3 o 6 por hoja', () => openFolleto());
   item('¶', 'Guion del orador', 'notas + miniaturas', () => exportGuion());

@@ -22,6 +22,9 @@ function saneaBloque(b, avisos, deck) {
   const tipos = BLOCK_DEFS.map(x => x.id);
   if (tipos.indexOf(b.type) < 0) { avisos.push('bloque de tipo «' + String(b.type) + '» desconocido'); return null; }
   if (!b.id) b.id = uid();
+  if (b.locked !== true) delete b.locked;
+  if (typeof b.group !== 'string' || b.group.length > 80) delete b.group;
+  if (!['left', 'center', 'right'].includes(b.blockAlign)) delete b.blockAlign;
   if (b.type === 'bullets') {
     if (!Array.isArray(b.items)) b.items = [];
     b.items = b.items.map(it => typeof it === 'string' ? { t: it, lvl: 0 } : { t: String((it || {}).t || ''), lvl: clamp(+(it || {}).lvl || 0, 0, 2) });

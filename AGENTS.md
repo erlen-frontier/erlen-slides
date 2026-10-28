@@ -10,9 +10,7 @@ The MCP server for AI assistants lives in mcp/ (docs/mcp.md): mcp/operaciones.js
 
 Run npm run build and relevant tests. When examples change, regenerate with npm run examples. Inspect rendered results for visual changes. JSDOM geometry is simulated; do not report it as browser validation.
 
-Publicación: un tag `v<versión>` lanza `.github/workflows/release.yml` (workflow «Publish release»), que crea la release y avisa a erlen-suite (docs/actualizacion-automatica.md del portal). Requiere el secreto `ERLEN_SYNC_APP_KEY`.
-
-Continuous Suite integration: every push to main dispatches slides-changed through suite-sync.yml using the erlen-suite-sync GitHub App (org secret ERLEN_SYNC_APP_KEY). Suite builds the exact current main SHA, validates the unchanged ZIP and both applications, then verifies production. No automatic release or tag is created.
+The current Erlen policy retires GitHub Actions and automatic synchronization with Erlen Suite. Run builds and tests locally. Historical workflows remain in this repository; verify the repository's Actions settings before pushing a tag or publishing a release.
 
 <!-- erlen-convencion-agentes:inicio v2 (bloque común; fuente: erlen-suite/docs/convencion.md; se actualiza en todos los repos a la vez) -->
 ## Trabajo con varios agentes

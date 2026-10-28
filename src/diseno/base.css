@@ -4,6 +4,28 @@
    Ningún color literal aquí: todo es var(--erlen-*) de tokens.css. Licencia: licencias/MIT.txt */
 *,::before,::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
+/* Opt-in responsive recipes. User content remains opaque; ARIA belongs in markup.
+   Original Erlen implementation; references: docs/research/ui-saas.md. */
+.erlen-ui-stack{display:grid;gap:var(--erlen-esp-4);min-inline-size:0}
+.erlen-ui-stack>*{min-inline-size:0;max-inline-size:100%}
+.erlen-ui-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:var(--erlen-esp-4);min-inline-size:0}
+.erlen-ui-grid>*{min-inline-size:0}
+.erlen-ui-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3);min-inline-size:0;max-inline-size:100%}
+.erlen-ui-toolbar>*{min-inline-size:0;max-inline-size:100%;overflow-wrap:anywhere}
+.erlen-ui-field{display:grid;gap:var(--erlen-esp-2);min-inline-size:0}
+.erlen-ui-field :is(input,select,textarea){inline-size:100%;min-inline-size:0;max-inline-size:100%}
+.erlen-ui-field :is(label,small){overflow-wrap:anywhere}
+.erlen-ui-field [aria-invalid="true"]{border-color:var(--erlen-peligro)}
+.erlen-ui-message{padding:var(--erlen-esp-3) var(--erlen-esp-4);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);overflow-wrap:anywhere}
+.erlen-ui-message[data-state="error"]{border-color:var(--erlen-peligro);background:var(--erlen-peligro-suave)}
+.erlen-ui-message[data-state="success"]{border-color:var(--erlen-verde);background:var(--erlen-verde-suave)}
+.erlen-ui-scroll{min-inline-size:0;max-inline-size:100%;overflow:auto;overscroll-behavior-inline:contain;border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie)}
+.erlen-ui-scroll:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:-3px}
+.erlen-ui-table{inline-size:100%;min-inline-size:40rem;border-collapse:collapse;background:var(--erlen-superficie);color:var(--erlen-tinta);font:inherit}
+.erlen-ui-table caption{text-align:start;padding:var(--erlen-esp-3);font-weight:700}
+.erlen-ui-table :is(th,td){text-align:start;vertical-align:top;padding:var(--erlen-esp-3);border-block-end:1px solid var(--erlen-linea);overflow-wrap:anywhere}
+.erlen-ui-table th{background:var(--erlen-superficie-2)}
+@media print{.erlen-ui-scroll{overflow:visible;border:0}.erlen-ui-table{min-inline-size:0;table-layout:fixed}}
 body{margin:0;background:var(--erlen-papel);color:var(--erlen-tinta);font:var(--erlen-texto-ui)/var(--erlen-interlineado-ui) var(--erlen-font-ui);-webkit-font-smoothing:antialiased}
 /* Títulos en LM Roman solo a partir de 24 px; por debajo, LM Sans. */
 h1,h2,h3,h4,p{margin:0}
@@ -21,7 +43,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 /* Sin backdrop-filter en la propia cabecera: crearía un bloque contenedor para el menú fijo de erlen-suite-nav que vive dentro.
    Si una app la fija arriba (sticky), añade el desenfoque en un ::before (ver docs/COHERENCIA-APPS.md §0). */
 .erlen-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:64px;padding:var(--erlen-esp-3) 4%;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 -1px 0 var(--erlen-vidrio-borde)}
-.erlen-app-header h1{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+/* El nombre de la app cede espacio con base 0: con base auto su texto inflaba la primera línea y
+   bajaba la tira de controles a una segunda fila (p. ej. dft y data a 1440 px). Elipsis en
+   marco.css; a ≤ 600 px queda oculto visualmente. */
+.erlen-app-header h1{flex:1 1 0%;min-width:0;overflow-wrap:anywhere}
 .erlen-app-header .erlen-marca{font-weight:700;white-space:nowrap}
 :root[data-erlen-color] .erlen-app-header .erlen-marca{color:var(--erlen-verde)}
 .erlen-app-header>erlen-suite-nav,.erlen-app-header .erlen-menu{margin-left:auto;flex:0 0 auto;min-height:40px;display:flex;align-items:center}
@@ -44,6 +69,9 @@ textarea{line-height:1.6;resize:vertical}
 label,small,.erlen-nota{font-size:var(--erlen-texto-sm)}
 /* Estado y avisos: en aria-live, sin animación. */
 #status,.erlen-status{min-height:26px;margin:var(--erlen-esp-2) 0 var(--erlen-esp-4);font-size:var(--erlen-texto-sm);color:var(--erlen-tinta-suave)}
+/* En el hueco «estado» de la cabecera del marco los márgenes verticales sobran: el hueco ya
+   centra y sus márgenes inflaban la fila (67 px en lugar de 61 en notes, lens y learn). */
+.erlen-marco-estado #status,.erlen-marco-estado .erlen-status{margin:0}
 #status[data-error="true"],.erlen-status.error,.erlen-error{color:var(--erlen-peligro);font-weight:700}
 .erlen-aviso{padding:var(--erlen-esp-3) var(--erlen-esp-4);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-pequeno);background:var(--erlen-ambar-suave);color:var(--erlen-tinta)}
 /* Paneles: cristal fuerte sin desenfoque (están en el flujo, no flotan); .destacado con más relieve. */
@@ -61,8 +89,32 @@ dialog.erlen-dialogo::backdrop{background:color-mix(in srgb,var(--erlen-tinta) 2
 .erlen-capsula:is([aria-pressed="true"],[aria-current],[aria-selected="true"]){background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-vidrio-relieve);color:var(--erlen-verde)}
 /* Atmósfera detrás del cromo (pantallas de bienvenida, vacíos, ajustes); nunca detrás del documento del usuario. */
 .erlen-atmosfera{background:var(--erlen-atmosfera)}
+/* Los estilos elegidos también se reconocen en las acciones principales. */
+:root[data-erlen-estilo] :is(button.primary,.erlen-boton.primary){box-shadow:var(--erlen-control-relieve)}
+/* Apariencia de las acciones del marco: relieve a escala de control, sin cambiar
+   tamaños, prioridad de la acción principal ni estados de selección o peligro. */
+:root[data-erlen-estilo] :is(.erlen-marco-acciones,.erlen-marco-utilidades) :is(button,.erlen-boton):not(.primary,.danger,.peligro,[aria-pressed="true"],[aria-selected="true"]){background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-control-relieve)}
+:root[data-erlen-estilo] :is(.erlen-marco-acciones,.erlen-marco-utilidades) :is(button,.erlen-boton):not(.primary,.danger,.peligro,[aria-pressed="true"],[aria-selected="true"]):hover:not(:disabled){background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-tinte)}
+/* Los respaldos siguen ganando también para el relieve de los controles. */
+@media(prefers-contrast:more),(forced-colors:active),print{:root:root[data-erlen-estilo]{--erlen-control-relieve:var(--erlen-vidrio-relieve)}}
 /* Pie de app: enlaces al portal, código y licencia. */
 .erlen-app-footer{padding:var(--erlen-esp-5) 4%;border-top:1px solid var(--erlen-linea);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
 .visualmente-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Entrada de archivo nativa con aspecto de botón secundario: el input queda oculto a la vista (no a la accesibilidad), va ANTES de su label y el anillo de foco se pinta en el label. */
+.erlen-entrada-archivo{display:flex;position:relative}
+.erlen-entrada-archivo>input[type="file"]{position:absolute;width:1px;height:1px;min-width:0;max-width:1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;opacity:0;outline:0}
+.erlen-entrada-archivo>label{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-4);border:1px solid var(--erlen-verde);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-verde);font-weight:700;line-height:1.2;cursor:pointer;text-align:center}
+.erlen-entrada-archivo>label:hover{background:var(--erlen-verde-suave)}
+.erlen-entrada-archivo>input[type="file"]:focus-visible+label{outline:3px solid var(--erlen-foco);outline-offset:3px;border-radius:4px}
+.erlen-entrada-archivo>input[type="file"]:disabled+label{opacity:.55;cursor:not-allowed}
 @media(max-width:760px){.erlen-app-header{padding:var(--erlen-esp-3) var(--erlen-esp-4)}.erlen-app-footer{padding:var(--erlen-esp-5) var(--erlen-esp-4)}}
 @media print{.erlen-app-header,.erlen-app-footer,erlen-suite-nav{display:none}}
+
+/* Iconos del cromo: conserva el significado, las dimensiones y los estados. */
+:root[data-erlen-estilo] :is(.erlen-app-header,.erlen-cinta,.erlen-cinta-menu,.erlen-inicio-cabecera,.erlen-inicio-lateral,.erlen-marco-navegacion,.erlen-marco-detalles) :is(.erlen-icono,svg[viewBox="0 0 24 24"]){stroke-width:var(--erlen-icono-grosor);stroke-linecap:var(--erlen-icono-terminal);stroke-linejoin:var(--erlen-icono-union);stroke-dasharray:var(--erlen-icono-guion);shape-rendering:var(--erlen-icono-render);filter:var(--erlen-icono-filtro);background:var(--erlen-icono-placa);border-radius:var(--erlen-icono-radio);box-shadow:var(--erlen-icono-relieve)}
+:root[data-erlen-estilo] :is(.primary,.primario,.erlen-cinta-archivo,.erlen-cinta-agregar,[aria-pressed="true"],[aria-selected="true"]) :is(.erlen-icono,svg[viewBox="0 0 24 24"]){background:none;box-shadow:none;filter:none}
+
+:root[data-erlen-estilo] :is(.erlen-app-header,.erlen-cinta,.erlen-cinta-menu,.erlen-inicio-cabecera,.erlen-inicio-lateral,.erlen-marco-navegacion,.erlen-marco-detalles) :is(.erlen-icono,svg[viewBox="0 0 24 24"]) :is(path,line,polyline,polygon,circle,rect,ellipse){stroke-width:inherit;stroke-linecap:inherit;stroke-linejoin:inherit;stroke-dasharray:inherit}
+
+/* Material al pulsar: cromo compartido; no cambia color semántico, posición ni foco. */
+:root[data-erlen-estilo] :is(.erlen-boton,.erlen-capsula,.erlen-inicio-boton,.erlen-cinta-boton,.erlen-cinta-archivo,.erlen-cinta-pestana,.erlen-marco-acciones button,.erlen-marco-utilidades button):active:not(:disabled,[aria-disabled="true"]){box-shadow:var(--erlen-control-presionado)}

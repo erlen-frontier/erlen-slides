@@ -37,6 +37,7 @@ function renderCanvas() {
   inner.append(renderSlide(S.deck, S.cur, 'edit'));
   $('#zoomLabel').textContent = Math.round(z * 100) + '%';
   mountToolbar();
+  pintaSeleccionBloques();
   /* Modo esqueleto: el lienzo queda tapado hasta que el argumento se sostiene. */
   const tapaVieja = $('#stage .esq-tapa'); if (tapaVieja) tapaVieja.remove();
   if (typeof enEsqueleto === 'function' && enEsqueleto() && !(typeof AR !== 'undefined' && AR.on)) stage.append(tapaEsqueleto());
@@ -44,7 +45,8 @@ function renderCanvas() {
 }
 
 /* ---------- selección + barra de bloque ---------- */
-function selectBlock(id) {
+function selectBlock(id, aditiva = false) {
+  marcaSeleccionBloques(id, aditiva);
   const antes = S.selBlock;
   S.selBlock = id;
   $$('#stageInner .blk.sel').forEach(e => e.classList.remove('sel'));
@@ -67,6 +69,9 @@ function mountToolbar() {
   const el = $(`#stageInner .blk[data-bid="${S.selBlock}"]`);
   const f = findBlock(S.selBlock);
   if (!el || !f) return;
+  if (f.block.locked) {
+    el.append(h('div', { class: 'blk-toolbar' }, h('button', { onclick: () => { f.block.locked = false; commit(); } }, 'Desbloquear'))); return;
+  }
   const k = clamp(1 / effZoom(), 0.6, 2.4);   // en móvil el zoom es bajo: la barra no debe volverse gigante
   const bar = h('div', { class: 'blk-toolbar', style: `top:-8px;right:0;transform:translateY(-100%) scale(${k});transform-origin:bottom right` });
   const add = (txt, title, fn, cls) => bar.append(h('button', { title, class: cls || '', onclick: e => { e.stopPropagation(); fn(e); } }, txt));
@@ -82,7 +87,7 @@ function mountToolbar() {
   }
   if (f.block.type === 'math') add('ƒ', 'Editar ecuación', () => openEqEditor(f.block));
   if (f.block.type === 'chem') add('⇌', 'Editar reacción', () => openChemEditor(f.block));
-  if (f.block.type === 'image') add('▣', 'Cambiar imagen', () => pickImage(f.block));
+  if (f.block.type === 'image') { add('▣', 'Cambiar imagen', () => pickImage(f.block)); if (f.block.figura) add('✎', 'Editar capas de la figura', () => openFiguraCapas(f.block)); if (f.block.cientifico) add('✎', 'Editar fuente de la figura', () => cienciaReabrir(f.block)); }
   if (f.block.type === 'chart') add('∿', 'Editar datos y gráfica', () => openChartEditor(f.block));
   if (f.block.type === 'func') add('𝑓', 'Editar fórmulas y parámetros', () => openFuncEditor(f.block));
   if (f.block.type === 'video') add('▶', 'Cambiar video', () => pickVideo(f.block));
@@ -290,7 +295,7 @@ function limpiaMarcas() {
 }
 
 function iniciaArrastre(ev, id) {
-  if (!id || ev.button > 0) return;
+  if (!id || ev.button > 0 || findBlock(id)?.block.locked) return;
   ev.preventDefault(); ev.stopPropagation();
   const asa = ev.currentTarget;
   /* Los movimientos se escuchan en el documento: la captura del puntero falla
@@ -436,6 +441,7 @@ function initCanvasEvents() {
     const nz = e.target.closest('[data-nueva-z]');
     if (nz) { e.preventDefault(); nuevoTextoEnZona(nz.dataset.nuevaZ); return; }
     const blk = e.target.closest('.blk');
+    if (blk?.dataset.bid && (e.ctrlKey || e.metaKey || e.shiftKey) && !e.target.closest('.blk-toolbar')) { e.preventDefault(); selectBlock(blk.dataset.bid, true); return; }
     if (blk && blk.dataset.bid && blk.dataset.bid !== S.selBlock) selectBlock(blk.dataset.bid);
     /* Insertar va a la columna donde acabas de hacer clic, no siempre a la primera. */
     const zc = e.target.closest('[data-z]');
@@ -449,7 +455,7 @@ function initCanvasEvents() {
     if (e.target.closest('[data-nueva-z]')) return;
     const blk = e.target.closest('.blk');
     if (!blk) { if (!e.target.closest('.blk-toolbar')) selectBlock(null); return; }
-    const f = findBlock(blk.dataset.bid); if (!f) return;
+    const f = findBlock(blk.dataset.bid); if (!f || f.block.locked) return;
     if (e.target.closest('.img-ph')) {
       if (f.block.type === 'image') pickImage(f.block);
       else if (f.block.type === 'math') openEqEditor(f.block);
@@ -464,9 +470,11 @@ function initCanvasEvents() {
       if (zc && !e.target.closest('[data-edit]')) nuevoTextoEnZona(zc.dataset.z);
       return;
     }
-    const f = findBlock(blk.dataset.bid); if (!f) return;
+    const f = findBlock(blk.dataset.bid); if (!f || f.block.locked) return;
     if (f.block.type === 'math') openEqEditor(f.block);
     else if (f.block.type === 'chem') openChemEditor(f.block);
+    else if (f.block.type === 'image' && f.block.figura) openFiguraCapas(f.block);
+    else if (f.block.type === 'image' && f.block.cientifico) cienciaReabrir(f.block);
     else if (f.block.type === 'image' && f.block.src) pickImage(f.block);
     else if (f.block.type === 'chart') openChartEditor(f.block);
     else if (f.block.type === 'func') openFuncEditor(f.block);
@@ -575,7 +583,8 @@ function pickImage(b) {
       const deck = S.deck;
       const aplica = url => {
         if (S.deck !== deck || findBlock(f.block.id)?.block !== f.block) return;
-        f.block.src = url; delete f.block.cientifico; delete f.block.orig; delete f.block.recProp;
+        if (f.block.locked) return;
+        f.block.src = url; delete f.block.cientifico; delete f.block.figura; delete f.block.orig; delete f.block.recProp;
         commit(); disenadorAlPonerImagen(f.block);
       };
       const rd = new FileReader();
@@ -613,4 +622,3 @@ function renderAll(opts) {
   pintaCodigo();
   if (typeof tutorFoto === 'function' && (!TUTOR_FOTO || !curSlide() || TUTOR_FOTO.id !== curSlide().id)) tutorFoto();
 }
-
