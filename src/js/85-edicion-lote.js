@@ -3,7 +3,8 @@
 const LOTE_SEL = { deck: null, slide: null, ids: new Set() };
 function idsSeleccionados() {
   if (LOTE_SEL.deck !== S.deck || LOTE_SEL.slide !== curSlide()) { LOTE_SEL.deck = S.deck; LOTE_SEL.slide = curSlide(); LOTE_SEL.ids.clear(); }
-  const vivos = new Set(zonas(curSlide()).flat().map(b => b.id));
+  const vivos = new Set(zonas(curSlide()).flat().filter(b => !curSlide().lienzoLibre ||
+    typeof bloqueVisible !== 'function' || bloqueVisible(b, S.deck)).map(b => b.id));
   for (const id of LOTE_SEL.ids) if (!vivos.has(id)) LOTE_SEL.ids.delete(id);
   return LOTE_SEL.ids;
 }

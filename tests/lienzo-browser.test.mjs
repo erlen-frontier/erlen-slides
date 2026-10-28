@@ -23,7 +23,7 @@ test('free canvas uses real slide geometry in Chromium', {timeout:120000}, async
     const d=blankDeck(), sl={id:'lienzo-prueba',layout:'blanco',title:'Título oculto',notes:'Notas conservadas',blocks:[]};
     const texto=newBlock('text'); Object.assign(texto,{id:'texto-prueba',text:'Texto ilustrativo'});
     const imagen=newBlock('image'); Object.assign(imagen,{id:'imagen-prueba',src:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200"%3E%3Crect width="400" height="200" fill="%23000"/%3E%3C/svg%3E',alt:'Imagen ilustrativa'});
-    sl.blocks.push(texto,imagen); d.slides.push(sl); wsNueva(d); S.cur=1; renderAll();
+    sl.blocks.push(texto,imagen); d.slides.push(sl); wsNueva(d); S.cur=1; S.prefs.imanLienzo=false; renderAll();
   });
   const texto=page.locator('#stageInner .blk[data-bid="texto-prueba"]');
   const antes=await texto.boundingBox();

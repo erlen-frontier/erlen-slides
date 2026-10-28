@@ -9,7 +9,7 @@ const LS_ESTILOS = 'erlen-slides.estilos';
 /* ---------- preferencias de la app (no viajan en el .json del proyecto) ---------- */
 /* barras: 'arriba' = cinta (de fábrica), 'lado' = panel a la derecha. Si el
    usuario eligió el panel, su preferencia guardada manda sobre esta. */
-const PREFS_DEF = { tema: 'auto', estiloPorOmision: null, barras: 'arriba' };
+const PREFS_DEF = { tema: 'auto', estiloPorOmision: null, barras: 'arriba', imanLienzo: true };
 function cargaPrefs() { return Object.assign({}, PREFS_DEF, lsGet(LS_PREFS, {}) || {}); }
 function guardaPrefs() { lsSet(LS_PREFS, S.prefs); }
 /* auto = la del sistema; claro/oscuro fuerzan el modo. */

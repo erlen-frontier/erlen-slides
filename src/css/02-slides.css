@@ -825,6 +825,8 @@ table.btab.no-head tbody tr:first-child td{border-top:2.2px solid var(--sfg)}
 /* ---------- guías de alineación ---------- */
 .guias{position:absolute;inset:0;pointer-events:none;z-index:8}
 .guias .g-v{position:absolute;top:0;bottom:0;width:0;border-left:1.5px dashed var(--sacc);opacity:.5}
+.guias .guia-libre-v{position:absolute;top:0;bottom:0;border-left:2px dashed var(--sacc);opacity:.85}
+.guias .guia-libre-h{position:absolute;left:0;right:0;border-top:2px dashed var(--sacc);opacity:.85}
 .guias .g-v.g-margen{border-left-style:solid;opacity:.28}
 .guias .g-v.g-centro{border-left-style:dotted;opacity:.35}
 .guias .g-v.g-borde{opacity:.95;border-left-width:2px}

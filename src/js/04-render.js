@@ -650,7 +650,11 @@ function renderSlide(deck, idx, mode, stepShown) {
           const copia = h('div', { class: original.className, style: 'display:contents' });
           copia.append(contexto); contexto = copia;
         }
-        fragmentos.push({ contexto, enBanda: ancestros.some(n => n.classList.contains('sangre-banda')) });
+        fragmentos.push({ id: b.id, contexto, enBanda: ancestros.some(n => n.classList.contains('sangre-banda')) });
+      }
+      if (zonas(sl).some(z => z.some(b => Number.isSafeInteger(b.capaLibre) && b.capaLibre >= 0 && b.capaLibre <= 1000000))) {
+        const orden = new Map(bloquesEnCapas(sl, deck).map((b, i) => [b.id, i]));
+        fragmentos.sort((a, b) => (orden.get(a.id) ?? Infinity) - (orden.get(b.id) ?? Infinity));
       }
       let bandaInsertada = false;
       for (const fragmento of fragmentos) {

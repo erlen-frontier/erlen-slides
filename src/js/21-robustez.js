@@ -26,6 +26,10 @@ function saneaBloque(b, avisos, deck) {
     avisos.push('un bloque tenía una posición de lienzo inválida; se usará una posición inicial visible');
     delete b.posLibre;
   }
+  if (b.capaLibre != null && (!Number.isSafeInteger(b.capaLibre) || b.capaLibre < 0 || b.capaLibre > 1000000)) {
+    avisos.push('un bloque tenía un orden de capas inválido; se usará su orden inicial');
+    delete b.capaLibre;
+  }
   if (b.locked !== true) delete b.locked;
   if (typeof b.group !== 'string' || b.group.length > 80) delete b.group;
   if (!['left', 'center', 'right'].includes(b.blockAlign)) delete b.blockAlign;
