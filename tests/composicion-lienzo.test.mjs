@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {editor} from '../herramientas/test-browser.mjs';
+import * as figuras from '../src/figuras-core.mjs';
 
 async function prepara(t) {
   const app = await editor();
@@ -118,4 +119,12 @@ test('alignment and distribution cannot partially change locked or incomplete se
   assert.equal(run("organizaSeleccionLibre(S.deck,curSlide(),['a','missing'],'izquierda')"), false);
   assert.equal(run("organizaSeleccionLibre(S.deck,curSlide(),['a','c'],'distribuir-h')"), false);
   assert.equal(run('JSON.stringify(S.deck)'), antes);
+});
+
+test('a shape is not inserted if the slide stops accepting blocks while its library loads', async t => {
+  const app = await prepara(t);app.dom.window.__figuras = figuras;
+  const pendiente = app.run("window.__espera=new Promise(resolve=>window.__termina=resolve);extensionSlides=()=>__espera;insertaFormaLibre('rect')");
+  app.run("curSlide().layout='title';window.__termina(window.__figuras)");
+  assert.equal(await pendiente,false);
+  assert.equal(app.run("curSlide().blocks.some(b=>b.formaLibre)"),false);
 });

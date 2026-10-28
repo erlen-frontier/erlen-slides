@@ -143,9 +143,12 @@ async function insertaFormaLibre(tipo) {
   if (!Object.hasOwn(nombres, tipo)) return false;
   if (typeof flushEdicion === 'function') flushEdicion();
   const deck = S.deck, slide = curSlide();
-  if (!slide.lienzoLibre || !zonasDe(slide.layout)) return false;
+  const vigente = () => deck === S.deck && slide === curSlide() && slide.lienzoLibre && zonasDe(slide.layout) > 0;
+  if (!vigente()) return false;
   const core = await extensionSlides('figurascore');
-  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre) return false;
+  if (!vigente()) return false;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  if (!vigente()) return false;
   const objeto = { id: uid(), kind: tipo === 'line' ? 'rect' : tipo, x: 8, y: 8, width: 284, height: 134,
     angle: 0, fill: '#dcecf5', stroke: '#235747', strokeWidth: 4, locked: false };
   if (tipo === 'line') Object.assign(objeto, { x: 12, y: 70, width: 276, height: 10, fill: '#235747', stroke: 'transparent', strokeWidth: 0 });

@@ -102,6 +102,18 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     await page.evaluate(()=>doUndo());assert.deepEqual((await posiciones()).map(p=>p.x),[10,50,75]);
   });
 
+  await t.test('the organize control follows selections made in the layers list and changes of the active block',async()=>{
+    await reset();await page.locator('#lienzoObjetosBtn').click();
+    await page.getByRole('checkbox',{name:'Marcar A'}).check();
+    await page.getByRole('checkbox',{name:'Marcar B'}).check();
+    await page.getByRole('button',{name:'Seleccionar marcados'}).click();
+    assert.deepEqual(await seleccion(),['a','b']);
+    assert.equal(await page.getByRole('button',{name:'Organizar selección'}).isEnabled(),true);
+    await page.locator('#stageInner .blk[data-bid="a"]').click({position:{x:40,y:40}});
+    assert.deepEqual(await seleccion(),['a','b']);
+    assert.equal(await page.getByRole('button',{name:'Organizar selección'}).isEnabled(),true);
+  });
+
   await t.test('basic shapes are inserted as editable local figure blocks',async()=>{
     await reset();
     await page.getByRole('button',{name:'Insertar formas'}).click();
@@ -113,6 +125,29 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     assert.equal(await page.locator('#stageInner .blk[data-bid="'+figura.id+'"] img').count(),1);
     await page.screenshot({path:fileURLToPath(new URL('../.local/formas-lienzo.png',import.meta.url))});
     await page.evaluate(()=>doUndo());assert.equal(await page.evaluate(()=>curSlide().blocks.some(b=>b.formaLibre==='rect')),false);
+  });
+
+  await t.test('inserting a shape after a slow load saves text typed while it was loading',async()=>{
+    const ctx=await browser.newContext({viewport:{width:1440,height:1000}});
+    let llega,liberar;const pedida=new Promise(r=>{llega=r;}), espera=new Promise(r=>{liberar=r;});
+    try {
+      await ctx.route('**/libre/figuras-core.mjs',async ruta=>{llega();await espera;await ruta.continue();});
+      const p=await ctx.newPage();p.setDefaultTimeout(5000);await p.goto('http://127.0.0.1:'+port+'/');
+      await p.evaluate(()=>{
+        const deck=blankDeck(), b=newBlock('text');Object.assign(b,{id:'espera',text:'A',posLibre:{x:10,y:20,w:20,h:20}});
+        deck.slides.push({id:'espera-slide',layout:'blanco',title:'',lienzoLibre:true,blocks:[b]});wsNueva(deck);S.cur=1;snapNow();renderAll();
+      });
+      await p.getByRole('button',{name:'Insertar formas'}).click();
+      await p.getByRole('button',{name:'Rectángulo',exact:true}).click();
+      await Promise.race([pedida,new Promise((_,reject)=>setTimeout(()=>reject(new Error('La carga de la figura no comenzó')),5000))]);
+      await p.locator('#stageInner .blk[data-bid="espera"] [data-edit]').click();
+      await p.keyboard.type(' pendiente');liberar();
+      await p.waitForFunction(()=>curSlide().blocks.some(b=>b.formaLibre==='rect'));
+      assert.equal(await p.evaluate(()=>findBlock('espera').block.text),'A pendiente');
+      await p.evaluate(()=>doUndo());
+      assert.equal(await p.evaluate(()=>findBlock('espera').block.text),'A pendiente');
+      assert.equal(await p.evaluate(()=>curSlide().blocks.some(b=>b.formaLibre==='rect')),false);
+    } finally { liberar();await ctx.close(); }
   });
 
   await t.test('all basic shapes survive project reopening without renumbering scientific figures',async()=>{
