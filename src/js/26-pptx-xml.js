@@ -79,6 +79,19 @@ function rasteriza(el, css, escala) {
     const w = Math.max(1, Math.round(r.width)), hh = Math.max(1, Math.round(r.height));
     const clon = el.cloneNode(true);
     clon.style.margin = '0';
+    let contenido = clon;
+    const libre = el.classList?.contains('blk') && el.closest('.lienzo-capa');
+    if (libre) {
+      /* El foreignObject ya mide la caja del bloque: sus coordenadas de página
+         no deben aplicarse por segunda vez dentro de esa caja. Las copias de
+         ancestros conservan los selectores del diseño sin crear más cajas. */
+      Object.assign(clon.style, { position: 'relative', left: '0', top: '0', right: 'auto', bottom: 'auto', width: '100%', height: '100%' });
+      for (let p = el.parentElement; p; p = p.parentElement) {
+        const contexto = p.cloneNode(false); contexto.removeAttribute('id'); contexto.style.display = 'contents';
+        contexto.append(contenido); contenido = contexto;
+        if (p.classList?.contains('slide')) break;
+      }
+    }
     /* Un <svg> serializado dentro del <foreignObject> pierde su espacio de
        nombres si no lo lleva escrito: el navegador lo lee como una etiqueta
        desconocida de XHTML y solo pinta su texto suelto. Le pasaba a todo lo
@@ -88,7 +101,8 @@ function rasteriza(el, css, escala) {
     if (clon.querySelectorAll) Array.prototype.push.apply(svgs, clon.querySelectorAll('svg'));
     svgs.forEach(s => s.setAttribute('xmlns', 'http://www.w3.org/2000/svg'));
     const estilo = 'width:' + w + 'px;height:' + hh + 'px;' + variablesHeredadas(el, css);
-    const html = '<div xmlns="http://www.w3.org/1999/xhtml" style="' + _atrXml(estilo) + '">' + htmlAXml(clon.outerHTML) + '</div>';
+    const fragmento = libre ? new XMLSerializer().serializeToString(contenido) : htmlAXml(clon.outerHTML);
+    const html = '<div xmlns="http://www.w3.org/1999/xhtml" style="' + _atrXml(estilo) + '">' + fragmento + '</div>';
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + hh + '">' +
       '<defs><style type="text/css"><![CDATA[' + css + ']]></style></defs>' +
       '<foreignObject width="100%" height="100%">' + html + '</foreignObject></svg>';

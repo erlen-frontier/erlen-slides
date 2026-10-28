@@ -1,5 +1,8 @@
 //! Portable project operations for the desktop application.
 
+mod agent;
+pub use agent::{agent_endpoint, request_agent_chat, AgentRequests};
+
 use serde::de::IgnoredAny;
 use serde::Deserialize;
 use std::fs;

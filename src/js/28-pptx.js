@@ -212,5 +212,8 @@ async function exportPPTX() {
     'application/vnd.openxmlformats-officedocument.presentationml.presentation');
   if (aviso && aviso.remove) aviso.remove();
   toast('PowerPoint listo · ' + n + ' diapositivas');
+  if (deck.slides.some(sl => sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length)))
+    openModal({ title: 'Revisar el PowerPoint', body: h('p', null, 'La posición libre puede diferir en PowerPoint; revisa el acomodo, el orden y los recortes en el archivo descargado.'),
+      foot: [h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Entendido')] });
 }
 

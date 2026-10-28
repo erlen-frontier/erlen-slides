@@ -906,6 +906,8 @@ function toBeamer(deck) {
     /* Marca cada diapositiva: hace el .tex legible y permite mostrar en el
        editor el fragmento que corresponde a la diapositiva actual. */
     L.push(MARCA_DIAPO + (_iSl + 1) + ' ---');
+    if (sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
+      L.push('% Aviso: la posición libre de la diapositiva ' + (_iSl + 1) + ' no se conserva en Beamer; revisa el acomodo.');
     if (sl.layout === 'title') {
       L.push('\\begin{frame}' + (cfgPie.enPortada ? '' : '[plain]'));
       if (hayLogo && (m.logoPos || 'arriba') === 'esquina') {
@@ -1391,6 +1393,8 @@ function openTexView() {
     title: 'Código Beamer (.tex)', size: 'modal-lg',
     body: h('div', null,
       h('p', { class: 'hint', style: 'margin:0 0 10px' }, 'Este es el LaTeX real de tu presentación, listo para Overleaf. Compila tal cual, aunque todavía no subas las figuras: donde falte una, aparece un recuadro con su nombre. Descárgalas con el botón de abajo y súbelas al proyecto sin cambiarles el nombre.'),
+      S.deck.slides.some(sl => sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
+        ? h('p', { class: 'hint', role: 'status' }, 'La posición libre no se conserva en Beamer: el acomodo cambia. Revisa el código y el resultado compilado.') : null,
       pre),
     foot: [
       figCount() ? h('button', { class: 'btn', onclick: exportFigures }, `Descargar figuras (${figCount()})`) : null,

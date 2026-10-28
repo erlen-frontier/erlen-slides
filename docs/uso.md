@@ -4,6 +4,20 @@ Con **Ctrl+K** busca herramientas o texto de las diapositivas. Los resultados in
 
 En **Ver todas** puedes reorganizar la diapositiva actual con **Mover antes** y **Mover después**, o con **Alt+←** y **Alt+→**. La operación se puede deshacer. Si hay diapositivas marcadas, usa **Quitar la marca** antes de mover una.
 
+## Lienzo libre
+
+En una diapositiva que admita bloques, activa **Lienzo libre** debajo de la diapositiva. Se conservan sus bloques y su acomodo anterior: vuelve a pulsarlo para regresar. En una diapositiva **En blanco** puedes componer el contenido desde cero. La portada, las secciones y los índices que no admiten bloques conservan su comportamiento anterior.
+
+Selecciona un bloque y arrastra su asa para moverlo o sus esquinas para cambiar su tamaño. Las flechas lo mueven; Mayús y las flechas cambian su tamaño. El panel de propiedades permite escribir posición y tamaño en porcentaje. **Elegir bloque** ayuda a seleccionar objetos superpuestos. El bloqueo y deshacer siguen funcionando. Comprueba los avisos de recorte si reduces cajas con texto o figuras complejas.
+
+El proyecto JSON conserva la geometría. La vista de presentación y el HTML usan el mismo acomodo; versiones anteriores pueden abrir el contenido pero ignorarán sus posiciones. La exportación Beamer y Markdown avisa de que cambia la colocación; revisa también el PowerPoint exportado, cuya apariencia puede diferir.
+
+## Conversar con IA
+
+Abre el asistente con **Ctrl+J** y elige **Conversar con IA**. En **Conexión**, escribe el endpoint HTTPS completo de un servicio en la nube compatible con Chat Completions y llamadas de herramientas, el modelo y, si corresponde, su clave API. No se conecta hasta que envías un mensaje; la dirección y la clave se conservan solo durante la sesión. El proveedor puede aplicar sus propias tarifas. El chat requiere la aplicación de escritorio o la versión web servida; el HTML suelto abierto como `file:` no carga las operaciones del agente.
+
+Al enviar una petición se comparte con el proveedor un resumen acotado de la presentación y la conversación, sin imágenes ni archivos incrustados. Las notas solo se incluyen si marcas la casilla. El agente puede proponer ideas, crear diapositivas y editar o reordenar contenido; aplica cada lote como un paso de deshacer. Si cambias la presentación mientras responde o alguna operación falla, no aplica el lote. Los bloques bloqueados y los datos científicos protegidos no se eliminan desde el chat. Revisa el resultado antes de presentarlo.
+
 ## Crear una charla
 
 **Inicio → Importar proyecto**, o **Archivo → Importar presentación**, acepta JSON, PowerPoint `.pptx` y Markdown `.md`. Elige el archivo, revisa la vista previa y pulsa **Abrir copia editable**. Cancelar deja intacta la presentación abierta. Se crea un nombre libre en tu biblioteca; un fallo de almacenamiento impide abrir la copia y avisa. Las copias descargadas desde Erlen DoE pasan por su comprobación y vista previa habitual.

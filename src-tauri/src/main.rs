@@ -54,9 +54,53 @@ fn cerrar_presentador(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Connect only to the provider explicitly configured in the chat. The core
+/// validates the destination, limits both bodies and never follows redirects.
+#[tauri::command]
+async fn agente_consulta(
+    solicitudes: tauri::State<'_, erlen_slides_core::AgentRequests>,
+    solicitud: String,
+    url: String,
+    clave: String,
+    cuerpo: String,
+) -> Result<String, String> {
+    // Register before allowing any HTTP work to begin. A cancellation that
+    // arrives first, or a rejected second request, must not reach a provider.
+    let (inicio, mut espera) = tauri::async_runtime::channel::<()>(1);
+    let tarea = tauri::async_runtime::spawn(async move {
+        espera
+            .recv()
+            .await
+            .ok_or_else(|| "Solicitud cancelada.".to_owned())?;
+        erlen_slides_core::request_agent_chat(
+            &url,
+            (!clave.is_empty()).then_some(clave.as_str()),
+            &cuerpo,
+        )
+        .await
+    });
+    if let Err(error) = solicitudes.start(&solicitud, tarea.inner().abort_handle()) {
+        tarea.abort();
+        return Err(error);
+    }
+    let _ = inicio.try_send(());
+    let resultado = tarea.await;
+    solicitudes.finish(&solicitud);
+    resultado.map_err(|_| "Solicitud cancelada.".to_owned())?
+}
+
+#[tauri::command]
+fn agente_cancelar(
+    solicitudes: tauri::State<'_, erlen_slides_core::AgentRequests>,
+    solicitud: String,
+) -> Result<(), String> {
+    solicitudes.cancel(&solicitud)
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(erlen_slides_core::SaveGate::default())
+        .manage(erlen_slides_core::AgentRequests::default())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let app_handle = app.handle().clone();
@@ -102,7 +146,9 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             guardar_proyecto,
-            cerrar_presentador
+            cerrar_presentador,
+            agente_consulta,
+            agente_cancelar
         ])
         .run(tauri::generate_context!())
         .expect("error al iniciar Tabula");

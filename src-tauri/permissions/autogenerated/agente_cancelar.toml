@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-agente-cancelar"
+description = "Enables the agente_cancelar command without any pre-configured scope."
+commands.allow = ["agente_cancelar"]
+
+[[permission]]
+identifier = "deny-agente-cancelar"
+description = "Denies the agente_cancelar command without any pre-configured scope."
+commands.deny = ["agente_cancelar"]

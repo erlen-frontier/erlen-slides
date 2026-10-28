@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+.agente-pestanas{display:flex;gap:var(--e1);padding:var(--e2) var(--e3);border-bottom:1px solid var(--line2)}
+.agente-pestanas button{border:0;border-radius:var(--r2);padding:var(--e2) var(--e3);background:transparent;color:var(--mut);cursor:pointer}
+.agente-pestanas button[aria-selected="true"]{background:var(--accSoft);color:var(--ink);font-weight:650}
+.agente-pestanas button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.agente-panel{display:flex;flex:1;flex-direction:column;min-height:0}
+.agente-panel[hidden]{display:none}
+.agente-conexion{padding:var(--e2) var(--e4);border-bottom:1px solid var(--line2);max-height:45%;overflow:auto}
+.agente-conexion summary{cursor:pointer;font-weight:650}
+.agente-conexion label:not(.agente-notas){display:block;margin-top:var(--e2);font-size:var(--t1);color:var(--mut)}
+.agente-conexion .field{display:block;width:100%;margin-top:var(--e1)}
+.agente-notas{display:flex;align-items:center;gap:var(--e1);margin-top:var(--e2);font-size:var(--t1)}
+.agente-hilo{min-height:0}
+.agente-entrada{display:flex}
+.agente-botones{display:flex;gap:var(--e2);margin-top:var(--e2)}
+.agente-estado{margin:0 0 var(--e2)}
+.agente-cambios{padding-left:1.3em;margin:var(--e2) 0}

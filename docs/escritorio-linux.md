@@ -30,4 +30,6 @@ En **Archivo → Exportar → Proyecto (.json)**, el escritorio muestra el selec
 
 El editor y sus herramientas científicas siguen ejecutándose en el WebView; la escritura de proyectos es la primera operación llevada al núcleo Rust. Las advertencias de importación, exportación y accesibilidad de la versión web siguen aplicando. No se incluyen cuentas, telemetría ni un servicio de sincronización.
 
+El chat de IA es optativo y requiere un servicio en la nube compatible con Chat Completions y llamadas de herramientas. La conexión de escritorio se realiza mediante Rust por HTTPS, con límite de tamaño y sin seguir redirecciones. La clave y dirección elegidas permanecen en la memoria de la sesión. Cancelar intenta detener la petición local y evita aplicar la respuesta; el proveedor puede haber recibido ya la solicitud y aplicar sus tarifas.
+
 El editor genera estilos durante la edición y para la impresión. En escritorio, la política de contenido permite esos estilos dinámicos; los scripts y las conexiones siguen sujetos a las restricciones configuradas en Tauri. Los enlaces web se abren mediante `xdg-open` en el navegador del sistema.

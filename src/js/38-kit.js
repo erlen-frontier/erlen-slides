@@ -113,6 +113,8 @@ function leemeKit(pgs, extra) {
     '  proyecto.json          El proyecto entero. Se abre en Tabula con Archivo → Importar.',
     '  guion.html             Tu guion con miniaturas, notas y tiempos. Ábrelo e imprímelo.',
     '  figuras/               Las imágenes sueltas, por si las necesitas en el artículo.',
+    ...(S.deck.slides.some(sl => sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
+      ? ['  Aviso: el código Beamer no conserva la posición libre; revisa su acomodo.'] : []),
     ...(extra || []).filter(a => a.desc).map(a => '  ' + (a.rotulo || a.nombre).padEnd(22) + ' ' + a.desc),
     '',
     'LO QUE FALTA Y TIENES QUE PONER TÚ',
