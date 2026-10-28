@@ -2,13 +2,13 @@
 'use strict';
 /* Extensiones locales y optativas: no se contacta con CDN ni proveedores. */
 const EXT_SLIDES = new Map();
-const EXT_RUTAS = { markdown: 'markdown-core.mjs', mermaid: 'mermaid/mermaid.esm.min.mjs', pptx: 'pptxgen.bundle.js', operaciones: 'operaciones.js', exportador: 'exportaciones-avanzadas.js', flujos: 'flujos-editor.js', pptxcore: 'pptx-core.mjs', figurascore: 'figuras-core.mjs', fabric: 'fabric.mjs', importar: 'importar-presentacion.js', figuras: 'figuras-editor.js', compartir: 'compartir-presentacion.js' };
+const EXT_RUTAS = { markdown: 'markdown-core.mjs', mermaid: 'mermaid/mermaid.esm.min.mjs', pptx: 'pptxgen.bundle.js', operaciones: 'operaciones.js', exportador: 'exportaciones-avanzadas.js', flujos: 'flujos-editor.js', pptxcore: 'pptx-core.mjs', figurascore: 'figuras-core.mjs', fabric: 'fabric.mjs', importar: 'importar-presentacion.js', figuras: 'figuras-editor.js', compartir: 'compartir-presentacion.js', catalogo: 'figures-catalog/index.mjs' };
 async function extensionSlides(nombre) {
   if (!EXT_RUTAS[nombre]) throw new Error('Herramienta desconocida.');
   if (location.protocol === 'file:') throw new Error('Sirve la carpeta de la aplicación con un servidor local para usar esta herramienta.');
   if (!EXT_SLIDES.has(nombre)) {
     const url = new URL('libre/' + EXT_RUTAS[nombre], document.baseURI).href;
-    const carga = ['markdown', 'mermaid', 'pptxcore', 'figurascore', 'fabric'].includes(nombre) ? import(url) : new Promise((resolve, reject) => {
+    const carga = ['markdown', 'mermaid', 'pptxcore', 'figurascore', 'fabric', 'catalogo'].includes(nombre) ? import(url) : new Promise((resolve, reject) => {
       const s = document.createElement('script'); s.src = url;
       const timer = setTimeout(() => { s.remove(); reject(new Error('La herramienta no terminó de cargar. Inténtalo de nuevo.')); }, 20000);
       s.onload = () => { clearTimeout(timer); resolve(({ pptx: window.PptxGenJS, exportador: window.ERLEN_EXPORTADORES, flujos: window.ERLEN_FLUJOS, importar: window.ERLEN_IMPORTAR, figuras: window.ERLEN_FIGURAS, compartir: window.ERLEN_COMPARTIR })[nombre] || window.ERLEN_MCP); };

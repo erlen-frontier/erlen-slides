@@ -19,7 +19,14 @@ window.ERLEN_EXPORTADORES = (() => {
       const doc = new DOMParser().parseFromString(texto, 'image/svg+xml'), svg = doc.documentElement;
       if (doc.querySelector('parsererror')) throw new Error('SVG de imagen inválido.');
       const caja = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
-      if (caja.length === 4 && caja.every(Number.isFinite) && caja[2] > 0 && caja[3] > 0) { svg.setAttribute('width', caja[2]); svg.setAttribute('height', caja[3]); }
+      // An SVG can deliberately letterbox its viewBox inside a differently
+      // proportioned viewport. Preserve explicit pixel sizes so PowerPoint
+      // does not stretch the artwork when it fills the measured image box.
+      const size = name => {
+        const value = (svg.getAttribute(name) || '').trim();
+        return /^(?:\d+\.?\d*|\.\d+)(?:px)?$/i.test(value) && parseFloat(value) > 0;
+      };
+      if ((!size('width') || !size('height')) && caja.length === 4 && caja.every(Number.isFinite) && caja[2] > 0 && caja[3] > 0) { svg.setAttribute('width', caja[2]); svg.setAttribute('height', caja[3]); }
       texto = new XMLSerializer().serializeToString(svg);
     }
     let bin = ''; for (const n of new TextEncoder().encode(texto)) bin += String.fromCharCode(n);

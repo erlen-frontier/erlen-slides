@@ -64,7 +64,7 @@ async function exportMarkdownUI() {
     const core = await extensionSlides('markdown');
     const r = core.aMarkdown(deck, { zonasPorDiseno: Object.fromEntries(LAYOUTS.map(l => [l.id, zonasDe(l.id)])), incrustarFiguras: true });
     await downloadFile(nombre + '.md', new Blob([r.md], { type: 'text/markdown;charset=utf-8' }), 'text/markdown');
-    if (r.avisos.length) openModal({ title: 'Límites del guion Markdown', body: h('div', null, h('p', null, 'El proyecto JSON conserva todos los datos y formatos. En el guion:'), h('ul', null, r.avisos.map(a => h('li', null, a)))) });
+    if (r.avisos.length) openModal({ title: 'Límites del guion Markdown', body: h('div', null, h('p', null, 'El proyecto JSON conserva todos los datos y formatos. En el guion:'), h('ul', null, r.avisos.map(a => h('li', null, a))), avisoCreditosCatalogo(deck)) });
   } catch (e) { toast(e.message, 'warn'); }
 }
 
@@ -86,7 +86,7 @@ function openHTMLPresentacion() {
     catch (e) { estado.textContent = 'No se pudo generar: ' + e.message; }
     finally { generar.disabled = false; }
   } }, 'Descargar presentación HTML');
-  openModal({ title: 'Presentación HTML autónoma', body: h('div', null, estado, h('label', null, notas, ' Incluir notas del orador (serán visibles para quien reciba el archivo)')), foot: [generar] });
+  openModal({ title: 'Presentación HTML autónoma', body: h('div', null, estado, avisoCreditosCatalogo(), h('label', null, notas, ' Incluir notas del orador (serán visibles para quien reciba el archivo)')), foot: [generar] });
 }
 
 /* El diagrama es un bloque image compatible con JSON v1. Conserva su fuente,

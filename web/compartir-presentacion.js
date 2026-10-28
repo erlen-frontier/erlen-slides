@@ -16,6 +16,7 @@ async function revisaSalida(formato, deck = S.deck) {
     if (formato === 'pptx') add('aviso', i, 'La posición libre puede diferir en PowerPoint.', 'Abre la exportación y revisa tamaño, orden y recortes de sus elementos.');
   });
   deck.slides.forEach((sl, i) => zonas(sl).flat().forEach(b => {
+    if (/^(CC-BY-|MIT)/.test(String(b.catalogo?.license || ''))) add('aviso', i, 'Una figura del catálogo requiere atribución.', 'Consulta Archivo → Créditos de figuras e incluye autor, fuente y licencia al compartir.', b.id);
     if (['image', 'video'].includes(b.type) && b.src && !(b.alt || b.caption || '').trim()) add('aviso', i, 'Una figura no tiene descripción accesible.', 'Escribe su texto alterno o un pie que explique qué muestra.', b.id);
     if (b.type === 'galeria') for (const im of b.gal?.imgs || []) if (!(im.alt || im.cap || '').trim()) add('aviso', i, 'Una imagen de la galería no tiene descripción.', 'Describe cada panel en el editor de la galería.', b.id);
     if (b.type === 'table' && !b.header) add('aviso', i, 'La tabla no tiene encabezados de columna.', 'Activa la primera fila como encabezado en Propiedades.', b.id);

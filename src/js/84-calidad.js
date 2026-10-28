@@ -136,6 +136,8 @@ function informeExportacion(deck) {
   const charts = figuras.filter(x => ['chart', 'func'].includes(x.b.type));
   if (charts.length) add('pptx-rasterized-figures', 'info', 'PowerPoint conserva el texto y las tablas editables, pero las gráficas se insertan como imagen.', charts.map(x => x.i + 1), ['pptx']);
   if (figuras.some(x => x.b.type === 'image')) add('image-format-dependency', 'info', 'Las imágenes conservan su formato original; comprueba resolución y licencia antes de compartir.', figuras.filter(x => x.b.type === 'image').map(x => x.i + 1), ['pdf', 'beamer', 'pptx']);
+  const creditos = figuras.filter(x => /^(CC-BY-|MIT)/.test(String(x.b.catalogo?.license || '')));
+  if (creditos.length) add('catalog-attribution', 'warning', 'Las figuras del catálogo requieren atribución. Consulta Archivo → Créditos de figuras e inclúyelos al compartir.', creditos.map(x => x.i + 1), ['pdf', 'beamer', 'pptx', 'svg', 'html']);
   return {
     schema: 'erlen-export-report-v1',
     app: 'Tabula', version: window.ERLEN?.version || 'desconocida',

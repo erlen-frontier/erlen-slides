@@ -16,9 +16,11 @@ async function openFiguraCapas(original) {
       if (!/^data:image\/svg\+xml[;,]/i.test(src)) throw new Error('Usa una imagen PNG, JPEG, WebP o SVG incrustada.');
       const xml = src.includes(';base64,') ? atob(src.split(',')[1]) : decodeURIComponent(src.slice(src.indexOf(',') + 1));
       const doc = new DOMParser().parseFromString(xml, 'image/svg+xml');
-      if (doc.querySelector('parsererror,script,foreignObject,iframe') || [...doc.querySelectorAll('*')].some(n => [...n.attributes].some(a => /^on/i.test(a.name) || (/href$/i.test(a.name) && !a.value.startsWith('#') && !core.imagenFigura(a.value)) || /(?:https?:|javascript:|blob:|@import|url\(\s*["']?(?!#))/i.test(a.value)) || /@import|url\(\s*["']?(?!#)/i.test(n.localName === 'style' ? n.textContent : ''))) throw new Error('El SVG contiene recursos externos o contenido no compatible. Usa una copia PNG.');
+      if (doc.querySelector('parsererror,script,foreignObject,iframe') || [...doc.querySelectorAll('*')].some(n => [...n.attributes].some(a =>
+        a.name !== 'xmlns' && a.prefix !== 'xmlns' && (/^on/i.test(a.name) || (/href$/i.test(a.name) && !a.value.startsWith('#') && !core.imagenFigura(a.value)) || /(?:https?:|javascript:|blob:|@import|url\(\s*["']?(?!#))/i.test(a.value))) || /@import|url\(\s*["']?(?!#)/i.test(n.localName === 'style' ? n.textContent : ''))) throw new Error('El SVG contiene recursos externos o contenido no compatible. Usa una copia PNG.');
       const im = await leeImagen(src);
-      const cv = document.createElement('canvas'); cv.width = Math.min(1600, im.naturalWidth || 960); cv.height = Math.min(1200, im.naturalHeight || 540);
+      const w = im.naturalWidth || 960, ht = im.naturalHeight || 540, scale = Math.min(1600 / w, 1200 / ht);
+      const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(w * scale)); cv.height = Math.max(1, Math.round(ht * scale));
       cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); src = cv.toDataURL('image/png');
     }
     const im = await leeImagen(src), w = 850, ht = Math.min(470, w * im.naturalHeight / im.naturalWidth), wi = ht * im.naturalWidth / im.naturalHeight;
@@ -93,7 +95,13 @@ async function openFiguraCapas(original) {
     try {
       const fig = core.validaFigura(modelo); if (JSON.stringify(fig).length > 25 * 1048576) throw new Error('La figura es demasiado grande. Usa imágenes más pequeñas.');
       const b = original?.figura ? original : newBlock('image');
-      Object.assign(b, { figura: fig, src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(core.svgFigura(fig, nombre.value.trim())), alt: nombre.value.trim(), caption: pie.value.trim(), w: b.w || 85 });
+      if (b !== original && esFuenteCatalogo(original?.catalogo)) {
+        b.catalogo = deepCopy(original.catalogo);
+        b.catalogo.changes = [...(Array.isArray(b.catalogo.changes) ? b.catalogo.changes : []), 'Adaptada como copia anotada en Tabula'];
+      }
+      let svg = core.svgFigura(fig, nombre.value.trim());
+      if (esFuenteCatalogo(b.catalogo)) svg = svgConCreditosCatalogo(svg, b.catalogo);
+      Object.assign(b, { figura: fig, src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), alt: nombre.value.trim(), caption: pie.value.trim(), w: b.w || 85 });
       if (b !== original) insertaFiguraNueva(b, slide);
       closeModal(); S.selBlock = b.id; commit(); toast('Figura guardada con sus objetos editables.');
     } catch (e) { estado.textContent = e.message; }

@@ -90,6 +90,7 @@
 84-calidad.js
 85-edicion-lote.js
 85-flujos.js
+85b-catalogo-figuras.js
 87-ejemplos.js
 ../diseno/suite-inicio.js
 88-workspace.js

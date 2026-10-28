@@ -32,3 +32,9 @@ El escritorio Linux también incorpora dependencias Rust, incluidas Tauri y sus 
 cargo about generate --config about.toml --manifest-path src-tauri/Cargo.toml --target x86_64-unknown-linux-gnu --locked --format json --fail > /tmp/erlen-rust-licenses.json
 node herramientas/licencias-rust.mjs < /tmp/erlen-rust-licenses.json > licenses/rust-dependencies.txt
 ```
+
+## Catálogo de Erlen Figures
+
+Tabula incorpora el catálogo y dibujador de Erlen Figures 0.21.0 (AGPL-3.0-only), con 221 dibujos heredados de Slides y 73 propios de Figures. El índice conserva además 706 dibujos externos normalizados de Bioicons (licencias CC BY 3.0, CC BY 4.0 o CC0 según cada autor), Health Icons (CC0), Tabler Icons (MIT) y diagramas de Janosh y colaboradores (MIT). Cada pieza registra su autor, licencia, enlace al original, versión, huellas y cambios en `src/figures-catalog/assets/registry-index.mjs`; la aplicación conserva esa procedencia al insertar la figura.
+
+Los avisos MIT completos están en [`licenses/figures-catalog-MIT.txt`](licenses/figures-catalog-MIT.txt). Los enlaces a las licencias Creative Commons y los créditos exigidos se muestran por pieza; el SVG insertado incorpora también esos datos. Las licencias de los dibujos son independientes de la licencia del programa. Para compartir una presentación, revisa e incluye las atribuciones de las piezas que lo requieran.
