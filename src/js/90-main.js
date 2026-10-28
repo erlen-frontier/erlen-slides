@@ -27,10 +27,11 @@ function showMenu(menu, anchor) {
 function initShortcuts() {
   window.addEventListener('keydown', e => {
     if (P.on || CL.on || (typeof AR !== 'undefined' && AR.on) || (typeof TL !== 'undefined' && TL.on)) return;
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && (e.key === 'o' || e.key === 'O') && hayEscritorio() && !$('#modalRoot').firstChild) { e.preventDefault(); abrirProyectoEscritorio(); return; }
     if (wsAbierto()) return;   /* con el inicio abierto, los atajos del editor no actúan */
     if ($('#modalRoot').firstChild) { if(e.key === 'Escape') { e.preventDefault(); closeModal(); } return; }
     const inField = e.target.closest('input,textarea,select,button,a[href],[contenteditable],[role="combobox"],[role="listbox"],[role="slider"],[role="spinbutton"],[role="menuitem"]');
-    const mod = e.ctrlKey || e.metaKey;
     if (e.key === 'F5') { e.preventDefault(); startPresent(e.shiftKey); return; }
     if (e.key === 'F9') { e.preventDefault(); alternaConcentracion(); return; }
     if (e.key === 'F7') { e.preventDefault(); alternaCodigo(); return; }
@@ -42,7 +43,6 @@ function initShortcuts() {
     if (mod && !e.shiftKey && (e.key === 'm' || e.key === 'M')) { e.preventDefault(); addSlide('content'); return; }
     if (mod && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPdfHelp(); return; }
     if (mod && (e.key === 's' || e.key === 'S')) { e.preventDefault(); hayEscritorio() ? guardarProyectoEscritorio(e.shiftKey) : saveDeckAs(); return; }
-    if (mod && (e.key === 'o' || e.key === 'O') && hayEscritorio()) { e.preventDefault(); abrirProyectoEscritorio(); return; }
     if (mod && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); openPaleta(); return; }
     if (mod && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); alternaAsistente(); return; }
     if (mod && e.shiftKey && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); ponDisposicion(enCinta() ? 'lado' : 'arriba'); return; }
@@ -318,14 +318,15 @@ function boot() {
   const retomado = aplicaSitio(sitio);
   arrancaSesion();
   renderAll();
+  if (typeof recuperaEstadoArchivoNuevo === 'function') recuperaEstadoArchivoNuevo(auto);
   const el = $('#saveInd'); if (el) { el.textContent = 'Guardado aquí ✓'; el.classList.add('on'); }
   if (retomado) setTimeout(() => avisaRetomado(sitio, auto && auto.when), 700);
   if (rescatado && rescatado.length) setTimeout(() => openAvisosImport(rescatado), 400);
   avisaAutoRoto();
   wsInit();
   recInicia();
-  instalaCierreNativo();
-  actualizaEstadoArchivoEscritorio();
+  if (typeof instalaCierreNativo === 'function') instalaCierreNativo();
+  if (typeof actualizaEstadoArchivoEscritorio === 'function') actualizaEstadoArchivoEscritorio();
   cienciaIconos();
 }
 

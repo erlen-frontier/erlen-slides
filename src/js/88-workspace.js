@@ -6,7 +6,8 @@ const wsPlantillas = () => { const lista=lsGet(LS_BIBLIOTECA,[]); return Array.i
 function wsConservar() {
   flushEdicion();
   saveInd.now();
-  if (!deckEnBlanco()) {
+  if (hayEscritorio() && archivoEscritorioActual && !archivoEscritorioPendiente()) return true;
+  if (!deckEnBlanco() || (hayEscritorio() && archivoEscritorioPendiente())) {
     const store = decksStore();
     const base = S.deckName || S.deck.meta.title || 'Sin título';
     let nombre = base;
@@ -46,6 +47,7 @@ function wsCerrar() {
 function wsNueva(deck) {
   if (!wsConservar()) return;
   if (!loadDeck(deck || blankDeck(), null)) return;
+  if (!deck) marcaArchivoNuevo();
   wsCerrar();
 }
 /* Recursos que trabajan sobre el editor: primero se cierra el inicio. */

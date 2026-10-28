@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {editor} from '../herramientas/test-browser.mjs';
+import {readFileSync} from 'node:fs';
 
 async function setup(t, invoke) {
   const app = await editor();
@@ -148,4 +149,94 @@ test('save as finishes without binding a different presentation opened during it
   assert.equal(app.run('S.deck.meta.title'), 'Segunda');
   assert.equal(app.run('archivoEscritorioActual'), null);
   assert.deepEqual(released, [90]);
+});
+
+test('an import adjustment that drops unknown source data requires a new save destination', async t => {
+  const calls = [];
+  let original;
+  const app = await setup(t, async (cmd, args) => {
+    calls.push([cmd, args]);
+    if (cmd === 'abrir_archivo_proyecto') return {id: 12, nombre: 'original.json', contenido: original};
+    if (cmd === 'guardar_archivo_proyecto_como') return null;
+    if (cmd === 'cerrar_archivo_proyecto') return null;
+    throw new Error('Unexpected write to original: ' + cmd);
+  });
+  original = app.run("(()=>{const d=blankDeck();d.meta.refs=[{id:'r1',autores:'Autora',titulo:'Referencia',datoFuturo:'conservar'}];return JSON.stringify(d)})()");
+  await app.run('abrirProyectoEscritorio()');
+  assert.equal(app.run('archivoEscritorioPendiente()'), true);
+  await app.run('guardarProyectoEscritorio(false)');
+  assert.ok(calls.some(([cmd]) => cmd === 'guardar_archivo_proyecto_como'));
+  assert.ok(!calls.some(([cmd]) => cmd === 'guardar_archivo_proyecto'));
+});
+
+test('opening the bundled derivation preserves the explanations in its equation steps', async t => {
+  let source;
+  const app = await setup(t, async cmd => {
+    if (cmd === 'abrir_archivo_proyecto') return {id: 22, nombre: 'derivacion.json', contenido: source};
+    return null;
+  });
+  source = readFileSync(new URL('../examples/derivacion/proyecto.json', import.meta.url), 'utf8');
+  const notes = JSON.parse(source).slides[3].blocks[0].pasos.map(step => step.nota);
+  await app.run('abrirProyectoEscritorio()');
+  assert.deepEqual(Array.from(app.run('S.deck.slides[3].blocks[0].pasos.map(p=>p.nota)')), notes);
+});
+
+test('a recovered untitled document with only a subtitle is pending and kept before switching', async t => {
+  const app = await setup(t, async () => null);
+  app.run("S.deck.meta.subtitle='Hallazgos de una investigación';S.undo=[];");
+  assert.equal(app.run('archivoEscritorioPendiente()'), true);
+  app.dom.window.confirm = () => false;
+  assert.equal(app.run('loadDeck(blankDeck(),null)'), false);
+  assert.equal(app.run('S.deck.meta.subtitle'), 'Hallazgos de una investigación');
+  app.dom.window.confirm = () => true;
+  assert.equal(app.run('loadDeck(blankDeck(),null)'), true);
+  assert.equal(app.run("Object.values(decksStore()).some(x=>x.deck.meta.subtitle==='Hallazgos de una investigación')"), true);
+});
+
+test('Ctrl+O opens a project from the desktop home screen', async t => {
+  const calls = [];
+  const app = await setup(t, async cmd => { calls.push(cmd); return null; });
+  app.run('wsInicio()');
+  const event = new app.dom.window.KeyboardEvent('keydown', {key:'o', ctrlKey:true, bubbles:true, cancelable:true});
+  app.dom.window.document.body.dispatchEvent(event);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.ok(calls.includes('abrir_archivo_proyecto'));
+  assert.equal(event.defaultPrevented, true);
+});
+
+test('a genuinely new untouched document stays clean after recovery, but changed metadata stays pending', async t => {
+  const app = await setup(t, async () => null);
+  app.run('loadDeck(blankDeck(),null);marcaArchivoNuevo();saveInd.now()');
+  assert.equal(app.run('lsGet(LS_AUTO,null).archivoNuevoSinCambios'), true);
+  app.run('archivoNuevoInicial=null;recuperaEstadoArchivoNuevo(lsGet(LS_AUTO,null))');
+  assert.equal(app.run('archivoEscritorioPendiente()'), false);
+  app.run("S.deck.meta.subtitle='Información recuperada';saveInd.now();archivoNuevoInicial=null;recuperaEstadoArchivoNuevo(lsGet(LS_AUTO,null));");
+  assert.equal(app.run('archivoEscritorioPendiente()'), true);
+});
+
+test('opening another file is not blocked by a full library when the current file is saved', async t => {
+  let next;
+  const app = await setup(t, async cmd => {
+    if (cmd === 'guardar_archivo_proyecto_como') return {id: 1, nombre:'primero.json'};
+    if (cmd === 'abrir_archivo_proyecto') return {id: 2, nombre:'otro.json', contenido:next};
+    return null;
+  });
+  app.run("S.deck.meta.title='Primero';");
+  await app.run('guardarProyectoEscritorio(true)');
+  next = app.run("(()=>{const d=blankDeck();d.meta.title='Otro';return JSON.stringify(d)})()");
+  const proto = app.dom.window.Storage.prototype, set = proto.setItem;
+  proto.setItem = function(key, value) { if (key === 'erlen-slides.decks') throw new Error('quota'); return set.call(this,key,value); };
+  t.after(() => { proto.setItem = set; });
+  await app.run('abrirProyectoEscritorio()');
+  assert.equal(app.run('S.deck.meta.title'), 'Otro');
+});
+
+test('native close does not discard an unconfirmed equation editor draft', async t => {
+  const app = await setup(t, async cmd => cmd === 'guardar_archivo_proyecto_como' ? {id: 1, nombre:'charla.json'} : null);
+  app.run("addSlide('content');addBlockToSlide('math',1);closeModal();");
+  await app.run('guardarProyectoEscritorio(true)');
+  app.run("openEqEditor(findBlock(S.selBlock).block);document.querySelector('#modalRoot textarea').value='E=mc^2';");
+  assert.equal(app.run('confirmaSalidaArchivo()'), false);
+  assert.equal(app.dom.window.document.querySelector('#modalRoot textarea').value, 'E=mc^2');
+  assert.match(app.dom.window.__notices.at(-1)[0], /diálogo|termina/i);
 });

@@ -122,7 +122,7 @@ function saneaBloque(b, avisos, deck) {
     b.sello = !!(b.sello && b.fuente);
   }
   if (b.type === 'math') {
-    if (Array.isArray(b.pasos)) b.pasos = b.pasos.filter(x => x && typeof x === 'object').map(x => ({ tex: String(x.tex || '').slice(0, 2000), por: String(x.por || '').slice(0, 300) }));
+    if (Array.isArray(b.pasos)) b.pasos = b.pasos.filter(x => x && typeof x === 'object').map(x => ({ ...x, tex: String(x.tex || '').slice(0, 2000), por: String(x.por || '').slice(0, 300) }));
     else delete b.pasos;
     b.derivacion = !!(b.derivacion && b.pasos && b.pasos.length);
   }

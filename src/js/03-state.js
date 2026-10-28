@@ -226,7 +226,8 @@ function memoriaHistorial() {
 const saveInd = deb(() => {
   const el = $('#saveInd');
   recActual();
-  const ok = lsSet(LS_AUTO, { deck: S.deck, deckName: S.deckName, respaldoId:S.respaldoId, when: Date.now(), sitio: marcaSitio() });
+  const nuevoSinCambios = typeof hayEscritorio === 'function' && hayEscritorio() && !archivoEscritorioActual && archivoNuevoInicial !== null && !archivoEscritorioPendiente();
+  const ok = lsSet(LS_AUTO, { deck: S.deck, deckName: S.deckName, respaldoId:S.respaldoId, when: Date.now(), sitio: marcaSitio(), archivoNuevoSinCambios:nuevoSinCambios });
   if (el) { el.textContent = ok ? 'Guardado aquí ✓' : 'Sin guardar'; el.classList.toggle('on', ok); }
   if (S.deckName) {
     const store = decksStore();
