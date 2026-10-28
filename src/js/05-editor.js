@@ -31,13 +31,36 @@ function renderCanvas() {
   const [W, H] = slideDims(S.deck);
   const z = effZoom();
   const stage = $('#stage'), inner = $('#stageInner');
+  const foco = document.activeElement;
+  const bloqueFoco = foco?.closest?.('.blk[data-bid]');
+  const restaurarFoco = curSlide().lienzoLibre && bloqueFoco && inner.contains(bloqueFoco) && bloqueFoco.dataset.bid === S.selBlock
+    ? { id: bloqueFoco.dataset.bid, tabindex: bloqueFoco.getAttribute('tabindex'), role: bloqueFoco.getAttribute('role'), etiqueta: bloqueFoco.getAttribute('aria-label') } : null;
   stage.style.width = W * z + 'px'; stage.style.height = H * z + 'px';
   inner.style.transform = `scale(${z})`;
   inner.innerHTML = '';
   inner.append(renderSlide(S.deck, S.cur, 'edit'));
   $('#zoomLabel').textContent = Math.round(z * 100) + '%';
+  const libre = $('#lienzoLibreBtn');
+  if (libre) {
+    const disponible = zonasDe(curSlide().layout) > 0;
+    libre.disabled = !disponible;
+    libre.setAttribute('aria-pressed', String(!!curSlide().lienzoLibre && disponible));
+    libre.title = disponible ? 'Activar o desactivar la colocación libre en esta diapositiva' : 'Este diseño no admite bloques';
+  }
+  const objetos = $('#lienzoObjetosBtn');
+  if (objetos) { objetos.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout)); objetos.disabled = !zonas(curSlide()).some(z => z.length); }
   mountToolbar();
   pintaSeleccionBloques();
+  if (restaurarFoco) {
+    const destino = Array.from(inner.querySelectorAll('.blk[data-bid]')).find(el => el.dataset.bid === restaurarFoco.id);
+    if (destino) {
+      destino.setAttribute('tabindex', restaurarFoco.tabindex ?? '0');
+      destino.setAttribute('role', restaurarFoco.role || 'group');
+      const b = findBlock(restaurarFoco.id)?.block, nombre = (BLOCK_DEFS.find(d => d.id === b?.type) || {}).name || 'Bloque';
+      destino.setAttribute('aria-label', restaurarFoco.etiqueta || nombre + (b?.locked ? ', bloqueado' : ', usa las flechas para mover y Mayús con flechas para cambiar el tamaño'));
+      destino.focus({ preventScroll: true });
+    }
+  }
   /* Modo esqueleto: el lienzo queda tapado hasta que el argumento se sostiene. */
   const tapaVieja = $('#stage .esq-tapa'); if (tapaVieja) tapaVieja.remove();
   if (typeof enEsqueleto === 'function' && enEsqueleto() && !(typeof AR !== 'undefined' && AR.on)) stage.append(tapaEsqueleto());
@@ -52,6 +75,7 @@ function selectBlock(id, aditiva = false) {
   $$('#stageInner .blk.sel').forEach(e => e.classList.remove('sel'));
   const tb = $('#stageInner .blk-toolbar'); if (tb) tb.remove();
   $$('#stageInner .ancho-asa').forEach(e => e.remove());
+  $$('#stageInner .libre-asa').forEach(e => e.remove());
   if (id) {
     const el = $(`#stageInner .blk[data-bid="${id}"]`);
     if (el) { el.classList.add('sel'); mountToolbar(); }
@@ -65,6 +89,7 @@ function selectBlock(id, aditiva = false) {
 function mountToolbar() {
   const old = $('#stageInner .blk-toolbar'); if (old) old.remove();
   $$('#stageInner .ancho-asa').forEach(e => e.remove());
+  $$('#stageInner .libre-asa').forEach(e => e.remove());
   if (!S.selBlock) return;
   const el = $(`#stageInner .blk[data-bid="${S.selBlock}"]`);
   const f = findBlock(S.selBlock);
@@ -76,7 +101,7 @@ function mountToolbar() {
   const bar = h('div', { class: 'blk-toolbar', style: `top:-8px;right:0;transform:translateY(-100%) scale(${k});transform-origin:bottom right` });
   const add = (txt, title, fn, cls) => bar.append(h('button', { title, class: cls || '', onclick: e => { e.stopPropagation(); fn(e); } }, txt));
   const asa = h('button', { class: 'tb-asa', title: 'Arrastra para colocarlo en otro sitio o suéltalo sobre una miniatura' }, '⠿');
-  asa.addEventListener('pointerdown', ev => iniciaArrastre(ev, S.selBlock));
+  asa.addEventListener('pointerdown', ev => curSlide().lienzoLibre ? iniciaGestoLibre(ev, S.selBlock, 'mover') : iniciaArrastre(ev, S.selBlock));
   asa.addEventListener('click', ev => ev.stopPropagation());
   bar.append(asa);
   add('↑', 'Subir bloque', () => moveBlock(S.selBlock, -1));
@@ -105,7 +130,8 @@ function mountToolbar() {
     el.classList.add('blk-movible');
     el.addEventListener('pointerdown', ev => arrastraCuerpo(ev, f.block.id, el));
   }
-  montaManija(el, f.block);
+  if (curSlide().lienzoLibre) montaManijasLibres(el, f.block);
+  else montaManija(el, f.block);
   /* Si arriba no cabe, la barra se mete dentro del bloque: así nunca tapa
      el título del marco ni se queda fuera del alcance del ratón. */
   const cuerpo = el.closest('.fbody') || el.closest('.slide');
@@ -286,6 +312,103 @@ function focusEdit(ek) {
    ratón, con lápiz y con el dedo, que es donde el arrastre clásico no existe. */
 let dragBlk = null, _lineaDrop = null, _destino = null, _chip = null, _miniDestino = null;
 
+function montaManijasLibres(el, b) {
+  const k = clamp(1 / effZoom(), 0.6, 2.4);
+  for (const lado of ['nw', 'ne', 'sw', 'se']) {
+    const asa = h('button', { type: 'button', class: 'libre-asa libre-' + lado,
+      title: 'Cambiar el tamaño', 'aria-label': 'Cambiar el tamaño del bloque', style: `transform:scale(${k})` });
+    asa.addEventListener('click', e => e.stopPropagation());
+    asa.addEventListener('pointerdown', e => iniciaGestoLibre(e, b.id, lado));
+    el.append(asa);
+  }
+}
+
+/* Una lista independiente de la posición permite alcanzar también elementos
+   completamente cubiertos por otros o al trabajar solo con teclado. */
+function openObjetosLienzo() {
+  const deck = S.deck, sl = curSlide();
+  if (!sl.lienzoLibre || !zonasDe(sl.layout)) return;
+  const lista = h('div', { class: 'lienzo-lista' });
+  zonas(sl).flat().forEach((b, i) => {
+    const nombre = (BLOCK_DEFS.find(d => d.id === b.type) || {}).name || b.type;
+    const detalle = String(b.text || b.caption || b.title || b.tex || b.alt || '').replace(/\s+/g, ' ').slice(0, 80);
+    lista.append(h('button', { type: 'button', class: 'btn', onclick: () => {
+      if (S.deck !== deck || curSlide() !== sl || !findBlock(b.id)) return;
+      closeModal(); selectBlock(b.id);
+      const destino = Array.from(document.querySelectorAll('#stageInner .blk[data-bid]')).find(el => el.dataset.bid === b.id);
+      if (destino) {
+        destino.tabIndex = 0; destino.setAttribute('role', 'group');
+        destino.setAttribute('aria-label', nombre + (b.locked ? ', bloqueado' : ', usa las flechas para mover y Mayús con flechas para cambiar el tamaño'));
+        destino.focus({ preventScroll: true });
+      }
+    } }, (i + 1) + ' · ' + nombre + (detalle ? ' · ' + detalle : '') + (b.locked ? ' · bloqueado' : '')));
+  });
+  openModal({ title: 'Bloques de la diapositiva', body: h('div', null,
+    h('p', { class: 'hint' }, 'Elige un bloque para moverlo, incluso si está cubierto por otro.'), lista),
+    foot: [h('button', { class: 'btn', onclick: closeModal }, 'Cerrar')] });
+}
+
+/* La vista previa es solo DOM: cancelar nunca escribe en el modelo ni crea
+   historial. El rectángulo medido incorpora el zoom real del navegador. */
+function iniciaGestoLibre(ev, id, accion) {
+  if (ev.button > 0 || !id) return;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  const deck = S.deck, sl = curSlide(), f = findBlock(id);
+  const raiz = $('#stageInner .slide');
+  const el = raiz && Array.from(raiz.querySelectorAll('.blk[data-bid]')).find(n => n.dataset.bid === id);
+  if (!sl.lienzoLibre || !f || f.slide !== sl || f.block.locked || !el) return;
+  const rect = raiz.getBoundingClientRect();
+  if (!(rect.width > 0 && rect.height > 0)) return;
+  ev.preventDefault(); ev.stopPropagation();
+  const p0 = { ...posicionLibreDe(sl, f.block) }, pointer = ev.pointerId;
+  const x0 = ev.clientX, y0 = ev.clientY;
+  let previa = p0, activo = false;
+  try { ev.currentTarget.setPointerCapture(pointer); } catch (e) {}
+  const mismo = e => pointer == null || e.pointerId === pointer;
+  const pinta = p => Object.assign(el.style, { left: p.x + '%', top: p.y + '%', width: p.w + '%', height: p.h + '%' });
+  const mueve = e => {
+    if (!mismo(e)) return;
+    const dx = (e.clientX - x0) / rect.width * 100, dy = (e.clientY - y0) / rect.height * 100;
+    if (!activo && Math.abs(e.clientX - x0) < 3 && Math.abs(e.clientY - y0) < 3) return;
+    activo = true;
+    const p = { ...p0 };
+    if (accion === 'mover') {
+      p.x = clamp(p0.x + dx, 0, 100 - p0.w);
+      p.y = clamp(p0.y + dy, 0, 100 - p0.h);
+    } else {
+      if (accion.includes('e')) p.w = clamp(p0.w + dx, 1, 100 - p0.x);
+      if (accion.includes('s')) p.h = clamp(p0.h + dy, 1, 100 - p0.y);
+      if (accion.includes('w')) { p.x = clamp(p0.x + dx, 0, p0.x + p0.w - 1); p.w = p0.x + p0.w - p.x; }
+      if (accion.includes('n')) { p.y = clamp(p0.y + dy, 0, p0.y + p0.h - 1); p.h = p0.y + p0.h - p.y; }
+    }
+    previa = Object.fromEntries(Object.entries(p).map(([k, v]) => [k, redondeaLibre(v)]));
+    pinta(previa);
+  };
+  const quita = () => {
+    document.removeEventListener('pointermove', mueve);
+    document.removeEventListener('pointerup', suelta);
+    document.removeEventListener('pointercancel', cancela);
+    document.removeEventListener('keydown', escapa, true);
+    document.body.classList.remove('arrastra-bloque');
+  };
+  const cancela = e => { if (e && e.type === 'pointercancel' && !mismo(e)) return; quita(); if (el.isConnected) pinta(p0); };
+  const escapa = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancela(); } };
+  const suelta = e => {
+    if (!mismo(e)) return;
+    quita();
+    const vigente = S.deck === deck && curSlide() === sl && findBlock(id)?.block === f.block;
+    const actual = vigente ? posicionLibreDe(sl, f.block) : p0;
+    const sinCambios = ['x', 'y', 'w', 'h'].every(k => actual[k] === p0[k]);
+    if (activo && vigente && sinCambios && !f.block.locked) aplicaPosicionLibre(id, previa);
+    else if (el.isConnected) pinta(actual);
+  };
+  document.body.classList.add('arrastra-bloque');
+  document.addEventListener('pointermove', mueve);
+  document.addEventListener('pointerup', suelta);
+  document.addEventListener('pointercancel', cancela);
+  document.addEventListener('keydown', escapa, true);
+}
+
 function limpiaMarcas() {
   if (_lineaDrop && _lineaDrop.parentNode) _lineaDrop.remove();
   _lineaDrop = null; _destino = null;
@@ -408,6 +531,7 @@ const ARRASTRA_CUERPO = { image: 1, chart: 1, func: 1, video: 1, smart: 1, estru
 function arrastraCuerpo(ev, id, el) {
   if (ev.button > 0 || !id) return;
   if (ev.target.closest('.blk-toolbar, .ancho-asa, [data-edit], .sliders, button, input, a')) return;
+  if (curSlide().lienzoLibre) { iniciaGestoLibre(ev, id, 'mover'); return; }
   const x0 = ev.clientX, y0 = ev.clientY;
   /* Se captura el puntero desde el principio: sin ello, en cuanto el cursor
      sale del bloque los movimientos dejan de llegar y el arrastre no arranca. */
@@ -430,6 +554,11 @@ function arrastraCuerpo(ev, id, el) {
 
 function initCanvasEvents() {
   const inner = $('#stageInner');
+  const pie = $('.canvas-foot .foot-izq');
+  if (pie && !$('#lienzoLibreBtn')) pie.append(h('button', { id: 'lienzoLibreBtn', type: 'button', class: 'btn btn-sm lienzo-control',
+    'aria-pressed': 'false', onclick: alternaLienzoLibre }, 'Lienzo libre'));
+  if (pie && !$('#lienzoObjetosBtn')) pie.append(h('button', { id: 'lienzoObjetosBtn', type: 'button', class: 'btn btn-sm',
+    hidden: true, onclick: openObjetosLienzo }, 'Elegir bloque'));
   /* Arrastrar una imagen dispara el arrastre nativo del navegador, que cancela
      el puntero a media gesto. El lienzo tiene el suyo propio, con sus guías. */
   inner.addEventListener('dragstart', e => e.preventDefault());

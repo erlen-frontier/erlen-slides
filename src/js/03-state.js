@@ -66,6 +66,69 @@ function findBlock(id, deck = S.deck) {
   return null;
 }
 
+/* La caja libre se guarda en porcentajes de la diapositiva, no en b.w (que
+   describe el tamaño de la figura dentro de su bloque). */
+function posicionLibreValida(p) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return false;
+  if (!['x', 'y', 'w', 'h'].every(k => typeof p[k] === 'number' && Number.isFinite(p[k]))) return false;
+  return p.w >= 1 && p.h >= 1 && p.w <= 100 && p.h <= 100 &&
+    p.x >= 0 && p.y >= 0 && p.x + p.w <= 100 && p.y + p.h <= 100;
+}
+const redondeaLibre = n => Math.round(n * 100) / 100;
+function posicionLibreDe(sl, b) {
+  if (posicionLibreValida(b.posLibre)) return b.posLibre;
+  const i = Math.max(0, zonas(sl).flat().findIndex(x => x.id === b.id));
+  return { x: 5 + (i % 2) * 45 + (Math.floor(i / 6) % 5),
+    y: 6 + (Math.floor(i / 2) % 3) * 28 + (Math.floor(i / 30) % 5), w: 40, h: 24 };
+}
+/* Fijar el respaldo al insertar o cargar impide que borrar/reordenar otro
+   bloque desplace una figura que todavía no tenía coordenadas propias. */
+function materializaPosicionesLibres(sl) {
+  if (!sl || sl.lienzoLibre !== true || !zonasDe(sl.layout)) return;
+  for (const b of zonas(sl).flat()) if (!posicionLibreValida(b.posLibre))
+    b.posLibre = { ...posicionLibreDe(sl, b) };
+}
+
+/* Convierte un gesto o control numérico en un solo paso del historial. */
+function aplicaPosicionLibre(id, p) {
+  if (!posicionLibreValida(p) || !curSlide().lienzoLibre) return false;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  const f = findBlock(id);
+  if (!f || f.slide !== curSlide() || f.block.locked) return false;
+  const antes = posicionLibreDe(f.slide, f.block);
+  const nueva = Object.fromEntries(['x', 'y', 'w', 'h'].map(k => [k, redondeaLibre(p[k])]));
+  if (!posicionLibreValida(nueva) || ['x', 'y', 'w', 'h'].every(k => nueva[k] === antes[k])) return false;
+  f.block.posLibre = nueva;
+  commit();
+  return true;
+}
+
+/* Congela los lugares visibles al activar el modo; en un entorno sin medidas
+   se mantiene el respaldo determinista de posicionLibreDe. Desactivarlo no
+   descarta esas cajas, por si se vuelve a activar. */
+function alternaLienzoLibre() {
+  if (typeof flushEdicion === 'function') flushEdicion();
+  const sl = curSlide();
+  if (!zonasDe(sl.layout)) return false;
+  if (!sl.lienzoLibre) {
+    const raiz = $('#stageInner .slide'), r = raiz && raiz.getBoundingClientRect();
+    if (r && r.width > 0 && r.height > 0) for (const b of zonas(sl).flat()) {
+      if (posicionLibreValida(b.posLibre)) continue;
+      const el = Array.from(raiz.querySelectorAll('.blk[data-bid]')).find(n => n.dataset.bid === b.id);
+      const q = el && el.getBoundingClientRect();
+      if (!q || q.width <= 0 || q.height <= 0) continue;
+      const w = redondeaLibre(clamp(q.width / r.width * 100, 1, 100));
+      const h = redondeaLibre(clamp(q.height / r.height * 100, 1, 100));
+      const x = redondeaLibre(clamp((q.left - r.left) / r.width * 100, 0, 100 - w));
+      const y = redondeaLibre(clamp((q.top - r.top) / r.height * 100, 0, 100 - h));
+      b.posLibre = { x, y, w, h };
+    }
+    sl.lienzoLibre = true;
+  } else delete sl.lienzoLibre;
+  commit();
+  return true;
+}
+
 /* secciones + numeración */
 function sectionsOf(deck) {
   const out = [];
@@ -182,6 +245,7 @@ function commit(opts) {
   /* La bibliografía se pone al día antes de guardar el paso, para que deshacer
      devuelva la presentación entera y no la deje a medias. */
   if (typeof sincronizaBib === 'function') sincronizaBib(S.deck);
+  S.deck.slides.forEach(materializaPosicionesLibres);
   S.undo.push(S._snap || snapDeck(S.deck));
   S.redo.length = 0;
   S._snap = snapDeck(S.deck);

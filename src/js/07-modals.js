@@ -478,7 +478,7 @@ function loadDeck(deck, name) {
   if (S.deck) { flushEdicion(); recActual(true); }
   S.respaldoId = null;
   S.archivo = null; S.archivoNombre = null;
-  S.deck = deepCopy(deck); S.deckName = name || null;
+  S.deck = deepCopy(deck); S.deck.slides.forEach(materializaPosicionesLibres); S.deckName = name || null;
   S.cur = 0; S.selBlock = null; S.undo = []; S.redo = []; S.zoom = null;
   snapNow(); saveInd(); renderAll();
 }

@@ -73,6 +73,8 @@ window.ERLEN_EXPORTADORES = (() => {
     try {
       for (let i = 0; i < deck.slides.length; i++) {
         const sl = deck.slides[i]; if (fueraDeRama(sl, deck)) continue;
+        if (sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
+          avisos.push({ diapositiva: i + 1, bloque: null, motivo: 'La posición libre puede diferir en PowerPoint; revisa el acomodo, el orden y los recortes.' });
         const raiz = renderSlide(deck, i, 'export', 99); banco.replaceChildren(raiz);
         await document.fonts?.ready;
         await Promise.all([...raiz.querySelectorAll('img')].map(im => im.decode?.().catch(() => {}) || Promise.resolve()));
@@ -146,7 +148,13 @@ async function creaHTML(deck, incluirNotas = false) {
     for (let i = 0; i < deck.slides.length; i++) {
       const sl = deck.slides[i]; if (fueraDeRama(sl, deck)) continue;
       const raiz = renderSlide(deck, i, 'present', 0); banco.replaceChildren(raiz);
-      await document.fonts?.ready; await pausa();
+      await document.fonts?.ready;
+      await Promise.all([...raiz.querySelectorAll('img')].map(im => im.decode?.().catch(() => {}) || Promise.resolve()));
+      for (const im of raiz.querySelectorAll('.imagen-libre-recorte')) {
+        const env = im.parentElement, img = env?.querySelector('img'), marco = im.querySelector('.imagen-libre-marco');
+        if (img && marco) ajustaMarcoImagenLibre(env, img, im, marco);
+      }
+      await pausa();
       for (const el of raiz.querySelectorAll('[contenteditable],[data-edit]')) { el.removeAttribute('contenteditable'); el.removeAttribute('data-edit'); }
       const frags = [...raiz.querySelectorAll('.frag')];
       for (const el of frags) { el.classList.remove('frag', 'on'); el.classList.add('fragment'); el.dataset.fragmentIndex = el.dataset.frag; }

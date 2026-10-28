@@ -10,6 +10,11 @@ async function revisaSalida(formato, deck = S.deck) {
   const exportador = formato === 'pptx' ? await extensionSlides('exportador') : null;
   const coreFiguras = deck.slides.some(sl => zonas(sl).flat().some(b => b.figura)) ? await extensionSlides('figurascore') : null;
   const medida = document.createElement('canvas').getContext('2d');
+  deck.slides.forEach((sl, i) => {
+    if (!sl.lienzoLibre || !zonasDe(sl.layout) || !zonas(sl).some(z => z.length)) return;
+    if (formato === 'beamer') add('aviso', i, 'La posición libre no se conserva en Beamer.', 'El acomodo cambiará; revisa el código y el resultado compilado.');
+    if (formato === 'pptx') add('aviso', i, 'La posición libre puede diferir en PowerPoint.', 'Abre la exportación y revisa tamaño, orden y recortes de sus elementos.');
+  });
   deck.slides.forEach((sl, i) => zonas(sl).flat().forEach(b => {
     if (['image', 'video'].includes(b.type) && b.src && !(b.alt || b.caption || '').trim()) add('aviso', i, 'Una figura no tiene descripción accesible.', 'Escribe su texto alterno o un pie que explique qué muestra.', b.id);
     if (b.type === 'galeria') for (const im of b.gal?.imgs || []) if (!(im.alt || im.cap || '').trim()) add('aviso', i, 'Una imagen de la galería no tiene descripción.', 'Describe cada panel en el editor de la galería.', b.id);

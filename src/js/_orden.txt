@@ -52,6 +52,9 @@
 50-geometria.js
 51-asistente.js
 52-asistente-ui.js
+52c-transporte-agente.js
+52b-agente.js
+52c-agente-ui.js
 53-imagen-estilo.js
 54-galeria.js
 55-disenador.js

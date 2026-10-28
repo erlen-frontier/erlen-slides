@@ -1,6 +1,11 @@
 fn main() {
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
-        tauri_build::AppManifest::new().commands(&["guardar_proyecto", "cerrar_presentador"]),
+        tauri_build::AppManifest::new().commands(&[
+            "guardar_proyecto",
+            "cerrar_presentador",
+            "agente_consulta",
+            "agente_cancelar",
+        ]),
     ))
     .expect("failed to build desktop application");
 }

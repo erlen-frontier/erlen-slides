@@ -104,6 +104,7 @@ function asisPanel() {
     _asisHilo,
     h('div', { class: 'asis-pie' }, _asisChips, h('div', { class: 'asis-caja' }, _asisEnt, enviar)));
   $('#asisRoot').append(_asisPanel);
+  if (window.ERLEN_AGENTE_UI) window.ERLEN_AGENTE_UI.monta(_asisPanel);
   return _asisPanel;
 }
 
@@ -117,16 +118,18 @@ function abreAsistente(pregunta) {
   if (!E.hilo.length) asisBienvenida();
   asisPintaChips();
   setTimeout(() => _asisEnt.focus({ preventScroll: true }), 60);
-  if (pregunta) asisManda(pregunta);
+  if (pregunta) { window.ERLEN_AGENTE_UI?.ayuda(); asisManda(pregunta); }
 }
 function cierraAsistente() {
   const E = asisEstado();
   E.abierto = false;
   asisQuitaFoco();
+  window.ERLEN_AGENTE_UI?.detiene();
   document.body.classList.remove('con-asis');
   if (_asisPanel) _asisPanel.classList.remove('on');
 }
 function asisLimpia() {
+  if (window.ERLEN_AGENTE_UI?.activa()) { window.ERLEN_AGENTE_UI.reinicia(); return; }
   const E = asisEstado();
   E.hilo = []; E.guia = null; E.paso = 0;
   _asisHilo.innerHTML = '';

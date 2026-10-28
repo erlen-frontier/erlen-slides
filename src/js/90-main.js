@@ -29,7 +29,7 @@ function initShortcuts() {
     if (P.on || CL.on || (typeof AR !== 'undefined' && AR.on) || (typeof TL !== 'undefined' && TL.on)) return;
     if (wsAbierto()) return;   /* con el inicio abierto, los atajos del editor no actúan */
     if ($('#modalRoot').firstChild) { if(e.key === 'Escape') { e.preventDefault(); closeModal(); } return; }
-    const inField = e.target.matches('input,textarea,[contenteditable],[contenteditable=true],[contenteditable=plaintext-only]');
+    const inField = e.target.closest('input,textarea,select,button,a[href],[contenteditable],[role="combobox"],[role="listbox"],[role="slider"],[role="spinbutton"],[role="menuitem"]');
     const mod = e.ctrlKey || e.metaKey;
     if (e.key === 'F5') { e.preventDefault(); startPresent(e.shiftKey); return; }
     if (e.key === 'F9') { e.preventDefault(); alternaConcentracion(); return; }
@@ -56,6 +56,17 @@ function initShortcuts() {
     if (e.key === 'Escape' && $('#modalRoot').firstChild) { e.preventDefault(); closeModal(); return; }
     if (inField) return;
     if ($('#modalRoot').firstChild) return;
+    if (curSlide().lienzoLibre && S.selBlock && !mod && !e.altKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+      const f = findBlock(S.selBlock);
+      if (f && f.slide === curSlide() && !f.block.locked) {
+        const p = { ...posicionLibreDe(f.slide, f.block) };
+        const dx = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
+        const dy = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+        if (e.shiftKey) { p.w = clamp(p.w + dx, 1, 100 - p.x); p.h = clamp(p.h + dy, 1, 100 - p.y); }
+        else { p.x = clamp(p.x + dx, 0, 100 - p.w); p.y = clamp(p.y + dy, 0, 100 - p.h); }
+        e.preventDefault(); aplicaPosicionLibre(f.block.id, p); return;
+      }
+    }
     if (e.key === 'Delete' && S.selBlock) { e.preventDefault(); delBlock(S.selBlock); return; }
     if (e.key === 'Escape') {
       if (S.sel && S.sel.size) limpiaSeleccion();

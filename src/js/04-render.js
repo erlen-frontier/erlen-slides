@@ -3,6 +3,31 @@
 /* ================= render de diapositivas ================= */
 const slideDims = deck => deck.meta.aspect === '43' ? [1024, 768] : [1280, 720];
 
+/* Las anotaciones usan coordenadas de la imagen, no del hueco que puede
+   quedar a sus lados al contenerla en una caja de otra proporción. */
+function ajustaMarcoImagenLibre(env, img, recorte, marco) {
+  if (!env.isConnected || !img.naturalWidth || !img.naturalHeight) return;
+  const e = env.getBoundingClientRect(), r = img.getBoundingClientRect();
+  if (!(e.width > 0 && e.height > 0 && r.width > 0 && r.height > 0)) return;
+  const cs = getComputedStyle(img), sx = r.width / (img.offsetWidth || r.width), sy = r.height / (img.offsetHeight || r.height);
+  const num = k => parseFloat(cs[k]) || 0;
+  const iz = (num('borderLeftWidth') + num('paddingLeft')) * sx, de = (num('borderRightWidth') + num('paddingRight')) * sx;
+  const ar = (num('borderTopWidth') + num('paddingTop')) * sy, ab = (num('borderBottomWidth') + num('paddingBottom')) * sy;
+  const w = r.width - iz - de, h = r.height - ar - ab;
+  if (!(w > 0 && h > 0)) return;
+  Object.assign(recorte.style, { left: ((r.left + iz - e.left) / e.width * 100) + '%', top: ((r.top + ar - e.top) / e.height * 100) + '%',
+    width: (w / e.width * 100) + '%', height: (h / e.height * 100) + '%' });
+  const fit = cs.objectFit;
+  const escala = fit === 'cover' ? Math.max(w / img.naturalWidth, h / img.naturalHeight)
+    : fit === 'contain' || fit === 'scale-down' ? Math.min(w / img.naturalWidth, h / img.naturalHeight) : null;
+  const dw = escala == null ? w : img.naturalWidth * escala, dh = escala == null ? h : img.naturalHeight * escala;
+  const posicion = String(cs.objectPosition || '50% 50%').split(/\s+/);
+  const fraccion = (v, fallback) => /%$/.test(v || '') ? (parseFloat(v) / 100) : fallback;
+  const px = fraccion(posicion[0], .5), py = fraccion(posicion[1], .5);
+  Object.assign(marco.style, { left: ((w - dw) * px / w * 100) + '%', top: ((h - dh) * py / h * 100) + '%',
+    width: (dw / w * 100) + '%', height: (dh / h * 100) + '%' });
+}
+
 function renderSlide(deck, idx, mode, stepShown) {
   const sl = deck.slides[idx];
   const m = deck.meta;
@@ -34,10 +59,14 @@ function renderSlide(deck, idx, mode, stepShown) {
   /* ---- bloques ---- */
   function renderBlock(b, availPx) {
     const sel = edit && S.selBlock === b.id;
+    if (sl.lienzoLibre && zonasDe(sl.layout)) availPx = SLIDE_W * posicionLibreDe(sl, b).w / 100;
     let el;
     switch (b.type) {
       case 'text':
-        el = h('div', Object.assign({ class: `blk b-text sz-${b.size || 'n'}${b.align === 'center' ? ' al-c' : ''}${emptyCls(b.text)}`, html: blockRich(b.text) }, ed('b:' + b.id, 'Texto…')));
+        if (edit && sl.lienzoLibre) {
+          el = h('div', { class: `blk b-text sz-${b.size || 'n'}${b.align === 'center' ? ' al-c' : ''}` },
+            h('div', Object.assign({ class: emptyCls(b.text).trim(), html: blockRich(b.text) }, ed('b:' + b.id, 'Texto…'))));
+        } else el = h('div', Object.assign({ class: `blk b-text sz-${b.size || 'n'}${b.align === 'center' ? ' al-c' : ''}${emptyCls(b.text)}`, html: blockRich(b.text) }, ed('b:' + b.id, 'Texto…')));
         break;
       case 'bullets': {
         const ul = h('ul', { class: 'bl' });
@@ -72,10 +101,32 @@ function renderSlide(deck, idx, mode, stepShown) {
       case 'image': {
         const fig = h('figure', null);
         if (b.src) {
-          const env = h('div', { class: 'imgwrap', style: `width:${b.w || 70}%` },
-            h('img', { src: b.src, alt: b.alt || b.caption || 'Figura' }),
-            typeof capaFigura === 'function' ? capaFigura(b, deck) : null,
-            typeof capaEscala === 'function' ? capaEscala(b) : null);
+          const img = h('img', { src: b.src, alt: b.alt || b.caption || 'Figura' });
+          const marcas = typeof capaFigura === 'function' ? capaFigura(b, deck) : null;
+          const escala = typeof capaEscala === 'function' ? capaEscala(b) : null;
+          const env = h('div', { class: 'imgwrap', style: `width:${b.w || 70}%` }, img);
+          if (sl.lienzoLibre && (marcas || escala)) {
+            const marco = h('div', { class: 'imagen-libre-marco', style: 'position:absolute;pointer-events:none' }, marcas, escala);
+            const recorte = h('div', { class: 'imagen-libre-recorte', style: 'position:absolute;overflow:hidden;pointer-events:none' }, marco);
+            if (escala) {
+              const pct = (b.escala.largo / b.escala.porPx / (b.escala.anchoImg || 1)) * 100;
+              escala.style.width = pct + '%'; escala.style.boxSizing = 'border-box';
+              escala.style.padding = b.escala.fondo === false ? '2px 0' : '5px 0';
+              const margen = Math.max(0, Math.min(2.5, 100 - pct));
+              if (String(b.escala.pos || 'abajo-der').endsWith('izq')) { escala.style.left = margen + '%'; escala.style.right = 'auto'; }
+              else { escala.style.right = margen + '%'; escala.style.left = 'auto'; }
+              const barra = escala.querySelector('.esc-barra'); if (barra) { barra.style.width = '100%'; barra.style.minWidth = '0'; }
+            }
+            env.append(recorte);
+            const ajusta = () => ajustaMarcoImagenLibre(env, img, recorte, marco);
+            img.addEventListener('load', ajusta);
+            if (img.decode) img.decode().then(ajusta, () => {});
+            if (typeof ResizeObserver !== 'undefined') {
+              const observador = new ResizeObserver(() => { if (!env.isConnected) observador.disconnect(); else ajusta(); });
+              observador.observe(env); observador.observe(img);
+            }
+            if (img.complete && img.naturalWidth) Promise.resolve().then(ajusta);
+          } else { if (marcas) env.append(marcas); if (escala) env.append(escala); }
           if (typeof aplicaEstiloImg === 'function') aplicaEstiloImg(env, b, deck);
           fig.append(env);
           /* Antes / después: la segunda imagen se funde sobre la primera como un paso. */
@@ -576,6 +627,42 @@ function renderSlide(deck, idx, mode, stepShown) {
     const lc = typeof lineaCitas === 'function' ? lineaCitas(sl, deck, mode) : null;
     if (lc) body.append(lc);
     frame.append(body);
+    if (sl.lienzoLibre && zonasDe(sl.layout)) {
+      /* Los bloques siguen en sus zonas del modelo; la capa solo cambia el
+         lugar donde se dibujan. Así desactivar el modo recupera el acomodo. */
+      const capa = h('div', { class: 'fbody lienzo-capa', style: esc !== 1 ? `--sesc:${esc}` : null });
+      const porId = new Map(zonas(sl).flat().map(b => [String(b.id), b]));
+      const fragmentos = [];
+      for (const el of Array.from(frame.querySelectorAll('.blk[data-bid]'))) {
+        const b = porId.get(el.dataset.bid); if (!b) continue;
+        const p = posicionLibreDe(sl, b);
+        /* Conserva las reglas dependientes del diseño (por ejemplo, el tamaño
+           de .enunciado o el color de .sangre-banda) sin que sus cajas limiten
+           la posición libre. El espacio vacío mantiene los fondos del diseño. */
+        const ancestros = [];
+        for (let n = el.parentElement; n && n !== body; n = n.parentElement) ancestros.push(n);
+        const reserva = h('div', { class: el.className.replace(/\b(?:blk|sel|sel-lote)\b/g, '').trim(),
+          'aria-hidden': 'true', style: `visibility:hidden;pointer-events:none;width:${p.w * SLIDE_W / 100}px;height:${p.h * slideDims(deck)[1] / 100}px` });
+        el.replaceWith(reserva);
+        Object.assign(el.style, { position: 'absolute', left: p.x + '%', top: p.y + '%', width: p.w + '%', height: p.h + '%' });
+        let contexto = el;
+        for (const original of ancestros) {
+          const copia = h('div', { class: original.className, style: 'display:contents' });
+          copia.append(contexto); contexto = copia;
+        }
+        fragmentos.push({ contexto, enBanda: ancestros.some(n => n.classList.contains('sangre-banda')) });
+      }
+      let bandaInsertada = false;
+      for (const fragmento of fragmentos) {
+        if (fragmento.enBanda && !bandaInsertada) {
+          const banda = body.querySelector('.sangre-banda');
+          if (banda) { const fondo = banda.cloneNode(true); fondo.setAttribute('aria-hidden', 'true'); fondo.style.pointerEvents = 'none'; capa.append(fondo); }
+          bandaInsertada = true;
+        }
+        capa.append(fragmento.contexto);
+      }
+      frame.append(capa);
+    }
     root.append(frame);
   }
 

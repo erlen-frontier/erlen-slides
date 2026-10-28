@@ -283,6 +283,24 @@ function renderBlockTab_(body) {
       h('span', { class: 'blk-donde' }, 'Diapositiva ' + (S.cur + 1) + (f.arr.length > 1 ? ' · bloque ' + (f.i + 1) + ' de ' + f.arr.length : ''))),
     h('button', { class: 'icon-btn', title: 'Quitar la selección', onclick: () => selectBlock(null) }, '✕')));
 
+  if (f.slide === curSlide() && f.slide.lienzoLibre) {
+    const g = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Posición en la diapositiva'));
+    const p = posicionLibreDe(f.slide, b);
+    const campos = h('div', { class: 'libre-campos' });
+    for (const [key, nombre] of [['x', 'Izquierda'], ['y', 'Arriba'], ['w', 'Anchura'], ['h', 'Altura']]) {
+      const input = h('input', { class: 'field', type: 'number', min: key === 'w' || key === 'h' ? '1' : '0', max: '100', step: '0.01',
+        value: p[key], disabled: !!b.locked, 'aria-label': nombre + ' (%)', onchange: e => {
+          if (f.slide !== curSlide() || findBlock(b.id)?.block !== b || b.locked) return;
+          const siguiente = { ...posicionLibreDe(f.slide, b), [key]: e.target.value === '' ? NaN : +e.target.value };
+          if (!posicionLibreValida(siguiente)) { e.target.value = posicionLibreDe(f.slide, b)[key]; toast('La caja debe quedar dentro de la diapositiva y medir al menos 1 %.', 'warn'); return; }
+          aplicaPosicionLibre(b.id, siguiente);
+        } });
+      campos.append(h('label', null, nombre + ' (%)', input));
+    }
+    g.append(campos, h('p', { class: 'hint' }, 'Flechas: mover · Mayús + flechas: cambiar el tamaño.'));
+    body.append(g);
+  }
+
   let cuerpo;
   try { cuerpo = cuerpoProps(b, { panel: true }); }
   catch (e) { cuerpo = h('div', null, h('p', { class: 'hint' }, 'No se pudieron mostrar las propiedades de este bloque.')); }
@@ -522,6 +540,8 @@ function renderSlideTab(body) {
     body.append(g);
   }
   const g = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Acomodo del texto'));
+  if (zonasDe(sl.layout) > 0) g.append(h('label', { class: 'check' },
+    h('input', { type: 'checkbox', checked: !!sl.lienzoLibre, onchange: alternaLienzoLibre }), 'Colocar los bloques libremente'));
   gruposLayout().forEach(([grupo, items]) => {
     g.append(h('span', { class: 'sublabel' }, grupo));
     const lg = h('div', { class: 'lay-grid', style: 'grid-template-columns:repeat(2,1fr)' });

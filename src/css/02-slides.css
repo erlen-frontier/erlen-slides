@@ -164,6 +164,13 @@
 .fbody.ly-ancho.pad-normal{--padk:.45}
 .fbody.ly-ancho.pad-amplio{--padk:1}
 .fbody.v-center{justify-content:center}
+/* La capa libre es una proyección de las mismas zonas sobre toda la página. */
+.fbody.lienzo-capa{position:absolute;inset:0;display:block;flex:none;padding:0;overflow:visible;pointer-events:none}
+.lienzo-capa .blk{pointer-events:auto;margin:0;min-width:0;max-width:none}
+.lienzo-capa .b-image>figure,.lienzo-capa .b-video>figure{height:100%;min-height:0}
+.lienzo-capa .imgwrap,.lienzo-capa .vid-wrap{min-height:0;max-height:100%;flex-shrink:1}
+.lienzo-capa .imgwrap img,.lienzo-capa .vid-wrap video{max-height:100%;max-width:100%;object-fit:contain}
+.lienzo-capa .sangre-fig img,.lienzo-capa .sangre-fig video{object-fit:cover}
 .cols{display:flex;gap:var(--gap-col);flex:1;min-height:0}
 .col{display:flex;flex-direction:column;gap:var(--e5);min-width:0}
 

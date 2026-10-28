@@ -22,6 +22,10 @@ function saneaBloque(b, avisos, deck) {
   const tipos = BLOCK_DEFS.map(x => x.id);
   if (tipos.indexOf(b.type) < 0) { avisos.push('bloque de tipo «' + String(b.type) + '» desconocido'); return null; }
   if (!b.id) b.id = uid();
+  if (b.posLibre != null && !posicionLibreValida(b.posLibre)) {
+    avisos.push('un bloque tenía una posición de lienzo inválida; se usará una posición inicial visible');
+    delete b.posLibre;
+  }
   if (b.locked !== true) delete b.locked;
   if (typeof b.group !== 'string' || b.group.length > 80) delete b.group;
   if (!['left', 'center', 'right'].includes(b.blockAlign)) delete b.blockAlign;
@@ -226,6 +230,10 @@ function saneaDeck(bruto) {
       if (!sl.citas.length) delete sl.citas;
     } else if (sl.citas != null) delete sl.citas;
     if (!LAY[sl.layout]) { avisos.push('la diapositiva ' + (i + 1) + ' usaba el diseño «' + String(sl.layout) + '»; se cambió a contenido'); sl.layout = 'content'; }
+    if (sl.lienzoLibre != null && sl.lienzoLibre !== true) {
+      if (sl.lienzoLibre !== false) avisos.push('la diapositiva ' + (i + 1) + ' tenía una opción de lienzo inválida');
+      delete sl.lienzoLibre;
+    }
     if (!sl.id || vistos.has(sl.id)) sl.id = uid();
     if (sl.bibAuto) sl.bibAuto = true; else delete sl.bibAuto;
     if (sl.subt2 != null) { sl.subt2 = String(sl.subt2).slice(0, 4000); if (!sl.subt2) delete sl.subt2; }
@@ -249,6 +257,7 @@ function saneaDeck(bruto) {
       sl[k].forEach(b => { if (vistos.has(b.id)) b.id = uid(); vistos.add(b.id); });
     });
     prepararZonas(sl, sl.layout);
+    materializaPosicionesLibres(sl);
     limpias.push(sl);
   });
   if (!limpias.length) return { error: 'Ninguna diapositiva del archivo se pudo leer.' };

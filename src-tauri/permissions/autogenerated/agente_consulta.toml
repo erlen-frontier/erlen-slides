@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-agente-consulta"
+description = "Enables the agente_consulta command without any pre-configured scope."
+commands.allow = ["agente_consulta"]
+
+[[permission]]
+identifier = "deny-agente-consulta"
+description = "Denies the agente_consulta command without any pre-configured scope."
+commands.deny = ["agente_consulta"]
