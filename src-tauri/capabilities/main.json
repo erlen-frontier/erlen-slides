@@ -3,5 +3,5 @@
   "identifier": "main",
   "description": "Local Slides editor and its native project-save command.",
   "windows": ["main"],
-  "permissions": ["core:default", "allow-guardar-proyecto", "allow-cerrar-presentador", "allow-agente-consulta", "allow-agente-cancelar"]
+  "permissions": ["core:default", "core:window:allow-destroy", "allow-guardar-proyecto", "allow-abrir-archivo-proyecto", "allow-guardar-archivo-proyecto-como", "allow-guardar-archivo-proyecto", "allow-cerrar-archivo-proyecto", "allow-cerrar-presentador", "allow-agente-consulta", "allow-agente-cancelar"]
 }

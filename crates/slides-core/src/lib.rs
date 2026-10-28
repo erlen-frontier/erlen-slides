@@ -1,7 +1,9 @@
 //! Portable project operations for the desktop application.
 
 mod agent;
+mod documents;
 pub use agent::{agent_endpoint, request_agent_chat, AgentRequests};
+pub use documents::{OpenedProject, ProjectFiles, ProjectReference};
 
 use serde::de::IgnoredAny;
 use serde::Deserialize;
@@ -43,20 +45,7 @@ struct ProjectShape {
 /// destination. A temporary file in the same directory keeps the previous
 /// project intact if validation or writing fails.
 pub fn save_project(path: &Path, contents: &str) -> io::Result<()> {
-    if !contents.trim_start().starts_with('{') {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "El proyecto no es un objeto JSON",
-        ));
-    }
-    let project: ProjectShape = serde_json::from_str(contents)
-        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-    if project.slides.is_empty() {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "El proyecto no contiene diapositivas",
-        ));
-    }
+    validate_project(contents)?;
 
     match fs::symlink_metadata(path) {
         Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_file() => {
@@ -96,5 +85,24 @@ pub fn save_project(path: &Path, contents: &str) -> io::Result<()> {
     }
     temporary.as_file().sync_all()?;
     temporary.persist(path).map_err(|error| error.error)?;
+    Ok(())
+}
+
+pub(crate) fn validate_project(contents: &str) -> io::Result<()> {
+    if !contents.trim_start().starts_with('{') {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "El proyecto no es un objeto JSON",
+        ));
+    }
+    let project: ProjectShape = serde_json::from_str(contents)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+    if project.slides.is_empty() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "El proyecto no contiene diapositivas",
+        ));
+    }
+
     Ok(())
 }

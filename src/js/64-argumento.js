@@ -242,7 +242,7 @@ function empiezaPorElArgumento() {
   const d = demoDeck();
   d.slides = [d.slides[0]];
   d.meta.title = ''; d.meta.subtitle = ''; d.meta.esqueleto = true; d.meta.refs = [];
-  loadDeck(d, null);
+  if (!loadDeck(d, null)) return;
   for (let k = 0; k < 3; k++) {
     const sl = { id: uid(), layout: 'content', title: '', blocks: [] };
     prepararZonas(sl, 'content');

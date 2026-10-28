@@ -273,12 +273,12 @@ function saneaDeck(bruto) {
 }
 
 /* Carga con red de seguridad: si algo revienta al dibujar, se vuelve atrás. */
-function cargaSegura(bruto, nombre) {
+function cargaSegura(bruto, nombre, confirmado = false) {
   const r = saneaDeck(bruto);
   if (r.error) { toast(r.error, 'warn'); return false; }
   const respaldo = S.deck, respName = S.deckName;
   try {
-    loadDeck(r.deck, nombre || null);
+    if (!loadDeck(r.deck, nombre || null, confirmado)) return false;
   } catch (e) {
     S.deck = respaldo; S.deckName = respName; snapNow();
     try { renderAll(); } catch (e2) {}

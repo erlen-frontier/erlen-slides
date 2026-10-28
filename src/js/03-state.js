@@ -239,6 +239,7 @@ const saveInd = deb(() => {
     S._avisoLS = true;
     toast('La presentacion ya no cabe en el guardado autom\u00e1tico del navegador (suele ser por los videos). Guarda el proyecto .json desde Exportar.', 'warn');
   }
+  if (typeof actualizaEstadoArchivoEscritorio === 'function') actualizaEstadoArchivoEscritorio(ok);
 }, 700);
 
 function commit(opts) {

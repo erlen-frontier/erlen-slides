@@ -101,6 +101,8 @@ Se rechazan, con el motivo en español y sin tocar nada, las copias de otro tipo
 
 El indicador superior informa del autoguardado. Archivo permite conservar varias presentaciones con nombre. En Recursos hay copias de recuperación, respaldo ZIP, plantillas e identidad institucional. Un respaldo ZIP contiene proyectos JSON y un archivo de plantillas: importa cada presentación desde Inicio y las plantillas desde su opción específica.
 
+En la aplicación de escritorio Linux, **Abrir proyecto** (Ctrl+O) abre un JSON desde el disco. **Guardar** (Ctrl+S) escribe en el archivo abierto y **Guardar como** (Ctrl+Mayús+S) permite elegir otro; para un documento nuevo, Guardar pregunta dónde crearlo. El indicador avisa si hay cambios pendientes. Si otra aplicación modifica el archivo, Tabula evita sobrescribirlo y propone guardar una copia. Al cerrar o cambiar de presentación con cambios sin guardar en disco se pide confirmación. La copia interna sigue autoguardándose y su recuperación es independiente del archivo elegido. Al reiniciar hay que volver a abrir el archivo o elegir un destino. Para PPTX y Markdown sigue disponible **Archivo → Importar presentación**.
+
 Guarda una copia JSON externa antes de borrar los datos del navegador. Importar otro proyecto valida su estructura; los borradores actuales se conservan al cambiar desde Inicio si hay espacio disponible. Si el almacenamiento se llena, descarga tu trabajo antes de continuar.
 
 ## Presentar

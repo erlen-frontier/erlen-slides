@@ -266,9 +266,16 @@ function elementosArchivo() {
   item('FolderOpen', 'Mis presentaciones…', null, openDecks);
   item('FilePlus', 'Nueva presentación…', 'plantillas', openPlantillas);
   sep();
-  item('Save', 'Guardar como…', 'Ctrl+S', saveDeckAs);
-  if (S.archivo) item('HardDrive', 'Dejar de guardar en el archivo', S.archivoNombre, sueltaArchivo);
-  else item('HardDrive', 'Guardar en un archivo…', 'se mantiene al día solo', eligeArchivo);
+  if (hayEscritorio()) {
+    item('FolderOpen', 'Abrir proyecto…', 'JSON', abrirProyectoEscritorio);
+    item('Save', 'Guardar', 'Ctrl+S', () => guardarProyectoEscritorio(false));
+    item('Save', 'Guardar como…', 'Ctrl+Mayús+S', () => guardarProyectoEscritorio(true));
+    item('HardDrive', 'Guardar copia en la biblioteca…', null, saveDeckAs);
+  } else {
+    item('Save', 'Guardar como…', 'Ctrl+S', saveDeckAs);
+    if (S.archivo) item('HardDrive', 'Dejar de guardar en el archivo', S.archivoNombre, sueltaArchivo);
+    else item('HardDrive', 'Guardar en un archivo…', 'se mantiene al día solo', eligeArchivo);
+  }
   item('Upload', 'Importar presentación…', 'JSON, PPTX o Markdown', openImportarPresentacion);
   item('FileCode', 'Crear desde Markdown…', 'vista previa', openMarkdown);
   item('History', 'Copias y recuperación', null, openRecuperacion);

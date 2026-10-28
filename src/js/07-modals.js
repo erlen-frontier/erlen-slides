@@ -471,16 +471,20 @@ function saveDeckAs() {
 function newDeckFlow(demo) {
   if (!confirm('Se abrirá una presentación nueva. La actual queda en el autoguardado' + (S.deckName ? ` y en «${S.deckName}»` : '') + '. ¿Continuar?')) return;
   if (S.deckName) { const s = decksStore(); s[S.deckName] = { deck: S.deck, when: Date.now() }; lsSet(LS_DECKS, s); }
-  loadDeck(demo ? demoDeck() : blankDeck(), null);
+  if (!loadDeck(demo ? demoDeck() : blankDeck(), null)) return;
   closeModal();
 }
-function loadDeck(deck, name) {
+function loadDeck(deck, name, confirmado = false) {
   if (S.deck) { flushEdicion(); recActual(true); }
+  if (!confirmado && typeof confirmaCambioArchivo === 'function' && !confirmaCambioArchivo()) return false;
   S.respaldoId = null;
   S.archivo = null; S.archivoNombre = null;
   S.deck = deepCopy(deck); S.deck.slides.forEach(materializaPosicionesLibres); S.deckName = name || null;
   S.cur = 0; S.selBlock = null; S.undo = []; S.redo = []; S.zoom = null;
   snapNow(); saveInd(); renderAll();
+  if (typeof olvidaArchivoEscritorio === 'function') olvidaArchivoEscritorio();
+  if (typeof actualizaEstadoArchivoEscritorio === 'function') actualizaEstadoArchivoEscritorio();
+  return true;
 }
 function importJSON() {
   let inp = h('input', { type: 'file', accept: '.json,application/json', style: 'display:none' });
