@@ -63,7 +63,7 @@ test('Archivo opens its menu with file, export and about options',async()=>{cons
  assert.equal(archivo.getAttribute('aria-expanded'),'true');
  const opciones=[...menu.querySelectorAll('[role=menuitem]')].map(b=>b.children[1].textContent);
  for(const o of ['Mis presentaciones…','Nueva presentación…','Guardar como…','Guardar en un archivo…','Importar presentación…','Revisar y compartir…','Copias y recuperación',
-  'PDF…','PowerPoint (.pptx)','Código Beamer (.tex)','Folleto para repartir…','Guion del orador','Proyecto (.json)','Kit de defensa (.zip)','Imagen de la diapositiva','Acerca de Erlen Slides'])
+  'PDF…','PowerPoint (.pptx)','Código Beamer (.tex)','Folleto para repartir…','Guion del orador','Proyecto (.json)','Kit de defensa (.zip)','Imagen de la diapositiva','Acerca de Tabula'])
   assert.ok(opciones.includes(o),'Falta en Archivo: '+o);
  assert.equal(d.activeElement,menu.querySelector('[role=menuitem]'),'El foco entra en el menú');
  [...menu.querySelectorAll('[role=menuitem]')].find(b=>b.textContent.startsWith('Acerca de')).click();
@@ -124,6 +124,6 @@ test('The ribbon script is the synced suite package copy and its stylesheet is i
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  assert.ok(html.includes(readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8')),'cinta.css del paquete, íntegro en el build');
  assert.ok(html.includes('const erlenCinta=(()=>{'));
- assert.ok(Buffer.byteLength(html)<=3.6*1024*1024,'El HTML único no pasa de 3,6 MiB (tipografías variables y recorrido compartido de Mey): '+Buffer.byteLength(html));
+ assert.ok(Buffer.byteLength(html)<=3.6*1024*1024,'El HTML único no pasa de 3,6 MiB (tipografías variables y componentes compartidos): '+Buffer.byteLength(html));
  assert.doesNotMatch(readFileSync(new URL('../src/css/01-editor.css',import.meta.url),'utf8'),/\.cinta-(b|tab|tabs|fila|grupo|items|bigs|col|gn|hoja|fl|sep)\b/,'No queda CSS de la cinta antigua');
 });

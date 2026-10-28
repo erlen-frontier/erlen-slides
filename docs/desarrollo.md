@@ -15,7 +15,7 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 - `src/js/45-estructura.js`, `src/js/45b-estructura-dibujo.js` y `src/js/46-estructura-edit.js`: las estructuras químicas, partidas en modelo, motor y lienzo (ver «Editores de figura»).
 - `src/js/47-lab-catalogo.js`, `src/js/47b-lab.js` y `src/js/48-lab-edit.js`: el montaje de laboratorio, partido en catálogo, motor y editor (ver «Editores de figura»).
 - `src/js/87-ejemplos.js`: doce ejemplos científicos construidos con los bloques reales.
-- `src/diseno/suite-inicio.js`: la pantalla de inicio común de Erlen (`erlenInicio`), que genera `diseno-sync --modo iife` del portal; `src/js/_orden.txt` la carga directamente, sin copia local. Sus estilos, `src/diseno/inicio.css`, se incrustan en el build tras los de la cinta.
+- `src/diseno/suite-inicio.mjs` y `src/diseno/suite-marco.mjs`: componentes compartidos del inicio y el marco. El build genera sus versiones para Tabula sin incluir Mey; no modifica los originales sincronizados. Sus estilos se incrustan junto a la cinta sin el preámbulo exclusivo de Mey; el build comprueba sus límites para detectar cambios en los archivos compartidos.
 - `src/js/88-workspace.js`: monta el inicio con la biblioteca, los ejemplos, las plantillas personales y los recursos locales, y mantiene las rutas `#suite/<vista>` y `#presentaciones` y el enlace `?plantilla=<id>`.
 - `src/diseno/suite-navigation.js`: el menú común de Erlen (auxiliar MIT del repositorio maestro, envuelto para el ámbito compartido porque aquí los módulos se concatenan); `src/js/_orden.txt` lo carga directamente. Lo mismo vale para la cinta, `src/diseno/suite-cinta.js`.
 - `src/js/88b-recuperacion.js`: historial en IndexedDB, separado del autoguardado.

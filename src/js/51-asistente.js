@@ -209,6 +209,7 @@ accion({ id: 'pieza', grp: 'Montaje', n: 'Añadir una pieza al montaje',
   corre: v => {
     if (!v || !LABK[v]) return null;
     let b = asisMontajeActual(), nuevo = false;
+    if (b && b.locked) return null;
     if (!b) { b = nuevoBloqueEn('montaje', {}); if (!b) return null; b.mont = montajeVacio(); nuevo = true; }
     if (!b.mont) b.mont = montajeVacio();
     const n = b.mont.piezas.length;
@@ -222,14 +223,14 @@ accion({ id: 'estilo-lab', grp: 'Montaje', n: 'Cambiar el estilo del montaje',
   frases: 'estilo dibujo montaje linea solido tecnico cuerpo silueta plano',
   arg: { n: 'estilo', tipo: 'opcion', ops: opEstiloLab },
   siNo: 'Primero necesitas un montaje en esta diapositiva. Pídeme «inserta un montaje de laboratorio» y luego le cambiamos el estilo.',
-  corre: v => { const b = asisMontajeActual(); if (!b || !b.mont || !v) return null; b.mont.estilo = v; commit(); return 'Montaje en estilo «' + EK_LAB[v].n + '». ' + EK_LAB[v].d; } });
+  corre: v => { const b = asisMontajeActual(); if (!b || b.locked || !b.mont || !v) return null; b.mont.estilo = v; commit(); return 'Montaje en estilo «' + EK_LAB[v].n + '». ' + EK_LAB[v].d; } });
 accion({ id: 'color-lab', grp: 'Montaje', n: 'Cambiar el color del líquido del montaje',
   d: 'El color de los líquidos y los rayos de todas las piezas del montaje. Cada pieza puede además llevar el suyo.',
   clave: 'color liquido montaje',
   frases: 'color liquido montaje azul rojo verde amarillo violeta ambar turquesa',
   arg: { n: 'color', tipo: 'opcion', ops: opColores },
   siNo: 'Primero necesitas un montaje en esta diapositiva. Pídeme «inserta un montaje de laboratorio» y después le damos color.',
-  corre: v => { const b = asisMontajeActual(); if (!b || !b.mont || !v) return null; b.mont.col = v; commit(); const n = (LIQ_COLORES.find(c => c[0] === v) || [])[1]; return 'Líquidos en ' + (n || v).toLowerCase() + '.'; } });
+  corre: v => { const b = asisMontajeActual(); if (!b || b.locked || !b.mont || !v) return null; b.mont.col = v; commit(); const n = (LIQ_COLORES.find(c => c[0] === v) || [])[1]; return 'Líquidos en ' + (n || v).toLowerCase() + '.'; } });
 
 /* --- diseño --- */
 accion({ id: 'tema', grp: 'Diseño', n: 'Cambiar el tema',
@@ -384,7 +385,7 @@ accion({ id: 'animacion', grp: 'Diapositivas', n: 'Poner un efecto de entrada al
   siNo: 'Selecciona primero el bloque al que quieres ponerle el efecto.',
   corre: v => {
     const f = S.selBlock && findBlock(S.selBlock);
-    if (!f || !v || !AK_ANIM[v]) return null;
+    if (!f || f.block.locked || !v || !AK_ANIM[v]) return null;
     f.block.anim = v; f.block.step = v !== 'none';
     commit();
     return 'Ese bloque entra con «' + AK_ANIM[v].name + '». ' + (AK_ANIM[v].d || '');
@@ -420,7 +421,7 @@ accion({ id: 'estilo-fig', grp: 'Insertar', n: 'Cambiar el estilo de la figura',
   corre: v => {
     if (!v) return null;
     const im = zonas(curSlide()).flat().find(x => x.type === 'image' && x.src);
-    if (!im) return null;
+    if (!im || im.locked) return null;
     if (!im.est) im.est = estiloImgPorOmision();
     const [k, val] = v.split(':');
     if (k === 'f') im.est.forma = val;
@@ -457,6 +458,7 @@ accion({ id: 'forma', grp: 'Insertar', n: 'Insertar una forma o una llamada',
   corre: v => {
     if (!v || !LABK[v]) return null;
     let b = asisMontajeActual(), nuevo = false;
+    if (b && b.locked) return null;
     if (!b) { b = nuevoBloqueEn('montaje', {}); if (!b) return null; b.mont = montajeVacio(); nuevo = true; }
     if (!b.mont) b.mont = montajeVacio();
     const n = b.mont.piezas.length;
@@ -499,7 +501,7 @@ accion({ id: 'acabado-smart', grp: 'Figuras', n: 'Acabado del diagrama',
   d: 'Relleno, contorno, editorial o relieve: el mismo SmartArt con cuatro pieles. Vale igual en pantalla, en el PDF y en el PowerPoint.',
   clave: 'acabado diagrama smartart relleno contorno editorial relieve piel estilo del diagrama',
   frases: 'acabado del diagrama que el smartart se vea distinto estilo del diagrama contorno editorial relieve',
-  req: () => { const f = S.selBlock && findBlock(S.selBlock); return !!(f && f.block.type === 'smart'); },
+  req: () => { const f = S.selBlock && findBlock(S.selBlock); return !!(f && !f.block.locked && f.block.type === 'smart'); },
   arg: { n: 'acabado', tipo: 'opcion', ops: () => SMART_ACABADOS.map(x => ({ v: x.id, n: x.n })) },
   corre: v => { findBlock(S.selBlock).block.acab = v; commit(); return 'Acabado ' + SA[v].n + '. ' + SA[v].d; } });
 accion({ id: 'diagrama', grp: 'Figuras', n: 'Insertar un diagrama',
@@ -580,19 +582,19 @@ accion({ id: 'capas', grp: 'Figuras', n: 'Revelar la gráfica por capas',
   d: 'La gráfica seleccionada se construye al presentar: ejes, luego cada serie, el ajuste y el punto que importa. En el PDF salen como overlays.',
   clave: 'capas revelar por capas construir la grafica poco a poco overlay',
   frases: 'revelar la grafica por capas que la grafica se construya poco a poco mostrar las series una por una',
-  req: () => { const f = S.selBlock && findBlock(S.selBlock); return !!(f && f.block.type === 'chart'); },
+  req: () => { const f = S.selBlock && findBlock(S.selBlock); return !!(f && !f.block.locked && f.block.type === 'chart'); },
   corre: () => { const b = findBlock(S.selBlock).block; b.capas = true; commit(); return 'Listo: ' + nombresCapas(b).length + ' capas. En el panel del bloque puedes destacar un punto y escribir qué dices en cada una.'; } });
 accion({ id: 'antes-despues', grp: 'Figuras', n: 'Antes y después',
   d: 'Un segundo estado de la figura seleccionada que entra como paso: el público ve exactamente qué se movió.',
   clave: 'antes despues comparar morph cambio segundo estado',
   frases: 'antes y despues comparar la misma figura que se vea el cambio segundo estado de la grafica',
-  req: () => { const f = S.selBlock && findBlock(S.selBlock); return !!(f && (f.block.type === 'chart' || f.block.type === 'image')); },
+  req: () => { const f = S.selBlock && findBlock(S.selBlock); return !!(f && !f.block.locked && (f.block.type === 'chart' || f.block.type === 'image')); },
   corre: () => { const b = findBlock(S.selBlock).block; b.despues = b.type === 'chart' ? { data: b.data || '' } : { src: '' }; commit(); S.tab = 'bloque'; renderInspector(); return b.type === 'chart' ? 'Pega en el panel los datos del «después»; los ejes ya abarcan los dos.' : 'Elige en el panel la imagen del «después».'; } });
 accion({ id: 'derivacion', grp: 'Figuras', n: 'Mostrar la ecuación paso a paso',
   d: 'La ecuación seleccionada se parte en pasos; lo que cambia en cada uno se pinta del color de acento y el porqué va al lado.',
   clave: 'derivacion paso a paso derivar pasos de la ecuacion desarrollar',
   frases: 'mostrar la ecuacion paso a paso derivacion guiada desarrollar la ecuacion por pasos',
-  req: () => { const f = S.selBlock && findBlock(S.selBlock); return !!(f && f.block.type === 'math'); },
+  req: () => { const f = S.selBlock && findBlock(S.selBlock); return !!(f && !f.block.locked && f.block.type === 'math'); },
   corre: () => { openDerivacion(findBlock(S.selBlock).block); return 'Escribe cada paso tal como queda; lo que cambió se pinta solo.'; } });
 accion({ id: 'paquete', grp: 'Figuras', n: 'Paquete reproducible de la figura',
   d: 'Un .zip con los datos en CSV, la figura en pgfplots y un PNG, para que cualquiera la regenere.',
@@ -692,7 +694,7 @@ function asisEntiende(txt) {
   try {
     comandos().forEach(c => {
       const r = asisPuntua(qtok, [[c.n, 2.2], [c.sub || '', 0.9]]);
-      if (r.s >= 4) cands.push({ a: { id: 'cmd:' + c.n, grp: c.grupo || 'Acciones', n: c.n, d: c.sub || '', corre: () => { c.fn(); return 'Hecho: ' + c.n.replace(/…$/, '') + '.'; } }, s: r.s * 0.92, val: null, cubre: r.cubre });
+      if (r.s >= 4) cands.push({ a: { id: 'cmd:' + c.n, grp: c.grupo || 'Acciones', n: c.n, d: c.sub || '', corre: () => c.fn() === false ? null : 'Hecho: ' + c.n.replace(/…$/, '') + '.' }, s: r.s * 0.92, val: null, cubre: r.cubre });
     });
   } catch (e) { /* si la paleta no está lista, seguimos con el catálogo */ }
 

@@ -1,12 +1,12 @@
-# Erlen Slides: Scientific presentations
+# Tabula: presentaciones
 
-**Presentaciones científicas libres, editables y hechas en tu navegador.**
+**Presentaciones libres, editables y hechas en tu dispositivo.**
 
-Escribe ecuaciones, dibuja química, explica datos y prepara tu próxima charla. Erlen Slides reúne edición por bloques, herramientas científicas y modo de presentación en una aplicación local, sin cuenta ni suscripción.
+Tabula reúne edición de diapositivas, herramientas visuales y científicas y modo de presentación en una aplicación local, sin cuenta ni suscripción. Nace de Erlen Slides y conserva la compatibilidad con sus proyectos.
 
 **Versión 0.3.0 · beta · AGPLv3.** Publicación independiente del módulo Presentaciones de Erlen, con auditoría científica y paquetes reproducibles. Interfaz en español.
 
-![Inicio de Erlen Slides](docs/images/inicio.png)
+![Inicio de Tabula](docs/images/inicio.png)
 
 [Empezar](#empezar) · [Ejemplos editables](examples/README.md) · [Cómo es la interfaz](docs/interfaz.md) · [Manual](docs/uso.md) · [English](docs/README.en.md) · [Citar](CITATION.cff)
 
@@ -70,11 +70,11 @@ Cada ejemplo contiene **seis diapositivas**, notas, archivo JSON editable, fuent
 
 El autoguardado usa el almacenamiento de **este navegador y este origen web**. Borrar los datos del sitio, cambiar de navegador o moverlo a otra dirección no traslada tu biblioteca. Descarga proyectos JSON y respaldos ZIP. El historial de recuperación local no sustituye una copia externa.
 
-Erlen Slides usa claves de almacenamiento propias. Para traer una presentación de Erlen, expórtala como JSON e impórtala aquí; no lee automáticamente sus bibliotecas. La única excepción es explícita: una copia que Erlen DoE envía a Slides por la suite, que se abre solo desde su enlace y solo se guarda tras confirmarla. No contiene configuración de producción, telemetría automática ni claves de servicios.
+Tabula conserva las claves de almacenamiento de Erlen Slides para que las bibliotecas existentes del mismo navegador y origen sigan disponibles. Para traer una presentación desde otro navegador u origen, expórtala como JSON e impórtala aquí. La única excepción es explícita: una copia que Erlen DoE envía a Slides por la suite, que se abre solo desde su enlace y solo se guarda tras confirmarla. No contiene configuración de producción, telemetría automática ni claves de servicios.
 
 ## Desarrollo y validación
 
-Lee [Arquitectura](docs/desarrollo.md), [Validación](docs/validacion.md) y [Contribuciones](CONTRIBUTING.md). Las capturas proceden de Firefox; las pruebas de integración con JSDOM simulan geometría y no sustituyen la inspección visual. Las exportaciones deben revisarse antes de enviar un trabajo científico.
+Lee [Arquitectura](docs/desarrollo.md), [Validación](docs/validacion.md) y [Contribuciones](CONTRIBUTING.md). Las capturas proceden de Chromium; las pruebas de integración con JSDOM simulan geometría y no sustituyen la inspección visual. Las exportaciones deben revisarse antes de enviar un trabajo científico.
 
 ## Escritorio en Linux
 

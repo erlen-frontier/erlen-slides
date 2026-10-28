@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
-/* De SMILES o de un archivo MOL a la estructura nativa de Erlen Slides
+/* De SMILES o de un archivo MOL a la estructura nativa de Tabula
    ({atomos, enlaces, estilo}, 45-estructura.js): un dibujo vectorial que se
    sigue editando en el lienzo de estructuras y sale como TikZ en el .tex, no
    una imagen.

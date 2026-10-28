@@ -11,17 +11,18 @@ const espera=()=>new Promise(r=>setTimeout(r,0));
 const aHash=(w,h)=>new Promise(r=>{w.addEventListener('hashchange',()=>setTimeout(r,0),{once:true});w.location.hash=h;});
 
 test('The home screen is the synced suite component and its stylesheet is inlined in the build; the old portada is gone',()=>{
- // El build carga el script directamente del paquete sincronizado: sin copias que se desfasen.
+ // El build genera el componente desde el paquete sincronizado, sin incluir Mey.
  const orden=readFileSync(new URL('../src/js/_orden.txt',import.meta.url),'utf8').trim().split('\n');
  assert.ok(orden.indexOf('../diseno/suite-inicio.js')>=0&&orden.indexOf('../diseno/suite-inicio.js')===orden.indexOf('88-workspace.js')-1,'El componente va justo antes de 88-workspace.js');
  assert.equal(orden.includes('88a-suite.js'),false,'La portada propia ya no se carga');
  assert.equal(existsSync(new URL('../src/js/88a-suite.js',import.meta.url)),false);
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
- const cinta=readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8'),inicioCss=readFileSync(new URL('../src/diseno/inicio.css',import.meta.url),'utf8');
- assert.ok(html.includes(inicioCss),'inicio.css del paquete, íntegro en el build');
+ const cinta=readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8'),inicioOriginal=readFileSync(new URL('../src/diseno/inicio.css',import.meta.url),'utf8');
+ const inicioCss=inicioOriginal.slice(inicioOriginal.indexOf('/* Erlen Suite · paquete de diseño'));
+ assert.ok(html.includes(inicioCss),'inicio.css del paquete, sin el preámbulo de Mey, en el build');
  assert.ok(html.indexOf(inicioCss)>html.indexOf(cinta),'inicio.css va tras cinta.css');
  assert.ok(html.includes('const erlenInicio=(()=>{'));
- assert.ok(Buffer.byteLength(html)<=3.6*1024*1024,'El HTML único no pasa de 3,6 MiB (tipografías variables y recorrido compartido de Mey): '+Buffer.byteLength(html));
+ assert.ok(Buffer.byteLength(html)<=3.6*1024*1024,'El HTML único no pasa de 3,6 MiB (tipografías variables y componentes compartidos): '+Buffer.byteLength(html));
  const css=readFileSync(new URL('../src/css/_orden.txt',import.meta.url),'utf8').trim().split('\n').map(n=>readFileSync(new URL('../src/css/'+n,import.meta.url),'utf8')).join('\n');
  assert.doesNotMatch(css,/\.(suite-(shell|sidebar|brand|topbar|content|welcome|archive-[a-z]+|search|page-heading)|slides-(showcase|example|new-card)|ws-(shell|hero|card|grid|thumb|empty|section-head|controls|eyebrow|note)|workspace)\b/,'No queda CSS de la portada antigua');
  assert.doesNotMatch(readFileSync(new URL('../src/cuerpo.html',import.meta.url),'utf8'),/workspaceRoot/);
@@ -34,12 +35,12 @@ test('Slides opens on its home screen: inert editor, focus on the h1, frozen sta
  assert.equal(d.querySelector('.erlen-marco').hasAttribute('inert'),true,'El editor queda inerte bajo el inicio');
  assert.ok(d.body.classList.contains('erlen-inicio-abierto'));
  assert.equal(d.activeElement,raiz(d).querySelector('h1'),'El foco va al h1');
- assert.equal(raiz(d).querySelector('h1').textContent,'Presentaciones científicas');
- assert.equal(raiz(d).querySelector('h1 em').textContent,'científicas');
- assert.equal(d.title,'Inicio · Erlen Slides');
+ assert.equal(raiz(d).querySelector('h1').textContent,'Crea y comparte tus ideas');
+ assert.equal(raiz(d).querySelector('h1 em').textContent,'tus ideas');
+ assert.equal(d.title,'Inicio · Tabula');
  assert.equal(raiz(d).querySelectorAll('h1').length,1);
  assert.match(raiz(d).querySelector('.erlen-inicio-estado').textContent,/^Disponible · beta/,'Literal congelado del portal');
- assert.equal(raiz(d).querySelector('.erlen-inicio-marca svg')?.getAttribute('viewBox'),'0 0 64 64','El matraz de la marca');
+ assert.equal(raiz(d).querySelector('.erlen-inicio-marca svg')?.getAttribute('viewBox'),'0 0 64 64','La marca de Tabula');
  const rejilla=raiz(d).querySelector('[aria-label="Colección de inicio"]');
  assert.equal(rejilla.querySelector('.erlen-inicio-nueva strong').textContent,'Nueva presentación');
  const ejemplos=[...rejilla.querySelectorAll('.erlen-inicio-ejemplo')];
@@ -64,14 +65,14 @@ test('Slides opens on its home screen: inert editor, focus on the h1, frozen sta
  assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('.erlen-marco').hasAttribute('inert'));
  assert.equal(run('S.deck.meta.title'),'Calibración UV–Vis');assert.equal(w.location.hash,'#presentaciones');
  assert.equal(d.activeElement,d.querySelector('#deckTitleInput'));
- assert.equal(d.title,'Erlen Slides · Presentaciones científicas','Al cerrar se devuelve el título de la pestaña');
+ assert.equal(d.title,'Tabula · Presentaciones','Al cerrar se devuelve el título de la pestaña');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
 test('Hash routes keep their historical names and follow the component navigation both ways',async()=>{const {dom,errors,run}=await editor('http://localhost:8130/#suite/herramientas');try{
  const d=dom.window.document,w=dom.window;
  assert.equal(run('INICIO.vista'),'recursos','#suite/herramientas abre Recursos y respaldos');
- assert.equal(d.title,'Recursos y respaldos · Erlen Slides');
+ assert.equal(d.title,'Recursos y respaldos · Tabula');
  const pares=[['Mis presentaciones','biblioteca'],['Ejemplos editables','plantillas'],['Recursos y respaldos','herramientas'],['Acerca de','servicio'],['Inicio','inicio']];
  for(const [texto,ruta] of pares){nav(d,texto).click();assert.equal(w.location.hash,'#suite/'+ruta,texto);assert.equal(nav(d,texto).getAttribute('aria-current'),'page');assert.equal(d.activeElement,raiz(d).querySelector('h1'));}
  // Hacia atrás: cambiar el hash abre la vista, #presentaciones vuelve al editor.

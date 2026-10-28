@@ -16,7 +16,7 @@ async function eligeArchivo() {
   try {
     S.archivo = await window.showSaveFilePicker({
       suggestedName: deckSlug() + '.json',
-      types: [{ description: 'Proyecto de Erlen', accept: { 'application/json': ['.json'] } }]
+      types: [{ description: 'Proyecto de Tabula', accept: { 'application/json': ['.json'] } }]
     });
     S.archivoNombre = S.archivo.name;
     await escribeArchivo();

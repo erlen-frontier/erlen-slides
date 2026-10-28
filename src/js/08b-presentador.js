@@ -204,7 +204,7 @@ function abrePresentador() {
   if (!w || !w.document) return false;
   try {
     const d = w.document;
-    d.open(); d.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Erlen · presentador</title></head><body class="vp"></body></html>'); d.close();
+    d.open(); d.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Tabula · presentador</title></head><body class="vp"></body></html>'); d.close();
     $$('style, link[rel="stylesheet"]').forEach(s => d.head.append(s.cloneNode(true)));
     d.head.append(estiloPresentador());
     d.body.className = 'vp';

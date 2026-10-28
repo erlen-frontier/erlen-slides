@@ -59,7 +59,7 @@ function zotMsgRed(c) {
       '«Allow other applications on this computer to communicate with Zotero».';
   }
   return 'No se pudo llegar a api.zotero.org.' + (zotEnCaja()
-    ? ' Estás viendo Erlen dentro de claude.ai, y esa página bloquea las conexiones a otros sitios. ' +
+    ? ' Estás viendo Tabula dentro de claude.ai, y esa página bloquea las conexiones a otros sitios. ' +
       'Descarga el archivo de la app (o ábrela desde el sitio publicado) y la conexión funciona; ' +
       'mientras tanto puedes traer tus referencias por archivo, aquí abajo.'
     : ' Revisa tu conexión, o trae las referencias por archivo aquí abajo.');

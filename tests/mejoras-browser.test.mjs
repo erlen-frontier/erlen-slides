@@ -148,6 +148,8 @@ test('Slides upgrades in Chromium', {timeout: 120000}, async t => {
     });
     assert.equal(r.intacto, true); assert.equal(r.nCharts, 1); assert.match(r.chartXML, /scatterChart/); assert.match(r.chartXML, />0\.7</); assert.match(r.chartXML, />4\.2</); assert.match(r.smartXML, /custGeom|prstGeom/);
     assert.ok(r.avisos.some(a => a.diapositiva === 5)); assert.equal(r.html.includes('NOTA_PRIVADA_DE_PRUEBA'), false); assert.equal(r.conNotas.includes('NOTA_PRIVADA_DE_PRUEBA'), true);
+    assert.match(r.html, /href="https:\/\/github\.com\/erlen-frontier\/erlen-slides"/);
+    assert.doesNotMatch(r.html, /github\.com\/erlen-frontier-ops\/erlen-suite/);
     writeFileSync(artifacts + 'editable.pptx', Buffer.from(r.pptx)); writeFileSync(artifacts + 'presentacion.html', r.html);
     const offline = await browser.newPage({viewport: {width: 1440, height: 1000}}), red = [], errores = [];
     offline.on('pageerror', e => errores.push(e.message)); offline.on('request', req => {if (/^https?:/.test(req.url())) red.push(req.url());});

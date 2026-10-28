@@ -198,14 +198,14 @@ async function exportPPTX() {
     'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" ' +
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
     '<dc:title>' + xesc(m.title || 'Presentación') + '</dc:title>' +
-    '<dc:creator>' + xesc(m.authors || 'Erlen') + '</dc:creator>' +
-    '<cp:lastModifiedBy>Erlen</cp:lastModifiedBy>' +
+    '<dc:creator>' + xesc(m.authors || 'Tabula') + '</dc:creator>' +
+    '<cp:lastModifiedBy>Tabula</cp:lastModifiedBy>' +
     '<dcterms:created xsi:type="dcterms:W3CDTF">' + ahora + '</dcterms:created>' +
     '<dcterms:modified xsi:type="dcterms:W3CDTF">' + ahora + '</dcterms:modified></cp:coreProperties>' });
   archivos.push({ nombre: 'docProps/app.xml', datos: XMLCAB +
     '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" ' +
     'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">' +
-    '<Application>Erlen</Application><Slides>' + n + '</Slides></Properties>' });
+    '<Application>Tabula</Application><Slides>' + n + '</Slides></Properties>' });
 
   const blob = await armaZip(archivos);
   await downloadFile(deckSlug() + '.pptx', blob,

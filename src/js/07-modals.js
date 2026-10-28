@@ -644,7 +644,7 @@ function openHelp(pestana) {
     return h('div', null,
       h('p', null, 'El diagnóstico es opcional y está desactivado inicialmente. Activarlo ayuda a corregir fallos de edición, guardado y descarga.'),
       h('label', {style: 'display:flex;align-items:center;gap:10px;margin:16px 0'}, check, 'Compartir diagnósticos técnicos'),
-      h('p', null, 'Solo enviamos a Sentry el tipo de fallo, la versión de Erlen y la línea del programa. No enviamos textos, títulos, archivos, cuentas, historial de clics ni grabaciones de pantalla. Como proveedor de la conexión, Sentry recibe datos de red; estos informes no llevan identificadores de usuario.'),
+      h('p', null, 'Solo enviamos a Sentry el tipo de fallo, la versión de Tabula y la línea del programa. No enviamos textos, títulos, archivos, cuentas, historial de clics ni grabaciones de pantalla. Como proveedor de la conexión, Sentry recibe datos de red; estos informes no llevan identificadores de usuario.'),
       h('p', null, 'Puedes desactivarlo aquí en cualquier momento. La preferencia se guarda en este navegador. No cambia la telemetría de uso, que sigue desactivada, ni afecta a las herramientas gratuitas.'),
       prueba, estado);
   }

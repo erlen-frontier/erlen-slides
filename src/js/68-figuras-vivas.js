@@ -187,7 +187,7 @@ async function paqueteFigura(b) {
     const nombre = (b.caption || b.title || 'figura').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 40) || 'figura';
     const { rows } = parseTable(b.data || '');
     const series = chartSeries(b);
-    const L = ['PAQUETE DE FIGURA · Erlen', '', 'Figura: ' + (b.caption || b.title || '(sin pie)'),
+    const L = ['PAQUETE DE FIGURA · Tabula', '', 'Figura: ' + (b.caption || b.title || '(sin pie)'),
       'Tipo: ' + (b.kind || 'linea'), 'Ejes: ' + (b.xlabel || 'x') + ' / ' + (b.ylabel || 'y'),
       'Puntos: ' + rows.length + ' · series: ' + series.map(x => x.name).join(', ') +
         (series.some(x => x.tieneError) ? ' · con barras de error' : '')];
@@ -204,7 +204,7 @@ async function paqueteFigura(b) {
     });
     L.push('', 'Archivos:', '  datos.csv    los datos tal cual, coma como separador',
       '  figura.tex   la figura en pgfplots; pdflatex figura.tex la regenera',
-      '  figura.png   una vista rápida', '', 'Generado el ' + new Date().toISOString().slice(0, 10) + ' con Erlen.');
+      '  figura.png   una vista rápida', '', 'Generado el ' + new Date().toISOString().slice(0, 10) + ' con Tabula.');
     const svg = renderChart(Object.assign({}, b, { w: 100, capas: false, despues: null }), S.deck, 'export', 900);
     const png = await svgAPng(svg, 1600);
     const archivos = [
@@ -214,7 +214,7 @@ async function paqueteFigura(b) {
       { nombre: 'figura.png', datos: b64aBytes(png) },
       { nombre: 'provenance.json', datos: JSON.stringify({
         schema: 'erlen-provenance-v1',
-        application: 'Erlen Slides',
+        application: 'Tabula',
         version: window.ERLEN?.version || 'desconocida',
         generatedAt: new Date().toISOString(),
         figure: { id: b.id || null, title: b.title || null, caption: b.caption || null,

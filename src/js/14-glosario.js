@@ -122,7 +122,7 @@ const GLOSARIO = [
       ej:'Guardar «CUCEI azul» una vez y no volver a configurar nada.' },
     { t:'Plantilla de arranque', d:'Presentaciones que ya vienen armadas con sus secciones, sus diapositivas y tiempos sugeridos: defensa de tesis, avance de proyecto, seminario de grupo y clase.',
       ej:'La de defensa trae dieciocho diapositivas: antecedentes, hipótesis, objetivos, metodología, resultados, discusión, conclusiones y agradecimientos.' },
-    { t:'Apariencia del editor', d:'Clara, oscura o la del sistema. Solo afecta a la interfaz de Erlen; las diapositivas siguen viéndose con el color de su tema.',
+    { t:'Apariencia del editor', d:'Clara, oscura o la del sistema. Solo afecta a la interfaz de Tabula; las diapositivas siguen viéndose con el color de su tema.',
       ej:'El botón ◐ de la barra de arriba. Se recuerda entre sesiones.' }
   ]},
   { g:'La ventana de trabajo', items:[
@@ -192,7 +192,7 @@ const GLOSARIO = [
       ej:'Escribir «tauc» salta a la diapositiva que lo menciona; escribir «palatino» cambia la tipografía.' },
     { t:'Buscar y reemplazar', d:'Ctrl+F recorre títulos, subtítulos, viñetas, celdas de tabla, cajas, citas, pies de figura, textos de los diagramas y notas del orador. Por omisión ignora acentos y mayúsculas.',
       ej:'Corregir un nombre mal escrito en cuarenta diapositivas de una vez; el reemplazo se puede deshacer.' },
-    { t:'Vista de clasificador', d:'Con Ctrl+G o el botón ⊞ de abajo, todas las diapositivas se ven a la vez en una rejilla, agrupadas por sección. Se reordenan arrastrando y se marcan varias para duplicarlas o borrarlas. Es la vista para revisar la estructura completa.',
+    { t:'Vista de clasificador', d:'Con Ctrl+G o el botón ⊞ de abajo, todas las diapositivas se ven a la vez en una rejilla, agrupadas por sección. Se reordenan arrastrando, con Mover antes o Mover después, o con Alt y las flechas. Se pueden marcar varias para duplicarlas o borrarlas; quita las marcas antes de mover una. Es la vista para revisar la estructura completa.',
       ej:'Antes de una defensa, para comprobar que el orden y los tiempos cuadran.' },
     { t:'Secciones en la tira', d:'Las diapositivas se agrupan bajo la sección a la que pertenecen y la sección se pliega con el triángulo, para no perderse en presentaciones largas.',
       ej:'Con seis secciones y cuarenta diapositivas, plegarlas deja la estructura completa a la vista.' },
@@ -210,7 +210,7 @@ const GLOSARIO = [
       ej:'Buena elección si la presentación lleva muchas fórmulas y quieres que texto y símbolos casen.' },
     { t:'Matemáticas de la familia', d:'Paquetes como mathptmx o mathpazo cambian también las ecuaciones, no solo el texto. En pantalla las fórmulas siempre se ven con Computer Modern (es lo que dibuja KaTeX), así que si quieres que el PDF salga idéntico a la pantalla, desactiva esa casilla y solo cambiará el texto.',
       ej:'Con la casilla apagada, Times usa tgtermes: texto Times, ecuaciones Computer Modern.' },
-    { t:'IfFileExists', d:'La orden de LaTeX que carga un paquete solo si está instalado. Erlen la usa en los paquetes que pueden faltar, de modo que el .tex compila en cualquier instalación y en Overleaf toma la tipografía buena.',
+    { t:'IfFileExists', d:'La orden de LaTeX que carga un paquete solo si está instalado. Tabula la usa en los paquetes que pueden faltar, de modo que el .tex compila en cualquier instalación y en Overleaf toma la tipografía buena.',
       ej:'\\IfFileExists{stix2.sty}{\\usepackage{stix2}}{\\usepackage{mathptmx}}' }
   ]},
   { g:'Pie de página', items:[
@@ -222,7 +222,7 @@ const GLOSARIO = [
       ej:'«CUCEI · {seccion} · {n}/{N}» se ve como «CUCEI · Síntesis y caracterización · 7/24».' },
     { t:'Fondo y línea', d:'El fondo puede ser transparente, un tono tenue del color de acento, el acento sólido o la barra del tema; encima se puede poner una línea fina o de acento. Los colores salen de la tabla del tema, así que la pantalla y el PDF de LaTeX coinciden.',
       ej:'Tenue con línea de acento se lee bien sin competir con el contenido.' },
-    { t:'Portada y secciones', d:'Beamer declara esas diapositivas como [plain], y una diapositiva plain no lleva pie. Si pides que el pie aparezca ahí, Erlen las exporta sin [plain].',
+    { t:'Portada y secciones', d:'Beamer declara esas diapositivas como [plain], y una diapositiva plain no lleva pie. Si pides que el pie aparezca ahí, Tabula las exporta sin [plain].',
       ej:'Útil cuando el comité pide el folio en todas las páginas, portada incluida.' }
   ]},
   { g:'Notas del orador', items:[
@@ -254,11 +254,11 @@ const GLOSARIO = [
   { g:'Exportación', items:[
     { t:'Folleto', d:'La versión impresa para repartir: 2, 3 o 6 diapositivas por hoja. Las de 2 y 3 llevan renglones al lado para que el comité anote mientras escucha.',
       ej:'Exportar → Folleto para repartir. Se abre en el navegador y se imprime como PDF.' },
-    { t:'Guardar en un archivo', d:'El autoguardado vive dentro del navegador y se pierde si limpias los datos del sitio. Con permiso del navegador, Erlen escribe además en un .json del disco y lo mantiene al día cada vez que guardas.',
+    { t:'Guardar en un archivo', d:'El autoguardado vive dentro del navegador y se pierde si limpias los datos del sitio. Con permiso del navegador, Tabula escribe además en un .json del disco y lo mantiene al día cada vez que guardas.',
       ej:'Archivo → Guardar en un archivo del disco. El indicador de arriba muestra ⤓ mientras está activo.' },
     { t:'PowerPoint (.pptx)', d:'El archivo se arma dentro de la app, sin subir nada. Los textos, las viñetas y las tablas quedan editables en PowerPoint; las ecuaciones, gráficas y diagramas van como imagen nítida, porque no tienen equivalente. Las notas del orador también viajan.',
       ej:'Cuando el congreso pide el archivo en PowerPoint y no acepta PDF.' },
-    { t:'Proyecto a prueba de fallos', d:'Al abrir un .json, Erlen lo revisa: repara diseños o bloques que no reconoce, empareja las filas de las tablas y repone los identificadores repetidos. Si algo se ajustó, lo dice en una lista en vez de quedarse a medias.',
+    { t:'Proyecto a prueba de fallos', d:'Al abrir un .json, Tabula lo revisa: repara diseños o bloques que no reconoce, empareja las filas de las tablas y repone los identificadores repetidos. Si algo se ajustó, lo dice en una lista en vez de quedarse a medias.',
       ej:'Un proyecto guardado con una versión anterior se abre igual y te explica qué cambió.' },
     { t:'pgfplots', d:'El paquete de LaTeX que dibuja gráficas vectoriales con la misma tipografía del documento. Tus gráficas viajan al .tex como código real, no como imágenes: se editan, escalan sin pixelarse y se ven parte del texto.',
       ej:'Cambiar un color o un rótulo en Overleaf es editar una línea, no rehacer la figura.' },

@@ -1,6 +1,6 @@
 # La interfaz, con ejemplos reales de la aplicación
 
-Estas imágenes son capturas de Firefox, tomadas con proyectos didácticos de este repositorio. No son bocetos de funciones futuras.
+Estas imágenes son capturas de Chromium, tomadas con proyectos didácticos de este repositorio. No son bocetos de funciones futuras.
 
 ## Inicio
 
@@ -30,7 +30,7 @@ El modo de presentación dedica el espacio al contenido, con navegación por tec
 
 ![Editor móvil](images/movil.png)
 
-La cinta se desplaza en horizontal dentro de su franja; el panel de detalles se abre como cajón desde la cinta o desde el botón ☰.
+La cinta se desplaza en horizontal dentro de su franja; el panel de detalles se abre como cajón desde la cinta o desde el botón ☰. En la vista general se puede mover la diapositiva actual con botones o con Alt y las flechas.
 
 ## Reproducir las capturas
 

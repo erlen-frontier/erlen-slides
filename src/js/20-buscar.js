@@ -126,6 +126,18 @@ function openBuscar(inicial) {
 }
 
 /* ---------- paleta de comandos ---------- */
+function accionBloqueContextual(referencia, accion, permitirProtegido = false) {
+  const deck = S.deck, slide = curSlide(), bloque = referencia.block;
+  return () => {
+    const actual = S.selBlock && findBlock(S.selBlock);
+    if (S.deck !== deck || curSlide() !== slide || !actual || actual.slide !== slide || actual.block !== bloque || (!permitirProtegido && bloque.locked)) {
+      toast('La selección cambió o el bloque está protegido. Vuelve a buscar la herramienta.', 'warn');
+      return false;
+    }
+    accion(bloque);
+    return true;
+  };
+}
 function comandos() {
   const c = [];
   const a = (n, sub, fn, grupo) => c.push({ n, sub, fn, grupo: grupo || 'Acciones' });
@@ -170,16 +182,18 @@ function comandos() {
   a('Esqueleto de artículo (.tex)', 'Afirmaciones → secciones, notas → prosa', exportArticulo);
   LAYOUTS.filter(l => l.z > 0).forEach(l => a('Acomodo: ' + l.name, l.d, () => changeLayout(curSlide(), l.id)));
   { const f = S.selBlock && findBlock(S.selBlock);
-    if (f && f.block.type === 'smart') SMART_ACABADOS.forEach(x => a('Acabado del diagrama: ' + x.n, x.d, () => { f.block.acab = x.id; commit(); })); }
+    if (f && f.slide === curSlide() && !f.block.locked && f.block.type === 'smart') SMART_ACABADOS.forEach(x => a('Acabado del diagrama: ' + x.n, x.d, accionBloqueContextual(f, b => { b.acab = x.id; commit(); }))); }
   a('Empezar por el argumento', 'Charla nueva con el lienzo cerrado hasta que el argumento se sostenga', empiezaPorElArgumento);
   a('Carga cognitiva…', 'Redundancia, atención dividida y señalización, con el arreglo', openCarga);
   a('Recorrido del ojo', 'Dónde cae primero la mirada en esta diapositiva · Ctrl+Shift+M', alternaMirada);
   a('Tutor de diseño…', 'Las reglas que te explica y las que ya son tuyas', openTutor);
   { const f = S.selBlock && findBlock(S.selBlock);
-    if (f && f.block.type === 'chart') { a('Revelar la gráfica por capas', 'Ejes → series → ajuste → el punto que importa', () => { f.block.capas = true; commit(); });
-      a('Paquete reproducible de la figura', 'CSV + pgfplots + PNG', () => paqueteFigura(f.block)); }
-    if (f && f.block.type === 'math') a('Mostrar la ecuación paso a paso', 'Derivación guiada con lo que cambia resaltado', () => openDerivacion(f.block));
-    if (f && (f.block.type === 'chart' || f.block.type === 'image')) a('Antes y después', 'Un segundo estado de la figura como paso', () => { f.block.despues = f.block.type === 'chart' ? { data: f.block.data || '' } : { src: '' }; commit(); S.tab = 'bloque'; renderInspector(); }); }
+    if (f && f.slide === curSlide() && f.block.type === 'chart') {
+      if (!f.block.locked) a('Revelar la gráfica por capas', 'Ejes → series → ajuste → el punto que importa', accionBloqueContextual(f, b => { b.capas = true; commit(); }));
+      a('Paquete reproducible de la figura', 'CSV + pgfplots + PNG', accionBloqueContextual(f, b => paqueteFigura(b), true));
+    }
+    if (f && f.slide === curSlide() && !f.block.locked && f.block.type === 'math') a('Mostrar la ecuación paso a paso', 'Derivación guiada con lo que cambia resaltado', accionBloqueContextual(f, b => openDerivacion(b)));
+    if (f && f.slide === curSlide() && !f.block.locked && (f.block.type === 'chart' || f.block.type === 'image')) a('Antes y después', 'Un segundo estado de la figura como paso', accionBloqueContextual(f, b => { b.despues = b.type === 'chart' ? { data: b.data || '' } : { src: '' }; commit(); S.tab = 'bloque'; renderInspector(); })); }
   ESTILOS_CITA.forEach(e => a('Estilo de cita: ' + e.n + '  ' + e.ej, e.d,
     () => { S.deck.meta.citEstilo = e.id; invalidaCitas(); commit(); }));
   a('Guardar esta diapositiva como respaldo', 'apéndice para preguntas', () => alternaRespaldo(S.cur));
@@ -214,14 +228,47 @@ function casa(texto, q) {
   const t = sinAcentos(texto);
   return sinAcentos(q).split(/\s+/).filter(Boolean).every(w => t.indexOf(w) >= 0);
 }
+/* Add actions from the live toolbar and File menu without maintaining a
+   second catalogue. A result is revalidated before it can touch a document. */
+function comandosPaleta() {
+  const contexto = { deck: S.deck, slide: curSlide(), bloque: S.selBlock };
+  const sigueContexto = () => S.deck === contexto.deck && curSlide() === contexto.slide && S.selBlock === contexto.bloque;
+  const avisoContexto = () => toast('La selección cambió. Vuelve a buscar la herramienta.', 'warn');
+  const lista = comandos().map(cmd => ({ ...cmd, fn: () => {
+    if (!sigueContexto()) { avisoContexto(); return; }
+    const vigente = comandos().find(c => c.n === cmd.n && c.grupo === cmd.grupo);
+    if (!vigente) { toast('La herramienta ya no está disponible. Vuelve a buscarla.', 'warn'); return; }
+    vigente.fn();
+  }}));
+  const vistos = new Set();
+  for (const [grupo, cargar] of [['Archivo', comandosArchivo], ['Herramientas', comandosCintaParaPaleta]]) {
+    for (const cmd of cargar()) {
+      const identidad = [grupo, cmd.pestana, cmd.clave, cmd.etiqueta].join('|');
+      if (!cmd.habilitado || cmd.clave === 'paleta' || vistos.has(identidad)) continue;
+      vistos.add(identidad);
+      const ruta = [...(cmd.pestana === 'bloque' ? ['Bloque'] : []), ...(cmd.ruta || [])].join(' › ');
+      const titulo = cmd.titulo || '';
+      const detalle = titulo.startsWith(cmd.etiqueta + ' · ') ? titulo.slice(cmd.etiqueta.length + 3) : (titulo === cmd.etiqueta ? '' : titulo);
+      const sub = [ruta || grupo, cmd.atajo || '', detalle].filter(Boolean).join(' · ');
+      lista.push({ n: cmd.etiqueta, sub, grupo, fn: () => {
+        if (!sigueContexto()) { avisoContexto(); return; }
+        const vigente = cargar().find(c => c.clave === cmd.clave && c.pestana === cmd.pestana && c.etiqueta === cmd.etiqueta);
+        if (!vigente || !vigente.habilitado) { toast('La herramienta ya no está disponible. Vuelve a buscarla.', 'warn'); return; }
+        vigente.ejecutar();
+      }});
+    }
+  }
+  return lista;
+}
 function openPaleta() {
-  const inp = h('input', { class: 'field cp-inp', placeholder: 'Escribe una acción o parte del texto de una diapositiva…', autocomplete: 'off' });
-  const lista = h('div', { class: 'cp-lista' });
+  const inp = h('input', { class: 'field cp-inp', role: 'combobox', 'aria-autocomplete': 'list', 'aria-expanded': 'true', 'aria-controls': 'cpResultados', 'aria-label': 'Buscar herramientas o diapositivas', placeholder: 'Escribe una acción o parte del texto de una diapositiva…', autocomplete: 'off' });
+  const lista = h('div', { class: 'cp-lista', id: 'cpResultados', role: 'listbox', 'aria-label': 'Resultados de búsqueda' });
+  const resumen = h('div', { class: 'cp-resumen', role: 'status', 'aria-live': 'polite' });
   let items = [], sel = 0;
   const pinta = () => {
     const q = inp.value.trim();
     items = [];
-    const cmds = comandos();
+    const cmds = comandosPaleta();
     if (q) {
       S.deck.slides.forEach((sl, i) => {
         const txt = [sl.title, sl.subtitle, ...(sl.zt || []),
@@ -233,19 +280,23 @@ function openPaleta() {
       items = cmds.filter(c => c.grupo === 'Acciones').slice(0, 10);
     }
     sel = clamp(sel, 0, Math.max(0, items.length - 1));
+    resumen.textContent = items.length + (items.length === 1 ? ' resultado' : ' resultados');
     lista.innerHTML = '';
     let grupo = null;
     items.forEach((it, k) => {
-      if (it.grupo !== grupo) { grupo = it.grupo; lista.append(h('div', { class: 'cp-grupo' }, grupo)); }
-      lista.append(h('button', { class: 'cp-fila' + (k === sel ? ' on' : ''), onmouseenter: () => { sel = k; marca(); },
+      if (it.grupo !== grupo) { grupo = it.grupo; lista.append(h('div', { class: 'cp-grupo', role: 'presentation', 'aria-hidden': 'true' }, grupo)); }
+      lista.append(h('div', { class: 'cp-fila' + (k === sel ? ' on' : ''), id: 'cp-opcion-' + k, role: 'option', 'aria-selected': String(k === sel), onmouseenter: () => { sel = k; marca(); },
         onclick: () => { closeModal(); it.fn(); } },
         h('span', { class: 'cp-n' }, it.n), it.sub ? h('span', { class: 'cp-s' }, it.sub) : null));
     });
     if (!items.length) lista.append(h('div', { class: 'cp-vacio' }, 'Nada coincide con «' + inp.value + '»'));
+    if (items.length) inp.setAttribute('aria-activedescendant', 'cp-opcion-' + sel);
+    else inp.removeAttribute('aria-activedescendant');
   };
   const marca = () => {
     const fs = $$('.cp-fila', lista);
-    fs.forEach((e, k) => e.classList.toggle('on', k === sel));
+    fs.forEach((e, k) => { e.classList.toggle('on', k === sel); e.setAttribute('aria-selected', String(k === sel)); });
+    if (fs[sel]) inp.setAttribute('aria-activedescendant', fs[sel].id);
     if (fs[sel]) fs[sel].scrollIntoView({ block: 'nearest' });
   };
   inp.addEventListener('input', () => { sel = 0; pinta(); });
@@ -254,7 +305,7 @@ function openPaleta() {
     else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(sel - 1, 0); marca(); }
     else if (e.key === 'Enter') { e.preventDefault(); const it = items[sel]; if (it) { closeModal(); it.fn(); } }
   });
-  openModal({ title: 'Ir a / hacer', size: 'modal-sm', body: h('div', { class: 'cp-caja' }, inp, lista),
+  openModal({ title: 'Buscar herramientas y diapositivas', size: 'modal-sm', body: h('div', { class: 'cp-caja' }, inp, resumen, lista),
     foot: [h('span', { class: 'foot-note' }, '↑ ↓ para moverte · Enter para ejecutar · Esc para cerrar')] });
   pinta();
   setTimeout(() => inp.focus(), 40);

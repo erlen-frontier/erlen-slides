@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
 test('Slides boots independently; all navigation and resource actions resolve',async()=>{const {dom,errors,run}=await editor();try{
- assert.match(dom.window.document.title,/Erlen Slides/);
+ assert.match(dom.window.document.title,/Tabula/);
  // La pantalla de inicio es el componente común (src/diseno/suite-inicio.js); cada ruta histórica abre su vista.
  const inicio=()=>dom.window.document.querySelector('#inicioRoot main.erlen-inicio');
  const vistas={inicio:'inicio',plantillas:'ejemplos',biblioteca:'biblioteca',herramientas:'recursos',servicio:'acerca'};

@@ -119,7 +119,7 @@ function openPieEditor() {
       onchange: e => { p.enPortada = e.target.checked; guarda(); } }), 'Mostrarlo también en la portada'));
     ctr.append(h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!p.enSecciones,
       onchange: e => { p.enSecciones = e.target.checked; guarda(); } }), 'Mostrarlo en las diapositivas de sección'));
-    ctr.append(h('p', { class: 'hint' }, 'En Beamer esas dos diapositivas se declaran [plain], que quita el pie. Al activarlas, Erlen las exporta sin [plain] para que la barra aparezca.'));
+    ctr.append(h('p', { class: 'hint' }, 'En Beamer esas dos diapositivas se declaran [plain], que quita el pie. Al activarlas, Tabula las exporta sin [plain] para que la barra aparezca.'));
   }
 
   pinta();

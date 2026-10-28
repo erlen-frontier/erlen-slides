@@ -1,10 +1,14 @@
-# Usar Erlen Slides
+# Usar Tabula
+
+Con **Ctrl+K** busca herramientas o texto de las diapositivas. Los resultados indican la sección donde vive cada acción y se pueden recorrer con las flechas y ejecutar con Enter.
+
+En **Ver todas** puedes reorganizar la diapositiva actual con **Mover antes** y **Mover después**, o con **Alt+←** y **Alt+→**. La operación se puede deshacer. Si hay diapositivas marcadas, usa **Quitar la marca** antes de mover una.
 
 ## Crear una charla
 
 **Inicio → Importar proyecto**, o **Archivo → Importar presentación**, acepta JSON, PowerPoint `.pptx` y Markdown `.md`. Elige el archivo, revisa la vista previa y pulsa **Abrir copia editable**. Cancelar deja intacta la presentación abierta. Se crea un nombre libre en tu biblioteca; un fallo de almacenamiento impide abrir la copia y avisa. Las copias descargadas desde Erlen DoE pasan por su comprobación y vista previa habitual.
 
-El PowerPoint se lee localmente, sin subirlo. Textos, imágenes PNG/JPEG/GIF/WebP incrustadas, tablas, ecuaciones compatibles y notas se convierten a bloques. Las gráficas se recuperan como **tablas de datos**, incluidas las parejas x/y; después puedes crear una gráfica y elegir sus ejes y unidades. Los objetos agrupados se separan y las tablas largas repiten el encabezado. El acomodo, las fuentes y los efectos se adaptan al estilo de Erlen: la importación no reproduce la apariencia exacta de Office. Revisa los avisos sobre formas, patrones, celdas combinadas, recortes y medios no compatibles. Límites: 25 MiB de archivo, 100 MiB descomprimidos y hasta 200 diapositivas antes y después de adaptar. En el HTML suelto abierto con `file:`, la entrada conserva la importación JSON anterior; las herramientas adicionales requieren servir la carpeta completa.
+El PowerPoint se lee localmente, sin subirlo. Textos, imágenes PNG/JPEG/GIF/WebP incrustadas, tablas, ecuaciones compatibles y notas se convierten a bloques. Las gráficas se recuperan como **tablas de datos**, incluidas las parejas x/y; después puedes crear una gráfica y elegir sus ejes y unidades. Los objetos agrupados se separan y las tablas largas repiten el encabezado. El acomodo, las fuentes y los efectos se adaptan al estilo de Tabula: la importación no reproduce la apariencia exacta de Office. Revisa los avisos sobre formas, patrones, celdas combinadas, recortes y medios no compatibles. Límites: 25 MiB de archivo, 100 MiB descomprimidos y hasta 200 diapositivas antes y después de adaptar. En el HTML suelto abierto con `file:`, la entrada conserva la importación JSON anterior; las herramientas adicionales requieren servir la carpeta completa.
 
 **Insertar → Figura por capas** crea una composición de texto, rectángulos, elipses, flechas e imágenes. Añade un objeto y selecciónalo en la lista; cambia texto, color y orden. **Posición, tamaño y giro** despliega los controles numéricos. Los botones de movimiento y de deshacer/rehacer permiten trabajar sin arrastrar. Escribe una descripción accesible antes de insertar. El proyecto JSON guarda los objetos; un doble clic o **Editar capas** permite volver a editarlos. Las imágenes nuevas deben ser PNG/JPEG/WebP y pesar hasta 8 MiB; una figura admite hasta 100 objetos. Una copia grande puede superar la cuota de almacenamiento del navegador: descarga el proyecto si aparece el aviso de guardado.
 
@@ -97,18 +101,18 @@ Usa Presentar o F5. Avanza con las flechas; Esc vuelve al editor. N muestra nota
 
 | Formato | Uso | Revisión necesaria |
 |---|---|---|
-| JSON | Conservar y volver a editar en Erlen | Es la copia de trabajo recomendada |
+| JSON | Conservar y volver a editar en Tabula | Es la copia de trabajo recomendada |
 | PDF | Compartir una copia visual | Usa Imprimir/Guardar como PDF y revisa tamaño, fondos y recortes |
 | PPTX | Abrir en software de presentaciones | Algunos elementos complejos se convierten en imágenes; revisa tipografías y alineación en el programa destino |
 | PPTX editable | Continuar editando texto, tablas, gráficas XY/barras y diagramas compatibles | Archivo → PowerPoint editable usa PptxGenJS. Incertidumbres, ajustes, anotaciones, escalas especiales, ecuaciones y funciones conservan la apariencia como imagen con aviso por diapositiva. Sigue disponible el exportador clásico. El JSON conserva las fuentes originales |
 | Markdown | Editar el guion como texto y volver a importarlo | Imágenes incrustadas; los avisos indican bloques que requieren JSON para una reedición completa |
-| HTML autónomo | Presentar sin conexión, con pasos, vista general y deslizadores de funciones | Archivo → Presentación HTML autónoma usa Reveal.js y el motor científico de Erlen. Incrusta imágenes/vídeos primero. Las notas se excluyen por defecto; al incluirlas pasan a formar parte del archivo compartido |
+| HTML autónomo | Presentar sin conexión, con pasos, vista general y deslizadores de funciones | Archivo → Presentación HTML autónoma usa Reveal.js y el motor científico de Tabula. Incrusta imágenes/vídeos primero. Las notas se excluyen por defecto; al incluirlas pasan a formar parte del archivo compartido |
 | Beamer / TEX | Continuar un flujo con LaTeX | Requiere una distribución de LaTeX; temas y elementos especiales pueden diferir de la vista web |
 | SVG científico | Reutilizar una gráfica o función en un artículo | Selecciona una figura científica y usa Exportar → SVG científico; incluye ejes, trazos, etiquetas y `metadata` de procedencia, sin depender del CSS de la app |
 | Informe de exportación (JSON) | Revisar riesgos antes de compartir | Exportar → Informe de exportación lista errores, advertencias e información por diapositiva y por formato |
 | HTML | Imprimir desde el navegador cuando el cuadro de impresión falla | Se ofrece dentro de Exportar → PDF como «Archivo imprimible (.html)»: es una copia paginada para imprimir, no un modo de presentación |
 
-Los paquetes de figura y el **kit de defensa** incluyen `provenance.json` con la versión de Erlen, los identificadores de figuras, las fuentes disponibles y la huella SHA-256 de los datos. Es un registro de trazabilidad, no una copia de los datos que no hayas incluido.
+Los paquetes de figura y el **kit de defensa** incluyen `provenance.json` con la versión de Tabula, los identificadores de figuras, las fuentes disponibles y la huella SHA-256 de los datos. Es un registro de trazabilidad, no una copia de los datos que no hayas incluido.
 
 No se ha certificado compatibilidad visual idéntica con todas las versiones de PowerPoint ni con todos los motores LaTeX. La validación específica de esta publicación está en [validacion.md](validacion.md).
 
