@@ -50,5 +50,5 @@
 **Files:** `README.md`, `docs/uso.md`, `docs/desarrollo.md` and any test adjustments required by new controls.
 
 - [x] Document behavior and keyboard access; inspect desktop and narrow layouts.
-- [ ] Run the complete repository tests, build, MCP tests and accessibility checks; report inherited failures accurately.
-- [ ] Request review, resolve findings, commit and open a PR based on PR #60 without merging it.
+- [x] Run the complete repository tests, build, MCP tests and accessibility checks; report inherited failures accurately.
+- [x] Request review, resolve findings, commit and prepare a PR based on PR #60 without merging it.
