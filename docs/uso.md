@@ -8,9 +8,15 @@ En **Ver todas** puedes reorganizar la diapositiva actual con **Mover antes** y 
 
 En una diapositiva que admita bloques, activa **Lienzo libre** debajo de la diapositiva. Se conservan sus bloques y su acomodo anterior: vuelve a pulsarlo para regresar. En una diapositiva **En blanco** puedes componer el contenido desde cero. La portada, las secciones y los índices que no admiten bloques conservan su comportamiento anterior.
 
-Selecciona un bloque y arrastra su asa para moverlo o sus esquinas para cambiar su tamaño. Las flechas lo mueven; Mayús y las flechas cambian su tamaño. El panel de propiedades permite escribir posición y tamaño en porcentaje. **Elegir bloque** ayuda a seleccionar objetos superpuestos. El bloqueo y deshacer siguen funcionando. Comprueba los avisos de recorte si reduces cajas con texto o figuras complejas.
+Selecciona un bloque y arrastra su asa para moverlo o sus esquinas para cambiar su tamaño. Las flechas lo mueven; Mayús y las flechas cambian su tamaño. El panel de propiedades permite escribir posición y tamaño en porcentaje. Comprueba los avisos de recorte si reduces cajas con texto o figuras complejas.
 
-El proyecto JSON conserva la geometría. La vista de presentación y el HTML usan el mismo acomodo; versiones anteriores pueden abrir el contenido pero ignorarán sus posiciones. La exportación Beamer y Markdown avisa de que cambia la colocación; revisa también el PowerPoint exportado, cuya apariencia puede diferir.
+Al mover un bloque, **Imán** muestra guías y lo ajusta a los bordes o centros de la diapositiva y de otros bloques visibles. Puedes desactivarlo con el botón o mantener **Alt** durante un arrastre para omitirlo. Esc cancela el gesto.
+
+Con **Ctrl**, **⌘** o **Mayús** y clic puedes marcar varios bloques; arrastra el asa del bloque activo o usa las flechas para moverlos juntos. Sus distancias se mantienen y el movimiento se deshace en un solo paso. **Supr** elimina la selección en un paso que también puedes deshacer. Si alguno está bloqueado, desbloquéalo antes de mover o eliminar la selección; para cambiar el tamaño, selecciona un solo bloque.
+
+**Capas** muestra los bloques de delante hacia atrás, incluso cuando están superpuestos. Desde la lista puedes marcar varios o usar las flechas para adelantar o retrasar una capa. El orden se guarda en el proyecto y se conserva en la vista de presentación y el HTML autónomo.
+
+El proyecto JSON conserva la geometría y el orden de capas. La vista de presentación y el HTML usan el mismo acomodo; versiones anteriores pueden abrir el contenido pero ignorar sus posiciones o capas. La exportación Beamer y Markdown avisa de que cambia la colocación; revisa también el PowerPoint exportado, cuya apariencia puede diferir.
 
 ## Conversar con IA
 

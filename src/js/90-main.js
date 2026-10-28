@@ -62,12 +62,28 @@ function initShortcuts() {
         const p = { ...posicionLibreDe(f.slide, f.block) };
         const dx = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
         const dy = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+        const seleccion = idsSeleccionados();
+        if (seleccion.has(f.block.id) && seleccion.size > 1) {
+          e.preventDefault();
+          if (e.shiftKey) toast('Selecciona un solo bloque para cambiar su tamaño.', 'warn');
+          else if ([...seleccion].some(id => findBlock(id)?.block.locked)) toast('Desbloquea los bloques seleccionados antes de moverlos.', 'warn');
+          else mueveSeleccionLibre(S.deck, f.slide, [...seleccion], dx, dy);
+          return;
+        }
         if (e.shiftKey) { p.w = clamp(p.w + dx, 1, 100 - p.x); p.h = clamp(p.h + dy, 1, 100 - p.y); }
         else { p.x = clamp(p.x + dx, 0, 100 - p.w); p.y = clamp(p.y + dy, 0, 100 - p.h); }
         e.preventDefault(); aplicaPosicionLibre(f.block.id, p); return;
       }
     }
-    if (e.key === 'Delete' && S.selBlock) { e.preventDefault(); delBlock(S.selBlock); return; }
+    if (e.key === 'Delete' && S.selBlock) {
+      e.preventDefault();
+      const ids = idsSeleccionados();
+      if (curSlide().lienzoLibre && ids.has(S.selBlock) && ids.size > 1) {
+        try { aplicaLoteBloques(S.deck, curSlide(), [...ids], 'eliminar'); }
+        catch (error) { toast(error.message, 'warn'); }
+      } else delBlock(S.selBlock);
+      return;
+    }
     if (e.key === 'Escape') {
       if (S.sel && S.sel.size) limpiaSeleccion();
       else if (S.selBlock) selectBlock(null);

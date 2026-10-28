@@ -1,6 +1,7 @@
 01-util.js
 02-data.js
 03-state.js
+03b-herramientas-lienzo.js
 04-render.js
 05-editor.js
 06-panels.js

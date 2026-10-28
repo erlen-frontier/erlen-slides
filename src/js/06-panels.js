@@ -314,9 +314,14 @@ function renderBlockTab_(body) {
   body.append(cuerpo);
 
   const g = h('div', { class: 'igroup' }, h('span', { class: 'panel-label' }, 'Acciones'));
+  const subir = f.slide.lienzoLibre
+    ? h('button', { class: 'btn btn-sm', disabled: !!b.locked, onclick: () => mueveCapaLibre(S.deck, f.slide, b.id, 'adelante') }, '↑ Adelantar capa')
+    : h('button', { class: 'btn btn-sm', onclick: () => moveBlock(S.selBlock, -1) }, '↑ Subir');
+  const bajar = f.slide.lienzoLibre
+    ? h('button', { class: 'btn btn-sm', disabled: !!b.locked, onclick: () => mueveCapaLibre(S.deck, f.slide, b.id, 'atras') }, '↓ Retrasar capa')
+    : h('button', { class: 'btn btn-sm', onclick: () => moveBlock(S.selBlock, 1) }, '↓ Bajar');
   g.append(h('div', { style: 'display:flex;gap:7px;flex-wrap:wrap' },
-    h('button', { class: 'btn btn-sm', onclick: () => moveBlock(S.selBlock, -1) }, '↑ Subir'),
-    h('button', { class: 'btn btn-sm', onclick: () => moveBlock(S.selBlock, 1) }, '↓ Bajar'),
+    subir, bajar,
     h('button', { class: 'btn btn-sm', onclick: () => dupBlock(S.selBlock) }, '⧉ Duplicar'),
     h('button', { class: 'btn btn-sm', onclick: () => openMoverBloque(b) }, '⇥ Mover a…'),
     h('button', { class: 'btn btn-sm btn-danger', onclick: () => delBlock(S.selBlock) }, '✕ Eliminar')));

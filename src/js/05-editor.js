@@ -29,12 +29,27 @@ function effZoom() {
 
 function renderCanvas() {
   const [W, H] = slideDims(S.deck);
+  if (curSlide().lienzoLibre) {
+    const ids = idsSeleccionados();
+    let actual = S.selBlock && findBlock(S.selBlock);
+    if (S.selBlock && (!actual || actual.slide !== curSlide() || (typeof bloqueVisible === 'function' && !bloqueVisible(actual.block, S.deck)))) {
+      S.selBlock = Array.from(ids).at(-1) || null;
+      actual = S.selBlock && findBlock(S.selBlock);
+    }
+    if (!S.selBlock) ids.clear();
+    else if (!ids.has(S.selBlock) && actual) {
+      ids.clear();
+      const grupo = actual.block.group;
+      for (const b of zonas(curSlide()).flat()) if ((b.id === S.selBlock || (grupo && b.group === grupo)) &&
+        (typeof bloqueVisible !== 'function' || bloqueVisible(b, S.deck))) ids.add(b.id);
+    }
+  }
   const z = effZoom();
   const stage = $('#stage'), inner = $('#stageInner');
   const foco = document.activeElement;
   const bloqueFoco = foco?.closest?.('.blk[data-bid]');
   const restaurarFoco = curSlide().lienzoLibre && bloqueFoco && inner.contains(bloqueFoco) && bloqueFoco.dataset.bid === S.selBlock
-    ? { id: bloqueFoco.dataset.bid, tabindex: bloqueFoco.getAttribute('tabindex'), role: bloqueFoco.getAttribute('role'), etiqueta: bloqueFoco.getAttribute('aria-label') } : null;
+    ? { id: bloqueFoco.dataset.bid, tabindex: bloqueFoco.getAttribute('tabindex'), role: bloqueFoco.getAttribute('role') } : null;
   stage.style.width = W * z + 'px'; stage.style.height = H * z + 'px';
   inner.style.transform = `scale(${z})`;
   inner.innerHTML = '';
@@ -49,6 +64,11 @@ function renderCanvas() {
   }
   const objetos = $('#lienzoObjetosBtn');
   if (objetos) { objetos.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout)); objetos.disabled = !zonas(curSlide()).some(z => z.length); }
+  const iman = $('#lienzoImanBtn');
+  if (iman) {
+    iman.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout));
+    iman.setAttribute('aria-pressed', String(S.prefs?.imanLienzo !== false));
+  }
   mountToolbar();
   pintaSeleccionBloques();
   if (restaurarFoco) {
@@ -56,8 +76,8 @@ function renderCanvas() {
     if (destino) {
       destino.setAttribute('tabindex', restaurarFoco.tabindex ?? '0');
       destino.setAttribute('role', restaurarFoco.role || 'group');
-      const b = findBlock(restaurarFoco.id)?.block, nombre = (BLOCK_DEFS.find(d => d.id === b?.type) || {}).name || 'Bloque';
-      destino.setAttribute('aria-label', restaurarFoco.etiqueta || nombre + (b?.locked ? ', bloqueado' : ', usa las flechas para mover y Mayús con flechas para cambiar el tamaño'));
+      const b = findBlock(restaurarFoco.id)?.block;
+      destino.setAttribute('aria-label', etiquetaBloqueLibre(restaurarFoco.id, b));
       destino.focus({ preventScroll: true });
     }
   }
@@ -70,6 +90,8 @@ function renderCanvas() {
 /* ---------- selección + barra de bloque ---------- */
 function selectBlock(id, aditiva = false) {
   marcaSeleccionBloques(id, aditiva);
+  const marcados = idsSeleccionados();
+  if (id && !marcados.has(id)) id = Array.from(marcados).at(-1) || null;
   const antes = S.selBlock;
   S.selBlock = id;
   $$('#stageInner .blk.sel').forEach(e => e.classList.remove('sel'));
@@ -85,6 +107,23 @@ function selectBlock(id, aditiva = false) {
   if (id && S.tab !== 'bloque') { S.tabPrev = S.tab; S.tab = 'bloque'; }
   else if (!id && S.tab === 'bloque') S.tab = S.tabPrev || 'insert';
   if (id !== antes || S.tab === 'bloque') renderInspector();
+}
+function etiquetaBloqueLibre(id, b) {
+  const nombre = (BLOCK_DEFS.find(d => d.id === b?.type) || {}).name || b?.type || 'Bloque';
+  const seleccion = idsSeleccionados();
+  const varios = seleccion.has(id) && seleccion.size > 1;
+  const bloqueada = varios && [...seleccion].some(k => findBlock(k)?.block.locked);
+  return varios
+    ? seleccion.size + ' bloques seleccionados, ' + nombre + ' activo. ' + (bloqueada ? 'Desbloquea la selección antes de moverla.' : 'Usa las flechas para moverlos juntos.')
+    : nombre + (b?.locked ? ', bloqueado' : ', usa las flechas para mover y Mayús con flechas para cambiar el tamaño');
+}
+function enfocaBloqueLibre(id) {
+  const b = id && findBlock(id)?.block;
+  const destino = b && Array.from(document.querySelectorAll('#stageInner .blk[data-bid]')).find(el => el.dataset.bid === String(id));
+  if (!destino) return;
+  destino.tabIndex = 0; destino.setAttribute('role', 'group');
+  destino.setAttribute('aria-label', etiquetaBloqueLibre(id, b));
+  destino.focus({ preventScroll: true });
 }
 function mountToolbar() {
   const old = $('#stageInner .blk-toolbar'); if (old) old.remove();
@@ -104,8 +143,13 @@ function mountToolbar() {
   asa.addEventListener('pointerdown', ev => curSlide().lienzoLibre ? iniciaGestoLibre(ev, S.selBlock, 'mover') : iniciaArrastre(ev, S.selBlock));
   asa.addEventListener('click', ev => ev.stopPropagation());
   bar.append(asa);
-  add('↑', 'Subir bloque', () => moveBlock(S.selBlock, -1));
-  add('↓', 'Bajar bloque', () => moveBlock(S.selBlock, 1));
+  if (curSlide().lienzoLibre) {
+    add('↑', 'Adelantar capa', () => mueveCapaLibre(S.deck, curSlide(), S.selBlock, 'adelante'));
+    add('↓', 'Retrasar capa', () => mueveCapaLibre(S.deck, curSlide(), S.selBlock, 'atras'));
+  } else {
+    add('↑', 'Subir bloque', () => moveBlock(S.selBlock, -1));
+    add('↓', 'Bajar bloque', () => moveBlock(S.selBlock, 1));
+  }
   if (f.block.type === 'table') {
     bar.append(h('div', { class: 'tb-sep2' }));
     add('▦', 'Filas y columnas…', ev => menuTabla(f.block, ev));
@@ -128,9 +172,12 @@ function mountToolbar() {
   el.append(bar);
   if (ARRASTRA_CUERPO[f.block.type]) {
     el.classList.add('blk-movible');
-    el.addEventListener('pointerdown', ev => arrastraCuerpo(ev, f.block.id, el));
+    if (!el._arrastraCuerpoMontado) {
+      el._arrastraCuerpoMontado = true;
+      el.addEventListener('pointerdown', ev => arrastraCuerpo(ev, f.block.id, el));
+    }
   }
-  if (curSlide().lienzoLibre) montaManijasLibres(el, f.block);
+  if (curSlide().lienzoLibre) { if (idsSeleccionados().size <= 1) montaManijasLibres(el, f.block); }
   else montaManija(el, f.block);
   /* Si arriba no cabe, la barra se mete dentro del bloque: así nunca tapa
      el título del marco ni se queda fuera del alcance del ratón. */
@@ -328,44 +375,90 @@ function montaManijasLibres(el, b) {
 function openObjetosLienzo() {
   const deck = S.deck, sl = curSlide();
   if (!sl.lienzoLibre || !zonasDe(sl.layout)) return;
-  const lista = h('div', { class: 'lienzo-lista' });
-  zonas(sl).flat().forEach((b, i) => {
-    const nombre = (BLOCK_DEFS.find(d => d.id === b.type) || {}).name || b.type;
-    const detalle = String(b.text || b.caption || b.title || b.tex || b.alt || '').replace(/\s+/g, ' ').slice(0, 80);
-    lista.append(h('button', { type: 'button', class: 'btn', onclick: () => {
-      if (S.deck !== deck || curSlide() !== sl || !findBlock(b.id)) return;
-      closeModal(); selectBlock(b.id);
-      const destino = Array.from(document.querySelectorAll('#stageInner .blk[data-bid]')).find(el => el.dataset.bid === b.id);
-      if (destino) {
-        destino.tabIndex = 0; destino.setAttribute('role', 'group');
-        destino.setAttribute('aria-label', nombre + (b.locked ? ', bloqueado' : ', usa las flechas para mover y Mayús con flechas para cambiar el tamaño'));
-        destino.focus({ preventScroll: true });
-      }
-    } }, (i + 1) + ' · ' + nombre + (detalle ? ' · ' + detalle : '') + (b.locked ? ' · bloqueado' : '')));
-  });
+  const lista = h('div', { class: 'lienzo-lista' }), marcados = new Set(idsSeleccionados());
+  const selecciona = h('button', { class: 'btn btn-pri', disabled: !marcados.size, onclick: () => {
+    if (S.deck !== deck || curSlide() !== sl) return;
+    const bloques = bloquesEnCapas(sl).filter(b => marcados.has(b.id));
+    if (!bloques.length) return;
+    const grupos = new Set(bloques.map(b => b.group).filter(Boolean));
+    for (const b of bloquesEnCapas(sl)) if (b.group && grupos.has(b.group)) marcados.add(b.id);
+    const ultimo = bloques.at(-1);
+    closeModal(); selectBlock(ultimo.id);
+    const ids = idsSeleccionados(); ids.clear(); for (const id of marcados) ids.add(id);
+    pintaSeleccionBloques(); mountToolbar(); enfocaBloqueLibre(ultimo.id);
+  } }, 'Seleccionar marcados');
+  function pinta() {
+    lista.replaceChildren();
+    const orden = bloquesEnCapas(sl).slice().reverse();
+    orden.forEach((b, i) => {
+      const nombre = (BLOCK_DEFS.find(d => d.id === b.type) || {}).name || b.type;
+      const detalle = String(b.text || b.caption || b.title || b.tex || b.alt || '').replace(/\s+/g, ' ').slice(0, 80);
+      const referencia = detalle || nombre;
+      const oculto = typeof bloqueVisible === 'function' && !bloqueVisible(b, deck);
+      const marca = h('input', { type: 'checkbox', disabled: oculto, checked: !oculto && marcados.has(b.id), 'aria-label': 'Marcar ' + referencia,
+        onchange: e => { e.target.checked ? marcados.add(b.id) : marcados.delete(b.id); selecciona.disabled = !marcados.size; } });
+      const elige = h('button', { type: 'button', class: 'btn lienzo-lista-nombre', disabled: oculto, onclick: () => {
+        if (S.deck !== deck || curSlide() !== sl || !findBlock(b.id)) return;
+        closeModal(); selectBlock(b.id); enfocaBloqueLibre(b.id);
+      } }, (orden.length - i) + ' · ' + nombre + (detalle ? ' · ' + detalle : '') + (b.locked ? ' · bloqueado' : '') + (oculto ? ' · oculto en este nivel' : ''));
+      const capa = (direccion, signo, etiqueta, desactivado) => h('button', { type: 'button', class: 'btn btn-sm',
+        disabled: b.locked || oculto || desactivado, 'aria-label': etiqueta + ' capa ' + referencia,
+        'data-capa-id': b.id, 'data-capa-direccion': direccion,
+        onclick: () => { if (mueveCapaLibre(deck, sl, b.id, direccion)) {
+          pinta();
+          const botones = Array.from(lista.querySelectorAll('[data-capa-id]'));
+          const siguiente = botones.find(n => n.dataset.capaId === String(b.id) && n.dataset.capaDireccion === direccion && !n.disabled);
+          (siguiente || botones.find(n => n.dataset.capaId === String(b.id) && !n.disabled))?.focus();
+        } } }, signo);
+      lista.append(h('div', { class: 'lienzo-lista-fila' }, marca, elige,
+        capa('adelante', '↑', 'Adelantar', i === 0), capa('atras', '↓', 'Retrasar', i === orden.length - 1)));
+    });
+  }
+  pinta();
   openModal({ title: 'Bloques de la diapositiva', body: h('div', null,
-    h('p', { class: 'hint' }, 'Elige un bloque para moverlo, incluso si está cubierto por otro.'), lista),
-    foot: [h('button', { class: 'btn', onclick: closeModal }, 'Cerrar')] });
+    h('p', { class: 'hint' }, 'La primera capa está delante. Elige un bloque o marca varios para moverlos juntos.'), lista),
+    foot: [h('button', { class: 'btn', onclick: closeModal }, 'Cerrar'), selecciona] });
 }
 
 /* La vista previa es solo DOM: cancelar nunca escribe en el modelo ni crea
    historial. El rectángulo medido incorpora el zoom real del navegador. */
 function iniciaGestoLibre(ev, id, accion) {
-  if (ev.button > 0 || !id) return;
+  if (ev.button > 0 || !id || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
   if (typeof flushEdicion === 'function') flushEdicion();
   const deck = S.deck, sl = curSlide(), f = findBlock(id);
   const raiz = $('#stageInner .slide');
   const el = raiz && Array.from(raiz.querySelectorAll('.blk[data-bid]')).find(n => n.dataset.bid === id);
-  if (!sl.lienzoLibre || !f || f.slide !== sl || f.block.locked || !el) return;
+  if (!sl.lienzoLibre || S.selBlock !== id || !f || f.slide !== sl || f.block.locked || !el) return;
+  const seleccion = idsSeleccionados();
+  if (!seleccion.has(id)) { seleccion.clear(); seleccion.add(id); }
+  const ids = seleccion.has(id) && seleccion.size > 1 ? [...seleccion] : [id];
+  if (ids.length > 1 && accion !== 'mover') { toast('Selecciona un solo bloque para cambiar su tamaño.', 'warn'); return; }
+  const porId = new Map(zonas(sl).flat().map(b => [b.id, b]));
+  const bloques = ids.map(k => porId.get(k) || null);
+  if (bloques.some(b => !b || b.locked)) { toast('Desbloquea los bloques seleccionados antes de moverlos.', 'warn'); return; }
+  const nodos = new Map(Array.from(raiz.querySelectorAll('.blk[data-bid]')).map(n => [n.dataset.bid, n]));
+  const elementos = ids.map(k => nodos.get(String(k)));
+  if (elementos.some(n => !n)) return;
   const rect = raiz.getBoundingClientRect();
   if (!(rect.width > 0 && rect.height > 0)) return;
   ev.preventDefault(); ev.stopPropagation();
-  const p0 = { ...posicionLibreDe(sl, f.block) }, pointer = ev.pointerId;
+  const posiciones = bloques.map(b => ({ ...posicionLibreDe(sl, b) }));
+  const p0 = posiciones[0], pointer = ev.pointerId;
+  const limites = posiciones.reduce((a, p) => ({xMin:Math.min(a.xMin,p.x), yMin:Math.min(a.yMin,p.y),
+    xMax:Math.max(a.xMax,p.x+p.w), yMax:Math.max(a.yMax,p.y+p.h)}), {xMin:100,yMin:100,xMax:0,yMax:0});
+  const {xMin, yMin, xMax, yMax} = limites;
+  const caja = {x:xMin, y:yMin, w:xMax-xMin, h:yMax-yMin};
   const x0 = ev.clientX, y0 = ev.clientY;
-  let previa = p0, activo = false;
+  let previa = p0, dxFinal = 0, dyFinal = 0, activo = false;
   try { ev.currentTarget.setPointerCapture(pointer); } catch (e) {}
   const mismo = e => pointer == null || e.pointerId === pointer;
-  const pinta = p => Object.assign(el.style, { left: p.x + '%', top: p.y + '%', width: p.w + '%', height: p.h + '%' });
+  const pinta = (n, p) => Object.assign(n.style, { left: p.x + '%', top: p.y + '%', width: p.w + '%', height: p.h + '%' });
+  const guias = g => {
+    if (g.x == null && g.y == null) { quitaGuias(); return; }
+    const capa = capaGuias(); if (!capa) return; capa.replaceChildren();
+    if (g.x != null) capa.append(h('i', {class: 'guia-libre-v', style: 'left:' + g.x + '%'}));
+    if (g.y != null) capa.append(h('i', {class: 'guia-libre-h', style: 'top:' + g.y + '%'}));
+  };
   const mueve = e => {
     if (!mismo(e)) return;
     const dx = (e.clientX - x0) / rect.width * 100, dy = (e.clientY - y0) / rect.height * 100;
@@ -373,8 +466,19 @@ function iniciaGestoLibre(ev, id, accion) {
     activo = true;
     const p = { ...p0 };
     if (accion === 'mover') {
-      p.x = clamp(p0.x + dx, 0, 100 - p0.w);
-      p.y = clamp(p0.y + dy, 0, 100 - p0.h);
+      dxFinal = clamp(dx, -caja.x, 100 - caja.x - caja.w);
+      dyFinal = clamp(dy, -caja.y, 100 - caja.y - caja.h);
+      if (S.prefs?.imanLienzo !== false && !e.altKey) {
+        const ajuste = imantaMovimientoLibre(sl, ids, caja, dxFinal, dyFinal, rect.width, rect.height);
+        dxFinal = ajuste.dx; dyFinal = ajuste.dy; guias(ajuste.guias);
+      } else {
+        dxFinal = clamp(redondeaLibre(dxFinal), -caja.x, 100 - caja.x - caja.w);
+        dyFinal = clamp(redondeaLibre(dyFinal), -caja.y, 100 - caja.y - caja.h);
+        quitaGuias();
+      }
+      posiciones.forEach((q, i) => pinta(elementos[i], {...q,
+        x:clamp(q.x + dxFinal, 0, 100 - q.w), y:clamp(q.y + dyFinal, 0, 100 - q.h)}));
+      return;
     } else {
       if (accion.includes('e')) p.w = clamp(p0.w + dx, 1, 100 - p0.x);
       if (accion.includes('s')) p.h = clamp(p0.h + dy, 1, 100 - p0.y);
@@ -382,7 +486,7 @@ function iniciaGestoLibre(ev, id, accion) {
       if (accion.includes('n')) { p.y = clamp(p0.y + dy, 0, p0.y + p0.h - 1); p.h = p0.y + p0.h - p.y; }
     }
     previa = Object.fromEntries(Object.entries(p).map(([k, v]) => [k, redondeaLibre(v)]));
-    pinta(previa);
+    pinta(el, previa);
   };
   const quita = () => {
     document.removeEventListener('pointermove', mueve);
@@ -390,17 +494,28 @@ function iniciaGestoLibre(ev, id, accion) {
     document.removeEventListener('pointercancel', cancela);
     document.removeEventListener('keydown', escapa, true);
     document.body.classList.remove('arrastra-bloque');
+    quitaGuias();
   };
-  const cancela = e => { if (e && e.type === 'pointercancel' && !mismo(e)) return; quita(); if (el.isConnected) pinta(p0); };
+  const restaura = () => elementos.forEach((n, i) => {
+    if (!n.isConnected) return;
+    const actual = S.deck === deck && curSlide() === sl && findBlock(ids[i])?.block === bloques[i] ? posicionLibreDe(sl, bloques[i]) : posiciones[i];
+    pinta(n, actual);
+  });
+  const cancela = e => { if (e && e.type === 'pointercancel' && !mismo(e)) return; quita(); restaura(); };
   const escapa = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancela(); } };
   const suelta = e => {
     if (!mismo(e)) return;
     quita();
-    const vigente = S.deck === deck && curSlide() === sl && findBlock(id)?.block === f.block;
-    const actual = vigente ? posicionLibreDe(sl, f.block) : p0;
-    const sinCambios = ['x', 'y', 'w', 'h'].every(k => actual[k] === p0[k]);
-    if (activo && vigente && sinCambios && !f.block.locked) aplicaPosicionLibre(id, previa);
-    else if (el.isConnected) pinta(actual);
+    const seleccionActual = idsSeleccionados();
+    const vigente = S.deck === deck && curSlide() === sl && S.selBlock === id &&
+      seleccionActual.size === ids.length && ids.every(k => seleccionActual.has(k)) &&
+      bloques.every((b, i) => findBlock(ids[i])?.block === b && !b.locked &&
+        (typeof bloqueVisible !== 'function' || bloqueVisible(b, deck)) &&
+        ['x','y','w','h'].every(k => posicionLibreDe(sl, b)[k] === posiciones[i][k]));
+    if (activo && vigente) {
+      if (accion === 'mover') { if (!mueveSeleccionLibre(deck, sl, ids, dxFinal, dyFinal)) restaura(); }
+      else if (!aplicaPosicionLibre(id, previa)) restaura();
+    } else restaura();
   };
   document.body.classList.add('arrastra-bloque');
   document.addEventListener('pointermove', mueve);
@@ -530,6 +645,7 @@ const ARRASTRA_CUERPO = { image: 1, chart: 1, func: 1, video: 1, smart: 1, estru
    se toma el bloque. */
 function arrastraCuerpo(ev, id, el) {
   if (ev.button > 0 || !id) return;
+  if (ev.ctrlKey || ev.metaKey || ev.shiftKey || S.selBlock !== id) return;
   if (ev.target.closest('.blk-toolbar, .ancho-asa, [data-edit], .sliders, button, input, a')) return;
   if (curSlide().lienzoLibre) { iniciaGestoLibre(ev, id, 'mover'); return; }
   const x0 = ev.clientX, y0 = ev.clientY;
@@ -558,7 +674,12 @@ function initCanvasEvents() {
   if (pie && !$('#lienzoLibreBtn')) pie.append(h('button', { id: 'lienzoLibreBtn', type: 'button', class: 'btn btn-sm lienzo-control',
     'aria-pressed': 'false', onclick: alternaLienzoLibre }, 'Lienzo libre'));
   if (pie && !$('#lienzoObjetosBtn')) pie.append(h('button', { id: 'lienzoObjetosBtn', type: 'button', class: 'btn btn-sm',
-    hidden: true, onclick: openObjetosLienzo }, 'Elegir bloque'));
+    hidden: true, title: 'Elegir bloques y ordenar las capas', onclick: openObjetosLienzo }, 'Capas'));
+  if (pie && !$('#lienzoImanBtn')) pie.append(h('button', { id: 'lienzoImanBtn', type: 'button', class: 'btn btn-sm lienzo-control',
+    hidden: true, 'aria-pressed': 'true', title: 'Ajustar a guías al mover; mantén Alt para omitir el ajuste', onclick: e => {
+      S.prefs.imanLienzo = S.prefs.imanLienzo === false; guardaPrefs();
+      e.currentTarget.setAttribute('aria-pressed', String(S.prefs.imanLienzo));
+    } }, 'Imán'));
   /* Arrastrar una imagen dispara el arrastre nativo del navegador, que cancela
      el puntero a media gesto. El lienzo tiene el suyo propio, con sus guías. */
   inner.addEventListener('dragstart', e => e.preventDefault());
@@ -570,8 +691,23 @@ function initCanvasEvents() {
     const nz = e.target.closest('[data-nueva-z]');
     if (nz) { e.preventDefault(); nuevoTextoEnZona(nz.dataset.nuevaZ); return; }
     const blk = e.target.closest('.blk');
-    if (blk?.dataset.bid && (e.ctrlKey || e.metaKey || e.shiftKey) && !e.target.closest('.blk-toolbar')) { e.preventDefault(); selectBlock(blk.dataset.bid, true); return; }
-    if (blk && blk.dataset.bid && blk.dataset.bid !== S.selBlock) selectBlock(blk.dataset.bid);
+    if (blk?.dataset.bid && (e.ctrlKey || e.metaKey || e.shiftKey) && !e.target.closest('.blk-toolbar')) {
+      e.preventDefault();
+      const id = blk.dataset.bid, deck = S.deck, slide = curSlide();
+      if (slide.lienzoLibre) flushEdicion();
+      const f = findBlock(id);
+      if (deck !== S.deck || slide !== curSlide() || !f || f.slide !== slide) return;
+      selectBlock(id, true);
+      if (slide.lienzoLibre && S.selBlock) enfocaBloqueLibre(S.selBlock);
+      return;
+    }
+    if (blk && blk.dataset.bid && blk.dataset.bid !== S.selBlock) {
+      const ids = idsSeleccionados();
+      if (curSlide().lienzoLibre && ids.size > 1 && ids.has(blk.dataset.bid)) {
+        const anteriores = [...ids]; selectBlock(blk.dataset.bid);
+        const actuales = idsSeleccionados(); actuales.clear(); anteriores.forEach(id => actuales.add(id)); pintaSeleccionBloques(); mountToolbar();
+      } else selectBlock(blk.dataset.bid);
+    }
     /* Insertar va a la columna donde acabas de hacer clic, no siempre a la primera. */
     const zc = e.target.closest('[data-z]');
     if (zc) {
@@ -582,6 +718,7 @@ function initCanvasEvents() {
   });
   inner.addEventListener('click', e => {
     if (e.target.closest('[data-nueva-z]')) return;
+    if (e.ctrlKey || e.metaKey || e.shiftKey) return;
     const blk = e.target.closest('.blk');
     if (!blk) { if (!e.target.closest('.blk-toolbar')) selectBlock(null); return; }
     const f = findBlock(blk.dataset.bid); if (!f || f.block.locked) return;
