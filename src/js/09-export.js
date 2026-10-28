@@ -579,7 +579,7 @@ function texBlocks(arr, ind) {
       case 'func': {
         const lines = [p + '\\begin{figure}', p + '  \\centering'];
         if (b.type === 'func') {
-          lines.push(p + '  % Curvas evaluadas por Erlen:');
+          lines.push(p + '  % Curvas evaluadas por Tabula:');
           (b.curves || []).forEach(cv => lines.push(p + '  %   ' + String(cv.name || 'y').replace(/[\r\n]+/g, ' ') + ' = ' + String(cv.expr || '').replace(/[\r\n]+/g, ' ')));
           if ((b.params || []).length) lines.push(p + '  %   con ' + b.params.map(q => q.name + ' = ' + q.value + (q.unit ? ' ' + mathToUnicode(q.unit) : '')).join(', ').replace(/[\r\n]+/g, ' '));
         }
@@ -728,11 +728,11 @@ function toBeamer(deck) {
   const pieTxt = (m.pieTexto || '').trim();
   const L = [];
   L.push('% ===================================================================');
-  L.push('%  Generado por Erlen');
+  L.push('%  Generado por Tabula');
   L.push('%  Compílalo en Overleaf, o localmente con dos pasadas de pdflatex.');
   if (m.theme === 'metropolis' || m.theme === 'nocturno')
     L.push('%  Este tema usa la tipografía Fira: compila con XeLaTeX o LuaLaTeX para verla.');
-  if (hasImg || hayLogo) L.push('%  Figuras y logotipo: descárgalos desde Erlen (botón «Descargar figuras»)');
+  if (hasImg || hayLogo) L.push('%  Figuras y logotipo: descárgalos desde Tabula (botón «Descargar figuras»)');
   if (hasImg || hayLogo) L.push('%  y súbelos junto a este archivo, conservando sus nombres.');
   L.push('% ===================================================================');
   L.push('\\documentclass[' + (m.aspect === '43' ? 'aspectratio=43' : 'aspectratio=169') + ',11pt]{beamer}');
@@ -764,7 +764,7 @@ function toBeamer(deck) {
   if (fu.id !== 'auto') {
     const lineas = (m.fuenteMat === false && fu.texTxt) ? fu.texTxt : fu.tex;
     L.push('');
-    L.push('% Tipografía: ' + fu.n + (fu.propia ? ' (la misma que ves en Erlen)' : ''));
+    L.push('% Tipografía: ' + fu.n + (fu.propia ? ' (la misma que ves en Tabula)' : ''));
     if (fu.texTxt && m.fuenteMat === false) L.push('% Solo cambia el texto; las matemáticas se quedan en Computer Modern.');
     lineas.forEach(x => L.push(x));
     L.push('');
@@ -817,7 +817,7 @@ function toBeamer(deck) {
   }
   L.push('\\setbeamertemplate{navigation symbols}{}');
   L.push('% Algunos temas (Metropolis entre ellos) insertan solos una diapositiva al');
-  L.push('% empezar cada sección. Erlen ya emite la suya, así que se desactiva la');
+  L.push('% empezar cada sección. Tabula ya emite la suya, así que se desactiva la');
   L.push('% automática: de otro modo cada sección saldría dos veces y la numeración');
   L.push('% del PDF dejaría de coincidir con la de la app.');
   L.push('\\AtBeginSection{}');

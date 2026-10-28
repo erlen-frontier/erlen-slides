@@ -1,6 +1,6 @@
 # Componentes y atribuciones
 
-La licencia AGPL-3.0-only cubre el trabajo original de Erlen Slides. Las bibliotecas, fuentes y dependencias externas conservan sus licencias. Los textos redistribuidos están en [licenses](licenses/).
+La licencia AGPL-3.0-only cubre Tabula y el trabajo original de Erlen Slides del que deriva. Las bibliotecas, fuentes y dependencias externas conservan sus licencias. Los textos redistribuidos están en [licenses](licenses/).
 
 | Componente | Uso | Licencia / origen |
 |---|---|---|

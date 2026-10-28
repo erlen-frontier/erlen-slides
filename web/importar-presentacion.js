@@ -54,7 +54,7 @@ function adaptaPPTX(raw, archivo = 'PowerPoint') {
           for (const serie of e.data || []) for (const v of serie.values || []) rows.push([String(serie.key || ''), String(serie.xlabels?.[v.x] ?? v.x), String(v.y)]);
           tabla(rows, i, 'Datos importados de la gráfica');
         }
-        add(i, 'La gráfica se importó como tabla de datos. Crea una gráfica de Erlen para elegir sus ejes y unidades.');
+        add(i, 'La gráfica se importó como tabla de datos. Crea una gráfica de Tabula para elegir sus ejes y unidades.');
       } else if (e.type === 'math' && e.latex) bloques.push(block('math', { tex: String(e.latex).slice(0, 20000) }));
       else add(i, 'Un objeto ' + String(e.type || 'desconocido').slice(0, 40) + ' no se importó. Revísalo en el PowerPoint original.');
     }
@@ -109,7 +109,7 @@ function openImportarPresentacion() {
         });
         if (cerrado || actual !== turno) return;
         r = adaptaPPTX(raw, f.name);
-        detalles.append(h('p', null, 'Se importan textos, imágenes incrustadas, tablas, ecuaciones compatibles y notas. El acomodo, las fuentes y los efectos se adaptan al estilo de Erlen; compara con el PowerPoint original.'));
+        detalles.append(h('p', null, 'Se importan textos, imágenes incrustadas, tablas, ecuaciones compatibles y notas. El acomodo, las fuentes y los efectos se adaptan al estilo de Tabula; compara con el PowerPoint original.'));
       } else if (/\.(md|markdown)$/i.test(f.name)) r = await deckDesdeMarkdown(await f.text());
       else if (/\.json$/i.test(f.name)) {
         const bruto = JSON.parse(await f.text());

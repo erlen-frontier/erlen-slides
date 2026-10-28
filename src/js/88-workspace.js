@@ -149,8 +149,8 @@ function wsRecursos() {
     ['De guion a diapositivas', 'Pega tu índice y crea la estructura de una charla sin empezar de cero.', 'Pegar esquema', wsAccion(openEsquema)]
   ];
   /* La versión sin conexión solo existe junto a la web: el archivo suelto ya lo es. */
-  if (location.protocol !== 'file:' && window.ERLEN) recursos.push(['Erlen Slides sin conexión', 'Un solo archivo HTML con el editor completo para trabajar sin red. Los paquetes se comparten como archivos; no sincronizan equipos.', 'Descargar sin conexión', () => {
-    const a = h('a', {href:'erlen-slides-offline.html', download:'erlen-sin-conexion.html', hidden:true});
+  if (location.protocol !== 'file:' && window.ERLEN) recursos.push(['Tabula sin conexión', 'Un solo archivo HTML con el editor completo para trabajar sin red. Los paquetes se comparten como archivos; no sincronizan equipos.', 'Descargar sin conexión', () => {
+    const a = h('a', {href:'erlen-slides-offline.html', download:'tabula-sin-conexion.html', hidden:true});
     document.body.append(a); a.click(); a.remove();
   }]);
   return recursos.map(([titulo, texto, etiqueta, accion]) => ({titulo, texto, etiqueta, accion}));
@@ -164,7 +164,7 @@ function wsImportarPlantillas() {
     try {
       if(f.size>50*1048576)throw new Error('El respaldo supera 50 MB. Importa las presentaciones de forma individual.');
       const p=JSON.parse(await f.text());
-      if(p.formato!=='erlen-plantillas-v1'||!Array.isArray(p.plantillas))throw new Error('Selecciona plantillas-personales.json de un respaldo de Erlen.');
+      if(p.formato!=='erlen-plantillas-v1'||!Array.isArray(p.plantillas))throw new Error('Selecciona plantillas-personales.json de un respaldo compatible.');
       const lista=wsPlantillas(),nombres=new Set(lista.map(x=>x.nombre));
       for(const t of p.plantillas){
         if(!t||typeof t.nombre!=='string'||!t.nombre.trim())throw new Error('Una plantilla no tiene un nombre válido.');
@@ -191,7 +191,7 @@ function wsGuardarPlantilla() {
   },true)]});
 }
 function wsEstiloSeguro(paquete) {
-  if(!paquete || paquete.formato!=='erlen-identidad-v1' || !paquete.estilo || typeof paquete.estilo!=='object' || Array.isArray(paquete.estilo)) throw new Error('El archivo no es un paquete de identidad de Erlen.');
+  if(!paquete || paquete.formato!=='erlen-identidad-v1' || !paquete.estilo || typeof paquete.estilo!=='object' || Array.isArray(paquete.estilo)) throw new Error('El archivo no es un paquete de identidad compatible.');
   const estilo={};
   CAMPOS_ESTILO.filter(k=>!['authors','short','notas'].includes(k)).forEach(k=>{
     if(Object.hasOwn(paquete.estilo,k)) estilo[k]=deepCopy(paquete.estilo[k]);
@@ -229,7 +229,7 @@ async function wsRespaldo() {
   try{
     const archivos=nombres.map((n,i)=>({nombre:`${i+1}-${wsNombre(n)}.json`,datos:JSON.stringify(store[n].deck,null,2)}));
     archivos.push({nombre:'plantillas-personales.json',datos:JSON.stringify({formato:'erlen-plantillas-v1',plantillas:wsPlantillas()},null,2)});
-    archivos.push({nombre:'LEEME.txt',datos:'Erlen: importa cada archivo de presentación desde Inicio → Importar proyecto. El archivo plantillas-personales.json es un respaldo de tus plantillas, no una presentación.'});
+    archivos.push({nombre:'LEEME.txt',datos:'Tabula: importa cada archivo de presentación desde Inicio → Importar proyecto. El archivo plantillas-personales.json es un respaldo de tus plantillas, no una presentación.'});
     downloadFile('erlen-biblioteca.zip',await armaZip(archivos),'application/zip');
   }catch(_){toast('No se pudo crear el respaldo. Descarga los proyectos individualmente.','warn');}
 }
@@ -240,7 +240,7 @@ function wsReporte() {
   downloadFile('erlen-biblioteca.csv','\ufeff'+filas.map(f=>f.map(csv).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 }
 function wsServicio(body) {
- body.append(h('h2',null,'Erlen Slides · Presentaciones científicas'),h('p',{class:'ws-lead'},'Editor científico libre, versión '+edVersion()+'. Tus presentaciones se guardan en este navegador.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:ERLEN_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:ERLEN_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
+ body.append(h('h2',null,'Tabula · Presentaciones'),h('p',{class:'ws-lead'},'Editor libre, versión '+edVersion()+'. Tus presentaciones se guardan en este dispositivo.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:ERLEN_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:ERLEN_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
 }
 /* ---------- el marco común de la suite ----------
    erlenMarco (src/diseno/suite-marco.js) reorganiza los nodos que la app ya tiene —sin
@@ -250,14 +250,14 @@ function wsServicio(body) {
    marca del marco vuelve al inicio común; el editor se queda con sus listeners, su
    historial y sus atajos. */
 let MARCO = null;
-const MARCA_SLIDES = '<svg class="marca-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M25 8h14v16l14 26a4 4 0 0 1-3.6 5.6H14.6A4 4 0 0 1 11 50l14-26z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M19 42h26l5.5 9.5H13.5z" fill="var(--acc)"/></svg>';
+const MARCA_SLIDES = window.ERLEN_SLIDES_MARCA;
 /* Catálogo de despliegue embebido por herramientas/build.mjs (ERLEN_SUITE_CATALOG):
    {items, home} para el menú de la suite. Sin él, el componente conserva su
    detección standalone: nunca se inventan enlaces. */
 function catalogoSuite() { return erlenSuiteNavigation.catalogoDe(document) || undefined; }
 function montaMarco() {
   MARCO = erlenMarco($('#app'), {
-    app: 'slides', nombre: 'Erlen Slides',
+    app: 'slides', nombre: 'Tabula', mey: false,
     inicio: () => wsInicio(),
     elementos: {
       titulo: $('#deckTitleInput'),
@@ -269,21 +269,10 @@ function montaMarco() {
       trabajo: $('.canvas-wrap'),
       detalles: $('#inspector')
     },
-    navegacionSuite: catalogoSuite(),
-    /* Mey: guía local que ejecuta con tu clic. CINTA se anula con la disposición «lado»
-       (de ahí la función); «nueva» es un menú, así que su paso apunta a una de sus opciones. */
-    ayuda: {
-      cinta: () => CINTA,
-      pasos: () => [
-        { control: 'nueva › ' + LAYOUTS.find(l => l.id === 'content').name, pestana: 'inicio', texto: 'Añadir una diapositiva' },
-        { control: 'ins-text', pestana: 'insertar', texto: 'Insertar texto' },
-        { control: 'ins-image', pestana: 'insertar', texto: 'Insertar una imagen' },
-        { control: 'buscar', pestana: 'inicio', texto: 'Buscar y reemplazar' },
-        { control: 'paleta', pestana: 'inicio', texto: 'Ir a / hacer: cualquier comando' }
-      ],
-      extras: comandosArchivo
-    }
+    navegacionSuite: catalogoSuite()
   });
+  const marca = MARCO.elemento.querySelector('.erlen-marco-marca');
+  if (marca) marca.innerHTML = MARCA_SLIDES;
 }
 
 function wsInit() {
@@ -291,12 +280,12 @@ function wsInit() {
      navegación local segura y jamás enlaces inventados. */
   const catalogo = catalogoSuite();
   INICIO = erlenInicio($('#inicioRoot'), {
-    app: 'slides',
-    nombre: 'Erlen Slides', corto: 'SLIDES', objetos: 'presentaciones',
+    app: 'slides', mey: false,
+    nombre: 'Tabula', corto: '', objetos: 'presentaciones',
     marca: MARCA_SLIDES,
-    estado: 'Disponible · beta', subtitulo: 'Presentaciones científicas',
-    eyebrow: 'ARCHIVO CIENTÍFICO · ERLEN SLIDES', titulo: ['Presentaciones ', 'científicas'],
-    lead: 'Crea, explora y conserva historias visuales para comunicar datos, métodos y resultados con precisión.',
+    estado: 'Disponible · beta', subtitulo: 'Presentaciones científicas y visuales',
+    eyebrow: 'PRESENTACIONES · TABULA', titulo: ['Crea y comparte ', 'tus ideas'],
+    lead: 'Crea y edita diapositivas para contar ideas, mostrar datos y presentar con claridad.',
     nuevo: {etiqueta:'Nueva presentación', detalle:'Lienzo científico en blanco', accion:() => wsNueva()},
     importar: {etiqueta:'Importar proyecto', accion:openImportarPresentacion},
     continuar: () => deckEnBlanco() ? null : {etiqueta:'Continuar presentación', accion:() => {}},
@@ -311,6 +300,17 @@ function wsInit() {
     alAbrir: () => { openDrawer(false); closeMenus(); },
     alCerrar: wsAlEditor
   });
+  // The shared home component repaints its brand on navigation; keep its
+  // synchronized source untouched and apply this app's name after each paint.
+  const nombreInicio = () => {
+    const nombre = INICIO.elemento.querySelector('.erlen-inicio-marca > span:not(.erlen-inicio-marca-icono)');
+    if (nombre && nombre.textContent !== 'Tabula') nombre.textContent = 'Tabula';
+  };
+  new MutationObserver(nombreInicio).observe(INICIO.elemento, { childList: true, subtree: true });
+  nombreInicio();
+  // The shared components set a suite favicon when mounted; restore Slides' own mark.
+  const icono = document.querySelector('link[rel="icon"]');
+  if (icono) icono.href = 'data:image/svg+xml,' + encodeURIComponent(MARCA_SLIDES);
   /* La navegación interna del componente no toca la URL: se refleja aquí, tras cada clic. */
   INICIO.elemento.addEventListener('click', () => { if (INICIO.abierta) suiteUrl(SUITE_RUTAS[INICIO.vista]); });
   window.addEventListener('hashchange',suiteDesdeUrl);
@@ -360,7 +360,7 @@ async function wsAbrirDelAsistente(clave) {
     return null;
   }
   try { datos = await res.json(); } catch (e) { wsRechazoAsistente('Lo que llegó no es un JSON válido.'); return null; }
-  if (!datos || datos.formato !== 'erlen-mcp-abrir-v1' || !datos.deck || typeof datos.deck !== 'object') { wsRechazoAsistente('Lo que llegó no es un proyecto de Erlen Slides.'); return null; }
+  if (!datos || datos.formato !== 'erlen-mcp-abrir-v1' || !datos.deck || typeof datos.deck !== 'object') { wsRechazoAsistente('Lo que llegó no es un proyecto de Tabula.'); return null; }
   const r = saneaDeck(datos.deck);
   if (r.error) { wsRechazoAsistente('El proyecto no se pudo leer: ' + r.error); return null; }
   wsVistaAsistente(r.deck, String(datos.archivo || 'proyecto.json').slice(0, 200), r.avisos);

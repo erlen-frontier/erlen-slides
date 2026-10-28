@@ -26,7 +26,7 @@ async fn guardar_proyecto(
         let Some(selected) = app
             .dialog()
             .file()
-            .add_filter("Proyecto de Erlen", &["json"])
+            .add_filter("Proyecto de Tabula", &["json"])
             .set_file_name(sugerido)
             .blocking_save_file()
         else {
@@ -73,7 +73,7 @@ fn main() {
                         )
                         .window_features(features)
                         .inner_size(1180.0, 780.0)
-                        .title("Erlen · presentador")
+                        .title("Tabula · presentador")
                         .on_navigation(|destination| destination.scheme() == "about")
                         .on_new_window(|_, _| NewWindowResponse::Deny)
                         .build();
@@ -105,5 +105,5 @@ fn main() {
             cerrar_presentador
         ])
         .run(tauri::generate_context!())
-        .expect("error al iniciar Erlen Slides");
+        .expect("error al iniciar Tabula");
 }

@@ -9,7 +9,7 @@ function recDB() {
     const req = indexedDB.open('erlen-slides-recuperacion-v1',1);
     req.onupgradeneeded = () => req.result.createObjectStore('copias',{keyPath:'id',autoIncrement:true});
     req.onerror = () => reject(req.error);
-    req.onblocked = () => reject(new Error('Cierra otras pestañas de Erlen para activar las copias'));
+    req.onblocked = () => reject(new Error('Cierra otras pestañas de Tabula para activar las copias'));
     req.onsuccess = () => {const db=req.result;db.onversionchange=()=>{db.close();RECUP.db=null;};resolve(db);};
   }).catch(e=>{RECUP.db=null;throw e;});
   return RECUP.db;
@@ -145,7 +145,7 @@ function openRecuperacion() {
     preparado=null;importar.disabled=true;const f=archivo.files[0];if(!f)return;
     try {
       if(f.size>RECUP.maxBytes)throw new Error('Este respaldo supera 32 MB. Importa sus proyectos individualmente.');
-      const p=JSON.parse(await f.text());if(p.formato!=='erlen-respaldo-v1')throw new Error('Elige un respaldo de biblioteca de Erlen. Los proyectos individuales se importan desde Archivo.');
+      const p=JSON.parse(await f.text());if(p.formato!=='erlen-respaldo-v1')throw new Error('Elige un respaldo de biblioteca compatible. Los proyectos individuales se importan desde Archivo.');
       recMezcla(decksStore(),p.proyectos);preparado=p.proyectos;importar.disabled=false;
       aviso.textContent=`${p.proyectos.length} presentaciones listas. Se crearán copias sin reemplazar tu biblioteca.`;
     }catch(e){aviso.textContent=e instanceof SyntaxError?'El archivo está incompleto o no es JSON válido.':e.message;}

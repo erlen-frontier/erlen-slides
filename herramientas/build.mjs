@@ -5,6 +5,7 @@ import {join,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {icons} from 'lucide';
 import {minify} from 'terser';
+import {build as bundle} from 'esbuild';
 import {generateGlassMap} from './glass-map.mjs';
 const root=join(dirname(fileURLToPath(import.meta.url)),'..');
 const get=p=>read(join(root,p),'utf8');
@@ -25,7 +26,26 @@ const limitesInforme=Object.fromEntries(Object.entries(JSON.parse(get('src/contr
 if(!Object.keys(limitesInforme).length||Object.values(limitesInforme).some(v=>!Number.isInteger(v)||v<1))throw new Error('src/contratos/informe-v1-limites.json no trae límites enteros positivos');
 write(join(root,'src/js/_informe-limites-gen.js'),'// Generado por herramientas/build.mjs desde src/contratos/informe-v1-limites.json — no editar a mano.\nconst INFORME_LIMITES=Object.freeze('+JSON.stringify(limitesInforme)+');\n');
 write(join(root,'src/js/_glass-map-gen.js'),'// Generado por herramientas/glass-map.mjs — no editar a mano.\nconst ERLEN_GLASS_MAP=\''+generateGlassMap().replace(/'/g,"\\'")+'\';\n');
-const modulos=await Promise.all(order.map(async n=>{const s=get('src/js/'+n);return compactos.has(n)?(await minify(s,{compress:{unused:false},mangle:false,format:{comments:/SPDX/}})).code:s;}));
+/* Build the unmodified shared home/frame modules without bundling Mey. Tabula
+   explicitly opts out of that optional interface in both component configs. */
+const sinMey={name:'tabula-sin-mey',setup(b){
+ b.onResolve({filter:/^\.\/mey\.mjs$/},()=>({path:'mey',namespace:'tabula-sin-mey'}));
+ b.onResolve({filter:/^\.\/suite-mey-ayuda\.mjs$/},()=>({path:'ayuda',namespace:'tabula-sin-mey'}));
+ b.onLoad({filter:/.*/,namespace:'tabula-sin-mey'},({path})=>({loader:'js',contents:path==='mey'
+  ? "const ausente=()=>{throw Error('Mey no está disponible en Tabula')};export const mey=Object.assign(ausente,{definir:ausente,montar:ausente,recorrerPagina:ausente,recorridoActual:ausente});"
+  : "export const TEXTOS_AYUDA_MEY={es:{},en:{}};export function crearAyudaMey(){throw Error('Mey no está disponible en Tabula')}"}));
+}};
+const licenciaDiseno='/* SPDX-License-Identifier: MIT\n'+get('src/diseno/licencias/MIT.txt').replace(/\*\//g,'* /')+'\n*/\n';
+async function componenteSinMey(archivo,exportado,global){
+ const out=await bundle({stdin:{contents:`export {${exportado}} from './src/diseno/${archivo}.mjs';`,resolveDir:root},
+  bundle:true,format:'iife',globalName:'componente',platform:'browser',write:false,plugins:[sinMey]});
+ return licenciaDiseno+`const ${global}=(()=>{`+out.outputFiles[0].text+`return componente.${exportado};})();`;
+}
+const modulos=await Promise.all(order.map(async n=>{
+ if(n==='../diseno/suite-inicio.js')return componenteSinMey('suite-inicio','mountInicio','erlenInicio');
+ if(n==='../diseno/suite-marco.js')return componenteSinMey('suite-marco','mountMarco','erlenMarco');
+ const s=get('src/js/'+n);return compactos.has(n)?(await minify(s,{compress:{unused:false},mangle:false,format:{comments:/SPDX/}})).code:s;
+}));
 /* Paquete de diseño de la suite (src/diseno, sincronizado por diseno-sync del
    portal): tokens --erlen-* y, del paquete de fuentes, solo las caras que usa
    el cromo, incrustadas para que el archivo suelto siga funcionando y el HTML
@@ -48,7 +68,14 @@ const token=n=>{const m=tokensSuite.match(new RegExp('--erlen-'+n+':(#[0-9a-fA-F
    .erlen-marco): sus slots reciben los nodos del editor y su JS se carga de
    src/diseno/suite-marco.js (en src/js/_orden.txt). motion.css no se carga: sus
    animaciones se dejarían sentir en las diapositivas. */
-const css=tokensSuite+'\n'+get('src/diseno/cinta.css')+'\n'+get('src/diseno/inicio.css')+'\n'+get('src/diseno/base.css')+'\n'+get('src/diseno/marco.css')+'\n'+fuentesSuite+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
+/* These synced styles start with a Mey-only prelude. Require the expected
+   boundaries so a future shared update cannot silently drop unrelated CSS. */
+function cssSinMey(path){
+ const css=get(path),inicio=css.indexOf('/* Erlen Suite · paquete de diseño');
+ if(!css.startsWith('/* Mey vive encima')||inicio<0)throw new Error('No se encontró el límite del CSS de Mey en '+path);
+ return css.slice(inicio);
+}
+const css=tokensSuite+'\n'+get('src/diseno/cinta.css')+'\n'+cssSinMey('src/diseno/inicio.css')+'\n'+get('src/diseno/base.css')+'\n'+cssSinMey('src/diseno/marco.css')+'\n'+fuentesSuite+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
 const lib=p=>get('node_modules/'+p);
 const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','Plus','HelpCircle','FlaskConical','Atom','ChartLine','FolderOpen','Download','Play','Settings2','House','Presentation','ArrowUpRight','ArrowRight','Archive','ChevronRight',
  /* Iconos de la cinta (src/js/56-cinta.js): uno por significado, sin repetir. */
@@ -56,12 +83,8 @@ const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','P
 if(names.some(n=>!icons[n]))throw new Error('Icono de lucide inexistente: '+names.filter(n=>!icons[n]).join(', '));
 const licenses=['@floating-ui/core','@floating-ui/dom','lucide'];
 const ui='/*\n'+licenses.map(p=>lib(p+'/LICENSE')).join('\n').replace(/\*\//g,'* /')+'\n*/\n'+lib('@floating-ui/core/dist/floating-ui.core.umd.min.js')+'\n'+lib('@floating-ui/dom/dist/floating-ui.dom.umd.min.js')+'\nwindow.ERLEN_ICONOS='+JSON.stringify(Object.fromEntries(names.map(n=>[n,icons[n]])))+';';
-/* El matraz de la marca como icono de pestaña, incrustado: sin petición al
-   servidor, sin 404 y disponible con el archivo suelto. */
-const FAVICON='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
- +'<rect width="64" height="64" rx="12" fill="'+token('papel')+'"/>'
- +'<path d="M25 10h14v15l13 24a4 4 0 0 1-3.5 6H15.5a4 4 0 0 1-3.5-6l13-24z" fill="none" stroke="'+token('tinta')+'" stroke-width="4" stroke-linejoin="round"/>'
- +'<path d="M20 42h24l5 9H15z" fill="'+token('verde')+'"/></svg>';
+/* The app-owned mark is shared by the home screen, editor and favicon. */
+const FAVICON=get('src/identidad/marca.svg').trim();
 const ICONO='<link rel="icon" href="data:image/svg+xml,'+encodeURIComponent(FAVICON).replace(/'/g,'%27')+'">';
 /* Catálogo de despliegue de la suite (ERLEN_SUITE_CATALOG): el JSON {items, home} viaja en
    un bloque <script type="application/json"> del <head> y lo lee
@@ -76,7 +99,7 @@ if(process.env.ERLEN_SUITE_CATALOG){
  catalogoHtml='<script type="application/json" id="erlen-suite-catalog">'+JSON.stringify(catalogo).replace(/</g,'\\u003c')+'</script>';
 }
 const script=s=>'<script>'+s.replace(/<\/script/gi,'<\\/script')+'</script>';
-const html='<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Erlen Slides · Presentaciones científicas</title>'+ICONO+catalogoHtml+'<meta name="description" content="Presentaciones científicas libres con ecuaciones, química, datos y exportación. Sin cuenta."><style>body{margin:0;font:14px system-ui,sans-serif;background:'+token('papel')+';color:'+token('tinta')+'}img{max-width:100%}[hidden]{display:none!important}</style><style>'+get('src/css/fuentes-katex.css')+get('src/css/fuentes-tx.css')+css+'</style></head><body>'+get('src/cuerpo.html')+script(get('vendor/katex.min.js'))+script(get('vendor/mhchem.min.js'))+script('window.ERLEN={version:'+JSON.stringify(version)+',telemetria:false};window.ERLEN_LIBRE=true;')+script(ui)+script(get('src/preludio.js')+modulos.join('\n'))+'</body></html>\n';
+const html='<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tabula · Presentaciones</title>'+ICONO+catalogoHtml+'<meta name="description" content="Presentaciones visuales con ecuaciones, química, datos y exportación. Sin cuenta."><style>body{margin:0;font:14px system-ui,sans-serif;background:'+token('papel')+';color:'+token('tinta')+'}img{max-width:100%}[hidden]{display:none!important}</style><style>'+get('src/css/fuentes-katex.css')+get('src/css/fuentes-tx.css')+css+'</style></head><body>'+get('src/cuerpo.html')+script(get('vendor/katex.min.js'))+script(get('vendor/mhchem.min.js'))+script('window.ERLEN={version:'+JSON.stringify(version)+',telemetria:false};window.ERLEN_LIBRE=true;window.ERLEN_SLIDES_MARCA='+JSON.stringify(FAVICON)+';')+script(ui)+script(get('src/preludio.js')+modulos.join('\n'))+'</body></html>\n';
 const out=join(root,'public');mkdirSync(out,{recursive:true});
 write(join(out,'index.html'),html);write(join(out,'erlen-slides-offline.html'),html.replace('window.ERLEN_LIBRE=true;','window.ERLEN_LIBRE=false;'));
 cpSync(join(root,'LICENSE'),join(out,'LICENSE'));cpSync(join(root,'licenses'),join(out,'licenses'),{recursive:true});
@@ -119,4 +142,4 @@ cpSync(join(root,'node_modules/3dmol/build/3Dmol-min.js.LICENSE.txt'),join(out,'
 cpSync(join(root,'node_modules/kekule/dist/themes'),join(science,'themes'),{recursive:true});cpSync(join(root,'web/quimica-worker.js'),join(science,'quimica-worker.js'));
 write(join(science,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 write(join(out,'build.json'),JSON.stringify({version,modules:order.length,sha256:createHash('sha256').update(html).digest('hex')},null,2)+'\n');
-console.log(`Built Erlen Slides ${version}: ${order.length} modules, ${(Buffer.byteLength(html)/1024).toFixed(0)} KiB, no production configuration.`);
+console.log(`Built Tabula ${version}: ${order.length} modules, ${(Buffer.byteLength(html)/1024).toFixed(0)} KiB, no production configuration.`);

@@ -1,4 +1,4 @@
-# Erlen Slides para escritorio Linux
+# Tabula para escritorio Linux
 
 La aplicación usa Tauri 2 y el WebView del sistema. El editor, los ejemplos y las bibliotecas científicas se empaquetan localmente. La instalación de la app no necesita ejecutar Node; Node y Rust se usan al construirla desde el código.
 
@@ -23,6 +23,8 @@ Con la configuración de Cargo por defecto, el paquete se escribe en `target/rel
 ## Presentaciones y privacidad
 
 La aplicación de escritorio y el navegador tienen bibliotecas separadas. No se borran ni trasladan automáticamente. Para usar una presentación anterior, expórtala desde su biblioteca como proyecto JSON y ábrela en el escritorio; conserva el original y tus respaldos. El guardado local de la aplicación sigue usando el almacenamiento de su WebView, por lo que conviene mantener copias JSON fuera de ese almacenamiento.
+
+El nombre visible es Tabula. Se conservan el identificador de escritorio y las claves de almacenamiento de Erlen Slides para mantener accesible la biblioteca de la misma instalación; el nombre nuevo no cambia el formato JSON.
 
 En **Archivo → Exportar → Proyecto (.json)**, el escritorio muestra el selector de archivos del sistema. Rust valida el JSON y guarda una copia temporal en la misma carpeta antes de sustituir el destino. Cancelar no escribe nada y un error se comunica sin sustituir el archivo anterior. Se permite un guardado a la vez en cada instancia; si se modifica la presentación mientras está abierto el selector, se advierte que la copia no incluye los cambios posteriores. En Linux las copias JSON se crean con permisos privados para su propietario (`0600`), también al reemplazar un archivo; si necesitas compartirlas puedes cambiar sus permisos después. La descarga del navegador mantiene su comportamiento habitual.
 

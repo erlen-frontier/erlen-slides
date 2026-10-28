@@ -1,6 +1,6 @@
 # Ejemplos científicos editables
 
-Abre **Ejemplos editables** en Erlen Slides o importa un `proyecto.json`. Cada carpeta contiene seis diapositivas, fuente Beamer y un README con la finalidad, pasos de adaptación y comprobaciones.
+Abre **Ejemplos editables** en Tabula o importa un `proyecto.json`. Cada carpeta contiene seis diapositivas, fuente Beamer y un README con la finalidad, pasos de adaptación y comprobaciones.
 
 Todos los datos son ilustrativos. Los ejemplos describen situaciones reales de trabajo científico; no representan experimentos realizados ni contienen citas inventadas.
 

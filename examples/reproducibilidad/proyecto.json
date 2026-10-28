@@ -89,7 +89,7 @@
         {
           "id": "example-reproducibilidad-9",
           "type": "text",
-          "text": "El bloque muestra código; Erlen Slides no lo ejecuta.",
+          "text": "El bloque muestra código; Tabula no lo ejecuta.",
           "size": "s",
           "align": "left"
         }

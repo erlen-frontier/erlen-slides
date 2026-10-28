@@ -8,7 +8,7 @@ Una explicación con reacciones y límites del modelo.
 
 ¿Qué predice un modelo ideal para la relación ácido/base?
 
-1. Inicia Erlen Slides y abre «Ejemplos editables → Equilibrio ácido–base», o importa [proyecto.json](proyecto.json).
+1. Inicia Tabula y abre «Ejemplos editables → Equilibrio ácido–base», o importa [proyecto.json](proyecto.json).
 2. Recorre las seis diapositivas: pregunta, estrategia, evidencia, límites y comprobaciones.
 3. Sustituye mediciones y metadatos por los de tu investigación; revisa unidades, controles e incertidumbre.
 4. Edita los bloques desde el panel derecho. Las tablas, ecuaciones y datos de las gráficas siguen siendo editables.

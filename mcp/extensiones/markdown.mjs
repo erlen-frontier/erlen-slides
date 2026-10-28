@@ -98,7 +98,7 @@ async function exporta(a) {
      un .md escrito a mano (con comentarios, negritas o enlaces que la
      importación quitó) no se pisa. Una exportación anterior sí. */
   if (existsSync(destino) && !readFileSync(destino, 'utf8').includes(MARCA))
-    throw new ErrorUso('«' + visible(destino) + '» ya existe y no es una exportación de Erlen Slides: no se sobrescribe. Indica otro nombre en «destino».');
+    throw new ErrorUso('«' + visible(destino) + '» ya existe y no es una exportación de Tabula: no se sobrescribe. Indica otro nombre en «destino».');
   const carpetaFiguras = basename(destino, extname(destino)) + '-figuras';
   const r = aMarkdown(deck, {zonasPorDiseno: await zonasPorDiseno(), carpetaFiguras});
   mkdirSync(dirname(destino), {recursive: true});

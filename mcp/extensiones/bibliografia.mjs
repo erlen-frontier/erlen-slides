@@ -121,7 +121,7 @@ export default {
     {name: 'citar_desde_bibliografia', title: 'Citar desde mi bibliografía',
       description: 'Importa el .bib o .ris del usuario y propone qué referencia va en cada diapositiva.',
       arguments: [{name: 'archivo', description: 'Proyecto de la carpeta de trabajo', required: true}, {name: 'bibliografia', description: 'El .bib o .ris en la carpeta de trabajo', required: true}],
-      texto: a => `En el proyecto «${a.archivo}» de Erlen Slides:
+      texto: a => `En el proyecto «${a.archivo}» de Tabula:
 1. Importa mis referencias de «${a.bibliografia}» con importar_bibliografia. Dime cuántas entraron, cuáles ya estaban y cuáles tienen huecos; no rellenes huecos suponiendo datos.
 2. Con ver_presentacion, propón qué referencias van en cada diapositiva (una tabla: diapositiva, afirmación que respalda, clave). Usa solo referencias de mi archivo y dime qué afirmaciones se quedan sin fuente.
 3. Cuando lo apruebe, cítalas con citar (bloque_referencias=true en la primera) y enséñame la vista previa de una diapositiva con citas y de la bibliografía.`}

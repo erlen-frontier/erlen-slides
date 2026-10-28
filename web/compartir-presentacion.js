@@ -21,13 +21,13 @@ async function revisaSalida(formato, deck = S.deck) {
     const fuentes = [b.src, b.poster, b.despues?.src, ...(b.gal?.imgs || []).map(im => im.src)].filter(Boolean);
     if (fuentes.some(s => !/^data:/i.test(s))) add(['pptx', 'html'].includes(formato) ? 'error' : 'aviso', i, 'Un recurso depende de una dirección externa.', 'Incrusta la imagen o el vídeo antes de compartirlo sin conexión.', b.id);
     if (b.type === 'video' && ['pptx', 'pdf', 'beamer'].includes(formato)) add('aviso', i, 'El vídeo no se reproducirá en este formato.', 'Comparte la presentación HTML para conservar los vídeos incrustados.', b.id);
-    if (formato === 'pptx' && (['func', 'math', 'chem', 'montaje', 'estruct', 'geo', 'galeria'].includes(b.type) || (b.type === 'chart' && !exportador.chartNativo(b)) || (b.type === 'image' && (b.figura || b.cientifico)))) add('detalle', i, 'Esta figura conserva su apariencia; sus objetos internos no serán editables en PowerPoint.', 'El proyecto JSON conserva los datos y los objetos editables de Erlen.', b.id);
+    if (formato === 'pptx' && (['func', 'math', 'chem', 'montaje', 'estruct', 'geo', 'galeria'].includes(b.type) || (b.type === 'chart' && !exportador.chartNativo(b)) || (b.type === 'image' && (b.figura || b.cientifico)))) add('detalle', i, 'Esta figura conserva su apariencia; sus objetos internos no serán editables en PowerPoint.', 'El proyecto JSON conserva los datos y los objetos editables de Tabula.', b.id);
     if (Array.isArray(b.figura?.objects) && b.figura.background !== 'transparent') for (const o of b.figura.objects) {
       if (o?.kind === 'text' && /^#[\da-f]{6}$/i.test(o.fill) && /^#[\da-f]{6}$/i.test(b.figura.background) && contraste(o.fill, b.figura.background) < 4.5) { add('aviso', i, 'Un texto de la figura tiene poco contraste con su fondo.', 'Edita la figura y cambia el color del texto o el fondo.', b.id); break; }
     }
   }));
   if (deck.meta.logo && !/^data:/i.test(deck.meta.logo)) add(['html', 'pptx'].includes(formato) ? 'error' : 'aviso', 0, 'El logotipo depende de una dirección externa.', 'Incrusta el logotipo desde Diseño.');
-  if (formato === 'pptx') add('detalle', 0, 'PowerPoint usa fuentes de Office y no incrusta las fuentes de Erlen.', 'Revisa el archivo final en el equipo donde vas a presentar.');
+  if (formato === 'pptx') add('detalle', 0, 'PowerPoint usa fuentes de Office y no incrusta las fuentes de Tabula.', 'Revisa el archivo final en el equipo donde vas a presentar.');
   if (deck.meta.importacion?.formato === 'pptx') add('detalle', 0, 'Esta presentación se adaptó desde PowerPoint.', 'Compara sus figuras, valores y notas con el archivo original.');
   return hallazgos;
 }
@@ -76,7 +76,7 @@ function openCompartir(formatoInicial = 'pptx') {
     const actual = ++turno; flushEdicion(); firma = JSON.stringify(S.deck); descargar.disabled = true; revisar.disabled = true; formato.disabled = true; lista.replaceChildren();
     const f = formato.value;
     opcionNotas.hidden = !['html', 'pptx'].includes(f);
-    consejo.textContent = ({ pptx: 'Textos, tablas y gráficas compatibles quedan editables. Las figuras especiales conservan su apariencia como imagen.', html: 'Un archivo autónomo para presentar sin conexión. Conserva los pasos y los deslizadores de funciones.', pdf: 'Se abrirá la impresión del navegador. Elige Guardar como PDF.', beamer: 'Se abrirá el código para editar y compilar en LaTeX.', json: 'Conserva los datos, las figuras editables y todas las notas. Es la copia para seguir trabajando en Erlen.' })[f];
+    consejo.textContent = ({ pptx: 'Textos, tablas y gráficas compatibles quedan editables. Las figuras especiales conservan su apariencia como imagen.', html: 'Un archivo autónomo para presentar sin conexión. Conserva los pasos y los deslizadores de funciones.', pdf: 'Se abrirá la impresión del navegador. Elige Guardar como PDF.', beamer: 'Se abrirá el código para editar y compilar en LaTeX.', json: 'Conserva los datos, las figuras editables y todas las notas. Es la copia para seguir trabajando en Tabula.' })[f];
     descargar.textContent = ['pdf', 'beamer'].includes(f) ? 'Continuar con ' + (f === 'pdf' ? 'PDF' : 'Beamer') : 'Descargar ' + (f === 'pptx' ? 'PowerPoint' : f === 'html' ? 'HTML' : 'proyecto JSON');
     estado.textContent = 'Revisando contenido, accesibilidad y límites del formato…';
     try {

@@ -449,7 +449,7 @@ function informeADeck(inf, copia) {
       'Aplicación: ' + app,
       inf.procedencia.proyecto ? 'Proyecto: ' + inf.procedencia.proyecto : '',
       'Título: ' + tituloOrigen,
-      'Copia enviada el ' + creada.slice(0, 10) + '; abierta en Erlen Slides el ' + new Date().toISOString().slice(0, 10),
+      'Copia enviada el ' + creada.slice(0, 10) + '; abierta en Tabula el ' + new Date().toISOString().slice(0, 10),
       sim ? 'DATOS SIMULADOS: el informe los declara así; no son mediciones.' : ''
     ].filter(Boolean).map(t => ({ t: infPlano(t), lvl: 0 })), step: false }),
     /* En un bloque de código: la notación automática del texto (39-notacion.js)

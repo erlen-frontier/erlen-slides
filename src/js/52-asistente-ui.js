@@ -152,6 +152,7 @@ function asisBienvenida() {
 /* ---------- tarjeta de una acción ---------- */
 function asisTarjeta(cand, comoSugerencia) {
   const a = cand.a;
+  const contexto = { deck: S.deck, slide: curSlide(), bloque: S.selBlock };
   const arg = a.arg;
   let valor = cand.val;
   const cuerpo = h('div', { class: 'asis-tar' });
@@ -182,15 +183,23 @@ function asisTarjeta(cand, comoSugerencia) {
     }
   }
   const fila = h('div', { class: 'asis-tar-acc' });
-  fila.append(h('button', { class: 'btn btn-pri btn-sm', onclick: () => asisEjecuta(a, valor) }, comoSugerencia ? 'Hacerlo' : 'Sí, hazlo'));
+  fila.append(h('button', { class: 'btn btn-pri btn-sm', onclick: () => asisEjecuta(a, valor, contexto) }, comoSugerencia ? 'Hacerlo' : 'Sí, hazlo'));
   if (a.donde) fila.append(h('button', { class: 'btn btn-sm', title: a.donde,
     onclick: () => { if (a.foco && asisEnfoca(a.foco, a.donde)) return; asisBurbuja('bot', asisTexto('Lo encuentras en: ' + a.donde)); } }, 'Enséñame dónde'));
   cuerpo.append(fila);
   return cuerpo;
 }
 
-function asisEjecuta(a, valor) {
+function asisEjecuta(a, valor, contexto) {
   asisQuitaFoco();
+  if (contexto && (S.deck !== contexto.deck || curSlide() !== contexto.slide || S.selBlock !== contexto.bloque)) {
+    asisBurbuja('bot', asisTexto('La selección cambió. Vuelve a pedir la acción para aplicarla al lugar correcto.')); return;
+  }
+  const bloque = S.selBlock && findBlock(S.selBlock);
+  if (S.selBlock && (!bloque || bloque.slide !== curSlide())) {
+    asisBurbuja('bot', asisTexto('El bloque seleccionado pertenece a otra diapositiva. Selecciona un bloque de esta diapositiva y vuelve a pedir la acción.')); return;
+  }
+  if (a.req && !a.req()) { asisBurbuja('bot', asisTexto('Esta acción ya no está disponible o el bloque está protegido.')); return; }
   let r = null, fallo = null;
   try { r = a.corre(valor); } catch (e) { fallo = e; }
   if (fallo) { asisBurbuja('bot', asisTexto('Lo intenté y algo se atravesó: ' + (fallo.message || fallo) + '. Puedes hacerlo a mano desde ' + (a.donde || 'el panel de la derecha') + '.')); return; }
@@ -338,7 +347,7 @@ function asisPintaPaso() {
   if (!acc && p.acc && p.acc.indexOf('cmd:') === 0) {
     const nom = p.acc.slice(4);
     const c = comandos().find(x => x.n === nom);
-    if (c) acc = { id: p.acc, n: c.n, d: c.sub || '', corre: () => { c.fn(); return 'Hecho: ' + c.n.replace(/…$/, '') + '.'; } };
+    if (c) acc = { id: p.acc, n: c.n, d: c.sub || '', corre: () => c.fn() === false ? null : 'Hecho: ' + c.n.replace(/…$/, '') + '.' };
   }
   if (acc) fila.append(h('button', { class: 'btn btn-sm btn-pri', onclick: () => { asisEjecuta(acc, p.val != null ? p.val : (acc.arg && acc.arg.pred)); asisAvanzaGuia(); } }, 'Hazlo por mí'));
   else if (p.ir) fila.append(h('button', { class: 'btn btn-sm btn-pri', onclick: () => { S.tab = p.ir; renderInspector(); openDrawer(true); asisAvanzaGuia(); } }, 'Llévame ahí'));

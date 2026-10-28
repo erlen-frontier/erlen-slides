@@ -95,7 +95,7 @@ function figuraSVG(b, deck) {
   const meta = document.createElementNS(SVGNS, 'metadata');
   meta.textContent = JSON.stringify({
     schema: 'erlen-scientific-figure-v1',
-    app: 'Erlen Slides', version: window.ERLEN?.version || 'desconocida',
+    app: 'Tabula', version: window.ERLEN?.version || 'desconocida',
     generatedAt: new Date().toISOString(), title: b.title || '',
     caption: b.caption || '', source: b.fuente || null
   });
@@ -138,7 +138,7 @@ function informeExportacion(deck) {
   if (figuras.some(x => x.b.type === 'image')) add('image-format-dependency', 'info', 'Las imágenes conservan su formato original; comprueba resolución y licencia antes de compartir.', figuras.filter(x => x.b.type === 'image').map(x => x.i + 1), ['pdf', 'beamer', 'pptx']);
   return {
     schema: 'erlen-export-report-v1',
-    app: 'Erlen Slides', version: window.ERLEN?.version || 'desconocida',
+    app: 'Tabula', version: window.ERLEN?.version || 'desconocida',
     generatedAt: new Date().toISOString(), deck: { title: d.meta?.title || '', slides: d.slides.length },
     formats: {
       pdf: 'Vectorial mediante impresión del navegador; revisa fuentes y gráficos de fondo.',

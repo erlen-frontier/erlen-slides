@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* SPDX-License-Identifier: AGPL-3.0-only */
-/* Servidor MCP de Erlen Slides: deja que un asistente de IA cree, edite,
+/* Servidor MCP de Tabula: deja que un asistente de IA cree, edite,
    revise y exporte presentaciones con el mismo motor que el editor.
 
      npm ci && npm run build
@@ -19,7 +19,7 @@ import {basename} from 'node:path';
 
 const VERSIONES = ['2025-06-18', '2025-03-26', '2024-11-05'];
 
-const INSTRUCCIONES = `Erlen Slides es un editor de presentaciones científicas con acabado LaTeX/Beamer. Estas herramientas trabajan sobre proyectos JSON de la carpeta de trabajo del usuario, que después se abren en el editor.
+const INSTRUCCIONES = `Tabula es un editor de presentaciones científicas con acabado LaTeX/Beamer. Estas herramientas trabajan sobre proyectos JSON de la carpeta de trabajo del usuario, que después se abren en el editor.
 Flujo recomendado: guia_formato (una vez por conversación) → crear_presentacion con todas las diapositivas (o agregar_diapositivas por partes) → revisar_presentacion → vista_previa (el mosaico sin «diapositiva» enseña toda la charla) → corregir lo que se desborde → exportar_presentacion.
 Moléculas: un bloque estruct con «smiles» (o «archivo_mol» para un .mol/.sdf) da una estructura vectorial y editable. Si el SMILES lo escribiste tú y no el usuario, compara la fórmula y la masa molar de la respuesta con la molécula que se pidió antes de seguir.
 Datos: si el usuario tiene archivos de su equipo (XRD, FTIR, UV-Vis, TGA, Raman, CV, CSV), usa un bloque chart con «archivo_datos»: la técnica, los ejes y la procedencia salen solos.
@@ -54,7 +54,7 @@ const HERRAMIENTAS = [
     inputSchema: {type: 'object', properties: {}}, annotations: soloLectura,
     run: async () => ({...(await M.guia()), convenciones: CONVENCIONES})},
   {name: 'listar_presentaciones', title: 'Listar presentaciones',
-    description: 'Proyectos de Erlen Slides de la carpeta de trabajo, del más reciente al más antiguo.',
+    description: 'Proyectos de Tabula de la carpeta de trabajo, del más reciente al más antiguo.',
     inputSchema: {type: 'object', properties: {}}, annotations: soloLectura,
     run: async () => M.listar()},
   {name: 'listar_ejemplos', title: 'Listar ejemplos',
@@ -183,7 +183,7 @@ const PROMPTS = [
   {name: 'presentacion_desde_resultados', title: 'Presentación a partir de resultados',
     description: 'Arma una charla científica a partir de los datos y notas del usuario.',
     arguments: [{name: 'tema', description: 'De qué trata la charla', required: true}, {name: 'audiencia', description: 'Reunión de grupo, congreso, defensa, clase…'}, {name: 'minutos', description: 'Duración'}, {name: 'archivos', description: 'Archivos de datos o figuras en la carpeta de trabajo'}],
-    texto: a => `Prepara en Erlen Slides una presentación sobre: ${a.tema}.
+    texto: a => `Prepara en Tabula una presentación sobre: ${a.tema}.
 Audiencia: ${a.audiencia || 'no indicada (pregúntala si cambia el enfoque)'}. Duración: ${a.minutos ? a.minutos + ' min' : 'no indicada'}.${a.archivos ? '\nArchivos disponibles: ' + a.archivos + '.' : ''}
 1. Consulta guia_formato. Propón primero el guion (una línea por diapositiva, con el mensaje de cada una) y espera mi visto bueno.
 2. Crea el proyecto con crear_presentacion y todas las diapositivas. Títulos que digan la conclusión; notas del orador y minutos en cada una.
@@ -279,7 +279,7 @@ async function atiende(m) {
       return responde(id, {
         protocolVersion: versionProtocolo,
         capabilities: {tools: {}, resources: {}, prompts: {}},
-        serverInfo: {name: 'erlen-slides', title: 'Erlen Slides', version: M.version()},
+        serverInfo: {name: 'erlen-slides', title: 'Tabula', version: M.version()},
         instructions: INSTRUCCIONES
       });
     }
@@ -289,7 +289,7 @@ async function atiende(m) {
     case 'tools/call':
       return responde(id, await llamaHerramienta(params && params.name, params && params.arguments));
     case 'resources/list':
-      return responde(id, {resources: [{uri: RECURSO_GUIA, name: 'guia', title: 'Guía del formato de Erlen Slides', mimeType: 'application/json'}]});
+      return responde(id, {resources: [{uri: RECURSO_GUIA, name: 'guia', title: 'Guía del formato de Tabula', mimeType: 'application/json'}]});
     case 'resources/read':
       if (!params || params.uri !== RECURSO_GUIA) return error(id, -32002, 'Recurso desconocido');
       return responde(id, {contents: [{uri: RECURSO_GUIA, mimeType: 'application/json', text: JSON.stringify({...(await M.guia()), convenciones: CONVENCIONES}, null, 2)}]});

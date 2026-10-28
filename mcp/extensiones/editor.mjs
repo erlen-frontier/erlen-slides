@@ -106,7 +106,7 @@ function abreNavegador(url) {
 export default {
   herramientas: [{
     name: 'abrir_en_editor', title: 'Abrir en el editor',
-    description: 'Abre el proyecto en el editor de Erlen Slides, en el navegador del usuario, para que lo vea y lo siga editando a mano. Sirve la app en 127.0.0.1 con un enlace de un solo uso que caduca en 10 minutos y devuelve siempre la URL por si el navegador no se abre. El editor pide confirmación antes de abrirlo. Lo que se edite en el navegador se guarda en el navegador, no en el archivo: para traerlo de vuelta, «Exportar → Proyecto (.json)» a la carpeta de trabajo.',
+    description: 'Abre el proyecto en el editor de Tabula, en el navegador del usuario, para que lo vea y lo siga editando a mano. Sirve la app en 127.0.0.1 con un enlace de un solo uso que caduca en 10 minutos y devuelve siempre la URL por si el navegador no se abre. El editor pide confirmación antes de abrirlo. Lo que se edite en el navegador se guarda en el navegador, no en el archivo: para traerlo de vuelta, «Exportar → Proyecto (.json)» a la carpeta de trabajo.',
     inputSchema: {type: 'object', required: ['archivo'], properties: {archivo: {type: 'string', description: 'Proyecto de la carpeta de trabajo.'}}},
     annotations: {readOnlyHint: true, openWorldHint: false},
     run: async a => {

@@ -51,7 +51,7 @@ const grupoC = (etiqueta, ...controles) => ({ etiqueta, controles: controles.fil
 /* Opción de menú con marca: la cinta pinta ✓ y aria-checked. */
 const opc = (etiqueta, accion, marcado, descripcion) => ({ etiqueta, accion, descripcion: descripcion || undefined, marcado });
 
-const blq = () => { const f = S.selBlock && findBlock(S.selBlock); return f ? f.block : null; };
+const blq = () => { const f = S.selBlock && findBlock(S.selBlock); return f && f.slide === curSlide() ? f.block : null; };
 const conBloque = fn => () => { const b = blq(); if (b && !b.locked) fn(b); };
 const insertar = id => () => addBlockToSlide(id, S.insCol || 1);
 const opcionesBloques = ids => () => BLOCK_DEFS.filter(d => ids.includes(d.id))
@@ -256,8 +256,7 @@ function cintaContextual() {
 }
 
 /* ---------- «Archivo» ---------- */
-/* Los ítems del menú Archivo, una sola vez: los pinta el menú y también los ofrece
-   Mey (extras de la ayuda), así que un rótulo nuevo aparece en ambos sitios. */
+/* Los ítems del menú Archivo se comparten con la búsqueda de herramientas. */
 function elementosArchivo() {
   const el = [];
   const item = (ic, etiqueta, sub, fn) => el.push({ ic, etiqueta, sub, fn });
@@ -291,11 +290,11 @@ function elementosArchivo() {
   item('PenTool', 'Figura en SVG científico', 'gráfica o función seleccionada', exportFiguraSVG);
   item('ClipboardList', 'Informe de exportación', 'advertencias por formato', exportInformeExportacion);
   sep();
-  item('Info', 'Acerca de Erlen Slides', 'versión y licencia', openEdicion);
+  item('Info', 'Acerca de Tabula', 'versión y licencia', openEdicion);
   item('HelpCircle', 'Ayuda y atajos', null, () => openHelp());
   return el;
 }
-/* Comandos de Mey: los mismos ítems, con el rótulo de su sección («Exportar › PDF…»). */
+/* Los mismos ítems, con el rótulo de su sección («Exportar › PDF…»). */
 function comandosArchivo() {
   let grupo = '';
   const out = [];
@@ -334,6 +333,29 @@ function configCinta() {
     contextuales: cintaContextual,
     inicial: 'inicio'
   };
+}
+/* The side layout has no mounted ribbon; derive the same available actions
+   from the declarations so the command palette works in either layout. */
+function comandosCintaParaPaleta() {
+  if (CINTA) return CINTA.comandos().filter(c => c.clave !== 'archivo');
+  const config = configCinta(), out = [];
+  const pestanas = [...config.pestanas, ...config.contextuales()];
+  for (const p of pestanas) for (const g of p.grupos) for (const c of g.controles) {
+    if ((c.oculto && c.oculto()) || (c.deshabilitado && c.deshabilitado())) continue;
+    const clave = c.id || c.etiqueta, ruta = [p.etiqueta, g.etiqueta];
+    if (c.tipo === 'menu') {
+      const opciones = typeof c.opciones === 'function' ? c.opciones() : (c.opciones || []);
+      for (const o of opciones) {
+        if (o.separador || (o.deshabilitado && o.deshabilitado())) continue;
+        out.push({clave: clave + ' › ' + o.etiqueta, pestana: p.id, etiqueta: c.etiqueta + ' › ' + o.etiqueta,
+          ruta, atajo: o.atajo, titulo: o.descripcion, habilitado: true, ejecutar: () => { o.accion?.(); if (clave === 'zona') renderInspector(); }});
+      }
+    } else {
+      out.push({clave, pestana: p.id, etiqueta: c.etiqueta, ruta, atajo: c.atajo,
+        titulo: c.titulo, habilitado: true, ejecutar: () => c.accion?.()});
+    }
+  }
+  return out;
 }
 /* Se llama tras cada cambio de estado o de selección (renderInspector,
    renderAll): la cinta solo refresca estados y la pestaña contextual, sin

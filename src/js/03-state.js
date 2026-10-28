@@ -5,7 +5,6 @@ const LS_AUTO = 'erlen-slides.autosave';
 const LS_DECKS = 'erlen-slides.decks';
 const LS_PREFS = 'erlen-slides.prefs';
 const LS_ESTILOS = 'erlen-slides.estilos';
-const meyEvento=tipo=>window.dispatchEvent(new window.CustomEvent('erlen-mey-evento',{detail:{tipo}}));
 
 /* ---------- preferencias de la app (no viajan en el .json del proyecto) ---------- */
 /* barras: 'arriba' = cinta (de fábrica), 'lado' = panel a la derecha. Si el
@@ -165,7 +164,6 @@ const saveInd = deb(() => {
   const el = $('#saveInd');
   recActual();
   const ok = lsSet(LS_AUTO, { deck: S.deck, deckName: S.deckName, respaldoId:S.respaldoId, when: Date.now(), sitio: marcaSitio() });
-  meyEvento(ok?'guardado':'error');
   if (el) { el.textContent = ok ? 'Guardado aquí ✓' : 'Sin guardar'; el.classList.toggle('on', ok); }
   if (S.deckName) {
     const store = decksStore();

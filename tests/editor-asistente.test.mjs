@@ -76,7 +76,7 @@ test('Expired keys, broken JSON, foreign payloads, malformed keys and a stopped 
   const casos = [
     [responde({error: 'x'}, 404), /caducó o ya se usó/],
     [responde(() => { throw new SyntaxError('Unexpected token'); }), /no es un JSON válido/],
-    [responde({v: 1, slides: []}), /no es un proyecto de Erlen Slides/],
+    [responde({v: 1, slides: []}), /no es un proyecto de Tabula/],
     [responde({formato: 'erlen-mcp-abrir-v1', archivo: 'x.json', deck: {v: 1, meta: {}, slides: 'nada'}}), /no se pudo leer/],
     [responde({}, 500), /error \(500\)/],
     [async () => { throw new TypeError('Failed to fetch'); }, /ya no está en marcha/]

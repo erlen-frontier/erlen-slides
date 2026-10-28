@@ -1,6 +1,6 @@
 # Servidor MCP: trabajar con una IA
 
-Erlen Slides incluye un servidor [MCP](https://modelcontextprotocol.io) (Model Context Protocol). Con él, un asistente de IA —Claude Desktop, Claude Code u otro cliente MCP— puede crear, editar, revisar y exportar presentaciones con **el mismo motor que el editor**: los bloques se construyen con `newBlock`, los proyectos se validan con `saneaDeck`, la revisión es la del panel de calidad científica y el `.tex` sale de `toBeamer`. El resultado es un proyecto JSON v1 normal, que después se abre en el editor para seguir a mano.
+Tabula incluye un servidor [MCP](https://modelcontextprotocol.io) (Model Context Protocol). Con él, un asistente de IA —Claude Desktop, Claude Code u otro cliente MCP— puede crear, editar, revisar y exportar presentaciones con **el mismo motor que el editor**: los bloques se construyen con `newBlock`, los proyectos se validan con `saneaDeck`, la revisión es la del panel de calidad científica y el `.tex` sale de `toBeamer`. El resultado es un proyecto JSON v1 normal, que después se abre en el editor para seguir a mano.
 
 El servidor corre en tu máquina, por stdio. No abre puertos a la red (la vista previa y `abrir_en_editor` escuchan solo en `127.0.0.1`), no envía nada a Internet y solo lee y escribe dentro de su carpeta de trabajo.
 
@@ -44,7 +44,7 @@ npm run mcp:instalar -- --cliente claude-desktop --carpeta ~/Presentaciones --dr
 - El comando que escribe es la ruta completa del Node con el que lo ejecutaste, no `node` a secas: Claude Desktop se abre sin el `PATH` de la terminal y a menudo no encuentra `node` (sobre todo con nvm, fnm o Homebrew). Por lo mismo, si el navegador solo se encontró gracias a `ERLEN_CHROMIUM` o `PLAYWRIGHT_BROWSERS_PATH`, su ruta queda fijada en la entrada. Si cambias de versión de Node o mueves la carpeta, vuelve a ejecutar el instalador.
 - `--compilar` y `--no-compilar` deciden sin preguntar si construir la aplicación; `--config <archivo>` usa otro `claude_desktop_config.json`; `--sin-prueba` no arranca el servidor al final.
 
-Si algo no funciona, pide a la IA «ejecuta el diagnóstico de Erlen Slides»: la herramienta [`diagnostico`](mcp-extensiones/diagnostico.md) dice qué falla y con qué comando se arregla.
+Si algo no funciona, pide a la IA «ejecuta el diagnóstico de Tabula»: la herramienta [`diagnostico`](mcp-extensiones/diagnostico.md) dice qué falla y con qué comando se arregla.
 
 ### A mano
 
@@ -95,7 +95,7 @@ También ofrece tres *prompts* que el cliente puede mostrar como atajos: **prese
 
 Un pedido típico: «Con `drx/zn-al-ph10.xy` y mis notas, hazme una presentación de 10 minutos para la reunión de grupo sobre la síntesis de HDL Zn-Al, tema Marino, y enséñame el mosaico». El asistente consulta la guía, propone el guion, crea el proyecto con todas las diapositivas, revisa, mira el mosaico, corrige lo que se desborda y exporta.
 
-Después abre el `.json` en Erlen Slides («Importar proyecto»), o pide al asistente que lo abra él con `abrir_en_editor`, para seguir editando a mano. Los montajes de laboratorio, las figuras geométricas, las galerías y los vídeos se editan mejor ahí: el servidor los conserva, pero no los construye.
+Después abre el `.json` en Tabula («Importar proyecto»), o pide al asistente que lo abra él con `abrir_en_editor`, para seguir editando a mano. Los montajes de laboratorio, las figuras geométricas, las galerías y los vídeos se editan mejor ahí: el servidor los conserva, pero no los construye.
 
 ## Estructuras químicas
 
