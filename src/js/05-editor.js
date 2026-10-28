@@ -29,7 +29,6 @@ function effZoom() {
 
 function renderCanvas() {
   const [W, H] = slideDims(S.deck);
-  $('.canvas-wrap')?.classList.toggle('con-composicion', !!curSlide().lienzoLibre && !!zonasDe(curSlide().layout));
   if (curSlide().lienzoLibre) {
     const ids = idsSeleccionados();
     let actual = S.selBlock && findBlock(S.selBlock);
@@ -836,13 +835,12 @@ function initCanvasEvents() {
       S.prefs.imanLienzo = S.prefs.imanLienzo === false; guardaPrefs();
       e.currentTarget.setAttribute('aria-pressed', String(S.prefs.imanLienzo));
     } }, 'Imán'));
-  const pieLienzo = $('.canvas-foot');
-  if (pieLienzo && !$('#lienzoComposicion')) {
+  if (pie && !$('#lienzoComposicion')) {
     const organizar = h('button', { id: 'lienzoOrganizarBtn', type: 'button', class: 'btn btn-sm', 'aria-label': 'Organizar selección',
       onclick: e => menuOrganizaLienzo(e.currentTarget) }, 'Organizar');
     const formas = h('button', { id: 'lienzoFormasBtn', type: 'button', class: 'btn btn-sm', 'aria-label': 'Insertar formas',
       onclick: e => menuFormasLienzo(e.currentTarget) }, 'Formas');
-    pieLienzo.append(h('div', { id: 'lienzoComposicion', class: 'lienzo-composicion', hidden: true }, formas, organizar));
+    pie.append(h('div', { id: 'lienzoComposicion', class: 'lienzo-composicion', hidden: true }, formas, organizar));
   }
   inner.addEventListener('pointerdown', iniciaSeleccionPorMarco);
   /* Arrastrar una imagen dispara el arrastre nativo del navegador, que cancela

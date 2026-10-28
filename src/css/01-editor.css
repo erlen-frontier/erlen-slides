@@ -217,8 +217,6 @@ button{font-family:var(--ui)}
      área de trabajo, el alto del cuadro de zoom y otros 12 px de aire. El lienzo la reserva
      como relleno inferior para que la diapositiva —y sus manijas de esquina— nunca queden debajo. */
   --pie-lienzo:calc(var(--h-ico) + 2 * var(--e1) + 2px + 24px)}
-.canvas-wrap.con-composicion{--pie-lienzo:calc(var(--h-ico) + 2 * var(--e1) + 2px + 68px)}
-@media (max-width:920px) and (orientation:landscape){.canvas-wrap.con-composicion .canvas-scroll{padding-bottom:var(--pie-lienzo)}}
 .canvas-scroll{flex:1;overflow:auto;display:grid;place-items:center;padding:var(--e5)}
 .stage{position:relative;flex:none;filter:drop-shadow(0 2px 8px rgba(10,14,30,.13)) drop-shadow(0 16px 38px rgba(10,14,30,.11))}
 .stage-inner{transform-origin:top left}
@@ -672,8 +670,10 @@ body.arrastra-ancho .blk-toolbar{opacity:.2}
 .seleccion-marco{position:absolute;box-sizing:border-box;border:1.5px solid var(--acc);pointer-events:none;z-index:55}
 .seleccion-marco .grupo-asa{pointer-events:auto}
 .lienzo-marquee{position:absolute;box-sizing:border-box;border:1.5px dashed var(--acc);background:color-mix(in srgb,var(--acc) 12%,transparent);pointer-events:none;z-index:60}
-.lienzo-composicion{position:absolute;inset-inline-start:0;bottom:calc(100% + 8px);display:flex;gap:var(--e2)}
+.lienzo-composicion{display:flex;flex:none;gap:var(--e2)}
 .lienzo-composicion[hidden]{display:none}
+@media (min-width:921px){.foot-izq{overflow-x:auto;scrollbar-width:thin}}
+@media (max-width:920px){.lienzo-composicion{position:absolute;inset-inline-start:0;bottom:calc(100% + 8px)}}
 .libre-campos{display:grid;grid-template-columns:1fr 1fr;gap:8px}.libre-campos label{font-size:var(--t1);color:var(--mut)}
 .libre-campos input{width:100%;margin-top:4px}
 
