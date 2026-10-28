@@ -70,7 +70,7 @@ function openCuentamelo() {
   const crea = (enLaActual) => {
     const usar = props.filter(p => p.usar && p.texto.trim());
     if (!usar.length) { aviso.textContent = 'Marca al menos una afirmación.'; return; }
-    if (!enLaActual) { const d = demoDeck(); d.slides = [d.slides[0]]; d.meta.title = ''; d.meta.subtitle = ''; d.meta.refs = []; loadDeck(d, null); }
+    if (!enLaActual) { const d = demoDeck(); d.slides = [d.slides[0]]; d.meta.title = ''; d.meta.subtitle = ''; d.meta.refs = []; if (!loadDeck(d, null)) return; }
     if (rec && oyendo) rec.stop();
     let at = enLaActual ? posBib(S.deck) : S.deck.slides.length;
     usar.forEach(pz => {

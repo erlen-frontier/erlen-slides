@@ -6,7 +6,8 @@ const wsPlantillas = () => { const lista=lsGet(LS_BIBLIOTECA,[]); return Array.i
 function wsConservar() {
   flushEdicion();
   saveInd.now();
-  if (!deckEnBlanco()) {
+  if (hayEscritorio() && archivoEscritorioActual && !archivoEscritorioPendiente()) return true;
+  if (!deckEnBlanco() || (hayEscritorio() && archivoEscritorioPendiente())) {
     const store = decksStore();
     const base = S.deckName || S.deck.meta.title || 'Sin título';
     let nombre = base;
@@ -45,7 +46,8 @@ function wsCerrar() {
 }
 function wsNueva(deck) {
   if (!wsConservar()) return;
-  loadDeck(deck || blankDeck(), null);
+  if (!loadDeck(deck || blankDeck(), null)) return;
+  if (!deck) marcaArchivoNuevo();
   wsCerrar();
 }
 /* Recursos que trabajan sobre el editor: primero se cierra el inicio. */
@@ -287,7 +289,7 @@ function wsInit() {
     eyebrow: 'PRESENTACIONES · TABULA', titulo: ['Crea y comparte ', 'tus ideas'],
     lead: 'Crea y edita diapositivas para contar ideas, mostrar datos y presentar con claridad.',
     nuevo: {etiqueta:'Nueva presentación', detalle:'Lienzo científico en blanco', accion:() => wsNueva()},
-    importar: {etiqueta:'Importar proyecto', accion:openImportarPresentacion},
+    importar: hayEscritorio() ? {etiqueta:'Abrir proyecto (.json)', accion:abrirProyectoEscritorio} : {etiqueta:'Importar proyecto', accion:openImportarPresentacion},
     continuar: () => deckEnBlanco() ? null : {etiqueta:'Continuar presentación', accion:() => {}},
     get ejemplos() { return wsEjemplos(); },
     biblioteca: {listar:wsBiblioteca, vacio:{titulo:'Aquí empieza tu próxima charla', texto:'Crea una presentación o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'}},
@@ -325,7 +327,7 @@ function wsInit() {
   const abrir=params.get('abrir');
   if(params.has('plantilla')||params.has('abrir')){const url=new URL(location.href);url.searchParams.delete('plantilla');url.searchParams.delete('abrir');history.replaceState(null,'',url.pathname+url.search+url.hash);}
   if(plantilla){
-    if(wsConservar()){loadDeck(plantilla.build(),null);toast('Ejemplo didáctico: sustituye los datos por los de tu trabajo.');}
+    if(wsConservar() && loadDeck(plantilla.build(),null)){toast('Ejemplo didáctico: sustituye los datos por los de tu trabajo.');}
     wsCerrar();
   } else {
     suiteDesdeUrl();
@@ -384,12 +386,13 @@ function wsVistaAsistente(deck, archivo, avisos) {
 /* Como una copia de DoE: primero la biblioteca (si no cabe, no se abre nada) y después el editor.
    El nombre se elige después de conservar la abierta, que puede haber ocupado el propuesto. */
 function wsAbreAsistente(deck, base) {
+  if (!confirmaCambioArchivo()) return false;
   if (!wsConservar()) return false;
   const store = decksStore(), nombre = infNombreLibre(base);
   Object.defineProperty(store, nombre, { value: { deck: deepCopy(deck), when: Date.now() }, enumerable: true, configurable: true, writable: true });
   if (!lsSet(LS_DECKS, store)) { toast('No hay espacio en este navegador para la presentación. Descarga un respaldo y libera espacio; no se abrió nada.', 'warn'); return false; }
   closeModal();
-  if (!cargaSegura(deck, nombre)) return false;
+  if (!cargaSegura(deck, nombre, true)) return false;
   wsCerrar();
   INICIO?.actualizar?.();
   return true;

@@ -78,7 +78,7 @@ Lee [Arquitectura](docs/desarrollo.md), [Validación](docs/validacion.md) y [Con
 
 ## Escritorio en Linux
 
-La versión de escritorio está en desarrollo con Tauri y un núcleo Rust. Utiliza el WebView del sistema y conserva el editor y sus bibliotecas locales; Node.js solo se necesita para construirla. La primera operación trasladada a Rust es el guardado de proyectos JSON mediante un diálogo nativo y una escritura que conserva el archivo anterior si falla.
+La versión de escritorio está en desarrollo con Tauri y un núcleo Rust. Utiliza el WebView del sistema y conserva el editor y sus bibliotecas locales; Node.js solo se necesita para construirla. Permite abrir y guardar proyectos JSON mediante diálogos nativos: Rust escribe de forma segura e informa si el archivo ha cambiado fuera de Tabula.
 
 La biblioteca de la aplicación de escritorio es independiente de la del navegador. Para llevar una presentación existente, expórtala como JSON desde el navegador e impórtala en la app. Consulta los requisitos y pasos en [Escritorio Linux](docs/escritorio-linux.md).
 

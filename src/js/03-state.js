@@ -229,7 +229,8 @@ function memoriaHistorial() {
 const saveInd = deb(() => {
   const el = $('#saveInd');
   recActual();
-  const ok = lsSet(LS_AUTO, { deck: S.deck, deckName: S.deckName, respaldoId:S.respaldoId, when: Date.now(), sitio: marcaSitio() });
+  const nuevoSinCambios = typeof hayEscritorio === 'function' && hayEscritorio() && !archivoEscritorioActual && archivoNuevoInicial !== null && !archivoEscritorioPendiente();
+  const ok = lsSet(LS_AUTO, { deck: S.deck, deckName: S.deckName, respaldoId:S.respaldoId, when: Date.now(), sitio: marcaSitio(), archivoNuevoSinCambios:nuevoSinCambios });
   if (el) { el.textContent = ok ? 'Guardado aquí ✓' : 'Sin guardar'; el.classList.toggle('on', ok); }
   if (S.deckName) {
     const store = decksStore();
@@ -242,6 +243,7 @@ const saveInd = deb(() => {
     S._avisoLS = true;
     toast('La presentacion ya no cabe en el guardado autom\u00e1tico del navegador (suele ser por los videos). Guarda el proyecto .json desde Exportar.', 'warn');
   }
+  if (typeof actualizaEstadoArchivoEscritorio === 'function') actualizaEstadoArchivoEscritorio(ok);
 }, 700);
 
 function commit(opts) {

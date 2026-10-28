@@ -29,7 +29,8 @@ function openPlantillas() {
       const d = p.build();
       const est = estiloPorOmision();
       if (est) Object.assign(d.meta, est);
-      loadDeck(d, null);
+      if (!loadDeck(d, null)) return;
+      if (p.id === 'blanco' && typeof marcaArchivoNuevo === 'function') marcaArchivoNuevo();
       toast('Presentación nueva: ' + p.n);
     } },
       h('span', { class: 'pl-ic' }, p.ic),

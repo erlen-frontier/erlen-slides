@@ -144,7 +144,12 @@ function comandos() {
   a('Nueva presentación…', 'plantillas', openPlantillas);
   a('Diapositivas desde un esquema…', 'pegar un índice', openEsquema);
   a('Mis presentaciones…', null, openDecks);
-  a('Guardar como…', 'Ctrl+S', saveDeckAs);
+  if (hayEscritorio()) {
+    a('Abrir proyecto…', null, abrirProyectoEscritorio);
+    a('Guardar', 'Ctrl+S', () => guardarProyectoEscritorio(false));
+    a('Guardar como…', 'Ctrl+Mayús+S', () => guardarProyectoEscritorio(true));
+    a('Guardar copia en la biblioteca…', null, saveDeckAs);
+  } else a('Guardar como…', 'Ctrl+S', saveDeckAs);
   a('Buscar y reemplazar…', 'Ctrl+F', () => openBuscar());
   a('Ver todas las diapositivas', 'Ctrl+G', alternaClasificador);
   a('Pendientes de la presentación…', 'F8', openPendientes);

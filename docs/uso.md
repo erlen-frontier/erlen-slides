@@ -30,7 +30,7 @@ Al enviar una petición se comparte con el proveedor un resumen acotado de la pr
 
 ## Crear una charla
 
-**Inicio → Importar proyecto**, o **Archivo → Importar presentación**, acepta JSON, PowerPoint `.pptx` y Markdown `.md`. Elige el archivo, revisa la vista previa y pulsa **Abrir copia editable**. Cancelar deja intacta la presentación abierta. Se crea un nombre libre en tu biblioteca; un fallo de almacenamiento impide abrir la copia y avisa. Las copias descargadas desde Erlen DoE pasan por su comprobación y vista previa habitual.
+**Archivo → Importar presentación** acepta JSON, PowerPoint `.pptx` y Markdown `.md`. En la versión web también se accede desde **Inicio → Importar proyecto**. Elige el archivo, revisa la vista previa y pulsa **Abrir copia editable**. Cancelar deja intacta la presentación abierta. Se crea un nombre libre en tu biblioteca; un fallo de almacenamiento impide abrir la copia y avisa. Las copias descargadas desde Erlen DoE pasan por su comprobación y vista previa habitual.
 
 El PowerPoint se lee localmente, sin subirlo. Textos, imágenes PNG/JPEG/GIF/WebP incrustadas, tablas, ecuaciones compatibles y notas se convierten a bloques. Las gráficas se recuperan como **tablas de datos**, incluidas las parejas x/y; después puedes crear una gráfica y elegir sus ejes y unidades. Los objetos agrupados se separan y las tablas largas repiten el encabezado. El acomodo, las fuentes y los efectos se adaptan al estilo de Tabula: la importación no reproduce la apariencia exacta de Office. Revisa los avisos sobre formas, patrones, celdas combinadas, recortes y medios no compatibles. Límites: 25 MiB de archivo, 100 MiB descomprimidos y hasta 200 diapositivas antes y después de adaptar. En el HTML suelto abierto con `file:`, la entrada conserva la importación JSON anterior; las herramientas adicionales requieren servir la carpeta completa.
 
@@ -110,6 +110,8 @@ Se rechazan, con el motivo en español y sin tocar nada, las copias de otro tipo
 ## Guardar y recuperar
 
 El indicador superior informa del autoguardado. Archivo permite conservar varias presentaciones con nombre. En Recursos hay copias de recuperación, respaldo ZIP, plantillas e identidad institucional. Un respaldo ZIP contiene proyectos JSON y un archivo de plantillas: importa cada presentación desde Inicio y las plantillas desde su opción específica.
+
+En la aplicación de escritorio Linux, **Abrir proyecto** (Ctrl+O) abre un JSON desde el disco. **Guardar** (Ctrl+S) escribe en el archivo abierto y **Guardar como** (Ctrl+Mayús+S) permite elegir otro; para un documento nuevo, Guardar pregunta dónde crearlo. El indicador avisa si hay cambios pendientes. Si otra aplicación modifica el archivo, Tabula evita sobrescribirlo y propone guardar una copia. Al cerrar o cambiar de presentación con cambios sin guardar en disco se pide confirmación. La copia interna sigue autoguardándose y su recuperación es independiente del archivo elegido. Al reiniciar hay que volver a abrir el archivo o elegir un destino. Para PPTX y Markdown sigue disponible **Archivo → Importar presentación**.
 
 Guarda una copia JSON externa antes de borrar los datos del navegador. Importar otro proyecto valida su estructura; los borradores actuales se conservan al cambiar desde Inicio si hay espacio disponible. Si el almacenamiento se llena, descarga tu trabajo antes de continuar.
 

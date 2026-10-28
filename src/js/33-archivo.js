@@ -53,6 +53,173 @@ function actualizaIndicadorArchivo() {
   el.classList.toggle('con-archivo', !!S.archivo);
 }
 
+/* El escritorio conserva solo un identificador opaco; la ruta vive en Rust.
+   Una generación distingue un documento nuevo incluso tras deshacer/rehacer. */
+let archivoEscritorioActual = null, generacionArchivoEscritorio = 0, operacionArchivoEscritorio = false, ultimoGuardadoLocal = true, archivoNuevoInicial = null;
+let campoArchivoActivo = null;
+const hayEscritorio = () => typeof window.__TAURI__?.core?.invoke === 'function';
+function liberaArchivoEscritorio(ref) {
+  if (!ref || !hayEscritorio()) return;
+  window.__TAURI__.core.invoke('cerrar_archivo_proyecto', {id: ref.id}).catch(() => {});
+}
+function olvidaArchivoEscritorio() {
+  const anterior = archivoEscritorioActual;
+  archivoEscritorioActual = null;
+  archivoNuevoInicial = null;
+  generacionArchivoEscritorio++;
+  liberaArchivoEscritorio(anterior);
+}
+function marcaArchivoNuevo() {
+  archivoNuevoInicial = JSON.stringify(S.deck);
+  actualizaEstadoArchivoEscritorio();
+}
+function recuperaEstadoArchivoNuevo(auto) {
+  if (!auto || auto.archivoNuevoSinCambios === true) marcaArchivoNuevo();
+}
+function escrituraPendienteEnLienzo() {
+  return typeof rawEl !== 'undefined' && rawEl?.isConnected &&
+    rawEl.innerText.replace(/\n$/, '') !== getRaw(rawEl.dataset.ek);
+}
+/* Algunos controles del inspector actualizan el modelo al perder el foco. */
+function terminaEdicionArchivo() {
+  const activo = document.activeElement;
+  if (activo?.matches?.('input:not([type=button]):not([type=submit]), textarea, select')) activo.blur();
+  flushEdicion();
+}
+/* Añadir valores por defecto es inocuo; cambiar o descartar valores del
+   archivo no lo es. Compara iterativamente para admitir datos anidados. */
+function archivoPierdeDatos(original, abierto) {
+  const pendientes = [[original, abierto]];
+  while (pendientes.length) {
+    const [a, b] = pendientes.pop();
+    if (a === null || typeof a !== 'object') { if (a !== b) return true; continue; }
+    if (!b || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return true;
+    if (Array.isArray(a) && a.length !== b.length) return true;
+    for (const k of Object.keys(a)) {
+      if (!Object.hasOwn(b, k)) return true;
+      pendientes.push([a[k], b[k]]);
+    }
+  }
+  return false;
+}
+function archivoEscritorioPendiente() {
+  if (!hayEscritorio() || !S.deck) return false;
+  if (campoArchivoActivo?.elemento === document.activeElement && campoArchivoActivo.valor !== campoArchivoActivo.elemento.value) return true;
+  if (escrituraPendienteEnLienzo()) return true;
+  if (!archivoEscritorioActual) return archivoNuevoInicial === null || JSON.stringify(S.deck) !== archivoNuevoInicial;
+  return archivoEscritorioActual.requiereGuardarComo || JSON.stringify(S.deck) !== archivoEscritorioActual.guardado;
+}
+function actualizaEstadoArchivoEscritorio(localOk) {
+  if (!hayEscritorio() || !S.deck) return;
+  if (typeof localOk === 'boolean') ultimoGuardadoLocal = localOk;
+  const el = $('#saveInd'); if (!el) return;
+  if (!ultimoGuardadoLocal) { el.textContent = 'Error de guardado local'; el.title = 'La copia local no se pudo guardar. Guarda el proyecto en un archivo.'; el.classList.remove('on'); return; }
+  const pendiente = archivoEscritorioPendiente();
+  el.textContent = archivoEscritorioActual ? (pendiente ? 'Cambios sin guardar' : 'Archivo guardado ✓') : 'Guardado aquí · sin archivo';
+  el.title = archivoEscritorioActual ? (pendiente ? 'Hay cambios pendientes en «' : 'Guardado en «') + archivoEscritorioActual.nombre + '»' : 'La copia local se guarda en Tabula. Usa Guardar para crear un archivo.';
+  el.classList.toggle('on', !pendiente);
+}
+function confirmaCambioArchivo() {
+  if (!hayEscritorio() || !archivoEscritorioPendiente()) return true;
+  return confirm('Hay cambios que no se han guardado en un archivo. ¿Cambiar de presentación de todos modos?');
+}
+function confirmaSalidaArchivo(ventana = null) {
+  if ($('#modalRoot')?.firstChild) { toast('Termina o cancela el diálogo abierto antes de cerrar.', 'warn'); return false; }
+  terminaEdicionArchivo();
+  saveInd.now();
+  if (operacionArchivoEscritorio || guardandoProyectoEscritorio) { toast('Espera a que termine la operación de archivo antes de cerrar.', 'warn'); return false; }
+  if (!archivoEscritorioPendiente()) return true;
+  openModal({title:'Cambios sin guardar', size:'modal-sm',
+    body:h('p', null, 'Hay cambios que todavía no se han guardado en un archivo. Puedes seguir editando para guardarlos antes de cerrar.'),
+    foot:[h('button', {class:'btn', onclick:closeModal}, 'Seguir editando'),
+      h('button', {class:'btn btn-danger', onclick:() => {
+        closeModal();
+        if (!ventana?.destroy) { toast('No se pudo cerrar la ventana.', 'warn'); return; }
+        ventana.destroy().catch(() => toast('No se pudo cerrar la ventana.', 'warn'));
+      }}, 'Cerrar sin guardar')]});
+  return false;
+}
+function instalaCierreNativo() {
+  if (!hayEscritorio()) return;
+  const win = window.__TAURI__?.window?.getCurrentWindow?.();
+  if (!win?.onCloseRequested) return;
+  win.onCloseRequested(e => { if (!confirmaSalidaArchivo(win)) e.preventDefault(); }).catch(() => {
+    toast('No se pudo activar el aviso al cerrar. Guarda una copia del proyecto.', 'warn');
+  });
+  document.addEventListener('focusin', e => {
+    if (e.target?.matches?.('input:not([type=button]):not([type=submit]), textarea, select')) campoArchivoActivo = {elemento:e.target, valor:e.target.value};
+  });
+  document.addEventListener('input', e => {
+    if ((rawEl && e.target === rawEl) || e.target === campoArchivoActivo?.elemento) actualizaEstadoArchivoEscritorio();
+  });
+  document.addEventListener('focusout', e => { if (e.target === campoArchivoActivo?.elemento) { campoArchivoActivo = null; actualizaEstadoArchivoEscritorio(); } });
+}
+async function abrirProyectoEscritorio() {
+  if (!hayEscritorio()) return importJSON();
+  if (operacionArchivoEscritorio || guardandoProyectoEscritorio) { toast('Ya hay una operación de archivo abierta', 'warn'); return; }
+  terminaEdicionArchivo();
+  const generacion = generacionArchivoEscritorio, anterior = JSON.stringify(S.deck);
+  operacionArchivoEscritorio = true;
+  let ref = null;
+  try {
+    ref = await window.__TAURI__.core.invoke('abrir_archivo_proyecto');
+    if (!ref) return;
+    terminaEdicionArchivo();
+    if (generacion !== generacionArchivoEscritorio || JSON.stringify(S.deck) !== anterior) {
+      toast('La presentación cambió mientras se elegía el archivo. Vuelve a abrirlo.', 'warn'); return;
+    }
+    let bruto;
+    try { bruto = JSON.parse(ref.contenido); } catch { throw new Error('El archivo no es un JSON válido.'); }
+    const comprobado = saneaDeck(bruto);
+    if (comprobado.error) throw new Error(comprobado.error);
+    if (!confirmaCambioArchivo() || !wsConservar()) return;
+    if (!cargaSegura(bruto, null, true)) return;
+    const ajustado = archivoPierdeDatos(bruto, S.deck);
+    archivoEscritorioActual = {id: ref.id, nombre: ref.nombre, guardado: JSON.stringify(S.deck), requiereGuardarComo: ajustado};
+    ref = null;
+    actualizaEstadoArchivoEscritorio();
+    if (wsAbierto()) wsCerrar();
+    if (ajustado) openAvisosImport([...(comprobado.avisos || []), 'Algunos datos del archivo necesitaron ajustes. Usa Guardar como para conservar el original.']);
+  } catch (e) {
+    toast('No se pudo abrir el proyecto. ' + String(e?.message || e), 'warn');
+  } finally {
+    liberaArchivoEscritorio(ref);
+    operacionArchivoEscritorio = false;
+  }
+}
+async function guardarProyectoEscritorio(como = false) {
+  if (!hayEscritorio()) return saveDeckAs();
+  if (operacionArchivoEscritorio || guardandoProyectoEscritorio) { toast('Ya hay una operación de archivo abierta', 'warn'); return; }
+  terminaEdicionArchivo();
+  const generacion = generacionArchivoEscritorio, anterior = archivoEscritorioActual;
+  const contenido = JSON.stringify(S.deck, null, 2), guardado = JSON.stringify(S.deck);
+  operacionArchivoEscritorio = true;
+  let ref = null;
+  try {
+    if (como || !anterior || anterior.requiereGuardarComo) {
+      ref = await window.__TAURI__.core.invoke('guardar_archivo_proyecto_como', {nombre: deckSlug() + '.json', contenido});
+      if (!ref) return;
+    } else {
+      await window.__TAURI__.core.invoke('guardar_archivo_proyecto', {id: anterior.id, contenido});
+      ref = anterior;
+    }
+    if (generacion !== generacionArchivoEscritorio || archivoEscritorioActual !== anterior) {
+      if (ref !== anterior) liberaArchivoEscritorio(ref);
+      toast('Se guardó la presentación anterior; la presentación abierta no cambió.', 'warn'); return;
+    }
+    if (ref !== anterior) liberaArchivoEscritorio(anterior);
+    archivoEscritorioActual = {id: ref.id, nombre: ref.nombre, guardado};
+    terminaEdicionArchivo();
+    actualizaEstadoArchivoEscritorio();
+    if (archivoEscritorioPendiente()) toast('Se guardó una versión anterior; hay cambios posteriores sin incluir.', 'warn');
+    else toast('Proyecto guardado en «' + ref.nombre + '»');
+  } catch (e) {
+    window.ErlenDiagnostico?.reportar('guardar-proyecto');
+    toast('No se pudo guardar el proyecto. ' + String(e?.message || e), 'warn');
+    actualizaEstadoArchivoEscritorio();
+  } finally { operacionArchivoEscritorio = false; }
+}
+
 /* ---------- folletos ---------- */
 const FOLLETOS = [
   { n: 2, lb: '2 por hoja', d: 'Grandes, con espacio amplio para anotar al lado.' },

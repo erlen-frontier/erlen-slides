@@ -45,6 +45,96 @@ async fn guardar_proyecto(
     .map_err(|error| error.to_string())?
 }
 
+/// The dialog, not the WebView, selects each file and establishes its session handle.
+#[tauri::command]
+async fn abrir_archivo_proyecto(
+    app: tauri::AppHandle,
+    gate: tauri::State<'_, erlen_slides_core::SaveGate>,
+    files: tauri::State<'_, erlen_slides_core::ProjectFiles>,
+) -> Result<Option<erlen_slides_core::OpenedProject>, String> {
+    let guard = gate
+        .try_enter()
+        .ok_or("Ya hay una operación de archivo abierta")?;
+    let files = files.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let _guard = guard;
+        let Some(selected) = app
+            .dialog()
+            .file()
+            .add_filter("Proyecto de Tabula", &["json"])
+            .blocking_pick_file()
+        else {
+            return Ok(None);
+        };
+        let path = selected.into_path().map_err(|e| e.to_string())?;
+        files.open(&path).map(Some).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn guardar_archivo_proyecto_como(
+    app: tauri::AppHandle,
+    gate: tauri::State<'_, erlen_slides_core::SaveGate>,
+    files: tauri::State<'_, erlen_slides_core::ProjectFiles>,
+    nombre: String,
+    contenido: String,
+) -> Result<Option<erlen_slides_core::ProjectReference>, String> {
+    let guard = gate
+        .try_enter()
+        .ok_or("Ya hay una operación de archivo abierta")?;
+    let files = files.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let _guard = guard;
+        let sugerido = Path::new(&nombre)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .filter(|n| !n.is_empty())
+            .unwrap_or("presentacion.json");
+        let Some(selected) = app
+            .dialog()
+            .file()
+            .add_filter("Proyecto de Tabula", &["json"])
+            .set_file_name(sugerido)
+            .blocking_save_file()
+        else {
+            return Ok(None);
+        };
+        let path = selected.into_path().map_err(|e| e.to_string())?;
+        files
+            .save_as(&path, &contenido)
+            .map(Some)
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn guardar_archivo_proyecto(
+    gate: tauri::State<'_, erlen_slides_core::SaveGate>,
+    files: tauri::State<'_, erlen_slides_core::ProjectFiles>,
+    id: u64,
+    contenido: String,
+) -> Result<(), String> {
+    let guard = gate
+        .try_enter()
+        .ok_or("Ya hay una operación de archivo abierta")?;
+    let files = files.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let _guard = guard;
+        files.save(id, &contenido).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+fn cerrar_archivo_proyecto(files: tauri::State<'_, erlen_slides_core::ProjectFiles>, id: u64) {
+    files.close(id);
+}
+
 /// Close the whole native window, not only its WebView on Linux.
 #[tauri::command]
 fn cerrar_presentador(app: tauri::AppHandle) -> Result<(), String> {
@@ -100,6 +190,7 @@ fn agente_cancelar(
 fn main() {
     tauri::Builder::default()
         .manage(erlen_slides_core::SaveGate::default())
+        .manage(erlen_slides_core::ProjectFiles::default())
         .manage(erlen_slides_core::AgentRequests::default())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
@@ -146,6 +237,10 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             guardar_proyecto,
+            abrir_archivo_proyecto,
+            guardar_archivo_proyecto_como,
+            guardar_archivo_proyecto,
+            cerrar_archivo_proyecto,
             cerrar_presentador,
             agente_consulta,
             agente_cancelar

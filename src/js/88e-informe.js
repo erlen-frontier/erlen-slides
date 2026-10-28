@@ -538,12 +538,13 @@ function previewInforme(res, r) {
 function creaDesdeInforme(res) {
   const r = saneaDeck(res.deck);
   if (!r.deck) { toast(r.error || 'El informe no produjo una presentación válida.', 'warn'); return false; }
+  if (!confirmaCambioArchivo()) return false;
   if (typeof wsConservar === 'function' && !wsConservar()) return false;
   const store = decksStore(), nombre = infNombreLibre(res.nombre);
   Object.defineProperty(store, nombre, { value: { deck: r.deck, when: Date.now() }, enumerable: true, configurable: true, writable: true });
   if (!lsSet(LS_DECKS, store)) { toast('No hay espacio en este navegador para la presentación nueva. Descarga un respaldo y libera espacio; no se creó nada.', 'warn'); return false; }
   closeModal();
-  loadDeck(r.deck, nombre);
+  if (!loadDeck(r.deck, nombre, true)) return false;
   if (typeof wsCerrar === 'function') wsCerrar();
   INICIO?.actualizar?.();
   toast('Presentación creada desde el informe de DoE: «' + nombre + '».');

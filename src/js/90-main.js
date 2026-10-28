@@ -27,10 +27,11 @@ function showMenu(menu, anchor) {
 function initShortcuts() {
   window.addEventListener('keydown', e => {
     if (P.on || CL.on || (typeof AR !== 'undefined' && AR.on) || (typeof TL !== 'undefined' && TL.on)) return;
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && (e.key === 'o' || e.key === 'O') && hayEscritorio() && !$('#modalRoot').firstChild) { e.preventDefault(); abrirProyectoEscritorio(); return; }
     if (wsAbierto()) return;   /* con el inicio abierto, los atajos del editor no actúan */
     if ($('#modalRoot').firstChild) { if(e.key === 'Escape') { e.preventDefault(); closeModal(); } return; }
     const inField = e.target.closest('input,textarea,select,button,a[href],[contenteditable],[role="combobox"],[role="listbox"],[role="slider"],[role="spinbutton"],[role="menuitem"]');
-    const mod = e.ctrlKey || e.metaKey;
     if (e.key === 'F5') { e.preventDefault(); startPresent(e.shiftKey); return; }
     if (e.key === 'F9') { e.preventDefault(); alternaConcentracion(); return; }
     if (e.key === 'F7') { e.preventDefault(); alternaCodigo(); return; }
@@ -41,7 +42,7 @@ function initShortcuts() {
     /* Sin Mayús: Ctrl+Shift+M es la mirada (más abajo). */
     if (mod && !e.shiftKey && (e.key === 'm' || e.key === 'M')) { e.preventDefault(); addSlide('content'); return; }
     if (mod && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPdfHelp(); return; }
-    if (mod && (e.key === 's' || e.key === 'S')) { e.preventDefault(); saveDeckAs(); return; }
+    if (mod && (e.key === 's' || e.key === 'S')) { e.preventDefault(); hayEscritorio() ? guardarProyectoEscritorio(e.shiftKey) : saveDeckAs(); return; }
     if (mod && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); openPaleta(); return; }
     if (mod && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); alternaAsistente(); return; }
     if (mod && e.shiftKey && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); ponDisposicion(enCinta() ? 'lado' : 'arriba'); return; }
@@ -125,13 +126,20 @@ function initChrome() {
   function fileMenu(anchor) {
     const menu = h('div', { class: 'menu' }), item = mkItem(menu);
     item('▤', 'Mis presentaciones…', null, openDecks);
-    item('⤓', 'Guardar como…', 'Ctrl+S', saveDeckAs);
+    if (hayEscritorio()) {
+      item('↥', 'Abrir proyecto…', 'Ctrl+O', abrirProyectoEscritorio);
+      item('⤓', 'Guardar', 'Ctrl+S', () => guardarProyectoEscritorio(false));
+      item('⤓', 'Guardar como…', 'Ctrl+Mayús+S', () => guardarProyectoEscritorio(true));
+      item('▤', 'Guardar copia en la biblioteca…', null, saveDeckAs);
+    } else item('⤓', 'Guardar como…', 'Ctrl+S', saveDeckAs);
     item('↶', 'Copias y recuperación', null, openRecuperacion);
     menu.append(h('div', { class: 'm-sep' }));
     item('✦', 'Nueva presentación…', 'plantillas', openPlantillas);
     item('↥', 'Importar proyecto .json…', null, importJSON);
-    if (S.archivo) item('⏺', 'Dejar de guardar en el archivo', S.archivoNombre, sueltaArchivo);
-    else item('⤓', 'Guardar en un archivo del disco…', 'se mantiene al día solo', eligeArchivo);
+    if (!hayEscritorio()) {
+      if (S.archivo) item('⏺', 'Dejar de guardar en el archivo', S.archivoNombre, sueltaArchivo);
+      else item('⤓', 'Guardar en un archivo del disco…', 'se mantiene al día solo', eligeArchivo);
+    }
     menu.append(h('div', { class: 'm-sep' }));
     item('◆', 'Estilos…', 'tema, color, tipografía', openEstilos);
     item('◔', 'Pendientes…', 'F8', openPendientes);
@@ -149,7 +157,12 @@ function initChrome() {
     item('▶', 'Presentar con vista de presentador', 'o tecla P al presentar', () => { startPresent(false); alternaPresentador(); });
     menu.append(h('div', { class: 'm-sep' }));
     item('▤', 'Mis presentaciones…', null, openDecks);
-    item('⤓', 'Guardar como…', null, saveDeckAs);
+    if (hayEscritorio()) {
+      item('↥', 'Abrir proyecto…', null, abrirProyectoEscritorio);
+      item('⤓', 'Guardar', 'Ctrl+S', () => guardarProyectoEscritorio(false));
+      item('⤓', 'Guardar como…', 'Ctrl+Mayús+S', () => guardarProyectoEscritorio(true));
+      item('▤', 'Guardar copia en la biblioteca…', null, saveDeckAs);
+    } else item('⤓', 'Guardar como…', null, saveDeckAs);
     item('↶', 'Copias y recuperación', null, openRecuperacion);
     item('⟲', 'Deshacer', 'Ctrl+Z', doUndo);
     item('⟳', 'Rehacer', 'Ctrl+Shift+Z', doRedo);
@@ -321,12 +334,15 @@ function boot() {
   const retomado = aplicaSitio(sitio);
   arrancaSesion();
   renderAll();
+  if (typeof recuperaEstadoArchivoNuevo === 'function') recuperaEstadoArchivoNuevo(auto);
   const el = $('#saveInd'); if (el) { el.textContent = 'Guardado aquí ✓'; el.classList.add('on'); }
   if (retomado) setTimeout(() => avisaRetomado(sitio, auto && auto.when), 700);
   if (rescatado && rescatado.length) setTimeout(() => openAvisosImport(rescatado), 400);
   avisaAutoRoto();
   wsInit();
   recInicia();
+  if (typeof instalaCierreNativo === 'function') instalaCierreNativo();
+  if (typeof actualizaEstadoArchivoEscritorio === 'function') actualizaEstadoArchivoEscritorio();
   cienciaIconos();
 }
 

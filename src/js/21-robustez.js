@@ -127,7 +127,7 @@ function saneaBloque(b, avisos, deck) {
     b.sello = !!(b.sello && b.fuente);
   }
   if (b.type === 'math') {
-    if (Array.isArray(b.pasos)) b.pasos = b.pasos.filter(x => x && typeof x === 'object').map(x => ({ tex: String(x.tex || '').slice(0, 2000), por: String(x.por || '').slice(0, 300) }));
+    if (Array.isArray(b.pasos)) b.pasos = b.pasos.filter(x => x && typeof x === 'object').map(x => ({ ...x, tex: String(x.tex || '').slice(0, 2000), por: String(x.por || '').slice(0, 300) }));
     else delete b.pasos;
     b.derivacion = !!(b.derivacion && b.pasos && b.pasos.length);
   }
@@ -278,12 +278,12 @@ function saneaDeck(bruto) {
 }
 
 /* Carga con red de seguridad: si algo revienta al dibujar, se vuelve atrás. */
-function cargaSegura(bruto, nombre) {
+function cargaSegura(bruto, nombre, confirmado = false) {
   const r = saneaDeck(bruto);
   if (r.error) { toast(r.error, 'warn'); return false; }
   const respaldo = S.deck, respName = S.deckName;
   try {
-    loadDeck(r.deck, nombre || null);
+    if (!loadDeck(r.deck, nombre || null, confirmado)) return false;
   } catch (e) {
     S.deck = respaldo; S.deckName = respName; snapNow();
     try { renderAll(); } catch (e2) {}
