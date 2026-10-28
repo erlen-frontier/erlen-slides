@@ -65,8 +65,8 @@ function initShortcuts() {
         const seleccion = idsSeleccionados();
         if (seleccion.has(f.block.id) && seleccion.size > 1) {
           e.preventDefault();
-          if (e.shiftKey) toast('Selecciona un solo bloque para cambiar su tamaño.', 'warn');
-          else if ([...seleccion].some(id => findBlock(id)?.block.locked)) toast('Desbloquea los bloques seleccionados antes de moverlos.', 'warn');
+          if ([...seleccion].some(id => findBlock(id)?.block.locked)) toast('Desbloquea los bloques seleccionados antes de moverlos.', 'warn');
+          else if (e.shiftKey) escalaSeleccionLibre(S.deck, f.slide, [...seleccion], 'se', dx + dy > 0 ? 1.02 : 0.98);
           else mueveSeleccionLibre(S.deck, f.slide, [...seleccion], dx, dy);
           return;
         }

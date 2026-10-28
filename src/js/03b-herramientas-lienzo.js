@@ -57,6 +57,111 @@ function mueveSeleccionLibre(deck, slide, ids, dx, dy) {
   return true;
 }
 
+/* Escala de manera uniforme alrededor de la esquina opuesta. El límite se
+   calcula para todo el conjunto, antes de cambiar cualquier bloque. */
+function calculaEscalaLibre(posiciones, esquina, factor) {
+  if (!Array.isArray(posiciones) || posiciones.length < 2 || !posiciones.every(posicionLibreValida) ||
+      !['nw', 'ne', 'sw', 'se'].includes(esquina) || !Number.isFinite(factor)) return null;
+  const caja = posiciones.reduce((a, p) => ({ izq: Math.min(a.izq, p.x), arriba: Math.min(a.arriba, p.y),
+    der: Math.max(a.der, p.x + p.w), abajo: Math.max(a.abajo, p.y + p.h) }), { izq: 100, arriba: 100, der: 0, abajo: 0 });
+  const ancho = caja.der - caja.izq, alto = caja.abajo - caja.arriba;
+  const anclaX = esquina.includes('e') ? caja.izq : caja.der;
+  const anclaY = esquina.includes('s') ? caja.arriba : caja.abajo;
+  const minimo = Math.max(...posiciones.flatMap(p => [1 / p.w, 1 / p.h]));
+  const maximo = Math.min((esquina.includes('e') ? 100 - anclaX : anclaX) / ancho,
+    (esquina.includes('s') ? 100 - anclaY : anclaY) / alto);
+  const escala = clamp(factor, minimo, maximo);
+  if (Math.abs(escala - 1) < 1e-12) return posiciones.map(p => ({ ...p }));
+  return posiciones.map(p => {
+    const w = clamp(redondeaLibre(p.w * escala), 1, 100), h = clamp(redondeaLibre(p.h * escala), 1, 100);
+    return { x: clamp(redondeaLibre(anclaX + (p.x - anclaX) * escala), 0, 100 - w),
+      y: clamp(redondeaLibre(anclaY + (p.y - anclaY) * escala), 0, 100 - h), w, h };
+  });
+}
+
+function escalaSeleccionLibre(deck, slide, ids, esquina, factor) {
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre) return false;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  if (deck !== S.deck || slide !== curSlide()) return false;
+  const elegidos = Array.from(new Set(ids)), porId = new Map(zonas(slide).flat().map(b => [b.id, b]));
+  const bloques = elegidos.map(id => porId.get(id));
+  if (bloques.length < 2 || bloques.some(b => !b || b.locked ||
+      (typeof bloqueVisible === 'function' && !bloqueVisible(b, deck)))) return false;
+  const anteriores = bloques.map(b => ({ ...posicionLibreDe(slide, b) }));
+  const nuevas = calculaEscalaLibre(anteriores, esquina, factor);
+  if (!nuevas || nuevas.every((p, i) => ['x', 'y', 'w', 'h'].every(k => p[k] === anteriores[i][k]))) return false;
+  bloques.forEach((b, i) => { b.posLibre = nuevas[i]; });
+  commit();
+  return true;
+}
+
+/* Alinear usa los extremos de la selección; distribuir iguala los espacios
+   entre cajas y mantiene inmóviles las dos cajas extremas. */
+function organizaSeleccionLibre(deck, slide, ids, accion) {
+  const acciones = ['izquierda', 'centro', 'derecha', 'arriba', 'medio', 'abajo', 'distribuir-h', 'distribuir-v'];
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre || !acciones.includes(accion)) return false;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  if (deck !== S.deck || slide !== curSlide()) return false;
+  const elegidos = Array.from(new Set(ids)), porId = new Map(zonas(slide).flat().map(b => [b.id, b]));
+  const bloques = elegidos.map(id => porId.get(id));
+  if (bloques.length < (accion.startsWith('distribuir') ? 3 : 2) || bloques.some(b => !b || b.locked ||
+      (typeof bloqueVisible === 'function' && !bloqueVisible(b, deck)))) return false;
+  const anteriores = bloques.map(b => ({ ...posicionLibreDe(slide, b) })), nuevas = anteriores.map(p => ({ ...p }));
+  const izq = Math.min(...anteriores.map(p => p.x)), der = Math.max(...anteriores.map(p => p.x + p.w));
+  const arriba = Math.min(...anteriores.map(p => p.y)), abajo = Math.max(...anteriores.map(p => p.y + p.h));
+  if (accion.startsWith('distribuir')) {
+    const horizontal = accion === 'distribuir-h', eje = horizontal ? 'x' : 'y', tam = horizontal ? 'w' : 'h';
+    const orden = nuevas.map((p, i) => ({ p, i })).sort((a, b) => a.p[eje] - b.p[eje] || a.i - b.i);
+    const primero = orden[0].p[eje], ultimo = orden.at(-1).p;
+    const espacio = (ultimo[eje] + ultimo[tam] - primero - orden.reduce((s, item) => s + item.p[tam], 0)) / (orden.length - 1);
+    let cursor = primero;
+    orden.forEach(({p}, i) => {
+      if (i > 0 && i < orden.length - 1) p[eje] = redondeaLibre(cursor);
+      cursor += p[tam] + espacio;
+    });
+  } else for (const p of nuevas) {
+    const coloca = (eje, valor) => {
+      if (Math.abs(p[eje] - valor) > 1e-9) p[eje] = clamp(valor, 0, 100 - p[eje === 'x' ? 'w' : 'h']);
+    };
+    if (accion === 'izquierda') coloca('x', izq);
+    if (accion === 'centro') coloca('x', (izq + der - p.w) / 2);
+    if (accion === 'derecha') coloca('x', der - p.w);
+    if (accion === 'arriba') coloca('y', arriba);
+    if (accion === 'medio') coloca('y', (arriba + abajo - p.h) / 2);
+    if (accion === 'abajo') coloca('y', abajo - p.h);
+  }
+  if (!nuevas.every(posicionLibreValida) || nuevas.every((p, i) => ['x', 'y', 'w', 'h'].every(k => p[k] === anteriores[i][k]))) return false;
+  bloques.forEach((b, i) => { b.posLibre = nuevas[i]; });
+  commit();
+  return true;
+}
+
+/* Las formas se insertan como figuras existentes: el SVG es autónomo y el
+   modelo editable viaja en JSON sin inventar otro tipo de bloque. */
+async function insertaFormaLibre(tipo) {
+  const nombres = { rect: 'Rectángulo', circle: 'Elipse', line: 'Línea', arrow: 'Flecha' };
+  if (!Object.hasOwn(nombres, tipo)) return false;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  const deck = S.deck, slide = curSlide();
+  if (!slide.lienzoLibre || !zonasDe(slide.layout)) return false;
+  const core = await extensionSlides('figurascore');
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre) return false;
+  const objeto = { id: uid(), kind: tipo === 'line' ? 'rect' : tipo, x: 8, y: 8, width: 284, height: 134,
+    angle: 0, fill: '#dcecf5', stroke: '#235747', strokeWidth: 4, locked: false };
+  if (tipo === 'line') Object.assign(objeto, { x: 12, y: 70, width: 276, height: 10, fill: '#235747', stroke: 'transparent', strokeWidth: 0 });
+  if (tipo === 'arrow') Object.assign(objeto, { x: 12, y: 15, width: 276, height: 120, fill: 'transparent', strokeWidth: 5 });
+  const figura = core.validaFigura({ v: 1, width: 300, height: 150, background: 'transparent', objects: [objeto] });
+  const b = newBlock('image');
+  Object.assign(b, { formaLibre: tipo, figura, src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(core.svgFigura(figura, nombres[tipo])),
+    alt: nombres[tipo], w: 100, posLibre: tipo === 'line' || tipo === 'arrow'
+      ? { x: 30, y: 45, w: 40, h: 10 } : { x: 35, y: 35, w: 30, h: 30 } });
+  zona(slide, clamp((S.insCol || 1) - 1, 0, zonasDe(slide.layout) - 1)).push(b);
+  S.selBlock = b.id;
+  commit();
+  enfocaBloqueLibre(b.id);
+  return true;
+}
+
 /* Ajuste por distancia visual, no por porcentaje fijo: funciona igual con
    zoom y con formatos 16:9 o 4:3. Solo los ejes realmente alineados se pintan. */
 function imantaMovimientoLibre(slide, ids, caja, dx, dy, anchoPx, altoPx) {

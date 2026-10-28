@@ -217,6 +217,8 @@ button{font-family:var(--ui)}
      área de trabajo, el alto del cuadro de zoom y otros 12 px de aire. El lienzo la reserva
      como relleno inferior para que la diapositiva —y sus manijas de esquina— nunca queden debajo. */
   --pie-lienzo:calc(var(--h-ico) + 2 * var(--e1) + 2px + 24px)}
+.canvas-wrap.con-composicion{--pie-lienzo:calc(var(--h-ico) + 2 * var(--e1) + 2px + 68px)}
+@media (max-width:920px) and (orientation:landscape){.canvas-wrap.con-composicion .canvas-scroll{padding-bottom:var(--pie-lienzo)}}
 .canvas-scroll{flex:1;overflow:auto;display:grid;place-items:center;padding:var(--e5)}
 .stage{position:relative;flex:none;filter:drop-shadow(0 2px 8px rgba(10,14,30,.13)) drop-shadow(0 16px 38px rgba(10,14,30,.11))}
 .stage-inner{transform-origin:top left}
@@ -662,11 +664,16 @@ body.arrastra-ancho .blk-toolbar{opacity:.2}
 .lienzo-control[aria-pressed="true"]{background:var(--acc);color:var(--panel)}
 .lienzo-lista{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto}.lienzo-lista button{text-align:left;white-space:normal}
 .lienzo-lista-fila{display:flex;align-items:center;gap:6px}.lienzo-lista-nombre{flex:1;min-width:0}.lienzo-lista-fila>input{flex:none}
-.libre-asa{position:absolute;width:36px;height:36px;min-width:36px;min-height:36px;padding:0;border:0;background:transparent;border-radius:50%;z-index:61;touch-action:none}
-.libre-asa::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;transform:translate(-50%,-50%);border:1.5px solid var(--acc);background:var(--panel);border-radius:50%}
-.libre-asa:hover::after{background:var(--accSoft)}
+.libre-asa,.grupo-asa{position:absolute;width:36px;height:36px;min-width:36px;min-height:36px;padding:0;border:0;background:transparent;border-radius:50%;z-index:61;touch-action:none}
+.libre-asa::after,.grupo-asa::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;transform:translate(-50%,-50%);border:1.5px solid var(--acc);background:var(--panel);border-radius:50%}
+.libre-asa:hover::after,.grupo-asa:hover::after{background:var(--accSoft)}
 .libre-nw{left:-18px;top:-18px;cursor:nwse-resize}.libre-se{right:-18px;bottom:-18px;cursor:nwse-resize}
 .libre-ne{right:-18px;top:-18px;cursor:nesw-resize}.libre-sw{left:-18px;bottom:-18px;cursor:nesw-resize}
+.seleccion-marco{position:absolute;box-sizing:border-box;border:1.5px solid var(--acc);pointer-events:none;z-index:55}
+.seleccion-marco .grupo-asa{pointer-events:auto}
+.lienzo-marquee{position:absolute;box-sizing:border-box;border:1.5px dashed var(--acc);background:color-mix(in srgb,var(--acc) 12%,transparent);pointer-events:none;z-index:60}
+.lienzo-composicion{position:absolute;inset-inline-start:0;bottom:calc(100% + 8px);display:flex;gap:var(--e2)}
+.lienzo-composicion[hidden]{display:none}
 .libre-campos{display:grid;grid-template-columns:1fr 1fr;gap:8px}.libre-campos label{font-size:var(--t1);color:var(--mut)}
 .libre-campos input{width:100%;margin-top:4px}
 

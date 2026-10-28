@@ -67,7 +67,8 @@ test('free canvas tools support layers, snapping and moving several blocks in Ch
     assert.equal(await page.evaluate(()=>S.selBlock),'a');
     assert.equal(await page.locator('#stageInner .libre-asa').count(),0);
     assert.match(etiqueta,/2 bloques seleccionados/);
-    assert.doesNotMatch(etiqueta,/cambiar el tamaño/);
+    assert.match(etiqueta,/cambiar el tamaño de la selección/);
+    assert.equal(await page.locator('#stageInner .grupo-asa').count(),4);
     await page.evaluate(()=>enfocaBloqueLibre('a'));
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.evaluate(()=>document.activeElement.dataset.bid),'a');

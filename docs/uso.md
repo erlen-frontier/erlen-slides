@@ -12,9 +12,13 @@ Selecciona un bloque y arrastra su asa para moverlo o sus esquinas para cambiar 
 
 Al mover un bloque, **Imán** muestra guías y lo ajusta a los bordes o centros de la diapositiva y de otros bloques visibles. Puedes desactivarlo con el botón o mantener **Alt** durante un arrastre para omitirlo. Esc cancela el gesto.
 
-Con **Ctrl**, **⌘** o **Mayús** y clic puedes marcar varios bloques; arrastra el asa del bloque activo o usa las flechas para moverlos juntos. Sus distancias se mantienen y el movimiento se deshace en un solo paso. **Supr** elimina la selección en un paso que también puedes deshacer. Si alguno está bloqueado, desbloquéalo antes de mover o eliminar la selección; para cambiar el tamaño, selecciona un solo bloque.
+Con **Ctrl**, **⌘** o **Mayús** y clic puedes marcar varios bloques. También puedes arrastrar desde un espacio vacío para dibujar un recuadro que selecciona los bloques visibles que toca; mantén **Mayús** para añadirlos a la selección y pulsa **Esc** para cancelar el gesto.
+
+Arrastra el asa del bloque activo o usa las flechas para mover la selección. Las manijas del marco conjunto cambian proporcionalmente el tamaño y la posición de todos los bloques; con el bloque activo enfocado, **Mayús + flechas** también permite reducir o ampliar el conjunto. **Organizar** alinea los bordes o centros y distribuye los espacios entre tres o más bloques. Cada operación se deshace en un solo paso. **Supr** elimina la selección. Si alguno está bloqueado, desbloquéalo antes de transformar o eliminar la selección.
 
 **Capas** muestra los bloques de delante hacia atrás, incluso cuando están superpuestos. Desde la lista puedes marcar varios o usar las flechas para adelantar o retrasar una capa. El orden se guarda en el proyecto y se conserva en la vista de presentación y el HTML autónomo.
+
+**Formas** inserta un rectángulo, una elipse, una línea o una flecha directamente en la diapositiva. Muévelos y cambia su tamaño como cualquier bloque. Con doble clic puedes editar su color, sus objetos y su descripción en el editor de figuras. La figura sigue editable en el proyecto JSON; en PowerPoint se incorpora como imagen.
 
 El proyecto JSON conserva la geometría y el orden de capas. La vista de presentación y el HTML usan el mismo acomodo; versiones anteriores pueden abrir el contenido pero ignorar sus posiciones o capas. La exportación Beamer y Markdown avisa de que cambia la colocación; revisa también el PowerPoint exportado, cuya apariencia puede diferir.
 

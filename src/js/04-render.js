@@ -136,12 +136,12 @@ function renderSlide(deck, idx, mode, stepShown) {
         }
         if (!b.src) fig.append(h('div', { class: 'img-ph' }, edit ? 'Haz clic para elegir una imagen (PNG, JPG o SVG)' : ' '));
         const capTxt = b.caption || '';
-        if (capTxt || edit) {
+        if (capTxt || (edit && !esFormaLibre(b))) {
           const cap = h('figcaption', null, h('span', { class: 'cap-label' }, `Figura ${ctx.fig + 1}: `),
             h('span', Object.assign({ class: emptyCls(capTxt).trim(), html: inlineRich(capTxt) }, ed(`b:${b.id}:cap`, 'Pie de figura…'))));
           fig.append(cap);
         }
-        el = h('div', { class: `blk b-image${b.frame ? ' imgframe' : ''}` }, fig);
+        el = h('div', { class: `blk b-image${b.frame ? ' imgframe' : ''}${esFormaLibre(b) ? ' b-forma-libre' : ''}` }, fig);
         break;
       }
       case 'table': {
@@ -324,7 +324,7 @@ function renderSlide(deck, idx, mode, stepShown) {
     /* El pie ya se escribió con el número de este bloque: el siguiente de la
        misma diapositiva lleva el siguiente. Sin esto, dos figuras juntas
        salían las dos como «Figura 1». */
-    if (TIPOS_FIGURA.includes(b.type)) ctx.fig++;
+    if (TIPOS_FIGURA.includes(b.type) && (!esFormaLibre(b) || b.caption)) ctx.fig++;
     else if (b.type === 'table') ctx.tab++;
     return el;
   }
