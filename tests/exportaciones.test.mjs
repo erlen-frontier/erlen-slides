@@ -55,6 +55,44 @@ test('Beamer marks code frames fragile, escapes them and drops file and shell pr
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
+test('Beamer preserves fragment formatting around scientific objects and sanitizes display math',async()=>{const{dom,run,errors}=await editor();try{
+ const text='BASE normal solo 😀\nFinal $E=mc^2$ [@ausente] {{glosa}}\n$$ x+\\input{mal} $$\nAntes $$ x_1 + \\input{mal} $$ después';
+ const range=(s,n,attrs)=>({inicio:text.indexOf(s),fin:text.indexOf(s)+n,...attrs});
+ const b={id:'formato',type:'text',text,negrita:true,cursiva:true,size:'l',align:'right',formatoTexto:[
+  range('normal',6,{negrita:false,cursiva:false}),range('solo',4,{negrita:false}),
+  range('Final',5,{cursiva:false}),range('mc',1,{negrita:false}),
+  range('ausente',3,{cursiva:false}),range('glosa',3,{negrita:false}),
+  range('$$',2,{negrita:false,cursiva:false})]};
+ run(`window.__fmt=${JSON.stringify(b)};window.__deck=blankDeck();__deck.slides.push({id:'f',layout:'content',title:'Prueba',blocks:[__fmt]},{id:'s',layout:'sangre',title:'Banda',blocks:[__fmt]});window.__antes=JSON.stringify(__fmt);window.__tex=toBeamer(__deck)`);
+ const tex=run('window.__tex');
+ assert.match(tex,/\\raggedleft/);assert.match(tex,/\\large\s+\\bfseries\s+\\boldmath\s+\\itshape/);
+ assert.match(tex,/\\mdseries\s+\\unboldmath\s+\\upshape normal/);assert.match(tex,/\\mdseries\s+\\unboldmath solo/);
+ assert.match(tex,/\\upshape Final/);assert.ok(tex.includes('$E=mc^2$'),'la fórmula en línea debe quedar entera');
+ assert.ok(tex.includes('[cita perdida]'),'la cita debe resolverse entera');assert.ok(tex.includes('glosa'),'la glosa debe resolverse entera');
+ assert.match(tex,/\\mdseries\s+\\unboldmath\s+\\upshape\s+\\\[ x\+\\text\{\[input retirado\]\}/);
+ assert.doesNotMatch(tex,/\\input\{mal\}/);
+ assert.ok(tex.split('\\unboldmath solo').length>=3,'la banda a sangre también conserva el formato');
+ assert.equal(run('JSON.stringify(__fmt)'),run('window.__antes'));
+ assert.ok(tex.includes('Antes $$ x\\_1 + \\textbackslash{}input\\{mal\\} $$ después'),'una línea existente conserva su interpretación anterior');
+ const positivo='base NEGRITA AMBAS CURSIVA & \\input{mal}';
+ const activa=(s,attrs)=>({inicio:positivo.indexOf(s),fin:positivo.indexOf(s)+s.length,...attrs});
+ const positivoBloque={id:'positivo',type:'text',text:positivo,formatoTexto:[
+  activa('NEGRITA',{negrita:true}),activa('AMBAS',{negrita:true,cursiva:true}),activa('CURSIVA',{cursiva:true})]};
+ const texPositivo=run(`(()=>{const d=blankDeck();d.slides.push({id:'p',layout:'content',title:'',blocks:[${JSON.stringify(positivoBloque)}]});return toBeamer(d);})()`);
+ assert.match(texPositivo,/base \{\\bfseries \\boldmath NEGRITA\} \{\\bfseries \\boldmath \\itshape AMBAS\} \{\\itshape CURSIVA\}/);
+ assert.match(texPositivo,/\\& \\textbackslash\{\}input\\\{mal\\\}/);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+test('Beamer escapes reference metadata without losing numeric superscripts',async()=>{const{dom,run,errors}=await editor();try{
+ const r=JSON.parse(run(`JSON.stringify((()=>{const d=blankDeck();d.meta.refs=[{id:'r',clave:'fuente',autores:'Pérez, Ana',anio:'2020\\\\input{mal}'}];
+  d.slides.push({id:'s',layout:'content',title:'',blocks:[{id:'t',type:'text',text:'[@fuente]'}]});
+  d.meta.citEstilo='an';const texto=toBeamer(d);
+  d.meta.citEstilo='sup';invalidaCitas();const sup=toBeamer(d);return {texto,sup};})())`));
+ assert.doesNotMatch(r.texto,/\\input\{mal\}/);assert.match(r.texto,/\\textbackslash\{\}input\\\{mal\\\}/);
+ assert.match(r.sup,/\\textsuperscript\{1\}/);assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
 test('Imported projects keep working sources and report the ones that phone home',async()=>{const{dom,run,errors}=await editor();try{
  run(`window.__r=saneaDeck((()=>{const d=EJEMPLOS[0].build();
   d.meta.logo='https://rastreador.example/pixel.png';

@@ -73,6 +73,95 @@ test('MCP masiva: buscar_reemplazar, vista previa y aplicar', {timeout: 120000},
   });
 });
 
+test('MCP masiva: los hits reales desplazan y conservan los estilos de texto', {timeout: 120000}, async () => {
+  await conServidor(async (c, dir) => {
+    const texto = '😀 uno cat | cat fin $cat$ [@cat2020]';
+    const primero = texto.indexOf('cat'), segundo = texto.indexOf('cat', primero + 3), fin = texto.indexOf('fin');
+    const rangos = [{inicio: primero, fin: primero + 3, negrita: false},
+      {inicio: segundo, fin: segundo + 3, cursiva: true}, {inicio: fin, fin: fin + 3, negrita: false}];
+    const r = await c.llama('crear_presentacion', {archivo: 'rangos', diapositivas: [{zonas: [[
+      {tipo: 'text', text: texto, negrita: true, formatoTexto: rangos},
+      {tipo: 'text', text: 'cat 500°C [@cat2020]', formatoTexto: [{inicio: 4, fin: 9, cursiva: true}]},
+      {tipo: 'chart', data: DATOS, caption: 'cat'}
+    ]]}]});
+    assert.equal(r.error, false, r.texto);
+    const antes = bruto(dir, 'rangos');
+    const args = {archivo: 'rangos', buscar: 'cat', reemplazar: 'gato', mayusculas: true};
+    let v = await c.llama('buscar_reemplazar', args);
+    assert.equal(v.error, false, v.texto);
+    assert.equal(bruto(dir, 'rangos'), antes);
+    assert.equal(v.datos.total, 4);
+    assert.match(v.datos.omitidas_en_matematicas, /^1 /);
+    assert.match(v.datos.omitidas_en_citas, /^2 /);
+    const a = await c.llama('buscar_reemplazar', {...args, aplicar: true});
+    assert.equal(a.error, false, a.texto);
+    assert.deepEqual(a.datos.cambios, v.datos.cambios);
+    let p = proyecto(dir, 'rangos'), [b, b2, chart] = p.slides[1].blocks;
+    assert.equal(b.text, '😀 uno gato | gato fin $cat$ [@cat2020]');
+    const p1 = b.text.indexOf('gato'), p2 = b.text.indexOf('gato', p1 + 4), pf = b.text.indexOf('fin');
+    assert.deepEqual(b.formatoTexto, [{inicio: p1, fin: p1 + 4, negrita: false},
+      {inicio: p2, fin: p2 + 4, cursiva: true}, {inicio: pf, fin: pf + 3, negrita: false}]);
+    assert.equal(b2.text, 'gato 500°C [@cat2020]');
+    assert.deepEqual(b2.formatoTexto, [{inicio: 5, fin: 10, cursiva: true}]);
+    assert.equal(chart.data, DATOS);
+    assert.equal(chart.caption, 'gato');
+    assert.equal((await c.llama('deshacer', {archivo: 'rangos'})).error, false);
+    assert.deepEqual(proyecto(dir, 'rangos').slides[1].blocks[0].formatoTexto, rangos);
+
+    /* Una coincidencia atraviesa dos rangos; al borrar se conservan los
+       estilos posteriores, sin buscar una diferencia textual aproximada. */
+    v = await c.llama('buscar_reemplazar', {archivo: 'rangos', buscar: 'cat \\| cat', regex: true, reemplazar: '', mayusculas: true, aplicar: true});
+    assert.equal(v.error, false, v.texto);
+    b = proyecto(dir, 'rangos').slides[1].blocks[0];
+    assert.equal(b.text, '😀 uno  fin $cat$ [@cat2020]');
+    assert.deepEqual(b.formatoTexto, [{inicio: b.text.indexOf('fin'), fin: b.text.indexOf('fin') + 3, negrita: false}]);
+    assert.equal((await c.llama('deshacer', {archivo: 'rangos'})).error, false);
+
+    /* El reemplazo regex expandido también desplaza los rangos posteriores. */
+    v = await c.llama('buscar_reemplazar', {archivo: 'rangos', buscar: '(\\d+)°C', regex: true, reemplazar: '$1 °C', aplicar: true});
+    assert.equal(v.error, false, v.texto);
+    b2 = proyecto(dir, 'rangos').slides[1].blocks[1];
+    assert.equal(b2.text, 'cat 500 °C [@cat2020]');
+    assert.deepEqual(b2.formatoTexto, [{inicio: 4, fin: 10, cursiva: true}]);
+  });
+});
+
+test('MCP masiva: no guarda si la inserción crea una pareja sustituta en una frontera de formato', {timeout: 120000}, async () => {
+  await conServidor(async (c, dir) => {
+    const r = await c.llama('crear_presentacion', {archivo: 'utf16', diapositivas: [{titulo: 'x', zonas: [[
+      {tipo: 'text', text: 'x\uDC00', formatoTexto: [{inicio: 0, fin: 1, negrita: true}]}
+    ]]}]});
+    assert.equal(r.error, false, r.texto);
+    const antes = bruto(dir, 'utf16'), h = (await c.llama('historial_presentacion', {archivo: 'utf16'})).datos.deshacer.length;
+    for (const aplicar of [false, true]) {
+      const cambio = await c.llama('buscar_reemplazar', {archivo: 'utf16', buscar: 'x', reemplazar: '\uD83D', aplicar});
+      assert.equal(cambio.error, true); assert.match(cambio.texto, /formatoTexto|UTF-16/);
+      assert.equal(bruto(dir, 'utf16'), antes);
+      assert.equal((await c.llama('historial_presentacion', {archivo: 'utf16'})).datos.deshacer.length, h);
+    }
+  });
+});
+
+test('MCP masiva: conserva overrides explícitos en los tramos intactos aunque coincidan con el bloque', {timeout: 120000}, async () => {
+  await conServidor(async (c, dir) => {
+    const formatoTexto = [{inicio: 0, fin: 3, negrita: true, cursiva: true}];
+    const r = await c.llama('crear_presentacion', {archivo: 'override', diapositivas: [{zonas: [[
+      {tipo: 'text', text: 'abc xx def', negrita: true, formatoTexto}
+    ]]}]});
+    assert.equal(r.error, false, r.texto);
+    const antes = bruto(dir, 'override'), h = (await c.llama('historial_presentacion', {archivo: 'override'})).datos.deshacer.length;
+    const cambio = await c.llama('buscar_reemplazar', {archivo: 'override', buscar: 'xx', reemplazar: 'y', aplicar: true});
+    if (cambio.error) {
+      assert.equal(bruto(dir, 'override'), antes, 'un fallo no guarda otros cambios');
+      assert.equal((await c.llama('historial_presentacion', {archivo: 'override'})).datos.deshacer.length, h);
+    }
+    assert.equal(cambio.error, false, cambio.texto);
+    const b = proyecto(dir, 'override').slides[1].blocks[0];
+    assert.equal(b.text, 'abc y def');
+    assert.deepEqual(b.formatoTexto, formatoTexto, 'negrita explícita debe seguir sobreescribiendo al bloque si este cambia después');
+  });
+});
+
 test('MCP masiva: ámbitos, diapositivas, mayúsculas, palabra completa y regex', {timeout: 120000}, async () => {
   await conServidor(async (c, dir) => {
     await crea(c);

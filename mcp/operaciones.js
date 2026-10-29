@@ -60,7 +60,7 @@ var ERLEN_MCP = (function () {
      propio build para que la lista no se quede atrás. */
   const CONOCIDAS = new Set();
   Array.from(document.scripts).forEach(s => { for (const m of s.textContent.matchAll(/\bb\.([A-Za-z_$][\w$]*)/g)) CONOCIDAS.add(m[1]); });
-  ['archivo', 'archivo_datos', 'columnas', 'max_puntos', 'tecnica', 'smiles'].forEach(k => CONOCIDAS.add(k));
+  ['archivo', 'archivo_datos', 'columnas', 'max_puntos', 'tecnica', 'smiles', 'formatoTexto'].forEach(k => CONOCIDAS.add(k));
   let AVISOS = [];
   const avisa = t => { if (!AVISOS.includes(t)) AVISOS.push(t); };
 
@@ -141,8 +141,22 @@ var ERLEN_MCP = (function () {
     return { archivo: datos.nombre, tecnica: tec ? tec.n : 'sin identificar', filas_archivo: total, filas_guardadas: rows.length, columnas: cols.map(c => t.headers[c]), x: [rows[0][0], rows[rows.length - 1][0]] };
   }
 
+  /* Los rangos que envía una operación se rechazan, no se reparan en
+     silencio. El mismo lector de la app comprueba orden, límites y UTF-16. */
+  function validaFormatoTexto(b) {
+    const rangos = b.formatoTexto;
+    if (rangos == null) return;
+    if (b.type !== 'text' || typeof b.text !== 'string' || !Array.isArray(rangos) ||
+        rangos.some(r => !r || typeof r !== 'object' || Array.isArray(r) ||
+          Object.keys(r).some(k => !['inicio', 'fin', 'negrita', 'cursiva'].includes(k)) ||
+          ['negrita', 'cursiva'].some(k => Object.hasOwn(r, k) && typeof r[k] !== 'boolean')) ||
+        rangosFormatoTexto(b).length !== rangos.length)
+      falla('«formatoTexto» solo admite en bloques text rangos ordenados, no solapados y dentro del texto final, con negrita o cursiva booleanas y límites UTF-16 que no dividan parejas sustitutas.');
+  }
+
   function aplicaPropiedades(b, props, datos) {
     const p = Object.assign({}, props || {});
+    const textoAnterior = b.text, formatoAnterior = b.formatoTexto;
     let info = null;
     if (p.archivo_datos != null) {
       if (!datos) falla('No se pudo leer «' + p.archivo_datos + '».');
@@ -161,6 +175,10 @@ var ERLEN_MCP = (function () {
       if (k === 'src' && !['image', 'video'].includes(b.type)) falla('Solo los bloques image y video llevan una imagen o un vídeo (src/archivo); este es «' + b.type + '».');
       if (v === null) delete b[k]; else b[k] = v;
     });
+    if (b.type === 'text' && b.text !== textoAnterior && formatoAnterior != null &&
+        (!Array.isArray(formatoAnterior) || formatoAnterior.length) && !Object.hasOwn(p, 'formatoTexto'))
+      falla('Al cambiar el texto de un bloque con formato parcial, envía «formatoTexto» compatible con el texto final o null para borrarlo.');
+    if (Object.hasOwn(p, 'formatoTexto')) validaFormatoTexto(b);
     /* _importado también puede venir del transformaBloque de una extensión:
        es un informe para la respuesta (recogeImportados), no una propiedad. */
     if (info) b._importado = info;
@@ -439,6 +457,26 @@ var ERLEN_MCP = (function () {
   /* ---------- operaciones ---------- */
   const OPS = {
     guia: () => guia(),
+    /* Los hits vienen de la búsqueda exacta, en offsets del texto original.
+       De derecha a izquierda no se desplazan las posiciones aún pendientes. */
+    reemplazosTexto: a => ({ bloques: a.bloques.map(({ bloque: b, hits }) => {
+      if (!b || b.type !== 'text' || typeof b.text !== 'string' || !Array.isArray(hits)) falla('Reemplazo de texto no válido.');
+      validaFormatoTexto(b);
+      const t = b.text;
+      const cortaPareja = i => i > 0 && i < t.length && /[\uD800-\uDBFF]/.test(t[i - 1]) && /[\uDC00-\uDFFF]/.test(t[i]);
+      let fin = 0;
+      for (const h of hits) {
+        if (!Array.isArray(h) || h.length !== 3 || !Number.isSafeInteger(h[0]) || !Number.isSafeInteger(h[1]) ||
+            h[0] < fin || h[0] >= h[1] || h[1] > t.length || typeof h[2] !== 'string' || cortaPareja(h[0]) || cortaPareja(h[1]))
+          falla('Los límites del reemplazo no son válidos para el texto UTF-16.');
+        fin = h[1];
+      }
+      for (const [inicio, fin, insercion] of hits.slice().reverse()) {
+        reemplazaTextoFormateado(b, inicio, fin, insercion);
+        validaFormatoTexto(b);
+      }
+      return b;
+    }) }),
     nueva: a => {
       const d = blankDeck();
       const m = d.meta;

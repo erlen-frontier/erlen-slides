@@ -3,12 +3,15 @@
 /* ================= .pptx: contenido y empaquetado ================= */
 
 /* Texto del modelo -> corridas, con las matemáticas pasadas a unicode. */
-function corridas(txt, base) {
+function corridas(txt, base, curMatematicas) {
   const out = [];
-  String(txt == null ? '' : txt).split(/(\$[^$]*\$)/g).forEach(seg => {
+  String(txt == null ? '' : txt).split(/(\\\$|\$\$(?:\\.|[^$])+\$\$|\$(?:\\.|[^$])+\$)/g).forEach(seg => {
     if (!seg) return;
-    if (seg.length > 1 && seg[0] === '$' && seg[seg.length - 1] === '$')
-      out.push(Object.assign({}, base, { t: mathToUnicode(seg.slice(1, -1)), cur: true }));
+    if (seg === '\\$') out.push(Object.assign({}, base, { t: '$' }));
+    else if (seg.length > 1 && seg[0] === '$' && seg[seg.length - 1] === '$') {
+      const n = seg.startsWith('$$') && seg.endsWith('$$') && seg.length > 4 ? 2 : 1;
+      out.push(Object.assign({}, base, { t: mathToUnicode(seg.slice(n, -n)), cur: curMatematicas == null ? true : curMatematicas }));
+    }
     else out.push(Object.assign({}, base, { t: seg }));
   });
   return out.length ? out : [Object.assign({}, base, { t: '' })];
@@ -16,6 +19,25 @@ function corridas(txt, base) {
 function parrafosDe(txt, base, opt) {
   return String(txt == null ? '' : txt).split(/\n{2,}|\n/).filter((l, i, a) => l.trim() || a.length === 1)
     .map(l => Object.assign({ runs: corridas(l.trim(), base) }, opt || {}));
+}
+
+/* Conserva los cortes de línea y no parte una fórmula, cita o glosa al
+   traducir los rangos UTF-16 a corridas editables. Lo que no cambia el estilo
+   del bloque conserva el estilo calculado, incluido el heredado del tema. */
+function parrafosTexto(b, st) {
+  const txt = String(b.text || ''), segmentos = segmentosFormatoTexto(b);
+  let inicio = 0;
+  return txt.split('\n').map(linea => {
+    const fin = inicio + linea.length;
+    const runs = segmentos.filter(s => s.inicio < fin && s.fin > inicio).flatMap(s => {
+      const neg = s.negrita === (b.negrita === true) ? st.neg : s.negrita;
+      const cur = s.cursiva === (b.cursiva === true) ? st.cur : s.cursiva;
+      const curMatematicas = s.cursiva === (b.cursiva === true) ? true : !!cur;
+      return corridas(txt.slice(Math.max(inicio, s.inicio), Math.min(fin, s.fin)), {neg: !!neg, cur: !!cur}, curMatematicas);
+    });
+    inicio = fin + 1;
+    return { runs, al: st.al, desp: 400 };
+  });
 }
 
 /* Marco de un elemento en EMU, relativo a la diapositiva. */
@@ -158,7 +180,8 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
       const cual = el.querySelector('blockquote span') || el;
       const st = estilo(cual, ptPorPx, fuente);
       const f = marco(el, raiz, esc); f.h = Math.round(f.h * 1.3) + 40000;
-      const ps = parrafosDe(b.text, {}, { al: st.al, desp: 400 });
+      const ps = b.type === 'text' && Array.isArray(b.formatoTexto) && b.formatoTexto.length
+        ? parrafosTexto(b, st) : parrafosDe(b.text, {}, { al: st.al, desp: 400 });
       if (b.type === 'quote' && b.by) ps.push({ runs: corridas('— ' + b.by, { cur: true }), al: st.al, desp: 0 });
       F.push(xmlTexto(id(), f, Object.assign(st, { parrafos: ps })));
     } else if (b.type === 'bullets') {

@@ -23,6 +23,70 @@ test('Slides upgrades in Chromium', {timeout: 120000}, async t => {
   const artifacts = fileURLToPath(new URL('../.local/slides-upgrade/', import.meta.url));
   mkdirSync(artifacts, {recursive: true});
 
+  await t.test('Both PowerPoint writers retain fragment styles, inherited styles and math policy', async () => {
+    const r = await page.evaluate(async () => {
+      const d = blankDeck(), text = 'BASE normal solo 😀\nÚltimo [@ausente] {{glosa}} <& y \\$ 5';
+      const rango = (s, opciones) => ({inicio:text.indexOf(s), fin:text.indexOf(s)+s.length, ...opciones});
+      const b = {id:'formato-ppt', type:'text', text, negrita:true, cursiva:true, formatoTexto:[
+        rango('normal',{negrita:false,cursiva:false}), rango('solo',{negrita:false}), rango('Último',{cursiva:false}),
+        {inicio:text.indexOf('ausente'),fin:text.indexOf('ausente')+3,negrita:false},
+        {inicio:text.indexOf('glosa'),fin:text.indexOf('glosa')+3,cursiva:false}]};
+      const herencia = {id:'herencia-ppt',type:'text',text:'herencia negrita fin',formatoTexto:[{inicio:9,fin:16,negrita:true}]};
+      const matematicas = {id:'math-ppt',type:'text',text:'Fórmula $E=mc^2$',formatoTexto:[{inicio:0,fin:7,negrita:true}]};
+      d.slides.push({id:'fmt-slide',layout:'content',title:'Fragmentos',blocks:[b]},
+        {id:'cita-slide',layout:'cita',title:'Herencia',blocks:[herencia]},
+        {id:'math-slide',layout:'content',title:'Fórmula',blocks:[matematicas]});
+      const antes = JSON.stringify(d), ext = await extensionSlides('exportador');
+      const avanzada = await ext.creaPPTX(d);
+      let clasica; const descargar = window.downloadFile;
+      wsNueva(d);
+      window.downloadFile = async (nombre, blob) => {if (nombre.endsWith('.pptx')) clasica = blob;};
+      try {await exportPPTX();} finally {window.downloadFile = descargar; closeModal();}
+      if (!clasica) throw new Error('No se generó el PowerPoint clásico');
+      const inspecciona = async blob => {
+        const zip = await window.JSZip.loadAsync(blob);
+        const parsea = async n => new DOMParser().parseFromString(await zip.file('ppt/slides/slide'+n+'.xml').async('string'),'application/xml');
+        const cajas = async n => {
+          const doc = await parsea(n);
+          if (doc.querySelector('parsererror')) throw new Error('XML de diapositiva inválido');
+          return [...doc.getElementsByTagName('p:sp')].map(sp => [...sp.getElementsByTagName('a:p')].map(p =>
+            [...p.getElementsByTagName('a:r')].map(run => ({text:run.getElementsByTagName('a:t')[0]?.textContent || '',
+              bold:run.getElementsByTagName('a:rPr')[0]?.getAttribute('b') === '1',
+              italic:run.getElementsByTagName('a:rPr')[0]?.getAttribute('i') === '1'}))));
+        };
+        return {fragmentos:await cajas(2), herencia:await cajas(3), math:await cajas(4),
+          imagenes:(await parsea(4)).getElementsByTagName('p:pic').length,
+          rels:await zip.file('ppt/slides/_rels/slide2.xml.rels').async('string')};
+      };
+      return {avanzada:await inspecciona(avanzada.blob), clasica:await inspecciona(clasica), avisos:avanzada.avisos, intacto:antes===JSON.stringify(d)};
+    });
+    const forma = (cajas, palabra) => cajas.find(ps => ps.flat().map(r=>r.text).join('').includes(palabra));
+    const caracter = (parrafos, palabra) => {
+      const runs = parrafos.flat(), texto = runs.map(r=>r.text).join(''), inicio = texto.indexOf(palabra);
+      assert.ok(inicio >= 0, 'falta «'+palabra+'» en '+texto);
+      let p = 0; for (const run of runs) { if (inicio < p + run.text.length) return run; p += run.text.length; }
+    };
+    for (const nombre of ['avanzada','clasica']) {
+      const salida=r[nombre], caja=forma(salida.fragmentos,'BASE'); assert.ok(caja,nombre);
+      assert.deepEqual([caracter(caja,'BASE').bold,caracter(caja,'BASE').italic],[true,true],nombre);
+      assert.deepEqual([caracter(caja,'normal').bold,caracter(caja,'normal').italic],[false,false],nombre);
+      assert.deepEqual([caracter(caja,'solo').bold,caracter(caja,'solo').italic],[false,true],nombre);
+      assert.deepEqual([caracter(caja,'Último').bold,caracter(caja,'Último').italic],[true,false],nombre);
+      assert.ok(caja.length >= 2 && caja[1].map(x=>x.text).join('').includes('Último'),nombre+': salto perdido');
+      assert.ok(caja.flat().map(x=>x.text).join('').includes('<& y $ 5'),nombre+': texto XML o dólar literal alterado');
+      for (const palabra of nombre === 'avanzada' ? ['[cita perdida]','glosa'] : ['[@ausente]','{{glosa}}'])
+        assert.deepEqual([caracter(caja,palabra).bold,caracter(caja,palabra).italic],[true,true],nombre+': estilo inicial del objeto semántico');
+      const h=forma(salida.herencia,'herencia'); assert.ok(h,nombre);
+      assert.equal(caracter(h,'herencia').italic,true,nombre+': cursiva del diseño');
+      assert.deepEqual([caracter(h,'negrita').bold,caracter(h,'negrita').italic],[true,true],nombre+': estilo heredado y negrita');
+      assert.doesNotMatch(salida.rels,/TargetMode="External"/);
+    }
+    assert.equal(r.intacto,true);
+    assert.ok(r.avanzada.imagenes>0,'el texto con matemáticas debe rasterizarse');
+    assert.ok(r.avisos.some(a=>a.bloque==='math-ppt' && /imagen/.test(a.motivo)));
+    assert.ok(forma(r.clasica.math,'E=mc²'),'el clásico debe conservar la aproximación Unicode');
+  });
+
   await t.test('Markdown preview, one shared parser, embedded figures and remote rejection', async () => {
     await page.evaluate(() => openMarkdown());
     await page.getByRole('textbox', {name: 'Guion Markdown'}).fill('# Charla ilustrativa\n\n## Evidencia\n\n- Objetivo\n- Medición');

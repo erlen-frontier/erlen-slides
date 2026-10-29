@@ -302,7 +302,12 @@ function setRaw(ek, v, deck = S.deck, cur = S.cur) {
   const p = ekParts(ek);
   const f = findBlock(p[1], deck); if (!f) return;
   const b = f.block;
-  if (p.length === 2) { if (b.type === 'bblock') b.body = v; else b.text = v; return; }
+  if (p.length === 2) {
+    if (b.type === 'bblock') b.body = v;
+    else if (b.type === 'text') cambiaTextoFormateado(b, v);
+    else b.text = v;
+    return;
+  }
   if (p[2] === 't') { b.btitle = v; return; }
   if (p[2] === 'by') { b.by = v; return; }
   if (p[2] === 'tt') { b.titulo = v; return; }
@@ -318,7 +323,7 @@ function isMultiline(ek) {
   return f && MULTILINE.has(f.block.type);
 }
 
-let rawEl = null, rawCancel = false, pendingFocus = null;
+let rawEl = null, rawCancel = false, pendingFocus = null, rawFormato = null, rawAntes = null;
 
 /* ---------- dónde quedó el cursor ----------
    Para poder meter una cita en mitad de la frase después de elegirla en una
@@ -332,7 +337,10 @@ function apuntaPunto() {
   const r = document.createRange();
   r.selectNodeContents(rawEl);
   try { r.setEnd(sel.focusNode, sel.focusOffset); } catch (e) { return; }
-  ULTIMO_PUNTO = { ek: rawEl.dataset.ek, pos: r.toString().length, cur: S.cur };
+  const ctx = contextoBarra(), seleccion = ctx && capturaTextoBarra(ctx), rango = sel.rangeCount && sel.getRangeAt(0);
+  const enInicio = rango && sel.focusNode === rango.startContainer && sel.focusOffset === rango.startOffset;
+  const pos = seleccion ? (enInicio ? seleccion.inicio : seleccion.fin) : r.toString().length;
+  ULTIMO_PUNTO = { ek: rawEl.dataset.ek, pos, cur: S.cur };
 }
 document.addEventListener('selectionchange', apuntaPunto);
 /* Mete un texto donde quedó el cursor. Trabaja sobre la fuente del bloque, no
@@ -346,16 +354,59 @@ function insertaEnPunto(txt) {
   const antes = actual.slice(0, pos);
   /* La marca va pegada a la palabra, como se cita de verdad. */
   const puente = (antes && /\S$/.test(antes) && !/\s$/.test(antes)) ? '' : '';
-  setRaw(p.ek, antes + puente + txt + actual.slice(pos));
+  const partes = ekParts(p.ek), bloque = partes[0] === 'b' && partes.length === 2 ? findBlock(partes[1])?.block : null;
+  if (bloque?.type === 'text') reemplazaTextoFormateado(bloque, pos, pos, puente + txt);
+  else setRaw(p.ek, antes + puente + txt + actual.slice(pos));
   ULTIMO_PUNTO = { ek: p.ek, pos: pos + puente.length + txt.length, cur: S.cur };
   return true;
 }
 const hayPuntoDeTexto = () => !!(ULTIMO_PUNTO && ULTIMO_PUNTO.cur === S.cur);
+function pintaTextoEnEdicion(el, b) {
+  if (!rangosFormatoTexto(b).length) el.innerText = b.text || '';
+  else {
+    const nodos = partesFormatoTexto(b).map(p => {
+      const txt = document.createTextNode(b.text.slice(p.inicio, p.fin));
+      const css = [];
+      if (p.negrita !== (b.negrita === true)) css.push('font-weight:' + (p.negrita ? 'var(--speso-b,700)' : 'normal'));
+      if (p.cursiva !== (b.cursiva === true)) css.push('font-style:' + (p.cursiva ? 'italic' : 'normal'));
+      return css.length ? h('span', {style:css.join(';')}, txt) : txt;
+    });
+    el.replaceChildren(...nodos);
+  }
+  /* El navegador necesita un salto adicional para colocar el cursor en una
+     línea final vacía; innerText lo descarta al guardar, no el salto real. */
+  if ((b.text || '').endsWith('\n')) el.append(document.createTextNode('\n'));
+}
+function actualizaTextoEnEdicion(el, e) {
+  if (!rawFormato || el !== rawEl) return;
+  const anterior = rawFormato.text, nuevo = el.innerText.replace(/\n$/, ''), guardado = contextoBarra();
+  const seleccion = guardado && capturaTextoBarra(guardado);
+  if (anterior !== nuevo) {
+    let a = rawAntes?.inicio, z = rawAntes?.fin;
+    const diferencia = nuevo.length - anterior.length;
+    if (a === z && diferencia < 0 && /^deleteContentBackward/.test(e.inputType || '')) a += diferencia;
+    else if (a === z && diferencia < 0 && /^deleteContentForward/.test(e.inputType || '')) z -= diferencia;
+    const n = nuevo.length - (anterior.length - z);
+    if (Number.isInteger(a) && Number.isInteger(z) && a >= 0 && z <= anterior.length && n >= a &&
+        anterior.slice(0, a) === nuevo.slice(0, a) && anterior.slice(z) === nuevo.slice(n))
+      reemplazaTextoFormateado(rawFormato, a, z, nuevo.slice(a, n));
+    else cambiaTextoFormateado(rawFormato, nuevo);
+  }
+  rawAntes = null;
+  /* Durante la composición IME no se reemplazan nodos que el teclado controla. */
+  if (!e.isComposing && seleccion && (rangosFormatoTexto(rawFormato).length || el.querySelector('span'))) {
+    pintaTextoEnEdicion(el, rawFormato);
+    restauraTextoBarra(seleccion);
+  }
+}
 function enterRaw(el) {
   if (rawEl === el) return;
   rawEl = el; rawCancel = false;
   el.classList.add('editing-raw');
-  el.innerText = getRaw(el.dataset.ek);
+  const p = ekParts(el.dataset.ek), b = p[0] === 'b' && p.length === 2 ? findBlock(p[1])?.block : null;
+  rawFormato = b?.type === 'text' ? {...b, text:String(b.text || ''), formatoTexto:deepCopy(b.formatoTexto || []), _original:b} : null;
+  rawAntes = null;
+  if (rawFormato) pintaTextoEnEdicion(el, rawFormato); else el.innerText = getRaw(el.dataset.ek);
   const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
   const s = getSelection(); s.removeAllRanges(); s.addRange(r);
   S.editingRaw = true;
@@ -363,11 +414,17 @@ function enterRaw(el) {
 function leaveRaw(el, nextEk) {
   if (rawEl !== el) return;
   rawEl = null; S.editingRaw = false;
+  const formato = rawFormato; rawFormato = null; rawAntes = null;
   const ek = el.dataset.ek;
   if (rawCancel) { rawCancel = false; renderCanvas(); return; }
   const v = el.innerText.replace(/\n$/, '');
-  const changed = v !== getRaw(ek);
-  setRaw(ek, v);
+  if (formato) cambiaTextoFormateado(formato, v);
+  const changed = v !== getRaw(ek) || !!(formato && JSON.stringify(formato.formatoTexto || []) !== JSON.stringify(formato._original.formatoTexto || []));
+  if (formato && findBlock(formato.id)?.block === formato._original) {
+    formato._original.text = formato.text;
+    if (formato.formatoTexto?.length) formato._original.formatoTexto = formato.formatoTexto;
+    else delete formato._original.formatoTexto;
+  } else setRaw(ek, v);
   if (changed && ek === 'slide.title' && typeof ensena === 'function' && typeof tituloGenerico === 'function' && tituloGenerico(v)) ensena('afirmacion', 'Ese título nombra la sección');
   pendingFocus = nextEk || null;
   if (changed) commit({ skipInsp: true }); else renderCanvas();
@@ -1188,9 +1245,17 @@ function initCanvasEvents() {
   });
   /* El texto de ayuda («Texto…») se pinta con una clase que solo se recalcula
      al redibujar: mientras escribes, se quita en cuanto hay algo escrito. */
+  inner.addEventListener('beforeinput', e => {
+    const ctx = rawFormato && contextoBarra();
+    rawAntes = ctx ? capturaTextoBarra(ctx) : null;
+  });
   inner.addEventListener('input', e => {
     const el = e.target.closest('[data-edit]');
-    if (el) el.classList.toggle('is-empty', !el.textContent.trim());
+    if (el) { actualizaTextoEnEdicion(el, e); el.classList.toggle('is-empty', !el.textContent.trim()); }
+  });
+  inner.addEventListener('compositionend', e => {
+    const el = e.target.closest('[data-edit]');
+    if (el) actualizaTextoEnEdicion(el, e);
   });
   inner.addEventListener('focusin', e => {
     const el = e.target.closest('[data-edit]');
@@ -1199,6 +1264,8 @@ function initCanvasEvents() {
   inner.addEventListener('focusout', e => {
     const el = e.target.closest('[data-edit]');
     if (!el || rawEl !== el) return;
+    const bar = $('#barraContextual'), ctx = contextoBarra();
+    if (ctx && bar?.contains(e.relatedTarget)) bar._textoPrevio = capturaTextoBarra(ctx);
     const rel = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('[data-edit]') : null;
     leaveRaw(el, rel ? rel.dataset.ek : null);
   });

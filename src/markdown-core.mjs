@@ -490,6 +490,9 @@ export function aMarkdown(deck, {zonasPorDiseno, carpetaFiguras, incrustarFigura
         if (b.align === 'right') perdidos.add('la alineación a la derecha del texto');
         if (b.negrita === true) perdidos.add('la negrita del bloque de texto');
         if (b.cursiva === true) perdidos.add('la cursiva del bloque de texto');
+        if (Array.isArray(b.formatoTexto) && b.formatoTexto.some(r => r && Number.isInteger(r.inicio) && Number.isInteger(r.fin) &&
+          r.inicio < t.length && r.fin > 0 && r.fin > r.inicio && (typeof r.negrita === 'boolean' || typeof r.cursiva === 'boolean')))
+          perdidos.add('la negrita y cursiva por fragmentos del texto');
         break;
       }
       case 'bullets': {

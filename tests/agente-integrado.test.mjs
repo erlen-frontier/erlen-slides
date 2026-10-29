@@ -44,6 +44,79 @@ test('real tool-calling changes the open deck once and undo restores it', async 
   } finally { e.dom.window.close(); }
 });
 
+test('agent keeps partial text formatting coherent, atomic and citation-safe', async () => {
+  const e = await entorno();
+  try {
+    e.run(`(()=>{S.deck.meta.bibAuto=false;const b=newBlock('text');
+      b.text='a😀 bc [@A]';b.negrita=true;b.formatoTexto=[{inicio:1,fin:3,negrita:false}];
+      b.cientifico={texto:'fuente inmutable'};curSlide().blocks.push(b);window.__formato=b.id;commit()})()`);
+    const id = e.run('__formato'), slide = e.run('curSlide().id');
+    const antes = e.run('JSON.stringify(S.deck)'), undo = e.run('S.undo.length'), enviados = [];
+    for (const cambio of [
+      {text: 'Otro [@A]'},
+      {text: 'a😀 bc [@A]', formatoTexto: [{inicio: 1, fin: 2, negrita: true}]},
+      {text: 'Sin cita', formatoTexto: null},
+      {text: 'Otro [@A]', formatoTexto: [{inicio: 0, fin: 2, negrita: 'sí'}]}
+    ]) {
+      e.dom.window.transporteAgente = async x => { enviados.push(x.cuerpo); return respuesta('', [
+        llamada('a', 'editar_diapositiva', {diapositiva: slide, cambios: {titulo: 'No guardar'}}),
+        llamada('b', 'editar_bloque', {bloque: id, cambios: cambio})
+      ]); };
+      await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Reescribe')), /formatoTexto|cita/i);
+      assert.equal(e.run('JSON.stringify(S.deck)'), antes);
+      assert.equal(e.run('S.undo.length'), undo);
+    }
+    const contexto = enviados[0].messages.find(m => m.content?.startsWith('Contenido de la presentación')).content;
+    assert.match(contexto, /formato_parcial/);
+    assert.doesNotMatch(contexto, /"formatoTexto"/);
+    const esquema = enviados[0].tools.find(t => t.function.name === 'editar_bloque');
+    assert.ok(esquema.function.parameters.properties.cambios.properties.formatoTexto);
+
+    let n = 0; e.dom.window.transporteAgente = async () => ++n === 1 ? respuesta('', [
+      llamada('a', 'editar_bloque', {bloque: id, cambios: {formatoTexto: [{inicio: 0, fin: 2, cursiva: true}], text: 'Sí [@A]'}})
+    ]) : respuesta('Revisado.');
+    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Reescribe conservando la cita'));
+    let b = JSON.parse(e.run('JSON.stringify(findBlock(__formato).block)'));
+    assert.equal(b.text, 'Sí [@A]');
+    assert.deepEqual(b.formatoTexto, [{inicio: 0, fin: 2, cursiva: true}]);
+    assert.equal(b.negrita, true);
+    assert.deepEqual(b.cientifico, {texto: 'fuente inmutable'});
+    assert.equal(e.run('S.undo.length'), undo + 1);
+    e.run('doUndo()'); assert.equal(e.run('JSON.stringify(S.deck)'), antes);
+    e.run('doRedo()');
+
+    n = 0; e.dom.window.transporteAgente = async () => ++n === 1 ? respuesta('', [
+      llamada('a', 'editar_bloque', {bloque: id, cambios: {text: 'Final [@A]', formatoTexto: null}})
+    ]) : respuesta('Actualizado.');
+    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Quita el formato y reescribe'));
+    b = JSON.parse(e.run('JSON.stringify(findBlock(__formato).block)'));
+    assert.equal(b.text, 'Final [@A]');
+    assert.equal(b.formatoTexto, undefined);
+    assert.deepEqual(b.cientifico, {texto: 'fuente inmutable'});
+    e.run('doUndo()');
+    assert.deepEqual(JSON.parse(e.run('JSON.stringify(findBlock(__formato).block.formatoTexto)')), [{inicio: 0, fin: 2, cursiva: true}]);
+  } finally { e.dom.window.close(); }
+});
+
+test('agent creates text with explicit ranges and rejects invalid batches', async () => {
+  const e = await entorno();
+  try {
+    const id = e.run('curSlide().id'), antes = e.run('JSON.stringify(S.deck)'), undo = e.run('S.undo.length');
+    e.dom.window.transporteAgente = async () => respuesta('', [llamada('a', 'agregar_diapositivas', {diapositivas: [
+      {titulo: 'Primera'}, {zonas: [[{tipo: 'text', text: '😀', formatoTexto: [{inicio: 0, fin: 1, negrita: true}]}]]}
+    ]})]);
+    await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Añade')), /formatoTexto/i);
+    assert.equal(e.run('JSON.stringify(S.deck)'), antes);
+    assert.equal(e.run('S.undo.length'), undo);
+    let n = 0; e.dom.window.transporteAgente = async () => ++n === 1 ? respuesta('', [
+      llamada('a', 'agregar_bloque', {diapositiva: id, bloque: {tipo: 'text', formatoTexto: [{inicio: 0, fin: 2, negrita: true}], text: '😀'}})
+    ]) : respuesta('Añadido.');
+    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Añade el texto'));
+    assert.deepEqual(JSON.parse(e.run('JSON.stringify(curSlide().blocks[0].formatoTexto)')), [{inicio: 0, fin: 2, negrita: true}]);
+    e.run('doUndo()'); assert.equal(e.run('JSON.stringify(S.deck)'), antes);
+  } finally { e.dom.window.close(); }
+});
+
 test('one request can set presentation metadata and add a complete slide batch atomically', async () => {
   const e = await entorno();
   try {

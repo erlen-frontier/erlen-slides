@@ -157,8 +157,8 @@ function renderSlide(deck, idx, mode, stepShown, opciones = null) {
         const clasesTexto = `blk b-text sz-${b.size || 'n'}${b.align === 'center' ? ' al-c' : b.align === 'right' ? ' al-d' : ''}${b.negrita === true ? ' txt-negrita' : ''}${b.cursiva === true ? ' txt-cursiva' : ''}`;
         if (edit && sl.lienzoLibre) {
           el = h('div', { class: clasesTexto },
-            h('div', Object.assign({ class: emptyCls(b.text).trim(), html: blockRich(b.text) }, ed('b:' + b.id, 'Texto…'))));
-        } else el = h('div', Object.assign({ class: clasesTexto + emptyCls(b.text), html: blockRich(b.text) }, ed('b:' + b.id, 'Texto…')));
+            h('div', Object.assign({ class: emptyCls(b.text).trim(), html: blockRichFormato(b) }, ed('b:' + b.id, 'Texto…'))));
+        } else el = h('div', Object.assign({ class: clasesTexto + emptyCls(b.text), html: blockRichFormato(b) }, ed('b:' + b.id, 'Texto…')));
         break;
       case 'bullets': {
         const ul = h('ul', { class: 'bl' });

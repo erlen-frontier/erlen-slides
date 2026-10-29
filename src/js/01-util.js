@@ -80,6 +80,143 @@ function kStr(tex, display) {
   try { return katex.renderToString(tex, Object.assign({ displayMode: !!display }, KOPT)); }
   catch (e) { return '<span class="math-err">' + esc(tex) + '</span>'; }
 }
+
+/* El texto sigue siendo una cadena JSON v1. Los rangos opcionales usan los
+   mismos offsets UTF-16 que Selection y conservan las anulaciones explícitas,
+   incluso si coinciden con el bloque. No contienen HTML ni alteran la fuente. */
+const cortaParejaTexto = (texto, i) => i > 0 && i < texto.length && /[\uD800-\uDBFF]/.test(texto[i - 1]) && /[\uDC00-\uDFFF]/.test(texto[i]);
+function rangosFormatoTexto(b) {
+  const texto = String(b.text == null ? '' : b.text), rangos = [];
+  if (!Array.isArray(b.formatoTexto)) return rangos;
+  let fin = 0;
+  for (const r of b.formatoTexto) {
+    if (!r || !Number.isSafeInteger(r.inicio) || !Number.isSafeInteger(r.fin) || r.inicio < fin ||
+        r.inicio >= r.fin || r.fin > texto.length ||
+        (typeof r.negrita !== 'boolean' && typeof r.cursiva !== 'boolean')) continue;
+    /* No dividir la pareja UTF-16 de un carácter suplementario. */
+    if (cortaParejaTexto(texto, r.inicio) || cortaParejaTexto(texto, r.fin)) continue;
+    const limpio = {inicio:r.inicio, fin:r.fin};
+    if (typeof r.negrita === 'boolean') limpio.negrita = r.negrita;
+    if (typeof r.cursiva === 'boolean') limpio.cursiva = r.cursiva;
+    rangos.push(limpio); fin = r.fin;
+  }
+  return rangos;
+}
+function partesFormatoTexto(b, inicio = 0, fin = String(b.text == null ? '' : b.text).length) {
+  const largo = String(b.text == null ? '' : b.text).length, partes = [];
+  inicio = clamp(inicio, 0, largo); fin = clamp(fin, inicio, largo);
+  const base = {negrita:b.negrita === true, cursiva:b.cursiva === true};
+  let p = inicio;
+  const agrega = (a, z, r) => {
+    if (a < z) partes.push({inicio:a, fin:z, negrita:r?.negrita ?? base.negrita, cursiva:r?.cursiva ?? base.cursiva,
+      negritaExplicita:typeof r?.negrita === 'boolean', cursivaExplicita:typeof r?.cursiva === 'boolean'});
+  };
+  for (const r of rangosFormatoTexto(b)) {
+    if (r.fin <= inicio) continue;
+    if (r.inicio >= fin) break;
+    agrega(p, Math.min(r.inicio, fin), null);
+    agrega(Math.max(p, r.inicio), Math.min(r.fin, fin), r);
+    p = Math.min(r.fin, fin);
+  }
+  agrega(p, fin, null);
+  return partes;
+}
+function guardaPartesFormatoTexto(b, partes) {
+  const rangos = [];
+  for (const p of partes) {
+    if (p.inicio >= p.fin) continue;
+    const r = {inicio:p.inicio, fin:p.fin};
+    if (p.negritaExplicita || p.negrita !== (b.negrita === true)) r.negrita = p.negrita;
+    if (p.cursivaExplicita || p.cursiva !== (b.cursiva === true)) r.cursiva = p.cursiva;
+    if (r.negrita == null && r.cursiva == null) continue;
+    const anterior = rangos[rangos.length - 1];
+    if (anterior && anterior.fin === r.inicio && anterior.negrita === r.negrita && anterior.cursiva === r.cursiva) anterior.fin = r.fin;
+    else rangos.push(r);
+  }
+  if (rangos.length) b.formatoTexto = rangos; else delete b.formatoTexto;
+}
+function cambiaFormatoTexto(b, inicio, fin, campo, valor) {
+  const partes = partesFormatoTexto(b), nuevas = [];
+  for (const p of partes) {
+    const cortes = [p.inicio, Math.max(p.inicio, Math.min(p.fin, inicio)), Math.max(p.inicio, Math.min(p.fin, fin)), p.fin];
+    for (let i = 0; i < cortes.length - 1; i++) {
+      if (cortes[i] === cortes[i + 1]) continue;
+      const trozo = {...p, inicio:cortes[i], fin:cortes[i + 1]};
+      if (trozo.inicio >= inicio && trozo.fin <= fin) { trozo[campo] = valor; trozo[campo + 'Explicita'] = false; }
+      nuevas.push(trozo);
+    }
+  }
+  guardaPartesFormatoTexto(b, nuevas);
+}
+/* Reemplaza un intervalo manteniendo los estilos a ambos lados; lo insertado
+   hereda el primer carácter sustituido o el carácter anterior al cursor. */
+function reemplazaTextoFormateado(b, inicio, fin, insercion) {
+  const texto = String(b.text == null ? '' : b.text), partes = partesFormatoTexto(b), nuevas = [];
+  inicio = clamp(inicio, 0, texto.length); fin = clamp(fin, inicio, texto.length);
+  insercion = String(insercion);
+  const posicion = inicio < fin ? inicio : Math.max(0, inicio - 1);
+  const heredada = partes.find(p => p.inicio <= posicion && posicion < p.fin) || {negrita:b.negrita === true, cursiva:b.cursiva === true};
+  for (const p of partes) if (p.inicio < inicio) nuevas.push({...p, fin:Math.min(p.fin, inicio)});
+  if (insercion.length) nuevas.push({...heredada, inicio, fin:inicio + insercion.length});
+  const delta = insercion.length - (fin - inicio);
+  for (const p of partes) if (p.fin > fin) nuevas.push({...p, inicio:Math.max(p.inicio, fin) + delta, fin:p.fin + delta});
+  b.text = texto.slice(0, inicio) + insercion + texto.slice(fin);
+  guardaPartesFormatoTexto(b, nuevas);
+}
+function cambiaTextoFormateado(b, texto) {
+  const anterior = String(b.text == null ? '' : b.text), nuevo = String(texto);
+  if (anterior === nuevo) return;
+  let a = 0, z = anterior.length, n = nuevo.length;
+  while (a < z && a < n && anterior[a] === nuevo[a]) a++;
+  while (z > a && n > a && anterior[z - 1] === nuevo[n - 1]) { z--; n--; }
+  if (cortaParejaTexto(anterior, a) || cortaParejaTexto(nuevo, a)) a--;
+  if (cortaParejaTexto(anterior, z) || cortaParejaTexto(nuevo, n)) { z++; n++; }
+  reemplazaTextoFormateado(b, a, z, nuevo.slice(a, n));
+}
+
+/* Solo se permite una frontera si el render de ambos lados reproduce el del
+   texto completo. Así el propio analizador protege fórmulas, citas, glosas y
+   notación, sin duplicar sus reglas. Un token indivisible usa el estilo de su
+   primer carácter; la selección exacta permanece en el modelo. */
+function segmentosFormatoTexto(b, inicio = 0, fin = String(b.text == null ? '' : b.text).length) {
+  const texto = String(b.text == null ? '' : b.text), partes = partesFormatoTexto(b), out = [];
+  inicio = clamp(inicio, 0, texto.length); fin = clamp(fin, inicio, texto.length);
+  const agrega = (a, z, estilo) => {
+    a = Math.max(a, inicio); z = Math.min(z, fin);
+    if (a >= z) return;
+    /* Reunir dos fragmentos con el mismo estilo puede cambiar la notación
+       que cada uno produjo por separado, aunque la frontera fuera segura. */
+    out.push({inicio:a, fin:z, negrita:estilo.negrita, cursiva:estilo.cursiva});
+  };
+  const estiloEn = p => partes.find(x => x.inicio <= p && x.fin > p);
+  let lineaInicio = 0;
+  for (const linea of texto.split('\n')) {
+    const lineaFin = lineaInicio + linea.length, t = linea.trim();
+    let actual = lineaInicio;
+    const display = t.length > 4 && t.startsWith('$$') && t.endsWith('$$');
+    for (const p of partes) {
+      if (p.inicio <= actual || p.inicio >= lineaFin) continue;
+      let corte = p.inicio;
+      if (display) corte = lineaFin;
+      else {
+        const entero = inlineRich(texto.slice(actual, lineaFin));
+        let intentos = 0;
+        while (corte < lineaFin && (cortaParejaTexto(texto, corte) ||
+          inlineRich(texto.slice(actual, corte)) + inlineRich(texto.slice(corte, lineaFin)) !== entero)) {
+          corte++;
+          /* Una fórmula enorme no debe congelar la interfaz. */
+          if (++intentos >= 128) { corte = lineaFin; break; }
+        }
+      }
+      const estilo = estiloEn(actual); if (estilo) agrega(actual, corte, estilo);
+      actual = corte;
+    }
+    const estilo = estiloEn(actual); if (estilo) agrega(actual, lineaFin, estilo);
+    const salto = estiloEn(lineaFin); if (salto && lineaFin < texto.length) agrega(lineaFin, lineaFin + 1, salto);
+    lineaInicio = lineaFin + 1;
+  }
+  return out;
+}
 /* Texto con matemáticas en línea: segmenta $...$ (\$ = literal). */
 function inlineRich(text) {
   const out = [];
@@ -116,6 +253,39 @@ function blockRich(text) {
   return out.join('') || '<p></p>';
 }
 
+function blockRichFormato(b) {
+  if (!rangosFormatoTexto(b).length) return blockRich(b.text);
+  const texto = String(b.text == null ? '' : b.text), segmentos = segmentosFormatoTexto(b), out = [];
+  let inicio = 0, para = [];
+  const flush = () => { if (para.length) { out.push('<p>' + para.join('<br>') + '</p>'); para = []; } };
+  const cssDe = s => {
+    const css = [];
+    if (s.negrita !== (b.negrita === true)) css.push('font-weight:' + (s.negrita ? 'var(--speso-b,700)' : 'normal'));
+    if (s.cursiva !== (b.cursiva === true)) css.push('font-style:' + (s.cursiva ? 'italic' : 'normal'));
+    return css.join(';');
+  };
+  for (const linea of texto.split('\n')) {
+    const fin = inicio + linea.length, t = linea.trim();
+    if (t.length > 4 && t.startsWith('$$') && t.endsWith('$$')) {
+      flush();
+      const estilo = segmentos.find(s => s.inicio <= inicio + linea.indexOf('$$') && s.fin > inicio + linea.indexOf('$$'));
+      const css = estilo ? cssDe(estilo) : '';
+      out.push('<div' + (css ? ' style="' + css + '"' : '') + '>' + kStr(t.slice(2, -2), true) + '</div>');
+    } else if (!t) flush();
+    else {
+      const html = segmentos.filter(s => s.inicio < fin && s.fin > inicio).map(s => {
+        const fragmento = texto.slice(Math.max(inicio, s.inicio), Math.min(fin, s.fin));
+        const css = cssDe(s), contenido = inlineRich(fragmento);
+        return css ? '<span style="' + css + '">' + contenido + '</span>' : contenido;
+      }).join('');
+      para.push(html);
+    }
+    inicio = fin + 1;
+  }
+  flush();
+  return out.join('') || '<p></p>';
+}
+
 const fmtWhen = ts => new Date(ts).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 /* Inserta texto en un textarea/input en la posición del cursor. */
@@ -138,5 +308,3 @@ async function copyText(txt) {
     } catch (e2) { return false; }
   }
 }
-
-

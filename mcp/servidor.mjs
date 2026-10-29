@@ -30,7 +30,10 @@ Cada cambio queda en el historial: deshacer lo revierte. Las diapositivas se num
    propiedad, así que las alternativas van con anyOf. */
 const archivo = {type: 'string', description: 'Proyecto JSON dentro de la carpeta de trabajo, p. ej. «tesis» o «grupo/avance.json»; «.json» es opcional.'};
 const diapositiva = {anyOf: [{type: 'integer', minimum: 1}, {type: 'string'}], description: 'Número de diapositiva (desde 1) o su id.'};
-const bloque = {type: 'object', additionalProperties: true, required: ['tipo'], properties: {tipo: {type: 'string', description: 'text, bullets, math, chem, estruct, table, chart, func, smart, bblock, teorema, quote, code, image, refs, spacer…'}},
+const formatoTexto = {anyOf: [{type: 'array', items: {type: 'object', required: ['inicio', 'fin'], additionalProperties: false,
+  properties: {inicio: {type: 'integer', minimum: 0}, fin: {type: 'integer', minimum: 0}, negrita: {type: 'boolean'}, cursiva: {type: 'boolean'}}}}, {type: 'null'}],
+  description: 'Solo text: rangos UTF-16 ordenados, no solapados, [inicio, fin), con negrita y/o cursiva booleanas. null borra el formato parcial.'};
+const bloque = {type: 'object', additionalProperties: true, required: ['tipo'], properties: {tipo: {type: 'string', description: 'text, bullets, math, chem, estruct, table, chart, func, smart, bblock, teorema, quote, code, image, refs, spacer…'}, negrita: {type: 'boolean'}, cursiva: {type: 'boolean'}, formatoTexto},
   description: 'Un bloque: {"tipo": "<tipo>", ...propiedades} (guia_formato las lista). Imagen local: {"tipo":"image","archivo":"figs/sem.png","caption":"…"}. Datos de un equipo: {"tipo":"chart","archivo_datos":"datos/xrd.xy","caption":"…"}. Molécula: {"tipo":"estruct","smiles":"CC(=O)Oc1ccccc1C(=O)O","caption":"Ácido acetilsalicílico"}.'};
 const zonas = {type: 'array', items: {type: 'array', items: bloque}, description: 'Una lista de bloques por zona, en orden («twocol» tiene 2 zonas, «cuadricula» 4…). Reemplaza el contenido de esas zonas.'};
 const encabezados = {type: 'array', items: {type: 'string'}, description: 'Encabezados de zona en los diseños que los usan: comparacion, partida, filas, rejilla6, tresfig (letras de panel), objetivos; en «dato» son [cifra, rótulo] y en «cita» [autor o fuente].'};
@@ -110,8 +113,8 @@ const HERRAMIENTAS = [
     inputSchema: {type: 'object', required: ['archivo', 'diapositiva', 'bloque'], properties: {archivo, diapositiva, bloque, zona: {type: 'integer', minimum: 1, description: 'Zona desde 1 (por omisión 1).'}, posicion: {type: 'integer', minimum: 1, description: 'Posición dentro de la zona, desde 1 (por omisión al final).'}}},
     annotations: cambia, run: M.agregaBloque},
   {name: 'editar_bloque', title: 'Editar bloque',
-    description: 'Cambia propiedades de un bloque por su id. Solo se tocan las enviadas; null borra una. En una imagen, «archivo» reemplaza la figura; en una gráfica, «archivo_datos» vuelve a leer los datos; en una estructura, «smiles» o «archivo_mol» la redibujan y «estilo» cambia la norma de dibujo.',
-    inputSchema: {type: 'object', required: ['archivo', 'bloque', 'cambios'], properties: {archivo, bloque: {type: 'string', description: 'Id del bloque.'}, cambios: {type: 'object', additionalProperties: true}}},
+    description: 'Cambia propiedades de un bloque por su id. Solo se tocan las enviadas; null borra una. Para cambiar text con formato parcial existente, envía formatoTexto compatible con el texto final o null para borrarlo. En una imagen, «archivo» reemplaza la figura; en una gráfica, «archivo_datos» vuelve a leer los datos; en una estructura, «smiles» o «archivo_mol» la redibujan y «estilo» cambia la norma de dibujo.',
+    inputSchema: {type: 'object', required: ['archivo', 'bloque', 'cambios'], properties: {archivo, bloque: {type: 'string', description: 'Id del bloque.'}, cambios: {type: 'object', properties: {formatoTexto}, additionalProperties: true}}},
     annotations: cambia, run: M.editaBloque},
   {name: 'eliminar_bloque', title: 'Eliminar bloque',
     description: 'Elimina un bloque por su id (se puede deshacer).',
@@ -163,7 +166,7 @@ const HERRAMIENTAS = [
 ];
 
 const CONVENCIONES = {
-  texto: 'text, bullets, bblock y teorema admiten $matemáticas en línea$ (\\$ para un dólar literal) y citas [@clave] de referencias añadidas con agregar_referencia. No hay marcado de negrita: el texto es literal.',
+  texto: 'text, bullets, bblock y teorema admiten $matemáticas en línea$ (\\$ para un dólar literal) y citas [@clave] de referencias añadidas con agregar_referencia. El texto es literal, no marcado Markdown. Solo el bloque text admite negrita y cursiva booleanas para todo el bloque y formatoTexto opcional: lista ordenada y no solapada de {inicio,fin,negrita?,cursiva?}, con al menos un booleano por rango. Los offsets son unidades UTF-16, inicio inclusivo y fin exclusivo, sin dividir parejas sustitutas; true o false sobreescribe el estilo del bloque. Las matemáticas y citas transformadas no se dividen visualmente por una frontera de estilo: usan el estilo de su primer carácter. Al cambiar text arbitrariamente si ya hay formato parcial, indica formatoTexto válido para el texto final o null para quitarlo; buscar_reemplazar ajusta los rangos usando las coincidencias y el texto insertado hereda el estilo del primer carácter sustituido.',
   math: 'Bloque «math»: tex sin $, p. ej. "E = mc^2" o "\\\\frac{d[A]}{dt} = -k[A]".',
   chem: 'Bloque «chem»: sintaxis mhchem sin \\ce{}, p. ej. "2 H2 + O2 -> 2 H2O" o "Zn^2+ + 2 OH- <=> Zn(OH)2 v".',
   chart: 'Bloque «chart»: data es una tabla (lista de filas o texto con tabuladores) con encabezado; la primera columna es x y las demás, series. Una columna «±» tras una serie es su barra de error. kind: linea, dispersion, ajuste o barras. Unidades entre paréntesis en xlabel/ylabel y siempre un caption.',
