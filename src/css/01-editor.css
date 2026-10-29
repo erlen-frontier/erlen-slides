@@ -218,6 +218,24 @@ button{font-family:var(--ui)}
      como relleno inferior para que la diapositiva —y sus manijas de esquina— nunca queden debajo. */
   --pie-lienzo:calc(var(--h-ico) + 2 * var(--e1) + 2px + 24px)}
 .canvas-scroll{flex:1;overflow:auto;display:grid;place-items:center;padding:var(--e5)}
+.barra-contextual{display:flex;align-items:center;gap:4px;flex:none;min-width:0;min-height:46px;
+  overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:4px 8px;background:var(--panel);
+  border-bottom:1px solid var(--line);scrollbar-width:thin}
+.barra-contextual[hidden]{display:none}
+.barra-contextual .contexto-grupo{display:flex;align-items:center;gap:3px;flex:none}
+.barra-contextual .contexto-grupo+.contexto-grupo{border-inline-start:1px solid var(--line);padding-inline-start:7px;margin-inline-start:3px}
+.barra-contextual button,.barra-contextual select{height:34px;border:1px solid transparent;border-radius:var(--r2);
+  background:transparent;color:var(--ink);font:600 var(--t1) var(--ui);cursor:pointer}
+.barra-contextual button{min-width:34px;padding:0 7px;font-size:var(--t3)}
+.barra-contextual button svg{display:block;width:17px;height:17px;margin:auto}
+.barra-contextual select{max-width:112px;padding:0 6px;border-color:var(--line);background:var(--panel)}
+.barra-contextual button:hover,.barra-contextual button[aria-pressed="true"]{background:var(--accSoft);color:var(--acc)}
+.barra-contextual button:focus-visible,.barra-contextual select:focus-visible,.barra-contextual input:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.barra-contextual button:disabled{opacity:.4;cursor:default}
+.barra-contextual .contexto-color{display:flex;align-items:center;gap:3px;font-size:var(--t1);color:var(--mut)}
+.barra-contextual .contexto-color input{width:34px;height:30px;padding:2px;border:1px solid var(--line);border-radius:var(--r1);background:var(--panel);cursor:pointer}
+.barra-contextual .contexto-nombre{font-size:var(--t1);font-weight:700;color:var(--mut);padding-inline:4px}
+.canvas-wrap.capas-abierto .barra-contextual{margin-inline-end:var(--capas-ancho)}
 .stage{position:relative;flex:none;filter:drop-shadow(0 2px 8px rgba(10,14,30,.13)) drop-shadow(0 16px 38px rgba(10,14,30,.11))}
 .stage-inner{transform-origin:top left}
 .canvas-foot{position:absolute;inset-inline:12px;bottom:calc(var(--cod-alto) + 12px);display:flex;align-items:center;gap:var(--e2);
@@ -433,6 +451,7 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
 .hamb{display:none}
 .only-narrow,.only-narrow-i{display:none}
 @media (max-width:920px){
+  .canvas-wrap.capas-abierto .barra-contextual{margin-inline-end:0}
   .hamb{display:inline-flex}
   .only-wide,.only-wide-i{display:none!important}
   .only-narrow{display:inline-flex}

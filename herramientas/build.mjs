@@ -13,7 +13,7 @@ const version=JSON.parse(get('package.json')).version;
 const order=get('src/js/_orden.txt').trim().split('\n');
 /* Compact new editor modules without renaming globals used by MCP and lazy
    adapters. Shared design copies and their license notices remain intact. */
-const compactos=new Set(['31-revision.js','56-cinta.js','79-accesible.js','85-edicion-lote.js','85-flujos.js']);
+const compactos=new Set(['05b-barra-contextual.js','07-modals.js','31-revision.js','56-cinta.js','79-accesible.js','85-edicion-lote.js','85-flujos.js']);
 /* Mapa de refracción del vidrio (Tier 2, solo-Chromium): se genera en cada
    build y se escribe como módulo ANTES de unir los de src/js, para que
    _orden.txt siempre lo encuentre aunque el repositorio esté limpio.
@@ -78,6 +78,8 @@ function cssSinMey(path){
 const css=tokensSuite+'\n'+get('src/diseno/cinta.css')+'\n'+cssSinMey('src/diseno/inicio.css')+'\n'+get('src/diseno/base.css')+'\n'+cssSinMey('src/diseno/marco.css')+'\n'+fuentesSuite+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
 const lib=p=>get('node_modules/'+p);
 const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','Plus','HelpCircle','FlaskConical','Atom','ChartLine','FolderOpen','Download','Play','Settings2','House','Presentation','ArrowUpRight','ArrowRight','Archive','ChevronRight',
+ /* Formato y acciones de la barra contextual. */
+ 'Bold','Italic','AlignLeft','AlignCenter','AlignRight','Lock',
  /* Iconos de la cinta (src/js/56-cinta.js): uno por significado, sin repetir. */
  'SquarePlus','Copy','Trash2','ListTree','Command','Route','Mic','ChartGantt','Library','GraduationCap','Columns3','Type','List','Sigma','ArrowRightLeft','Image','Images','Table','Blocks','Pi','BookMarked','LibraryBig','Superscript','BookOpen','Palette','Droplet','CaseSensitive','Sparkles','MoveRight','Users','BookA','PanelBottom','Shield','Bookmark','PanelRight','LayoutDashboard','ALargeSmall','Scaling','NotebookPen','ScrollText','Clock','MessageCircleQuestion','Lightbulb','GitBranch','SquareCheck','ListTodo','StickyNote','Brain','Eye','StepForward','Timer','Hourglass','CircleCheckBig','Projector','Accessibility','FileCheck','Microscope','LayoutGrid','Code','SunMoon','Rows3','PanelTop','Pencil','ImageUp','SlidersHorizontal','Scissors','Crop','Ruler','Footprints','WandSparkles','Gauge','ArrowUp','ArrowDown','CopyPlus','Delete','ArrowRightToLine','FilePlus','Save','HardDrive','Upload','History','CalendarDays','FileText','FileSliders','FileCode','FilePen','Printer','NotebookText','FileJson','Package','FileImage','PenTool','ClipboardList','Info','Group','Layers3','Layers2','Workflow','Video','GalleryHorizontalEnd','FileInput','LockOpen'];
 if(names.some(n=>!icons[n]))throw new Error('Icono de lucide inexistente: '+names.filter(n=>!icons[n]).join(', '));

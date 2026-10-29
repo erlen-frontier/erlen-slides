@@ -20,6 +20,8 @@ Arrastra el asa del bloque activo o usa las flechas para mover la selección. La
 
 **Duplicar selección** crea copias seleccionadas por delante de los originales y, cuando hay espacio, las desplaza juntas para que sean visibles. Los grupos copiados quedan separados de sus originales. **Eliminar selección**, en la barra, la cinta o el panel, y la tecla **Supr** eliminan los mismos bloques. En **Más acciones** puedes bloquear la selección; usa **Desbloquear selección** para volver a editarla. Si alguno está bloqueado, desbloquéalo antes de transformar, ordenar, duplicar o eliminar la selección.
 
+Al seleccionar un objeto aparece una barra sobre el lienzo con sus acciones más usadas. En texto puedes cambiar tamaño, alineación, negrita y cursiva del bloque completo; estas opciones no aplican formato a fragmentos individuales. En imágenes puedes cambiar el archivo o encuadrarlo; las figuras con capas ofrecen su editor. Las formas simples permiten cambiar directamente el relleno y el contorno, o el color de la línea o flecha. Las figuras compuestas y los datos científicos se editan con sus herramientas propias. La barra también permite duplicar, ordenar, bloquear y eliminar; con varias piezas seleccionadas, estas acciones se aplican al conjunto. En pantallas estrechas puedes desplazar la barra horizontalmente o recorrerla con el teclado.
+
 La opción **Mover bloque activo a…** lleva un solo bloque a otra diapositiva o zona, aunque haya varios seleccionados. Para mover juntos los bloques dentro de la diapositiva, arrastra la selección o usa las flechas.
 
 **Capas** abre un panel que permanece visible mientras trabajas en la diapositiva. Muestra los objetos de delante hacia atrás, con su tipo, una miniatura de las imágenes y símbolos para los demás bloques; también permite alcanzar uno que esté cubierto por otros. La selección se refleja tanto en el panel como en el lienzo. Marca varias casillas para seleccionar varios objetos y usa **Seleccionar marcados** para llevar el foco al lienzo. Los objetos ocultos por el nivel de presentación se identifican en la lista y no se pueden seleccionar hasta cambiar de nivel.
@@ -29,6 +31,8 @@ Arrastra el asa de una fila para cambiar su lugar; la línea indica dónde se in
 **Formas** inserta un rectángulo, una elipse, una línea o una flecha directamente en la diapositiva. Muévelos y cambia su tamaño como cualquier bloque. Con doble clic puedes editar su color, sus objetos y su descripción en el editor de figuras. La figura sigue editable en el proyecto JSON; en PowerPoint se incorpora como imagen.
 
 El proyecto JSON conserva la geometría, la orientación, el bloqueo de proporciones y el orden de capas. La vista de presentación, el HTML y el archivo para imprimir usan el mismo acomodo; versiones anteriores pueden abrir el contenido pero ignorar estas propiedades. PowerPoint conserva el giro y el volteo; las figuras con anotaciones se exportan como una imagen. Beamer conserva la orientación, pero Beamer y Markdown avisan de que cambia la colocación; revisa el archivo final antes de compartirlo.
+
+La negrita, la cursiva y la alineación del texto se guardan en el proyecto y se usan al presentar y en HTML, Beamer y PowerPoint. El exportador editable de PowerPoint rasteriza el texto que contiene matemáticas para conservar su aspecto; el clásico aproxima las matemáticas con Unicode. Markdown avisa cuando no puede conservar esos estilos al volver a importarlo; guarda el JSON para seguir editándolos.
 
 ## Conversar con IA
 

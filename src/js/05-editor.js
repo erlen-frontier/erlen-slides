@@ -44,6 +44,7 @@ function renderCanvas() {
         (typeof bloqueVisible !== 'function' || bloqueVisible(b, S.deck))) ids.add(b.id);
     }
   }
+  pintaBarraContextual();
   const z = effZoom();
   const stage = $('#stage'), inner = $('#stageInner');
   const foco = document.activeElement;
@@ -116,6 +117,7 @@ function selectBlock(id, aditiva = false) {
   if (id !== antes || S.tab === 'bloque') renderInspector();
   actualizaControlesComposicion();
   sincronizaPanelCapas();
+  pintaBarraContextual();
 }
 function etiquetaBloqueLibre(id, b) {
   const nombre = (BLOCK_DEFS.find(d => d.id === b?.type) || {}).name || b?.type || 'Bloque';
@@ -135,6 +137,8 @@ function enfocaBloqueLibre(id) {
   destino.focus({ preventScroll: true });
 }
 function mountToolbar() {
+  /* Algunas selecciones restauran varios ids después de elegir el activo. */
+  pintaBarraContextual();
   const old = $('#stageInner .blk-toolbar'); if (old) old.remove();
   $$('#stageInner .ancho-asa').forEach(e => e.remove());
   $$('#stageInner .libre-asa').forEach(e => e.remove());
@@ -197,13 +201,16 @@ function mountToolbar() {
   }
   if (curSlide().lienzoLibre) { if (idsSeleccionados().size <= 1) montaManijasLibres(el, f.block); }
   else montaManija(el, f.block);
-  /* Si arriba no cabe, la barra se mete dentro del bloque: así nunca tapa
-     el título del marco ni se queda fuera del alcance del ratón. */
+  /* Si arriba no cabe, intenta colocar la barra debajo del objeto. No debe
+     ocupar el propio texto que la persona acaba de seleccionar para editar. */
   const cuerpo = el.closest('.fbody') || el.closest('.slide');
   if (cuerpo && bar.getBoundingClientRect().top < cuerpo.getBoundingClientRect().top + 2) {
-    bar.style.top = '4px';
-    bar.style.transform = `scale(${k})`;
-    bar.style.transformOrigin = 'top right';
+    const bloque = el.getBoundingClientRect(), limite = cuerpo.getBoundingClientRect();
+    if (bloque.bottom + bar.getBoundingClientRect().height + 8 <= limite.bottom) {
+      bar.style.top = 'calc(100% + 8px)';
+      bar.style.transform = `scale(${k})`;
+      bar.style.transformOrigin = 'top right';
+    }
   }
 }
 
@@ -1044,6 +1051,7 @@ function iniciaSeleccionPorMarco(ev) {
 function initCanvasEvents() {
   const inner = $('#stageInner');
   const pie = $('.canvas-foot .foot-izq');
+  iniciaBarraContextual();
   iniciaPanelCapas();
   if (pie && !$('#lienzoLibreBtn')) pie.append(h('button', { id: 'lienzoLibreBtn', type: 'button', class: 'btn btn-sm lienzo-control',
     'aria-pressed': 'false', onclick: alternaLienzoLibre }, 'Lienzo libre'));

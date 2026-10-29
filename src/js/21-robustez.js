@@ -36,6 +36,8 @@ function saneaBloque(b, avisos, deck) {
     delete b.capaLibre;
   }
   if (b.locked !== true) delete b.locked;
+  if (b.type !== 'text' || b.negrita !== true) delete b.negrita;
+  if (b.type !== 'text' || b.cursiva !== true) delete b.cursiva;
   if (typeof b.group !== 'string' || b.group.length > 80) delete b.group;
   if (!['left', 'center', 'right'].includes(b.blockAlign)) delete b.blockAlign;
   if (b.type !== 'image' || !b.figura || !['rect', 'circle', 'line', 'arrow'].includes(b.formaLibre)) delete b.formaLibre;

@@ -37,7 +37,7 @@ function estilo(el, ptPorPx, fuente) {
   const px = parseFloat(cs.fontSize);
   return {
     pt: isFinite(px) ? Math.max(6, +(px * ptPorPx).toFixed(1)) : 18,
-    col: hex6(cs.color, _FONDO), neg: parseInt(cs.fontWeight, 10) >= 600,
+    col: hex6(cs.color, _FONDO), neg: parseInt(cs.fontWeight, 10) >= 600, cur: /^(italic|oblique)/.test(cs.fontStyle),
     al: cs.textAlign === 'start' ? 'left' : cs.textAlign,
     fuente: fuente
   };

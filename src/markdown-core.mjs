@@ -34,7 +34,7 @@ const escapaCita = l => (citaPideEscape(l) || l.startsWith('\\')) ? '\\' + l : l
 const desescapaCita = l => l.startsWith('\\') && (citaPideEscape(l.slice(1)) || l[1] === '\\') ? l.slice(1) : l;
 
 /* ---------- marcado en línea ----------
-   La app no tiene negrita, cursiva, tachado, código en línea ni enlaces: sus
+   La app no admite negrita, cursiva o tachado por fragmentos, ni código en línea o enlaces: sus
    marcas se quitan. «\*», «\_», «\`», «\[», «\~» y «\\» son caracteres
    literales, que es como la exportación protege un texto que las llevaba. Las
    matemáticas $…$ no se tocan. */
@@ -174,7 +174,7 @@ export function leeMarkdown(texto) {
   const enLinea = (s, n) => String(s).split(TROZOS).map((trozo, k) => {
     if (k % 2) return trozo;
     const {t, hubo} = quitaMarcas(trozo);
-    if (hubo.enfasis) avisa(n, 'la app no tiene negrita, cursiva ni tachado en el texto: se quitaron las marcas.', 'enfasis');
+    if (hubo.enfasis) avisa(n, 'la app no admite negrita, cursiva ni tachado por fragmentos: se quitaron las marcas.', 'enfasis');
     if (hubo.codigo) avisa(n, 'el código en línea (`…`) se dejó como texto normal.', 'codigo-en-linea');
     if (hubo.enlaces) avisa(n, 'los enlaces se escribieron como «texto (url)».', 'enlaces');
     if (/(^|[^\\])!\[[^\]\n]*\]\([^)\n]+\)/.test(trozo)) avisa(n, 'una imagen dentro de un párrafo no se inserta: ponla sola en su línea.');
@@ -487,6 +487,9 @@ export function aMarkdown(deck, {zonasPorDiseno, carpetaFiguras, incrustarFigura
         else return null;
         if (b.size === 's') perdidos.add('el tamaño pequeño del texto');
         if (b.align === 'center') perdidos.add('la alineación centrada del texto');
+        if (b.align === 'right') perdidos.add('la alineación a la derecha del texto');
+        if (b.negrita === true) perdidos.add('la negrita del bloque de texto');
+        if (b.cursiva === true) perdidos.add('la cursiva del bloque de texto');
         break;
       }
       case 'bullets': {
