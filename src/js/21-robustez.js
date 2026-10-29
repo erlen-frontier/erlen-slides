@@ -38,6 +38,13 @@ function saneaBloque(b, avisos, deck) {
   if (b.locked !== true) delete b.locked;
   if (b.type !== 'text' || b.negrita !== true) delete b.negrita;
   if (b.type !== 'text' || b.cursiva !== true) delete b.cursiva;
+  if (b.formatoTexto != null) {
+    const rangos = b.type === 'text' ? rangosFormatoTexto(b) : [];
+    if (!Array.isArray(b.formatoTexto) || rangos.length !== b.formatoTexto.length || b.type !== 'text' ||
+        b.formatoTexto.some(r => (r.negrita != null && typeof r.negrita !== 'boolean') || (r.cursiva != null && typeof r.cursiva !== 'boolean')))
+      avisos.push('un bloque tenía formato de texto inválido; se descartaron los rangos que no se podían aplicar');
+    if (rangos.length) b.formatoTexto = rangos; else delete b.formatoTexto;
+  } else delete b.formatoTexto;
   if (typeof b.group !== 'string' || b.group.length > 80) delete b.group;
   if (!['left', 'center', 'right'].includes(b.blockAlign)) delete b.blockAlign;
   if (b.type !== 'image' || !b.figura || !['rect', 'circle', 'line', 'arrow'].includes(b.formaLibre)) delete b.formaLibre;

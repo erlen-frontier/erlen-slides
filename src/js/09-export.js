@@ -54,7 +54,12 @@ function texInline(s) {
   }
   out += inM ? texEscape('$' + buf) : texEscapeNota(buf);
   /* [@clave] y {{término}} atraviesan el escape sin tocarse: aquí se resuelven. */
-  const conCitas = resuelveCitas(out.replace(/\n/g, ' \\\\\n'), 'tex');
+  const conCitas = out.replace(/\n/g, ' \\\\\n').replace(RE_CITA, marca => {
+    const resuelta = resuelveCitas(marca, 'tex');
+    /* La única orden que puede devolver el resolvedor es el superíndice
+       numérico. Los nombres y títulos de las referencias son texto ajeno. */
+    return /^\\textsuperscript\{[\d,]*\}$/.test(resuelta) ? resuelta : texEscape(resuelta);
+  });
   if (conCitas.indexOf('\u0001') < 0) return conCitas;
   return conCitas.replace(/\u0001([^\u0001\u0002]*)\u0002/g, (m, t) => {
     const g = typeof glosaDe === 'function' ? glosaDe(t, TEX_DECK || S.deck) : null;
@@ -65,9 +70,48 @@ function texInline(s) {
 function texBlockText(s) {
   return String(s == null ? '' : s).split('\n').map(ln => {
     const t = ln.trim();
-    if (t.length > 4 && t.startsWith('$$') && t.endsWith('$$')) return '\\[ ' + t.slice(2, -2).trim() + ' \\]';
+    if (t.length > 4 && t.startsWith('$$') && t.endsWith('$$')) return '\\[ ' + texMate(t.slice(2, -2).trim()) + ' \\]';
     return texInline(ln);
   }).join('\n\n').replace(/\n{3,}/g, '\n\n');
+}
+
+/* Los límites son offsets UTF-16 del texto original. El segmentador mantiene
+   juntas las fórmulas, las citas y las glosas aunque un formato las cruce. */
+function texTexto(b) {
+  const texto = String(b.text || '');
+  let body;
+  if (Array.isArray(b.formatoTexto) && b.formatoTexto.length) {
+    const segmentos = segmentosFormatoTexto(b);
+    let inicio = 0;
+    const aplica = (contenido, segmento) => {
+      const estilos = [];
+      if (segmento.negrita && b.negrita !== true) estilos.push('\\bfseries', '\\boldmath');
+      else if (!segmento.negrita && b.negrita === true) estilos.push('\\mdseries', '\\unboldmath');
+      if (segmento.cursiva && b.cursiva !== true) estilos.push('\\itshape');
+      else if (!segmento.cursiva && b.cursiva === true) estilos.push('\\upshape');
+      return estilos.length ? '{' + estilos.join(' ') + ' ' + contenido + '}' : contenido;
+    };
+    body = texto.split('\n').map(ln => {
+      const fin = inicio + ln.length;
+      const partes = segmentos.filter(s => s.inicio < fin && s.fin > inicio)
+        .map(s => ({...s, inicio:Math.max(inicio, s.inicio), fin:Math.min(fin, s.fin)}));
+      const t = ln.trim();
+      let salida;
+      if (t.length > 4 && t.startsWith('$$') && t.endsWith('$$')) {
+        const pos = inicio + ln.indexOf('$$');
+        const segmento = partes.find(s => s.inicio <= pos && pos < s.fin);
+        const formula = '\\[ ' + texMate(t.slice(2, -2).trim()) + ' \\]';
+        salida = segmento ? aplica(formula, segmento) : formula;
+      } else {
+        salida = partes.map(s => aplica(texInline(texto.slice(s.inicio, s.fin)), s)).join('');
+      }
+      inicio = fin + 1;
+      return salida;
+    }).join('\n\n').replace(/\n{3,}/g, '\n\n');
+  } else body = texBlockText(texto);
+  const estilos = [b.size === 's' ? '\\small' : b.size === 'l' ? '\\large' : '',
+    b.negrita === true ? '\\bfseries \\boldmath' : '', b.cursiva === true ? '\\itshape' : ''].filter(Boolean);
+  return estilos.length ? '{' + estilos.join(' ') + ' ' + body + '}' : body;
 }
 
 const MARCA_DIAPO = '% --- diapositiva ';
@@ -475,10 +519,7 @@ function texBlocks(arr, ind) {
     if (typeof bloqueVisible === 'function' && !bloqueVisible(b, TEX_DECK || S.deck)) continue;
     switch (b.type) {
       case 'text': {
-        const body = texBlockText(b.text);
-        const estilos = [b.size === 's' ? '\\small' : b.size === 'l' ? '\\large' : '',
-          b.negrita === true ? '\\bfseries' : '', b.cursiva === true ? '\\itshape' : ''].filter(Boolean);
-        const contenido = estilos.length ? '{' + estilos.join(' ') + ' ' + body + '}' : body;
+        const contenido = texTexto(b);
         if (b.align === 'center') L.push(p + '\\begin{center}\n' + p + contenido + '\n' + p + '\\end{center}');
         else if (b.align === 'right') L.push(p + '{\\raggedleft ' + contenido + '\\par}');
         else L.push(p + contenido);
@@ -1017,7 +1058,7 @@ function toBeamer(deck) {
         L.push(texBlocks([Object.assign({}, fig, { w: 100, caption: '' })], '        '));
         L.push('      }};');
       }
-      const banda = [texInline(sl.title || '')].concat(resto.map(x => texBlockText(x.text || x.body || ''))).filter(Boolean);
+      const banda = [texInline(sl.title || '')].concat(resto.map(x => x.type === 'text' ? texTexto(x) : texBlockText(x.text || x.body || ''))).filter(Boolean);
       if (banda.length) {
         L.push('    \\node[anchor=south, inner sep=0] at (current page.south) {%');
         L.push('      \\begin{tikzpicture}');

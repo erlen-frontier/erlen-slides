@@ -391,11 +391,15 @@ function disParteTexto(textos) {
     return [[b], [b2]];
   }
   if (b.type === 'text') {
-    const par = String(b.text || '').split(/\n\s*\n/);
+    const texto = String(b.text || ''), par = texto.split(/\n\s*\n/);
     if (par.length < 2) return null;
     const k = mitad(par.map(x => x.length));
-    const b2 = Object.assign(deepCopy(b), { id: uid(), text: par.slice(k).join('\n\n') });
-    b.text = par.slice(0, k).join('\n\n');
+    const separadores = [...texto.matchAll(/\n\s*\n/g)], corte = separadores[k - 1];
+    const b2 = Object.assign(deepCopy(b), { id: uid() });
+    reemplazaTextoFormateado(b2, 0, corte.index + corte[0].length, '');
+    reemplazaTextoFormateado(b, corte.index, texto.length, '');
+    for (const pieza of [b, b2]) for (const m of [...pieza.text.matchAll(/\n\s*\n/g)].reverse())
+      reemplazaTextoFormateado(pieza, m.index, m.index + m[0].length, '\n\n');
     return [[b], [b2]];
   }
   return null;
@@ -782,4 +786,3 @@ function disenadorAlPonerImagen(b) {
   if (S.prefs && S.prefs.sinDisenador) return;
   setTimeout(() => { if (b.src) abreDisenador(b); }, 260);
 }
-

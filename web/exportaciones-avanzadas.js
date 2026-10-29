@@ -90,8 +90,34 @@ window.ERLEN_EXPORTADORES = (() => {
         const r0 = raiz.getBoundingClientRect();
         const caja = el => { const r = el.getBoundingClientRect(); const p = { x: (r.left - r0.left) * k, y: (r.top - r0.top) * k, w: r.width * k, h: r.height * k }; if (!Object.values(p).every(Number.isFinite) || p.w <= 0 || p.h <= 0) throw new Error('Diapositiva ' + (i + 1) + ': no se pudo medir el contenido.'); return p; };
         const texto = (el, t, extra = {}) => {
-          if (!el || !String(t || '').trim()) return;
-          const cs = getComputedStyle(el); pagina.addText(String(t), { ...caja(el), fontFace: fuente, fontSize: Math.max(6, parseFloat(cs.fontSize) * k * 72), color: hex(cs.color, th.bg), margin: 0, breakLine: false, valign: 'top', align: ['left', 'center', 'right', 'justify'].includes(cs.textAlign) ? cs.textAlign : 'left', bold: +cs.fontWeight >= 600, italic: /^(italic|oblique)/.test(cs.fontStyle), ...extra });
+          if (!el || (Array.isArray(t) ? !t.some(r => r.text.trim()) : !String(t || '').trim())) return;
+          const cs = getComputedStyle(el); pagina.addText(Array.isArray(t) ? t : String(t), { ...caja(el), fontFace: fuente, fontSize: Math.max(6, parseFloat(cs.fontSize) * k * 72), color: hex(cs.color, th.bg), margin: 0, breakLine: false, valign: 'top', align: ['left', 'center', 'right', 'justify'].includes(cs.textAlign) ? cs.textAlign : 'left', bold: Array.isArray(t) ? false : +cs.fontWeight >= 600, italic: Array.isArray(t) ? false : /^(italic|oblique)/.test(cs.fontStyle), ...extra });
+        };
+        /* PptxGenJS hereda opciones del cuadro cuando una corrida pone false.
+           Por eso el cuadro no declara negrita/cursiva y cada corrida lleva
+           el estilo calculado, incluido el que hereda del tema o del bloque. */
+        const corridasTexto = el => {
+          const runs = [];
+          const salto = () => {
+            if (!runs.length || runs[runs.length - 1].options.breakLine) runs.push({text: '', options: {}});
+            runs[runs.length - 1].options.breakLine = true;
+          };
+          const visita = nodo => {
+            if (nodo.nodeType === 3) {
+              const cs = getComputedStyle(nodo.parentElement);
+              const opciones = {bold: +cs.fontWeight >= 600, italic: /^(italic|oblique)/.test(cs.fontStyle)};
+              nodo.data.split('\n').forEach((parte, j) => { if (j) salto(); if (parte) runs.push({text: parte, options: {...opciones}}); });
+            } else if (nodo.nodeType === 1) {
+              if (nodo.tagName === 'BR') salto();
+              else for (const hijo of nodo.childNodes) visita(hijo);
+            }
+          };
+          let parrafo = false;
+          for (const hijo of el.childNodes) {
+            if (hijo.nodeType === 1 && hijo.tagName === 'P') { if (parrafo) salto(); parrafo = true; }
+            visita(hijo);
+          }
+          return runs;
         };
         const fondo = el => { if (!el) return; const bg = getComputedStyle(el).backgroundColor; if (opaco(bg)) pagina.addShape('rect', { ...caja(el), fill: { color: hex(bg, th.bg) }, line: { transparency: 100 } }); };
         const foto = async (el, alt) => { const uri = await rasteriza(el, css, 2); if (!uri) throw new Error('Diapositiva ' + (i + 1) + ': no se pudo exportar una figura.'); pagina.addImage({ ...caja(el), data: uri, altText: alt || 'Figura' }); };
@@ -117,7 +143,7 @@ window.ERLEN_EXPORTADORES = (() => {
           const t = transformacionLibreDe(b), transformada = b.type === 'image' && (t.giro || t.voltearH || t.voltearV);
           if (['text', 'quote', 'code', 'bullets'].includes(b.type) && !el.querySelector('.katex')) {
             if (b.type === 'code') fondo(el.querySelector('pre'));
-            const t = b.type === 'bullets' ? [...el.querySelectorAll('li')].map((li, j) => '  '.repeat(b.items[j]?.lvl || 0) + '• ' + li.textContent).join('\n') : el.textContent;
+            const t = b.type === 'text' ? corridasTexto(el) : b.type === 'bullets' ? [...el.querySelectorAll('li')].map((li, j) => '  '.repeat(b.items[j]?.lvl || 0) + '• ' + li.textContent).join('\n') : el.textContent;
             texto(el, t, b.type === 'code' ? { fontFace: 'Courier New' } : {});
           } else if (b.type === 'table' && !el.querySelector('.katex')) {
             const tab = el.querySelector('table'), cs = getComputedStyle(tab.querySelector('td,th') || tab);

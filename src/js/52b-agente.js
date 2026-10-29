@@ -78,6 +78,9 @@ window.ERLEN_AGENTE = (() => {
   function bloqueResumen(b) {
     const out = {id: b.id, tipo: b.type, bloqueado: b.locked === true};
     if (b.type === 'text' || b.type === 'quote') out.texto = cadena(b.text, 500);
+    /* El texto se recorta y oculta datos antes de enviarlo: sus offsets ya
+       no serían los del original. Solo se informa de que hay formato. */
+    if (b.type === 'text' && b.formatoTexto != null && (!Array.isArray(b.formatoTexto) || b.formatoTexto.length)) out.formato_parcial = true;
     if (b.type === 'bullets') out.vinetas = (b.items || []).slice(0, 15).map(x => cadena(typeof x === 'string' ? x : x.t, 200));
     if (b.type === 'math' || b.type === 'chem') out.tex = cadena(b.tex, 500);
     if (b.type === 'bblock') { out.titulo = cadena(b.btitle, 150); out.texto = cadena(b.body, 400); }
@@ -116,7 +119,9 @@ window.ERLEN_AGENTE = (() => {
   const idSchema = {type: 'string', description: 'ID estable obtenido de la presentación, no número de diapositiva.'};
   const numSchema = {type: 'number'};
   const strProps = nombres => Object.fromEntries(nombres.map(k => [k, cadenaSchema]));
-  const bloqueSchema = {type: 'object', properties: {tipo: {type: 'string', enum: ['text', 'bullets', 'math', 'chem']}, text: cadenaSchema, tex: cadenaSchema, items: {type: 'array', items: {type: 'object', properties: {t: cadenaSchema, lvl: {type: 'integer'}}, required: ['t'], additionalProperties: false}}}, required: ['tipo'], additionalProperties: false};
+  const formatoSchema = {anyOf: [{type: 'array', items: {type: 'object', properties: {inicio: {type: 'integer'}, fin: {type: 'integer'}, negrita: {type: 'boolean'}, cursiva: {type: 'boolean'}}, required: ['inicio', 'fin'], additionalProperties: false}}, {type: 'null'}],
+    description: 'Solo text: rangos [inicio, fin) en UTF-16, ordenados, sin solaparse ni dividir parejas sustitutas, con negrita y/o cursiva booleanas que sobrescriben el estilo del bloque; null quita el formato parcial.'};
+  const bloqueSchema = {type: 'object', properties: {tipo: {type: 'string', enum: ['text', 'bullets', 'math', 'chem']}, text: cadenaSchema, formatoTexto: formatoSchema, tex: cadenaSchema, items: {type: 'array', items: {type: 'object', properties: {t: cadenaSchema, lvl: {type: 'integer'}}, required: ['t'], additionalProperties: false}}}, required: ['tipo'], additionalProperties: false};
   const slideSchema = {type: 'object', properties: {diseno: cadenaSchema, titulo: cadenaSchema, notas: cadenaSchema, minutos: numSchema, zonas: {type: 'array', items: {type: 'array', items: bloqueSchema}}}, additionalProperties: false};
   function herramienta(name, description, properties, required = []) {
     return {type: 'function', function: {name, description, parameters: {type: 'object', properties, required, additionalProperties: false}}};
@@ -131,12 +136,12 @@ window.ERLEN_AGENTE = (() => {
     herramienta('mover_diapositiva', 'Mueve una diapositiva a una posición desde 1.', {diapositiva: idSchema, posicion: {type: 'integer'}}, ['diapositiva', 'posicion']),
     herramienta('eliminar_diapositiva', 'Elimina una diapositiva que no contiene bloques protegidos o científicos.', {diapositiva: idSchema}, ['diapositiva']),
     herramienta('agregar_bloque', 'Añade un bloque text, bullets, math o chem. Indica text, items o tex según el tipo.', {diapositiva: idSchema, zona: {type: 'integer'}, posicion: {type: 'integer'}, bloque: bloqueSchema}, ['diapositiva', 'bloque']),
-    herramienta('editar_bloque', 'Cambia texto o propiedades descriptivas de un bloque sin tocar sus datos científicos.', {bloque: idSchema, cambios: {type: 'object', properties: {...strProps(['text', 'tex', 'caption', 'alt', 'xlabel', 'ylabel', 'title', 'btitle', 'body', 'by', 'size', 'align']), items: {type: 'array', items: {type: 'object', properties: {t: cadenaSchema, lvl: {type: 'integer'}}, required: ['t'], additionalProperties: false}}}, additionalProperties: false}}, ['bloque', 'cambios']),
+    herramienta('editar_bloque', 'Cambia texto o propiedades descriptivas de un bloque sin tocar sus datos científicos. Si cambias text con formato parcial existente, envía formatoTexto válido para el texto final o null para quitarlo; no adivines los rangos.', {bloque: idSchema, cambios: {type: 'object', properties: {...strProps(['text', 'tex', 'caption', 'alt', 'xlabel', 'ylabel', 'title', 'btitle', 'body', 'by', 'size', 'align']), formatoTexto: formatoSchema, items: {type: 'array', items: {type: 'object', properties: {t: cadenaSchema, lvl: {type: 'integer'}}, required: ['t'], additionalProperties: false}}}, additionalProperties: false}}, ['bloque', 'cambios']),
     herramienta('eliminar_bloque', 'Elimina un bloque de texto o fórmula no protegido.', {bloque: idSchema}, ['bloque']),
     herramienta('posicionar_bloque', 'Coloca un bloque desbloqueado en una diapositiva con lienzo libre. Los valores son porcentajes, con anchura y altura mínimas de 1.', {bloque: idSchema, posicion: {type: 'object', properties: {x: numSchema, y: numSchema, w: numSchema, h: numSchema}, required: ['x', 'y', 'w', 'h'], additionalProperties: false}}, ['bloque', 'posicion'])
   ];
   const propiedades = {
-    text: ['text', 'size', 'align'], bullets: ['items'], math: ['tex', 'size'], chem: ['tex'],
+    text: ['text', 'size', 'align', 'formatoTexto'], bullets: ['items'], math: ['tex', 'size'], chem: ['tex'],
     quote: ['text', 'by'], bblock: ['btitle', 'body'], teorema: ['titulo', 'body'],
     chart: ['caption', 'xlabel', 'ylabel', 'title'], func: ['caption', 'xlabel', 'ylabel', 'title'],
     image: ['caption', 'alt'], table: ['caption'], estruct: ['caption'], montaje: ['caption'], geo: ['caption']
@@ -168,6 +173,8 @@ window.ERLEN_AGENTE = (() => {
           campos(item, ['t', 'lvl'], ['t']); texto(item.t, 'viñeta', 1000);
           if (item.lvl != null) entero(item.lvl, 'nivel', 0, 2);
         }
+      } else if (k === 'formatoTexto') {
+        if (v !== null && !Array.isArray(v)) error('«formatoTexto» debe ser una lista de rangos o null.');
       } else {
         texto(v, k, 4000);
         if (k === 'size' && !['s', 'n', 'l'].includes(v)) error('Tamaño de texto no válido.');
@@ -176,7 +183,7 @@ window.ERLEN_AGENTE = (() => {
     }
   }
   function validaBloqueNuevo(b) {
-    campos(b, ['tipo', 'text', 'items', 'tex'], ['tipo']);
+    campos(b, ['tipo', 'text', 'formatoTexto', 'items', 'tex'], ['tipo']);
     if (!['text', 'bullets', 'math', 'chem'].includes(b.tipo)) error('Tipo de bloque no permitido.');
     const p = {...b}; delete p.tipo; revisaCamposBloque(b.tipo, p);
     const necesaria = b.tipo === 'text' ? 'text' : b.tipo === 'bullets' ? 'items' : 'tex';
@@ -298,7 +305,14 @@ window.ERLEN_AGENTE = (() => {
       for (const k of Object.keys(a.cambios)) conservaCitas(f.block[k], a.cambios[k]);
       r = await ejecuta(ops, 'editaBloque', a, d);
       const mod = bloquePorId(r.deck, a.bloque).block;
-      for (const k of Object.keys(a.cambios)) if (Object.hasOwn(mod, k)) f.block[k] = copia(mod[k]); else delete f.block[k];
+      const claves = new Set(Object.keys(a.cambios));
+      /* Texto y rangos deben copiarse juntos desde el resultado validado,
+         sin sustituir las demás propiedades científicas del bloque. */
+      if (f.block.type === 'text' && (claves.has('text') || claves.has('formatoTexto'))) {
+        conservaCitas(f.block.text, mod.text);
+        claves.add('text'); claves.add('formatoTexto');
+      }
+      for (const k of claves) if (Object.hasOwn(mod, k)) f.block[k] = copia(mod[k]); else delete f.block[k];
       descripcion = 'Actualizado el bloque ' + f.block.type + ' en «' + cadena(f.slide.title || 'sin título', 100) + '».';
     } else if (nombre === 'eliminar_bloque') {
       campos(a, ['bloque'], ['bloque']); const f = bloquePorId(d, a.bloque);

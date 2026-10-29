@@ -28,9 +28,9 @@ function mismoContextoBarra(a, b) {
 function vigenteBarra(ctx) { return mismoContextoBarra(ctx, contextoBarra()); }
 
 /* Guarda la selección de texto antes de que un control del navegador tome el
-   foco. Los estilos afectan al bloque entero, pero no desplazan su cursor. */
+   foco, para aplicar el formato sin desplazar el cursor. */
 function capturaTextoBarra(ctx) {
-  if (!rawEl || rawEl.dataset.ek !== 'b:' + ctx.b.id || !rawEl.isConnected) return null;
+  if (!ctx || !rawEl || rawEl.dataset.ek !== 'b:' + ctx.b.id || !rawEl.isConnected) return null;
   const seleccion = getSelection();
   if (!seleccion || !seleccion.rangeCount) return null;
   const r = seleccion.getRangeAt(0);
@@ -73,17 +73,34 @@ function ejecutaBarra(ctx, fn, conservarTexto = false) {
   if (!vigenteBarra(ctx)) return;
   flushEdicion();
   if (!vigenteBarra(ctx)) return;
-  fn();
+  fn(guardado);
   if (conservarTexto) restauraTextoBarra(guardado);
 }
 function cambiaTextoBarra(ctx, campo, valor) {
-  ejecutaBarra(ctx, () => {
+  ejecutaBarra(ctx, seleccion => {
     const b = ctx.b;
     if (ctx.ids.length !== 1 || b.locked || b.type !== 'text') return;
+    const estilo = campo === 'negrita' || campo === 'cursiva';
+    if (estilo && seleccion && seleccion.fin > seleccion.inicio) {
+      const texto = String(b.text || '');
+      let inicio = clamp(seleccion.inicio, 0, texto.length), fin = clamp(seleccion.fin, inicio, texto.length);
+      /* La selección visual no debe cortar un emoji o un acento combinado. */
+      if (typeof Intl.Segmenter === 'function') for (const parte of new Intl.Segmenter(undefined, {granularity:'grapheme'}).segment(texto)) {
+        const a = parte.index, z = a + parte.segment.length;
+        if (a < inicio && inicio < z) inicio = a;
+        if (a < fin && fin < z) fin = z;
+      }
+      if (inicio === fin) return;
+      const activo = partesFormatoTexto(b, inicio, fin).every(p => p[campo]);
+      cambiaFormatoTexto(b, inicio, fin, campo, !activo);
+      commit(); return;
+    }
     const previo = campo === 'size' ? b.size || 'n' : campo === 'align' ? b.align || 'left' : !!b[campo];
     const nuevo = typeof valor === 'function' ? valor(previo) : valor;
     if (previo === nuevo) return;
-    if ((campo === 'negrita' || campo === 'cursiva') && !nuevo) delete b[campo]; else b[campo] = nuevo;
+    const partes = estilo ? partesFormatoTexto(b) : null;
+    if (estilo && !nuevo) delete b[campo]; else b[campo] = nuevo;
+    if (partes) { partes.forEach(p => { p[campo] = nuevo; p[campo + 'Explicita'] = false; }); guardaPartesFormatoTexto(b, partes); }
     commit();
   }, true);
 }
@@ -107,7 +124,10 @@ async function cambiaColorFormaBarra(ctx, propiedad, color) {
 function actualizaBarraContextual(bar, ctx) {
   const b = ctx.b;
   const size = bar.querySelector('[data-barra-accion="tamano"]'); if (size) size.value = b.size || 'n';
-  for (const [accion, activo] of [['negrita',b.negrita === true], ['cursiva',b.cursiva === true],
+  const seleccion = capturaTextoBarra(ctx), fuente = rawFormato || b;
+  const partes = seleccion && seleccion.fin > seleccion.inicio ? partesFormatoTexto(fuente, seleccion.inicio, seleccion.fin) : [];
+  const estado = campo => partes.length ? (partes.every(p => p[campo]) ? 'true' : partes.some(p => p[campo]) ? 'mixed' : 'false') : String(b[campo] === true);
+  for (const [accion, activo] of [['negrita',estado('negrita')], ['cursiva',estado('cursiva')],
     ['izquierda',!b.align || b.align === 'left'], ['centro',b.align === 'center'], ['derecha',b.align === 'right']]) {
     const boton = bar.querySelector('[data-barra-accion="'+accion+'"]'); if (boton) boton.setAttribute('aria-pressed', String(activo));
   }
@@ -157,8 +177,8 @@ function pintaBarraContextual() {
     g.append(tam);
     const texto = (simbolo,nombre,accion,campo,valor) => g.append(h('button',{type:'button',title:nombre,'aria-label':nombre,
       'data-barra-accion':accion,'aria-pressed':'false',onclick:() => cambiaTextoBarra(ctx,campo,valor)},simbolo));
-    texto(icono('Bold','N'),'Negrita del bloque','negrita','negrita',v=>!v);
-    texto(icono('Italic','C'),'Cursiva del bloque','cursiva','cursiva',v=>!v);
+    texto(icono('Bold','N'),'Negrita','negrita','negrita',v=>!v);
+    texto(icono('Italic','C'),'Cursiva','cursiva','cursiva',v=>!v);
     texto(icono('AlignLeft','≡'),'Alinear texto a la izquierda','izquierda','align','left');
     texto(icono('AlignCenter','≡'),'Centrar texto','centro','align','center');
     texto(icono('AlignRight','≡'),'Alinear texto a la derecha','derecha','align','right');
@@ -199,6 +219,10 @@ function pintaBarraContextual() {
 function iniciaBarraContextual() {
   const bar = $('#barraContextual'); if (!bar || bar._iniciada) return;
   bar._iniciada = true;
+  document.addEventListener('selectionchange', () => {
+    const ctx = bar._contexto;
+    if (ctx && vigenteBarra(ctx) && rawEl) actualizaBarraContextual(bar, ctx);
+  });
   bar.addEventListener('pointerdown', e => {
     const ctx = bar._contexto;
     bar._textoPrevio = ctx ? capturaTextoBarra(ctx) : null;

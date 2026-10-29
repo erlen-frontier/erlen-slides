@@ -57,10 +57,20 @@ test('Recupera texto aún en edición sin tocar el documento ni forzar pérdida 
  s.ctx.rawEl={isConnected:true,dataset:{ek:'b:b1'},innerText:'texto en curso\n'};
  s.ctx.deepCopy=x=>JSON.parse(JSON.stringify(x));s.ctx.ekParts=x=>x.split(':');
  s.ctx.findBlock=(id,d=s.ctx.S.deck)=>({block:d.slides[0].blocks.find(b=>b.id===id)});
+ s.ctx.cambiaTextoFormateado=(b,v)=>{b.text=v;};
  const editor=readFileSync(new URL('../src/js/05-editor.js',import.meta.url),'utf8');
  vm.runInContext(editor.match(/function setRaw\([\s\S]*?\n\}/)[0],s.ctx);
  await s.ctx.recActual();assert.equal(s.ctx.S.deck.slides[0].blocks[0].text,'actual');
  assert.equal(JSON.parse((await s.ctx.recLista())[0].datos).slides[0].blocks[0].text,'texto en curso');
+ const bloque=s.ctx.S.deck.slides[0].blocks[0];
+ Object.assign(bloque,{text:'aaaa',formatoTexto:[{inicio:2,fin:4,negrita:true}]});
+ s.ctx.rawFormato={...bloque,text:'aaaaa',formatoTexto:[{inicio:3,fin:5,negrita:true}]};
+ s.ctx.rawEl.innerText='aaaaa';
+ await s.ctx.recActual(true);
+ const recuperado=JSON.parse((await s.ctx.recLista())[0].datos).slides[0].blocks[0];
+ assert.equal(recuperado.text,'aaaaa');
+ assert.deepEqual(recuperado.formatoTexto,[{inicio:3,fin:5,negrita:true}]);
+ assert.deepEqual(bloque.formatoTexto,[{inicio:2,fin:4,negrita:true}]);
 });
 test('Un fallo durante la escritura revierte también las eliminaciones por retención',async()=>{
  const s=setup();await s.ctx.recGuardar(deck('a'),'A');await s.ctx.recGuardar(deck('b'),'A');const db=await s.ctx.recDB();

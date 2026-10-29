@@ -131,8 +131,10 @@ function xmlTexto(id, f, texto) {
       : '<a:buNone/>';
     const esp = '<a:spcAft><a:spcPts val="' + Math.round((p.desp != null ? p.desp : 300)) + '"/></a:spcAft>';
     const runs = (p.runs && p.runs.length ? p.runs : [{ t: '' }]).map(r => {
+      const neg = r.neg == null ? texto.neg : r.neg, cur = r.cur == null ? texto.cur : r.cur;
       const props = '<a:rPr lang="es-MX" sz="' + Math.round((r.pt != null ? r.pt : texto.pt) * 100) + '"' +
-        (r.neg || texto.neg ? ' b="1"' : '') + (r.cur || texto.cur ? ' i="1"' : '') + ' dirty="0">' +
+        (r.neg != null ? ' b="' + (neg ? '1' : '0') + '"' : neg ? ' b="1"' : '') +
+        (r.cur != null ? ' i="' + (cur ? '1' : '0') + '"' : cur ? ' i="1"' : '') + ' dirty="0">' +
         '<a:solidFill><a:srgbClr val="' + (r.col || texto.col) + '"/></a:solidFill>' +
         '<a:latin typeface="' + xesc(r.mono ? 'Consolas' : texto.fuente) + '"/></a:rPr>';
       return '<a:r>' + props + '<a:t xml:space="preserve">' + xesc(r.t) + '</a:t></a:r>';
@@ -197,4 +199,3 @@ function xmlTabla(id, f, filas, opt) {
     '<a:tbl><a:tblPr firstRow="' + (opt.encabezado ? 1 : 0) + '" bandRow="1"/>' +
     '<a:tblGrid>' + cols + '</a:tblGrid>' + cuerpo + '</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
 }
-

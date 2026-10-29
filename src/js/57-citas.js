@@ -728,15 +728,24 @@ function quitaReferencia(id) {
 /* Al quitar una referencia se van también sus marcas del texto: si no, quedaría
    un «[cita perdida]» a media frase. */
 function borraMarcas(deck, clave) {
-  const limpia = t => String(t == null ? '' : t).replace(RE_CITA, (m, g) => {
+  const citaSinClave = (m, g) => {
     const q = clavesDeGrupo(g).filter(c => c !== clave);
     return q.length ? '[' + q.map(c => '@' + c).join('; ') + ']' : '';
-  }).replace(/[ \t]{2,}/g, ' ').replace(/ +([,.;:)])/g, '$1');
+  };
+  const limpia = t => String(t == null ? '' : t).replace(RE_CITA, citaSinClave)
+    .replace(/[ \t]{2,}/g, ' ').replace(/ +([,.;:)])/g, '$1');
+  const limpiaTexto = b => {
+    for (const [patron, reemplazo] of [[RE_CITA, citaSinClave], [/[ \t]{2,}/g, () => ' '], [/ +([,.;:)])/g, (m, signo) => signo]]) {
+      for (const m of [...String(b.text).matchAll(patron)].reverse())
+        reemplazaTextoFormateado(b, m.index, m.index + m[0].length, reemplazo(...m));
+    }
+  };
   deck.slides.forEach(sl => {
     if (typeof sl.title === 'string') sl.title = limpia(sl.title);
     if (typeof sl.subtitle === 'string') sl.subtitle = limpia(sl.subtitle);
     zonas(sl).flat().forEach(b => {
-      if (b.type !== 'code' && typeof b.text === 'string') b.text = limpia(b.text);
+      if (b.type === 'text' && typeof b.text === 'string') limpiaTexto(b);
+      else if (b.type !== 'code' && typeof b.text === 'string') b.text = limpia(b.text);
       ['body', 'caption', 'btitle'].forEach(k => { if (typeof b[k] === 'string') b[k] = limpia(b[k]); });
       if (Array.isArray(b.items)) b.items.forEach(i => { if (i && typeof i.t === 'string') i.t = limpia(i.t); });
       if (Array.isArray(b.rows)) b.rows.forEach(f => { if (Array.isArray(f)) f.forEach((c, j) => { if (typeof c === 'string') f[j] = limpia(c); }); });
@@ -810,5 +819,4 @@ function referenciasTex(deck, p, blq) {
   L.push(p + '\\end{thebibliography}');
   return L.join('\n');
 }
-
 

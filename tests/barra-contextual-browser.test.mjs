@@ -27,6 +27,14 @@ test('contextual controls follow the selected object and keep the canvas usable'
   });
   const barra=page.getByRole('toolbar',{name:'Herramientas del objeto'});
   const visible=async()=>assert.equal(await barra.isVisible(),true,'La barra contextual aparece al seleccionar un objeto');
+  const selecciona=async(inicio,fin)=>page.evaluate(([a,z])=>{
+    const el=document.querySelector('#stageInner .blk[data-bid="texto"] [data-edit]');
+    const nodos=[],walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    while(walker.nextNode())nodos.push(walker.currentNode);
+    const punto=pos=>{for(const nodo of nodos){if(pos<=nodo.length)return [nodo,pos];pos-=nodo.length;}throw Error('Selección fuera del texto');};
+    const [n,i]=punto(a),[m,j]=punto(z),r=document.createRange();r.setStart(n,i);r.setEnd(m,j);
+    const s=getSelection();s.removeAllRanges();s.addRange(r);
+  },[inicio,fin]);
 
   await t.test('the first click on unselected text selects it and starts editing',async()=>{
     await reset();
@@ -44,7 +52,7 @@ test('contextual controls follow the selected object and keep the canvas usable'
 
   await t.test('text selection exposes type-specific and common actions outside the slide',async()=>{
     await reset();assert.equal(await barra.isVisible(),false);await page.evaluate(()=>selectBlock('texto'));await visible();
-    for(const name of ['Negrita del bloque','Cursiva del bloque','Alinear texto a la izquierda','Centrar texto','Alinear texto a la derecha','Duplicar bloque','Adelantar capa','Retrasar capa','Bloquear bloque','Eliminar bloque'])
+    for(const name of ['Negrita','Cursiva','Alinear texto a la izquierda','Centrar texto','Alinear texto a la derecha','Duplicar bloque','Adelantar capa','Retrasar capa','Bloquear bloque','Eliminar bloque'])
       assert.equal(await barra.getByRole('button',{name,exact:true}).count(),1,name);
     assert.equal(await barra.getByRole('combobox',{name:'Tamaño del texto'}).count(),1);
     const r=await page.evaluate(()=>{const a=document.querySelector('#barraContextual').getBoundingClientRect(),s=document.querySelector('#stage').getBoundingClientRect();return {barra:a.bottom,slide:s.top};});
@@ -55,10 +63,10 @@ test('contextual controls follow the selected object and keep the canvas usable'
     await reset();await page.evaluate(()=>selectBlock('texto'));await visible();
     const editor=page.locator('#stageInner .blk[data-bid="texto"] [data-edit]');
     await editor.click();await page.keyboard.press('End');await page.keyboard.type(' más');
-    await barra.getByRole('button',{name:'Negrita del bloque'}).click();
+    await barra.getByRole('button',{name:'Negrita'}).click();
     assert.deepEqual(await page.evaluate(()=>({text:findBlock('texto').block.text,bold:!!findBlock('texto').block.negrita,focus:document.activeElement?.dataset.ek})),{text:'Hola $x$ más',bold:true,focus:'b:texto'});
     await page.keyboard.type(' continúa');
-    await barra.getByRole('button',{name:'Cursiva del bloque'}).click();
+    await barra.getByRole('button',{name:'Cursiva'}).click();
     assert.equal(await page.evaluate(()=>findBlock('texto').block.text),'Hola $x$ más continúa');
     assert.equal(await page.evaluate(()=>!!findBlock('texto').block.cursiva),true);
     await page.evaluate(()=>doUndo());assert.equal(await page.evaluate(()=>!!findBlock('texto').block.cursiva),false);
@@ -75,7 +83,7 @@ test('contextual controls follow the selected object and keep the canvas usable'
       const r=document.createRange();r.setStart(last,0);r.collapse(true);
       const s=getSelection();s.removeAllRanges();s.addRange(r);
     });
-    await barra.getByRole('button',{name:'Negrita del bloque'}).click();
+    await barra.getByRole('button',{name:'Negrita'}).click();
     await page.keyboard.type('X');
     await page.evaluate(()=>flushEdicion());
     assert.equal(await page.evaluate(()=>findBlock('texto').block.text),'Uno\nXDos');
@@ -90,16 +98,187 @@ test('contextual controls follow the selected object and keep the canvas usable'
       const r=document.createRange();r.setStart(nodos[0],1);r.setEnd(nodos.at(-1),2);
       const s=getSelection();s.removeAllRanges();s.addRange(r);
     });
-    await barra.getByRole('button',{name:'Cursiva del bloque'}).click();
+    await barra.getByRole('button',{name:'Cursiva'}).click();
     await page.keyboard.type('X');await page.evaluate(()=>flushEdicion());
     assert.equal(await page.evaluate(()=>findBlock('texto').block.text),'UXs');
   });
 
+  await t.test('a selection can combine styles, toggle a mixed range and survive undo and JSON',async()=>{
+    await reset();await page.evaluate(()=>{findBlock('texto').block.text='Alfa beta gamma';snapNow();renderAll();selectBlock('texto');});
+    const editor=page.locator('#stageInner .blk[data-bid="texto"] [data-edit]');await editor.click();
+    await selecciona(5,9);await barra.getByRole('button',{name:'Negrita'}).click();
+    assert.equal(await page.evaluate(()=>getSelection().toString()),'beta');
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:5,fin:9,negrita:true}]);
+    const aspecto=await page.evaluate(()=>{
+      const e=document.querySelector('#stageInner .blk[data-bid="texto"] [data-edit]'),r=document.createTreeWalker(e,NodeFilter.SHOW_TEXT),out=[];
+      while(r.nextNode()){const n=r.currentNode,s=getComputedStyle(n.parentElement);out.push([n.data,s.fontWeight,s.fontStyle]);}return out;
+    });
+    assert.equal(aspecto.map(x=>x[0]).join(''),'Alfa beta gamma');
+    assert.ok(+aspecto.find(x=>x[0]==='beta')[1]>=600,JSON.stringify(aspecto));
+    assert.ok(+aspecto.find(x=>x[0].includes('Alfa'))[1]<600,JSON.stringify(aspecto));
+    await selecciona(5,12);await barra.getByRole('button',{name:'Cursiva'}).click();
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[
+      {inicio:5,fin:9,negrita:true,cursiva:true},{inicio:9,fin:12,cursiva:true}]);
+    await selecciona(5,12);await page.waitForTimeout(50);
+    assert.equal(await barra.getByRole('button',{name:'Negrita'}).getAttribute('aria-pressed'),'mixed');
+    await barra.getByRole('button',{name:'Negrita'}).click();
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:5,fin:12,negrita:true,cursiva:true}]);
+    await page.evaluate(()=>doUndo());
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[
+      {inicio:5,fin:9,negrita:true,cursiva:true},{inicio:9,fin:12,cursiva:true}]);
+    await page.evaluate(()=>doRedo());
+    const r=await page.evaluate(()=>{const d=saneaDeck(JSON.parse(JSON.stringify(S.deck)));return {v:d.deck.v,b:d.deck.slides[1].blocks[0],avisos:d.avisos};});
+    assert.equal(r.b.text,'Alfa beta gamma');
+    assert.deepEqual(r.b.formatoTexto,[{inicio:5,fin:12,negrita:true,cursiva:true}]);
+    assert.ok(!r.avisos.some(x=>/formato de texto/.test(x)),JSON.stringify(r.avisos));
+  });
+
+  await t.test('typing and replacement keep formatting attached to the intended text',async()=>{
+    await reset();await page.evaluate(()=>{findBlock('texto').block.text='aaa bbb ccc';snapNow();renderAll();selectBlock('texto');});
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await selecciona(4,7);await barra.getByRole('button',{name:'Negrita'}).click();
+    await selecciona(1,1);await page.keyboard.type('X');
+    await selecciona(5,8);await page.keyboard.type('D');
+    await page.evaluate(()=>flushEdicion());
+    assert.deepEqual(await page.evaluate(()=>({text:findBlock('texto').block.text,formato:findBlock('texto').block.formatoTexto})),
+      {text:'aXaa D ccc',formato:[{inicio:5,fin:6,negrita:true}]});
+    await page.evaluate(()=>doUndo());
+    assert.deepEqual(await page.evaluate(()=>({text:findBlock('texto').block.text,formato:findBlock('texto').block.formatoTexto})),
+      {text:'aaa bbb ccc',formato:[{inicio:4,fin:7,negrita:true}]});
+  });
+
+  await t.test('typing after trailing line breaks preserves the newlines and existing formatting',async()=>{
+    for(const teclas of [['Enter'],['Shift+Enter'],['Enter','Enter']]){
+      await reset();await page.evaluate(()=>{
+        Object.assign(findBlock('texto').block,{text:'abc',formatoTexto:[{inicio:0,fin:2,negrita:true}]});
+        snapNow();renderAll();selectBlock('texto');
+      });
+      await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+      await page.keyboard.press('End');
+      for(const tecla of teclas) await page.keyboard.press(tecla);
+      await page.keyboard.type('X');await page.evaluate(()=>flushEdicion());
+      assert.deepEqual(await page.evaluate(()=>({text:findBlock('texto').block.text,formato:findBlock('texto').block.formatoTexto})),
+        {text:'abc'+'\n'.repeat(teclas.length)+'X',formato:[{inicio:0,fin:2,negrita:true}]},teclas.join('+'));
+    }
+    await reset();await page.evaluate(()=>{
+      Object.assign(findBlock('texto').block,{text:'abc',formatoTexto:[{inicio:0,fin:3,negrita:true}]});
+      snapNow();renderAll();selectBlock('texto');
+    });
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await page.keyboard.press('End');await page.keyboard.press('Enter');await page.keyboard.press('Enter');
+    await page.keyboard.press('Backspace');await page.keyboard.type('X');await page.evaluate(()=>flushEdicion());
+    assert.deepEqual(await page.evaluate(()=>({text:findBlock('texto').block.text,formato:findBlock('texto').block.formatoTexto})),
+      {text:'abc\nX',formato:[{inicio:0,fin:5,negrita:true}]},'la inserción hereda el estilo y borrar un salto no desplaza el texto');
+    await reset();await page.evaluate(()=>{
+      Object.assign(findBlock('texto').block,{text:'abc\n',formatoTexto:[{inicio:0,fin:2,negrita:true}]});
+      snapNow();renderAll();selectBlock('texto');
+    });
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await page.evaluate(()=>flushEdicion());
+    assert.equal(await page.evaluate(()=>findBlock('texto').block.text),'abc\n','enfocar y salir no debe borrar un salto existente');
+  });
+
+  await t.test('editing preserves explicit overrides even when they match the block style',async()=>{
+    await reset();await page.evaluate(()=>{
+      Object.assign(findBlock('texto').block,{text:'abc xx def',negrita:true,formatoTexto:[{inicio:0,fin:3,negrita:true,cursiva:true}]});
+      snapNow();renderAll();selectBlock('texto');
+    });
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await page.keyboard.press('End');await page.keyboard.type('!');await page.evaluate(()=>flushEdicion());
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:0,fin:3,negrita:true,cursiva:true}]);
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await selecciona(0,3);await barra.getByRole('button',{name:'Cursiva'}).click();
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:0,fin:3,negrita:true}]);
+  });
+
+  await t.test('inserting a repeated citation keeps its position and the original formatting',async()=>{
+    await reset();await page.evaluate(()=>{
+      const b=findBlock('texto').block;
+      Object.assign(b,{text:'a\n[@x][@x]',formatoTexto:[{inicio:6,fin:10,negrita:true}]});
+      S.deck.meta.refs=[{id:'referencia',clave:'x',titulo:'Referencia ilustrativa',autores:'Autora',anio:'2020'}];
+      snapNow();renderAll();selectBlock('texto');
+    });
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await selecciona(2,2);
+    assert.equal(await page.evaluate(()=>{apuntaPunto();flushEdicion();return citaEnElTexto(['referencia']);}),true);
+    assert.deepEqual(await page.evaluate(()=>({text:findBlock('texto').block.text,formato:findBlock('texto').block.formatoTexto})),
+      {text:'a\n[@x][@x][@x]',formato:[{inicio:10,fin:14,negrita:true}]});
+  });
+
+  await t.test('the citation cursor accounts for a line break without formatting',async()=>{
+    await reset();await page.evaluate(()=>{
+      findBlock('texto').block.text='a\nx';
+      S.deck.meta.refs=[{id:'referencia',clave:'x',titulo:'Referencia ilustrativa',autores:'Autora',anio:'2020'}];
+      snapNow();renderAll();selectBlock('texto');
+    });
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await page.evaluate(()=>{
+      const el=document.querySelector('#stageInner .blk[data-bid="texto"] [data-edit]'), walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+      let ultimo;while(walker.nextNode())ultimo=walker.currentNode;
+      const r=document.createRange();r.setStart(ultimo,0);r.collapse(true);
+      const s=getSelection();s.removeAllRanges();s.addRange(r);apuntaPunto();flushEdicion();citaEnElTexto(['referencia']);
+    });
+    assert.equal(await page.evaluate(()=>findBlock('texto').block.text),'a\n[@x]x');
+  });
+
+  await t.test('a partial override can remove bold inside a bold block without removing italic',async()=>{
+    await reset();await page.evaluate(()=>{const b=findBlock('texto').block;Object.assign(b,{text:'uno dos tres',negrita:true,cursiva:true});snapNow();renderAll();selectBlock('texto');});
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await selecciona(4,7);await barra.getByRole('button',{name:'Negrita'}).click();
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:4,fin:7,negrita:false}]);
+    const estilo=await page.evaluate(()=>{const e=document.querySelector('#stageInner .blk[data-bid="texto"] [data-edit] span');const s=getComputedStyle(e);return {texto:e.textContent,peso:s.fontWeight,cursiva:s.fontStyle};});
+    assert.deepEqual(estilo,{texto:'dos',peso:'400',cursiva:'italic'});
+    await selecciona(7,7);await barra.getByRole('button',{name:'Negrita'}).click();
+    assert.equal(await page.evaluate(()=>!!findBlock('texto').block.negrita),false);
+    assert.equal(await page.evaluate(()=>!!findBlock('texto').block.cursiva),true);
+    assert.equal(await page.evaluate(()=>findBlock('texto').block.formatoTexto),undefined);
+  });
+
+  await t.test('formatting does not alter formulas, scientific notation, citations or glossary marks',async()=>{
+    await reset();
+    const r=await page.evaluate(()=>{
+      const b=findBlock('texto').block;
+      b.text='Dato 10 mg/L, $x^2$ y [@X] sobre {{fase}}.';
+      const antes=renderSlide(S.deck,1,'present',0).querySelector('.blk[data-bid="texto"]');
+      b.formatoTexto=[{inicio:0,fin:2,negrita:true},{inicio:6,fin:8,cursiva:true},{inicio:15,fin:18,negrita:true},{inicio:25,fin:28,cursiva:true}];
+      const despues=renderSlide(S.deck,1,'present',0).querySelector('.blk[data-bid="texto"]');
+      const resultado={texto:b.text,antes:antes.textContent,despues:despues.textContent,math:despues.querySelectorAll('.katex').length};
+      b.text='a (00l) y 10 mg/L más $x^2$ fin';delete b.formatoTexto;
+      resultado.millerAntes=renderSlide(S.deck,1,'present',0).querySelector('.blk[data-bid="texto"]').textContent;
+      b.formatoTexto=[{inicio:4,fin:5,negrita:true},{inicio:6,fin:14,cursiva:true}];
+      resultado.millerDespues=renderSlide(S.deck,1,'present',0).querySelector('.blk[data-bid="texto"]').textContent;
+      return resultado;
+    });
+    assert.equal(r.texto,'Dato 10 mg/L, $x^2$ y [@X] sobre {{fase}}.');
+    assert.equal(r.antes,r.despues);assert.equal(r.math,1);
+    assert.equal(r.millerAntes,r.millerDespues,'el índice de Miller no debe convertirse en una unidad');
+  });
+
   await t.test('keyboard actions retain focus on the contextual control',async()=>{
     await reset();await page.evaluate(()=>selectBlock('texto'));
-    const bold=barra.getByRole('button',{name:'Negrita del bloque'});await bold.focus();await page.keyboard.press('Enter');
+    const bold=barra.getByRole('button',{name:'Negrita'});await bold.focus();await page.keyboard.press('Enter');
     assert.equal(await page.evaluate(()=>!!findBlock('texto').block.negrita),true);
     assert.equal(await page.evaluate(()=>document.activeElement?.dataset.barraAccion),'negrita');
+  });
+
+  await t.test('a keyboard selection stays formatted when a toolbar control receives focus',async()=>{
+    await reset();await page.evaluate(()=>{findBlock('texto').block.text='uno dos';snapNow();renderAll();selectBlock('texto');});
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await page.keyboard.press('Home');
+    for(let i=0;i<3;i++) await page.keyboard.press('Shift+ArrowRight');
+    assert.equal(await page.evaluate(()=>getSelection().toString()),'uno');
+    await barra.getByRole('button',{name:'Negrita'}).focus();await page.keyboard.press('Enter');
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:0,fin:3,negrita:true}]);
+  });
+
+  await t.test('formatting cannot split an emoji or a combining accent',async()=>{
+    await reset();await page.evaluate(()=>{findBlock('texto').block.text='a😀 e\u0301 b';snapNow();renderAll();selectBlock('texto');});
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await selecciona(1,2);await barra.getByRole('button',{name:'Negrita'}).click();
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:1,fin:3,negrita:true}]);
+    await selecciona(4,5);await barra.getByRole('button',{name:'Cursiva'}).click();
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[
+      {inicio:1,fin:3,negrita:true},{inicio:4,fin:6,cursiva:true}]);
   });
 
   await t.test('all block property controls open the visible details panel with the ribbon',async()=>{
@@ -236,8 +415,8 @@ test('contextual controls follow the selected object and keep the canvas usable'
 
   await t.test('text style and alignment survive project and export',async()=>{
     await reset();await page.evaluate(()=>selectBlock('texto'));await visible();
-    await barra.getByRole('button',{name:'Negrita del bloque'}).click();
-    await barra.getByRole('button',{name:'Cursiva del bloque'}).click();
+    await barra.getByRole('button',{name:'Negrita'}).click();
+    await barra.getByRole('button',{name:'Cursiva'}).click();
     await barra.getByRole('button',{name:'Alinear texto a la derecha'}).click();
     await barra.getByRole('combobox',{name:'Tamaño del texto'}).selectOption('l');
     const r=await page.evaluate(async()=>{
@@ -252,8 +431,8 @@ test('contextual controls follow the selected object and keep the canvas usable'
 
   await t.test('PowerPoint retains whole-block text styles for editable plain text',async()=>{
     await reset();await page.evaluate(()=>selectBlock('otro'));
-    await barra.getByRole('button',{name:'Negrita del bloque'}).click();
-    await barra.getByRole('button',{name:'Cursiva del bloque'}).click();
+    await barra.getByRole('button',{name:'Negrita'}).click();
+    await barra.getByRole('button',{name:'Cursiva'}).click();
     const xml=await page.evaluate(async()=>{
       const ppt=await (await extensionSlides('exportador')).creaPPTX(S.deck);
       return await (await window.JSZip.loadAsync(ppt.blob)).file('ppt/slides/slide2.xml').async('string');
@@ -264,8 +443,8 @@ test('contextual controls follow the selected object and keep the canvas usable'
 
   await t.test('the classic PowerPoint exporter also retains bold and italic text',async()=>{
     await reset();await page.evaluate(()=>selectBlock('otro'));
-    await barra.getByRole('button',{name:'Negrita del bloque'}).click();
-    await barra.getByRole('button',{name:'Cursiva del bloque'}).click();
+    await barra.getByRole('button',{name:'Negrita'}).click();
+    await barra.getByRole('button',{name:'Cursiva'}).click();
     const xml=await page.evaluate(async()=>{
       let archivo;const old=window.downloadFile;
       window.downloadFile=async(nombre,blob)=>{if(nombre.endsWith('.pptx'))archivo=blob;return true;};

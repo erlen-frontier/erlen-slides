@@ -21,6 +21,9 @@ function camposTexto(deck) {
       else if (b.type === 'table') (b.rows || []).forEach((r, ri) => r.forEach((_, ci) => add(i, nom, () => b.rows[ri][ci] || '', v => b.rows[ri][ci] = v)));
       else if (b.type === 'bblock') { add(i, nom, () => b.btitle || '', v => b.btitle = v); add(i, nom, () => b.body || '', v => b.body = v); }
       else if (b.type === 'quote') { add(i, nom, () => b.text || '', v => b.text = v); add(i, nom, () => b.by || '', v => b.by = v); }
+      else if (b.type === 'text') add(i, nom, () => b.text || '', (v, cambios) => {
+        for (const [a, z, insercion] of cambios.slice().reverse()) reemplazaTextoFormateado(b, a, z, insercion);
+      });
       else if (b.text != null || b.type === 'text' || b.type === 'code') add(i, nom, () => b.text || '', v => b.text = v);
       if (b.type === 'teorema') { add(i, nom, () => b.titulo || '', v => b.titulo = v); }
       if (b.caption != null || ['image', 'chart', 'func', 'video', 'smart', 'table', 'estruct', 'montaje', 'geo'].indexOf(b.type) >= 0)
@@ -69,9 +72,9 @@ function reemplazaTodo(deck, q, por, opts) {
     const txt = c.get();
     if (!txt) return;
     const hay = norm(txt);
-    let out = '', p = 0, k = hay.indexOf(aguja);
-    while (k >= 0) { out += txt.slice(p, k) + por; p = k + q.length; n++; k = hay.indexOf(aguja, p); }
-    if (n && p) { out += txt.slice(p); c.set(out); }
+    let out = '', p = 0, k = hay.indexOf(aguja), cambios = [];
+    while (k >= 0) { out += txt.slice(p, k) + por; p = k + q.length; cambios.push([k, p, por]); n++; k = hay.indexOf(aguja, p); }
+    if (cambios.length) { out += txt.slice(p); c.set(out, cambios); }
   });
   return n;
 }
@@ -319,5 +322,4 @@ function openPaleta() {
   pinta();
   setTimeout(() => inp.focus(), 40);
 }
-
 

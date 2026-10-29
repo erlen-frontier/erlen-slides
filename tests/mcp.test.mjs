@@ -36,6 +36,7 @@ test('MCP: protocolo, catálogo y prompts', {timeout: 120000}, async () => {
     assert.ok(guia.datos.disenos.some(d => d.id === 'twocol' && d.zonas === 2));
     assert.deepEqual(guia.datos.disenos.find(d => d.id === 'dato').encabezados, ['', ''], 'la cifra de muestra no se ofrece como contenido');
     assert.ok(guia.crudo.structuredContent, 'structuredContent en 2025-06-18');
+    assert.match(guia.datos.convenciones.texto, /formatoTexto[\s\S]*UTF-16[\s\S]*null/);
 
     assert.match((await c.llama('crear_presentacion', {})).texto, /Falta «archivo»/);
     assert.match((await c.llama('herramienta_rara', {})).texto, /Herramienta desconocida/);
@@ -44,6 +45,86 @@ test('MCP: protocolo, catálogo y prompts', {timeout: 120000}, async () => {
   await conServidor(async c => {
     assert.equal((await c.llama('listar_ejemplos', {})).crudo.structuredContent, undefined, 'sin structuredContent en versiones anteriores');
   }, '2025-03-26');
+});
+
+test('MCP: el formato parcial se valida contra el texto final y los cambios ambiguos son explícitos', {timeout: 120000}, async () => {
+  await conServidor(async (c, dir) => {
+    const rangos = [{inicio: 1, fin: 3, negrita: false}, {inicio: 3, fin: 5, cursiva: true}];
+    const creada = await c.llama('crear_presentacion', {archivo: 'formato', diapositivas: [{zonas: [[
+      {tipo: 'text', formatoTexto: rangos, negrita: true, texto: 'a😀bc'},
+      {tipo: 'text', text: 'libre'}
+    ]]}]});
+    assert.equal(creada.error, false, creada.texto);
+    let p = proyecto(dir, 'formato'), b = p.slides[1].blocks[0], libre = p.slides[1].blocks[1];
+    assert.deepEqual(b.formatoTexto, rangos);
+    assert.equal(b.negrita, true);
+    assert.ok(!creada.datos.avisos.some(x => /formatoTexto/.test(x)));
+    const editar = cambios => c.llama('editar_bloque', {archivo: 'formato', bloque: b.id, cambios});
+    const antes = () => readFileSync(join(dir, 'formato.json'), 'utf8');
+    let r = await editar({size: 'l'});
+    assert.equal(r.error, false, r.texto);
+    r = await editar({text: 'a😀bc'});
+    assert.equal(r.error, false, r.texto);
+    assert.deepEqual(proyecto(dir, 'formato').slides[1].blocks[0].formatoTexto, rangos);
+
+    for (const cambios of [
+      {texto: 'texto distinto'}, {text: null},
+      {text: 'a😀bc', formatoTexto: [{inicio: 1, fin: 2, negrita: true}]},
+      {formatoTexto: [{inicio: 2, fin: 3, negrita: true}], text: 'a😀bc'},
+      {formatoTexto: [{inicio: 0, fin: 6, negrita: true}]},
+      {formatoTexto: [{inicio: -1, fin: 1, negrita: true}]},
+      {formatoTexto: [{inicio: 0.5, fin: 1, negrita: true}]},
+      {formatoTexto: [{inicio: 0, fin: 0, negrita: true}]},
+      {formatoTexto: [{inicio: 0, fin: 3, negrita: true}, {inicio: 2, fin: 3, cursiva: true}]},
+      {formatoTexto: [{inicio: 3, fin: 5, negrita: true}, {inicio: 0, fin: 1, cursiva: true}]},
+      {formatoTexto: [{inicio: 0, fin: 1, negrita: 'sí', cursiva: true}]},
+      {formatoTexto: [{inicio: 0, fin: 1, negrita: null, cursiva: true}]},
+      {formatoTexto: [{inicio: 0, fin: 1}]},
+      {formatoTexto: [{inicio: 0, fin: 1, negrita: true, extra: true}]},
+      {formatoTexto: 'incorrecto'}
+    ]) {
+      const previo = antes(), h = (await c.llama('historial_presentacion', {archivo: 'formato'})).datos.deshacer.length;
+      r = await editar(cambios);
+      assert.equal(r.error, true, JSON.stringify(cambios));
+      assert.match(r.texto, /formatoTexto/);
+      assert.equal(antes(), previo, 'un error no escribe');
+      assert.equal((await c.llama('historial_presentacion', {archivo: 'formato'})).datos.deshacer.length, h);
+    }
+
+    r = await editar({formatoTexto: [{inicio: 0, fin: 4, cursiva: false}], texto: 'nueva'});
+    assert.equal(r.error, false, r.texto);
+    b = proyecto(dir, 'formato').slides[1].blocks[0];
+    assert.equal(b.text, 'nueva');
+    assert.deepEqual(b.formatoTexto, [{inicio: 0, fin: 4, cursiva: false}]);
+    r = await editar({text: 'más largo', formatoTexto: [{inicio: 0, fin: 9, negrita: true}]});
+    assert.equal(r.error, false, r.texto);
+    assert.deepEqual(proyecto(dir, 'formato').slides[1].blocks[0].formatoTexto, [{inicio: 0, fin: 9, negrita: true}]);
+    r = await editar({text: 'otra', formatoTexto: null});
+    assert.equal(r.error, false, r.texto);
+    assert.equal(proyecto(dir, 'formato').slides[1].blocks[0].formatoTexto, undefined);
+    r = await c.llama('editar_bloque', {archivo: 'formato', bloque: libre.id, cambios: {text: 'sin rango'}});
+    assert.equal(r.error, false, r.texto);
+
+    const previo = antes();
+    r = await c.llama('agregar_diapositivas', {archivo: 'formato', diapositivas: [
+      {titulo: 'válida'}, {zonas: [[{tipo: 'text', text: 'x', formatoTexto: [{inicio: 0, fin: 2, negrita: true}]}]]}
+    ]});
+    assert.equal(r.error, true); assert.match(r.texto, /Diapositiva 2[\s\S]*formatoTexto/);
+    assert.equal(antes(), previo, 'el lote fallido es atómico');
+    r = await c.llama('agregar_bloque', {archivo: 'formato', diapositiva: 2, bloque: {tipo: 'quote', text: 'x', formatoTexto: [{inicio: 0, fin: 1, negrita: true}]}});
+    assert.equal(r.error, true); assert.match(r.texto, /formatoTexto/);
+    assert.equal(antes(), previo);
+
+    /* Ni siquiera los rangos de un archivo ajeno, hoy inválidos, deben
+       volverse aparentemente válidos sobre otro texto sin una decisión. */
+    p = proyecto(dir, 'formato');
+    p.slides[1].blocks[0].formatoTexto = [{inicio: 0, fin: 20, negrita: true}];
+    writeFileSync(join(dir, 'formato.json'), JSON.stringify(p));
+    const importado = antes();
+    r = await editar({text: 'x'.repeat(25)});
+    assert.equal(r.error, true); assert.match(r.texto, /formatoTexto/);
+    assert.equal(antes(), importado);
+  });
 });
 
 test('MCP: construir, importar datos, revisar, deshacer y exportar', {timeout: 180000}, async () => {

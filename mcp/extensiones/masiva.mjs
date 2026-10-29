@@ -233,7 +233,7 @@ async function buscarReemplazar(a) {
     throw new ErrorUso('La búsqueda falló: ' + e.message);
   }
 
-  const cambios = [], porAmbito = {};
+  const cambios = [], porAmbito = {}, textosFormateados = [];
   let total = 0, enMat = 0, enCita = 0;
   const ctx = (t, x, y) => t.slice(Math.max(0, x), y).replace(/\s+/g, ' ');
   lista.forEach((c, k) => {
@@ -250,9 +250,23 @@ async function buscarReemplazar(a) {
       if (por != null) fila.despues = antes + por + despues;
       cambios.push(fila);
     });
-    if (a.aplicar) c.obj[c.clave] = r.nuevo;
+    if (reemplazar != null && c.tipo === 'text' && c.clave === 'text' && c.obj.formatoTexto?.length)
+      textosFormateados.push({campo: c, hits: r.hits, nuevo: r.nuevo});
+    else if (a.aplicar) c.obj[c.clave] = r.nuevo;
   });
 
+  if (textosFormateados.length) {
+    const {bloques} = await op('reemplazosTexto', {bloques: textosFormateados.map(x => ({bloque: x.campo.obj, hits: x.hits}))});
+    textosFormateados.forEach((x, i) => {
+      const b = bloques[i];
+      if (b.text !== x.nuevo) throw new ErrorUso('El texto reemplazado no coincide con la búsqueda; no se guardaron cambios.');
+      if (a.aplicar) {
+        x.campo.obj.text = b.text;
+        if (Object.hasOwn(b, 'formatoTexto')) x.campo.obj.formatoTexto = b.formatoTexto;
+        else delete x.campo.obj.formatoTexto;
+      }
+    });
+  }
   const extra = {coincidencias: total, por_ambito: porAmbito, diapositivas: [...new Set(cambios.map(x => x.diapositiva))], cambios};
   if (total > cambios.length) extra.lista_recortada = 'Se muestran ' + cambios.length + ' de ' + total + '.';
   if (enMat) extra.omitidas_en_matematicas = enMat + ' coincidencia(s) dentro de $…$ no se tocan; añade «ecuaciones» al ámbito si también deben cambiar.';

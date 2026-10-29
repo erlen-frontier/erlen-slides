@@ -89,7 +89,14 @@ function recActual(fijar=false) {
     let deck=S.deck;
     if (typeof rawEl!=='undefined' && rawEl?.isConnected) {
       deck=deepCopy(S.deck);
-      setRaw(rawEl.dataset.ek,rawEl.innerText.replace(/\n$/,''),deck,S.cur);
+      const texto=rawEl.innerText.replace(/\n$/,'');
+      if (typeof rawFormato!=='undefined' && rawFormato && findBlock(rawFormato.id,deck)?.block) {
+        const copia={...rawFormato,formatoTexto:deepCopy(rawFormato.formatoTexto || [])};
+        cambiaTextoFormateado(copia,texto);
+        const bloque=findBlock(rawFormato.id,deck).block;
+        bloque.text=copia.text;
+        if(copia.formatoTexto?.length)bloque.formatoTexto=copia.formatoTexto;else delete bloque.formatoTexto;
+      } else setRaw(rawEl.dataset.ek,texto,deck,S.cur);
     }
     return recGuardar(deck,S.deckName,{fijar});
   } catch {recError();return Promise.resolve(false);}
