@@ -1,5 +1,7 @@
 # Validación de 0.2.1
 
+Este documento conserva comprobaciones históricas de las versiones y fechas indicadas. Las referencias al menú de Suite y a la importación de informes DoE describen funcionalidades anteriores, retiradas en la versión independiente de Tabula; no son resultados de la versión actual.
+
 Comprobaciones del 9 de septiembre de 2026, sobre esta distribución independiente:
 
 | Comprobación | Resultado y alcance |
@@ -53,3 +55,15 @@ Al modificar el archivo fuera de Tabula, Guardar avisó del conflicto y mantuvo 
 `tests/lienzo-archivos-browser.test.mjs` incorpora una regresión con interacción real en Chromium para componer, guardar y reabrir figuras, así como conservar los cambios al fallar el guardado. El selector y las operaciones nativas de archivos se simulan en esa prueba; las operaciones de Rust se comprueban por separado. Las 21 pruebas del núcleo Rust pasaron con acceso a los puertos locales que usan sus servidores de prueba.
 
 La auditoría global `npm run accesibilidad` detectó las mismas dos violaciones graves `label-content-name-mismatch` que en la base anterior: `erlen-suite-nav,summary` y `#edicionBadge`, tanto en claro como en oscuro. Siguen pendientes de corrección.
+
+## Evolución de la cinta — 29 de octubre de 2026
+
+La cinta reúne las herramientas del lienzo en **Diapositiva** y ofrece acceso directo a las gráficas desde **Insertar**. Se comprobaron en Chromium la selección, los menús, el foco y la convivencia con los controles del pie; también se inspeccionaron las disposiciones superior y lateral, los temas claro y oscuro y ventanas estrechas. Con un Pixel 5 emulado en Chromium a 390 × 844 y puntero táctil se usaron Imán, Capas y Conectores; los controles de lienzo de la cinta midieron 44 px de alto. No se probó un dispositivo móvil real.
+
+La auditoría axe limitada a la cinta y al menú de conectores no encontró violaciones serias ni críticas en los estados revisados. La auditoría global sigue señalando `label-content-name-mismatch` en `erlen-suite-nav,summary`, tanto en claro como en oscuro: es parte del componente compartido de la suite. La etiqueta de `#edicionBadge` se corrigió y ya no aparece en ese resultado. `npm test` aprobó 516 pruebas y omitió una por no disponer del checkout de `erlen-contratos`; las siete pruebas de `tests/mcp.test.mjs` pasaron por separado con Chromium, incluidas las exportaciones y la vista previa.
+
+## Tabula independiente — 29 de octubre de 2026
+
+`npm run build` generó 102 módulos y `npm test` aprobó 507 pruebas, sin fallos ni omisiones. Las siete pruebas de `tests/mcp.test.mjs` pasaron también por separado, incluidas la vista previa y las exportaciones PDF y PowerPoint en Chromium. Las pruebas comprueban las rutas locales y sus alias históricos, la migración aislada de apariencia, la conservación de una transferencia antigua sin abrirla ni borrarla y la importación de un proyecto ya convertido con su procedencia.
+
+`npm run accesibilidad` no encontró violaciones axe serias ni críticas en inicio, editor y ayuda, en claro y oscuro. Se inspeccionaron en Chromium el inicio, el editor y el diálogo Apariencia, incluidos oscuro y una ventana de 390 × 844; también se comprobaron el restablecimiento y la devolución del foco. La ventana estrecha es una emulación y no sustituye una prueba en un dispositivo móvil real ni con lectores de pantalla concretos.

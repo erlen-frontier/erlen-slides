@@ -6,7 +6,7 @@ En **Ver todas** puedes reorganizar la diapositiva actual con **Mover antes** y 
 
 ## Lienzo libre
 
-En una diapositiva que admita bloques, activa **Lienzo libre** debajo de la diapositiva. Se conservan sus bloques y su acomodo anterior: vuelve a pulsarlo para regresar. En una diapositiva **En blanco** puedes componer el contenido desde cero. La portada, las secciones y los índices que no admiten bloques conservan su comportamiento anterior.
+En una diapositiva que admita bloques, activa **Diapositiva → Lienzo libre** en la cinta o usa el botón debajo de la diapositiva. En ese grupo también están **Capas**, **Imán**, **Formas**, **Catálogo científico**, **Organizar** y **Conectores**; los controles debajo del lienzo siguen disponibles con la cinta plegada o con el panel lateral. Se conservan los bloques y su acomodo anterior: vuelve a pulsar **Lienzo libre** para regresar. En una diapositiva **En blanco** puedes componer el contenido desde cero. La portada, las secciones y los índices que no admiten bloques conservan su comportamiento anterior.
 
 Selecciona un bloque y arrastra su asa para moverlo o sus esquinas para cambiar su tamaño. Las flechas lo mueven; Mayús y las flechas cambian su tamaño. **Transformar objeto** abre el panel donde puedes escribir posición y tamaño en porcentaje. Activa **Bloquear proporciones** para conservar la relación entre anchura y altura al usar las esquinas, el teclado o los campos numéricos. Comprueba los avisos de recorte si reduces cajas con texto o figuras complejas.
 
@@ -30,6 +30,10 @@ Arrastra el asa de una fila para cambiar su lugar; la línea indica dónde se in
 
 **Formas** inserta un rectángulo, una elipse, una línea o una flecha directamente en la diapositiva. Muévelos y cambia su tamaño como cualquier bloque. Con doble clic puedes editar su color, sus objetos y su descripción en el editor de figuras. La figura sigue editable en el proyecto JSON; en PowerPoint se incorpora como imagen.
 
+Para unir dos objetos, selecciónalos en el orden deseado y abre **Conectores → Conectar**: la flecha apunta al objeto activo, el último seleccionado. También puedes seleccionarlos desde **Capas**. La flecha sigue los objetos al moverlos o cambiar su tamaño, y sigue el contorno de rectángulos y elipses simples sin pie, incluso al girarlos. Para figuras con pie u otros objetos se ancla a la caja del bloque, por lo que puede no tocar el contorno visible. Las conexiones se pintan detrás de los objetos. Si se superponen o un extremo está oculto por el nivel de presentación, la conexión deja de verse hasta que se separen o vuelvan a mostrarse.
+
+En **Conectores** puedes quitar cada relación, y deshacerla. Al eliminar un extremo o enviarlo a otra diapositiva se quitan sus conexiones en el mismo paso; al duplicar una selección se copian las conexiones cuyos dos extremos estén incluidos. Desactivar el lienzo libre oculta las conexiones sin borrarlas. El proyecto JSON las conserva; versiones anteriores pueden ignorarlas y no garantizan conservarlas al volver a guardar. El HTML y el PDF las muestran; PowerPoint las incluye como flechas estáticas, que no siguen a los objetos dentro de PowerPoint. Beamer y Markdown no las conservan y avisan de esa limitación.
+
 El proyecto JSON conserva la geometría, la orientación, el bloqueo de proporciones y el orden de capas. La vista de presentación, el HTML y el archivo para imprimir usan el mismo acomodo; versiones anteriores pueden abrir el contenido pero ignorar estas propiedades. PowerPoint conserva el giro y el volteo; las figuras con anotaciones se exportan como una imagen. Beamer conserva la orientación, pero Beamer y Markdown avisan de que cambia la colocación; revisa el archivo final antes de compartirlo.
 
 La negrita, la cursiva y la alineación del texto se guardan en el proyecto y se usan al presentar y en HTML, Beamer y PowerPoint. El exportador editable de PowerPoint rasteriza el texto que contiene matemáticas para conservar su aspecto; el clásico aproxima las matemáticas con Unicode. Markdown avisa cuando no puede conservar esos estilos al volver a importarlo; guarda el JSON para seguir editándolos.
@@ -42,7 +46,7 @@ Al enviar una petición se comparte con el proveedor un resumen acotado de la pr
 
 ## Crear una charla
 
-**Archivo → Importar presentación** acepta JSON, PowerPoint `.pptx` y Markdown `.md`. En la versión web también se accede desde **Inicio → Importar proyecto**. Elige el archivo, revisa la vista previa y pulsa **Abrir copia editable**. Cancelar deja intacta la presentación abierta. Se crea un nombre libre en tu biblioteca; un fallo de almacenamiento impide abrir la copia y avisa. Las copias descargadas desde Erlen DoE pasan por su comprobación y vista previa habitual.
+**Archivo → Importar presentación** acepta JSON, PowerPoint `.pptx` y Markdown `.md`. En la versión web también se accede desde **Inicio → Importar proyecto**. Elige el archivo, revisa la vista previa y pulsa **Abrir copia editable**. Cancelar deja intacta la presentación abierta. Se crea un nombre libre en tu biblioteca; un fallo de almacenamiento impide abrir la copia y avisa.
 
 El PowerPoint se lee localmente, sin subirlo. Textos, imágenes PNG/JPEG/GIF/WebP incrustadas, tablas, ecuaciones compatibles y notas se convierten a bloques. Las gráficas se recuperan como **tablas de datos**, incluidas las parejas x/y; después puedes crear una gráfica y elegir sus ejes y unidades. Los objetos agrupados se separan y las tablas largas repiten el encabezado. El acomodo, las fuentes y los efectos se adaptan al estilo de Tabula: la importación no reproduce la apariencia exacta de Office. Revisa los avisos sobre formas, patrones, celdas combinadas, recortes y medios no compatibles. Límites: 25 MiB de archivo, 100 MiB descomprimidos y hasta 200 diapositivas antes y después de adaptar. En el HTML suelto abierto con `file:`, la entrada conserva la importación JSON anterior; las herramientas adicionales requieren servir la carpeta completa.
 
@@ -52,7 +56,7 @@ Las imágenes que insertas en una diapositiva o galería conservan los bytes del
 
 Seleccionar una imagen existente y elegir **Anotar una copia** conserva el bloque original y su fuente científica. La copia incorpora la imagen como objeto bloqueado, que puedes desbloquear si necesitas moverlo; las anotaciones son otros objetos. Al adaptar un SVG se genera una representación PNG para el lienzo de la copia. Los datos científicos del bloque original permanecen intactos.
 
-**Figuras del catálogo:** en una diapositiva que admita bloques, activa **Lienzo libre** y pulsa **Figuras**, o elige **Insertar → Catálogo científico**. Busca por nombre o área, revisa el dibujo y sus créditos y pulsa **Añadir al lienzo**. Cada pieza es un objeto SVG independiente: puedes moverla, cambiar su tamaño, ordenarla y combinarla con otros objetos. Los trazados internos de la pieza no se editan individualmente; **Anotar una copia** permite añadir elementos sobre ella. El proyecto JSON conserva la imagen y su procedencia sin necesitar el catálogo para abrirla. Las portadas y secciones no admiten bloques en el lienzo actual.
+**Figuras del catálogo:** en una diapositiva que admita bloques, activa **Lienzo libre** y elige **Diapositiva → Catálogo científico**, pulsa **Figuras** debajo del lienzo o usa **Insertar → Catálogo científico**. Busca por nombre o área, revisa el dibujo y sus créditos y pulsa **Añadir al lienzo**. Cada pieza es un objeto SVG independiente: puedes moverla, cambiar su tamaño, ordenarla y combinarla con otros objetos. Los trazados internos de la pieza no se editan individualmente; **Anotar una copia** permite añadir elementos sobre ella. El proyecto JSON conserva la imagen y su procedencia sin necesitar el catálogo para abrirla. Las portadas y secciones no admiten bloques en el lienzo actual.
 
 Al compartir, algunas licencias requieren atribución. **Archivo → Créditos de figuras** permite consultarla y descargarla; incluye esos créditos junto al resultado. El kit de defensa los incorpora automáticamente. Markdown avisa que no conserva la procedencia editable al volver a importarlo; guarda el proyecto JSON para seguir trabajando.
 
@@ -61,6 +65,8 @@ Si creas una figura o un diagrama desde una portada o sección, al insertar se a
 **Inicio → Desde Markdown** abre un guion con vista previa. Usa `# Título` para la portada y `## Título` para las diapositivas; admite listas, tablas, ecuaciones, notas y columnas con el mismo [formato del servidor MCP](mcp.md). «Crear presentación» añade un documento nuevo a la biblioteca y conserva la charla abierta. Para traer figuras desde el guion, incrústalas como `data:image/...`; los archivos locales se insertan después. Archivo → Guion Markdown exporta imágenes incrustadas y avisa si un bloque necesita el proyecto JSON para conservar todas sus propiedades.
 
 **Inicio → Organizar bloques** permite agrupar, desagrupar, bloquear, alinear, duplicar, eliminar o trasladar una selección a otra zona. Ctrl/⌘/Mayús + clic añade bloques a la selección; un grupo se selecciona junto. Cada operación tiene un solo paso de deshacer. Bloquear protege los controles del editor; desbloquea antes de cambiar el contenido. Diseño → Vista previa de temas enseña los estilos sobre la diapositiva actual.
+
+En la pantalla de inicio abre **Apariencia** para ajustar el tema, el acento y el estilo visual de la aplicación. En el editor también puedes usar **Vista → Apariencia → Más opciones de apariencia…**. Estos ajustes no cambian las diapositivas: sus temas se eligen en **Diseño**.
 
 **Insertar → Diagrama desde texto** dibuja flujos, secuencias, relaciones y cronogramas con Mermaid. Pulsa «Dibujar», revisa etiquetas y conexiones e inserta la figura. El JSON conserva SVG y fuente; «Datos científicos…» o doble clic la reabre. Se rechazan enlaces y configuración embebida. Los diagramas existentes se siguen viendo sin cargar Mermaid.
 
@@ -72,7 +78,7 @@ En una pantalla vertical la diapositiva se coloca arriba, sus controles quedan e
 
 ## Gráficas y química
 
-Una gráfica conserva los pares de datos y sus etiquetas. Verifica unidades y significado de la incertidumbre antes de mostrar resultados. Los ejemplos tienen datos didácticos. El editor no certifica un ajuste, una asignación espectral ni la validez de un método.
+En **Insertar → Datos y ciencia** puedes elegir directamente **Gráfica de datos**, **Gráfica dinámica**, **Química y laboratorio** o **Matemáticas**. Una gráfica conserva los pares de datos y sus etiquetas. Verifica unidades y significado de la incertidumbre antes de mostrar resultados. Los ejemplos tienen datos didácticos. El editor no certifica un ajuste, una asignación espectral ni la validez de un método.
 
 La **gráfica dinámica** dibuja fórmulas (`x` es la variable del eje; cualquier otra letra es un parámetro con deslizador) y al presentar los deslizadores mueven la curva en vivo; en el PDF y en Beamer sale fija, con los valores que tenga al exportar.
 
@@ -105,25 +111,6 @@ Antes de compartir, abre Archivo → Calidad científica. La revisión comprueba
 Si trabajas con un asistente de IA conectado al [servidor MCP](mcp.md), puede enseñarte lo que construyó con `abrir_en_editor`: tu navegador abre el editor en `http://127.0.0.1:8130/?abrir=<clave>` (el asistente te da la dirección si el navegador no se abre solo). Slides pide el proyecto a ese mismo servidor, retira la clave de la dirección y enseña una **vista previa** con sus diapositivas. Solo al pulsar **Abrir en el editor** entra en tu biblioteca, con su título (y « (2)» si el nombre ya existe); la presentación que tenías abierta se conserva. **Cancelar** no cambia nada.
 
 La clave sirve una vez y caduca a los 10 minutos: si ves «El enlace caducó o ya se usó», pide al asistente que vuelva a abrirla. Lo que edites a partir de ahí se guarda en este navegador, no en el archivo del asistente: para devolverle tus cambios, usa **Exportar → Proyecto (.json)** y guarda el archivo en su carpeta de trabajo.
-
-## Un informe de Erlen DoE, como presentación
-
-Erlen DoE puede enviar su informe (tipo `informe-v1` del [contrato de copias de la suite](https://github.com/erlen-frontier-ops/erlen-suite/blob/main/docs/intercambio-doe.md)) para contarlo en una reunión de grupo. Dentro de la suite, la página de recursos del portal o el propio DoE abren `/slides/#copy=<id>`: Slides lee la copia al arrancar, la retira de la dirección sin dejar entrada en el historial y enseña una **vista previa** con las diapositivas que va a crear, cómo se repartieron las tablas largas, los recortes que hizo falta hacer y, si el informe lo declara, el aviso **DATOS SIMULADOS**. Fuera de la suite, DoE descarga la copia como `erlen-copia-slides-<id8>.json`; ábrela con **Importar proyecto** y pasa por la misma vista previa.
-
-Solo al pulsar **Crear presentación** aparece una presentación nueva en tu biblioteca, con el título del informe (y « (2)», « (3)»… si el nombre ya existe: nunca se sobrescribe otra). La presentación que tenías abierta se conserva. **Cancelar** no crea ni cambia nada, y la copia de intercambio sigue en la página de recursos, que es donde se borra.
-
-| En el informe | En la presentación |
-|---|---|
-| Título, subtítulo y fecha | La portada; con datos simulados, el subtítulo termina en «DATOS SIMULADOS» |
-| Cada sección | Una o más diapositivas con su título; las que siguen dicen «continuación» |
-| Párrafos y listas | Texto y viñetas, sin pasar de unas 55 palabras ni de siete viñetas por diapositiva; un párrafo largo se parte por frases y, si hace falta, a media frase con «…» |
-| Tablas | Tablas de Slides de hasta siete columnas y las filas que caben. Una tabla más larga o más ancha **se reparte** en varias diapositivas, sin perder datos: las filas en tramos parejos (un L9 va en 5 y 4 corridas) con el encabezado en cada uno, y las columnas de más en grupos que repiten las que identifican cada fila (la primera y, si las hay justo detrás, las de los factores del diseño). El título lleva «(1/4)», «(2/4)»…; el pie dice qué filas y columnas hay en cada diapositiva, y las notas y la vista previa, cómo se repartió. Solo si hicieran falta más de doce diapositivas se recorta lo que sobra, y el pie y las notas dicen cuántas filas y columnas se omitieron. Las celdas largas acaban en «…» y los números se muestran con hasta seis cifras significativas, igual en todas las partes |
-| Figuras | Gráficas de datos editables: de dispersión si todas las series son de puntos, de líneas si no; conservan el eje invertido del FTIR. Una serie de más de unos miles de puntos se aligera guardando el mínimo y el máximo de cada tramo, y el pie lo dice. Las marcas y regiones van a las notas. Una figura sin puntos se muestra como tabla de sus series; nunca como una imagen inventada |
-| Procedencia | La última diapositiva: aplicación, proyecto, título, fechas, identificador de la copia y su SHA-256. También queda en el proyecto (`meta.origen`) y en las notas de cada diapositiva |
-
-El reparto está calculado para el tema Metropolis en 16:9, con el que nace la presentación. Si cambias de tema o de proporción cambian las letras: **Preparar mi charla** avisa entonces de lo que no quepa. El texto llega tal cual lo escribió DoE; un «$» se muestra como signo, no abre matemáticas.
-
-Se rechazan, con el motivo en español y sin tocar nada, las copias de otro tipo o de otra aplicación de origen, las dirigidas a otra aplicación, las que cambiaron después de enviarse (su SHA-256 ya no coincide), las que no están en este navegador y los informes que se salen de los límites del tipo (30 secciones, 200 bloques, 2 MiB, tablas de 50 columnas y 500 filas, figuras de 8 series y 20 000 puntos por serie).
 
 ## Guardar y recuperar
 

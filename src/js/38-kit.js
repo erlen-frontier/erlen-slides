@@ -116,6 +116,8 @@ function leemeKit(pgs, extra) {
     ...(textoCreditosCatalogo(S.deck) ? ['  creditos-figuras.txt   Autoría y licencias para compartir las figuras.'] : []),
     ...(S.deck.slides.some(sl => sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
       ? ['  Aviso: el código Beamer no conserva la posición libre; revisa su acomodo.'] : []),
+    ...(S.deck.slides.some(sl => sl.conectores?.length)
+      ? ['  Aviso: Beamer no conserva los conectores; las relaciones siguen en proyecto.json.'] : []),
     ...(extra || []).filter(a => a.desc).map(a => '  ' + (a.rotulo || a.nombre).padEnd(22) + ' ' + a.desc),
     '',
     'LO QUE FALTA Y TIENES QUE PONER TÚ',

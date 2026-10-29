@@ -11,7 +11,7 @@ import {createHash} from 'node:crypto';
 test('A clean build generates its inputs before reading the module order', {timeout: 90000}, () => {
   const root = fileURLToPath(new URL('..', import.meta.url));
   const clean = mkdtempSync(join(tmpdir(), 'erlen-slides-clean-'));
-  const generated = ['_informe-limites-gen.js', '_glass-map-gen.js'];
+  const generated = ['_glass-map-gen.js'];
   try {
     for (const name of ['src', 'vendor', 'web', 'mcp', 'licenses', 'herramientas', 'LICENSE', 'package.json']) {
       cpSync(join(root, name), join(clean, name), {
@@ -29,7 +29,6 @@ test('A clean build generates its inputs before reading the module order', {time
     const html = readFileSync(join(clean, 'public/index.html'));
     const build = JSON.parse(readFileSync(join(clean, 'public/build.json')));
     assert.equal(build.sha256, createHash('sha256').update(html).digest('hex'));
-    assert.match(html.toString(), /const INFORME_LIMITES=Object\.freeze/);
     assert.match(html.toString(), /const ERLEN_GLASS_MAP=/);
   } finally {
     rmSync(clean, {recursive: true, force: true});

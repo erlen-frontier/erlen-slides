@@ -725,7 +725,7 @@ function renderSlide(deck, idx, mode, stepShown, opciones = null) {
         /* content y ancho */
         body.dataset.z = '0';
         body.append(...bloquesDe(0, bodyW));
-        const v = vacia(0, 'Inserta bloques desde el panel derecho →');
+        const v = vacia(0, 'Elige Insertar para añadir bloques');
         if (v) { v.style.width = '64%'; v.style.alignSelf = 'center'; body.append(v); }
       }
     }
@@ -738,6 +738,11 @@ function renderSlide(deck, idx, mode, stepShown, opciones = null) {
       /* Los bloques siguen en sus zonas del modelo; la capa solo cambia el
          lugar donde se dibujan. Así desactivar el modo recupera el acomodo. */
       const capa = h('div', { class: 'fbody lienzo-capa', style: esc !== 1 ? `--sesc:${esc}` : null });
+      if (sl.conectores?.length) {
+        const [w, h] = slideDims(deck);
+        const svg = sv('svg', {class:'lienzo-conectores', viewBox:`0 0 ${w} ${h}`, role:'img'});
+        pintaConectoresLienzo(svg, sl, deck); capa.append(svg);
+      }
       const porId = new Map(zonas(sl).flat().map(b => [String(b.id), b]));
       const fragmentos = [];
       for (const el of Array.from(frame.querySelectorAll('.blk[data-bid]'))) {
@@ -771,6 +776,17 @@ function renderSlide(deck, idx, mode, stepShown, opciones = null) {
           bandaInsertada = true;
         }
         capa.append(fragmento.contexto);
+      }
+      if (mode === 'present') {
+        const pasos = new Map();
+        for (const el of capa.querySelectorAll('.blk[data-bid]')) {
+          const fragmentos = [...(el.matches('.frag') ? [el] : []), ...el.querySelectorAll('.frag')];
+          pasos.set(el.dataset.bid, Math.max(-1, ...fragmentos.map(f => +f.dataset.frag)));
+        }
+        for (const conector of capa.querySelectorAll('.lienzo-conectores g[data-desde]')) {
+          const paso = Math.max(pasos.get(conector.dataset.desde) ?? -1, pasos.get(conector.dataset.hasta) ?? -1);
+          if (paso >= 0) { conector.classList.add('frag', 'an-fade'); conector.dataset.frag = paso; if (paso < stepShown) conector.classList.add('on'); }
+        }
       }
       frame.append(capa);
     }
@@ -829,4 +845,3 @@ function stepCount(deck, idx) {
   }
   return n;
 }
-

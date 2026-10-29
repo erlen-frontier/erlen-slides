@@ -236,8 +236,12 @@ function casa(texto, q) {
 /* Add actions from the live toolbar and File menu without maintaining a
    second catalogue. A result is revalidated before it can touch a document. */
 function comandosPaleta() {
-  const contexto = { deck: S.deck, slide: curSlide(), bloque: S.selBlock };
-  const sigueContexto = () => S.deck === contexto.deck && curSlide() === contexto.slide && S.selBlock === contexto.bloque;
+  const contexto = { deck: S.deck, slide: curSlide(), bloque: S.selBlock, ids: [...idsSeleccionados()] };
+  const sigueContexto = () => {
+    if (S.deck !== contexto.deck || curSlide() !== contexto.slide || S.selBlock !== contexto.bloque) return false;
+    const ids = idsSeleccionados();
+    return ids.size === contexto.ids.length && contexto.ids.every(id => ids.has(id));
+  };
   const avisoContexto = () => toast('La selección cambió. Vuelve a buscar la herramienta.', 'warn');
   const lista = comandos().map(cmd => ({ ...cmd, fn: () => {
     if (!sigueContexto()) { avisoContexto(); return; }

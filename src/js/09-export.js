@@ -920,6 +920,8 @@ function toBeamer(deck) {
     L.push(MARCA_DIAPO + (_iSl + 1) + ' ---');
     if (sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
       L.push('% Aviso: la posición libre de la diapositiva ' + (_iSl + 1) + ' no se conserva en Beamer; revisa el acomodo.');
+    if (Array.isArray(sl.conectores) && sl.conectores.length)
+      L.push('% Aviso: los conectores de la diapositiva ' + (_iSl + 1) + ' no se conservan en Beamer; consulta el proyecto JSON.');
     if (sl.layout === 'title') {
       L.push('\\begin{frame}' + (cfgPie.enPortada ? '' : '[plain]'));
       if (hayLogo && (m.logoPos || 'arriba') === 'esquina') {
@@ -1431,6 +1433,8 @@ function openTexView() {
       avisoCreditosCatalogo(),
       S.deck.slides.some(sl => sl.lienzoLibre && zonasDe(sl.layout) && zonas(sl).some(z => z.length))
         ? h('p', { class: 'hint', role: 'status' }, 'La posición libre no se conserva en Beamer: el acomodo cambia. Revisa el código y el resultado compilado.') : null,
+      S.deck.slides.some(sl => Array.isArray(sl.conectores) && sl.conectores.length && !(typeof fueraDeRama === 'function' && fueraDeRama(sl, S.deck)))
+        ? h('p', { class: 'hint', role: 'status' }, 'Los conectores no se conservan en Beamer. Guarda el proyecto JSON para conservar las relaciones.') : null,
       pre),
     foot: [
       figCount() ? h('button', { class: 'btn', onclick: exportFigures }, `Descargar figuras (${figCount()})`) : null,

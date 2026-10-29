@@ -43,6 +43,7 @@
         const c = deepCopy(s);
         c.id = s.id + '-m' + k;
         CLAVES_ZONA.forEach(z => (c[z] || []).forEach(b => { b.id = b.id + '-m' + k; }));
+        if (Array.isArray(c.conectores)) c.conectores.forEach(con => { con.desde += '-m' + k; con.hasta += '-m' + k; });
         return c;
       };
       m.slides = [copia(sl, 0)].concat(props.map((p, k) => copia(p.copia.slides[i], k + 1)));

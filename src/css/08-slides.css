@@ -9,6 +9,7 @@ body{letter-spacing:0;background:var(--bg)}
 .app{background:var(--panel)}
 .ed-badge{font:700 var(--t0)/1 var(--ui);letter-spacing:.02em;border-radius:var(--erlen-radio-badge);padding:5px 10px;background:var(--accSoft);color:var(--acc);border-color:var(--accLine)}
 .tb-sep{height:20px;margin:0 6px}.deck-title{font:600 var(--t2) var(--ui);border-radius:var(--r2);padding-inline:10px}
+@media(max-width:920px){.deck-title{padding-inline:6px}}
 .save-ind{font:500 var(--t0) var(--ui);letter-spacing:0}.save-ind.on{color:var(--ok)}
 .btn{border-radius:var(--r1);font-size:var(--t1);letter-spacing:0}.btn-pri{box-shadow:none}
 .icon-btn{border-radius:var(--r1)}.icon-btn:hover,.btn-ghost:hover{background:var(--accSoft);color:var(--acc)}

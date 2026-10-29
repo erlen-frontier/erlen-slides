@@ -32,7 +32,14 @@ test('the layers panel stays usable while editing the free canvas', {timeout:180
   const llevar=async (desde,hacia,parte='antes')=>{
     const handle=panel.locator('[data-capa-fila="'+desde+'"] [data-capa-arrastrar]'),destino=panel.locator('[data-capa-fila="'+hacia+'"]');
     await handle.waitFor({state:'visible'});await destino.waitFor({state:'visible'});
-    const a=await handle.boundingBox(),b=await destino.boundingBox();assert.ok(a&&b);
+    // Volver a medir si la lista se repinta entre la espera y la lectura de la caja.
+    let a,b;
+    for(let intento=0;intento<3;intento++){
+      a=await handle.boundingBox();b=await destino.boundingBox();
+      if(a&&b)break;
+      await page.waitForTimeout(50);
+    }
+    assert.ok(a&&b);
     await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
     await page.mouse.move(b.x+b.width/2,b.y+(parte==='antes'?5:b.height-5),{steps:8});
     await page.waitForFunction(({id,parte})=>document.querySelector('[data-capa-fila="'+id+'"]')?.dataset.insercion===parte,{id:hacia,parte});

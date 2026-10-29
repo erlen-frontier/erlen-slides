@@ -131,7 +131,7 @@ accion({ id: 'diseno', grp: 'Diapositivas', n: 'Cambiar el diseño de esta diapo
 accion({ id: 'duplicar', grp: 'Diapositivas', n: 'Duplicar esta diapositiva', d: 'Hace una copia justo después.',
   clave: 'duplicar copiar clonar',
   frases: 'duplicar copiar clonar repetir diapositiva',
-  corre: () => { const c = deepCopy(curSlide()); c.id = uid(); zonas(c).forEach(z => z.forEach(b => { b.id = uid(); })); S.deck.slides.splice(S.cur + 1, 0, c); S.cur++; commit(); return 'Copiada como diapositiva ' + (S.cur + 1) + '.'; } });
+  corre: () => { const c = copiaDiapositiva(curSlide()); S.deck.slides.splice(S.cur + 1, 0, c); S.cur++; commit(); return 'Copiada como diapositiva ' + (S.cur + 1) + '.'; } });
 accion({ id: 'borrar-diap', grp: 'Diapositivas', n: 'Quitar esta diapositiva',
   d: 'La elimina. Sale un aviso con «Deshacer» por si te arrepientes.',
   clave: 'borrar eliminar quitar',
@@ -749,5 +749,4 @@ function herramientasJSON() {
   }));
 }
 function correAccion(id, val) { const a = ACC.find(x => x.id === id); return a ? a.corre(val) : null; }
-
 

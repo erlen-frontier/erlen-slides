@@ -29,6 +29,19 @@ test('figure orientation is undoable and survives JSON without changing the sour
   assert.deepEqual(errors, []);
 });
 
+test('a rotated scientific image keeps the connector attached to the block box', async t => {
+  const {run,errors} = await prepara(t);
+  run(`const b=newBlock('text');Object.assign(b,{id:'destino',text:'Destino',posLibre:{x:70,y:50,w:20,h:20}});
+    curSlide().blocks.push(b);curSlide().conectores=[{desde:'figura',hasta:'destino'}];snapNow()`);
+  const coordenadas=()=>json(run,`(()=>{const line=renderSlide(S.deck,S.cur,'export',99).querySelector('.lienzo-conectores line');
+    return ['x1','y1','x2','y2'].map(k=>+line.getAttribute(k));})()`);
+  const antes=coordenadas(), source=run("findBlock('figura').block.src");
+  run("aplicaTransformacionLibre(S.deck,curSlide(),'figura',{giro:90,voltearH:false,voltearV:false})");
+  assert.deepEqual(coordenadas(),antes);
+  assert.equal(run("findBlock('figura').block.src"),source);
+  assert.deepEqual(errors,[]);
+});
+
 test('aspect lock keeps both dimensions in proportion for keyboard and numeric changes', async t => {
   const {run,dom,errors} = await prepara(t);
   run("findBlock('figura').block.bloqueaProporcion=true; snapNow(); renderAll(); selectBlock('figura')");

@@ -1,18 +1,18 @@
 # La interfaz, con ejemplos reales de la aplicación
 
-Estas imágenes son capturas de Chromium, tomadas con proyectos didácticos de este repositorio. No son bocetos de funciones futuras.
+Estas imágenes son capturas de Chromium, tomadas con proyectos didácticos de este repositorio. Son de una versión anterior y pueden diferir de la interfaz independiente, en particular de los controles de Apariencia.
 
 ## Inicio
 
 ![Inicio](images/inicio.png)
 
-La navegación organiza Inicio, Mis presentaciones, Ejemplos editables y Recursos. La acción principal crea una presentación vacía; las tarjetas abren copias editables de los ejemplos. El enlace al código y su licencia está en la barra lateral.
+La navegación local organiza Inicio, Mis presentaciones, Ejemplos editables y Recursos. La acción principal crea una presentación vacía; las tarjetas abren copias editables de los ejemplos. **Apariencia** permite ajustar el tema, el acento y el estilo de la aplicación. El enlace al código y su licencia está en la barra lateral.
 
 ## Editor científico
 
 ![Editor](images/editor.png)
 
-Arriba, la barra con la marca, el título, el guardado y «Presentar»; debajo, la cinta de herramientas común de la suite («Archivo», Inicio, Insertar, Diseño, Diapositiva, Presentar, Vista y la pestaña del bloque seleccionado). Debajo, de izquierda a derecha: secuencia de diapositivas, lienzo y, cuando lo pides desde la cinta, el panel de detalles. Debajo del lienzo están posición, zoom y vista general. El gráfico del ejemplo conserva sus datos; no es una captura pegada.
+Arriba, la barra con la marca, el título, el guardado y «Presentar»; debajo, la cinta de herramientas del editor («Archivo», Inicio, Insertar, Diseño, Diapositiva, Presentar, Vista y la pestaña del bloque seleccionado). Debajo, de izquierda a derecha: secuencia de diapositivas, lienzo y, cuando lo pides desde la cinta, el panel de detalles. Debajo del lienzo están posición, zoom y vista general. El gráfico del ejemplo conserva sus datos; no es una captura pegada.
 
 Al seleccionar un objeto, una barra sobre el lienzo muestra las acciones correspondientes a texto, imágenes o formas junto con las acciones de organización. El panel de capas puede permanecer abierto mientras se usa la barra y la diapositiva.
 

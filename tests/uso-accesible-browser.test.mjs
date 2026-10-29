@@ -34,6 +34,37 @@ test('Accessible import, figure editing and sharing in Chromium', { timeout: 180
     assert.deepEqual(violations.filter(v => ['serious', 'critical'].includes(v.impact)).map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), [], name);
   };
 
+  await t.test('The project title starts visible and remains editable on desktop and narrow screens', async () => {
+    for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+      const ctx = await browser.newContext({ viewport }), p = await ctx.newPage();
+      try {
+        await p.goto('http://127.0.0.1:' + port + '/');
+        await p.evaluate(() => document.fonts.ready);
+        await p.getByRole('button', { name: /Nueva presentación/ }).click();
+        const title = p.getByRole('textbox', { name: 'Título de la presentación' });
+        const state = () => title.evaluate(el => ({ focused: el === document.activeElement, scroll: el.scrollLeft, width: el.clientWidth, contentWidth: el.scrollWidth }));
+        const initial = await state();
+        assert.equal(initial.focused, true);
+        assert.equal(initial.scroll, 0, JSON.stringify({ viewport, initial }));
+        assert.ok(initial.contentWidth <= initial.width, JSON.stringify({ viewport, initial }));
+
+        const longTitle = 'Un título largo para presentar resultados ilustrativos y describir el método con claridad';
+        await title.fill(longTitle);
+        await p.getByRole('button', { name: 'Volver a Tabula' }).click();
+        await p.getByRole('button', { name: 'Continuar presentación' }).click();
+        const reopened = await state();
+        assert.equal(reopened.focused, true);
+        assert.equal(reopened.scroll, 0, JSON.stringify({ viewport, reopened }));
+        await title.press('End'); await p.keyboard.type('!');
+        await title.press('Home'); await p.keyboard.type('X');
+        assert.equal(await title.inputValue(), 'X' + longTitle + '!');
+        await p.getByRole('button', { name: 'Volver a Tabula' }).click();
+        await p.getByRole('button', { name: 'Continuar presentación' }).click();
+        assert.equal(await title.inputValue(), 'X' + longTitle + '!');
+      } finally { await ctx.close(); }
+    }
+  });
+
   await t.test('One import entry reads PPTX locally, preserves numerical pairs and notes, and saves a new copy', async () => {
     await page.getByRole('button', { name: 'Importar proyecto', exact: true }).click();
     await page.getByLabel('Archivo de presentación', { exact: true }).setInputFiles(file);
@@ -48,26 +79,22 @@ test('Accessible import, figure editing and sharing in Chromium', { timeout: 180
     assert.equal(r.images[0], 'data:image/png;base64,' + readFileSync(new URL('../docs/images/inicio.png', import.meta.url)).toString('base64'));
   });
 
-  await t.test('The same import entry handles JSON, Markdown and verified DoE copies', async () => {
-    for (const [name, data] of [['charla.md', '# Ejemplo ilustrativo\n\n## Método\n\n- Control ilustrativo'], ['charla.json', JSON.stringify({ v: 1, meta: { title: 'Proyecto ilustrativo' }, slides: [{ id: 'sl', layout: 'content', title: 'Método', blocks: [{ id: 'b', type: 'text', text: 'Control ilustrativo' }] }] })]]) {
+  await t.test('The same import entry handles JSON and Markdown and rejects unrelated JSON', async () => {
+    for (const [name, data] of [['charla.md', '# Ejemplo ilustrativo\n\n## Método\n\n- Control ilustrativo'], ['charla.json', JSON.stringify({ v: 1, meta: { title: 'Proyecto ilustrativo', origen: { tool: 'doe', kind: 'informe-v1', id: 'anterior' } }, slides: [{ id: 'sl', layout: 'content', title: 'Método', blocks: [{ id: 'b', type: 'text', text: 'Control ilustrativo' }] }] })]]) {
       await page.evaluate(() => openImportarPresentacion());
       await page.getByLabel('Archivo de presentación', { exact: true }).setInputFiles({ name, mimeType: 'application/octet-stream', buffer: Buffer.from(data) });
       await page.waitForFunction(() => !!document.querySelector('.mo-foot .btn-pri') && !document.querySelector('.mo-foot .btn-pri').disabled);
       await page.getByRole('button', { name: 'Abrir copia editable' }).click();
       assert.ok(await page.evaluate(() => S.deck.slides.some(sl => zonas(sl).flat().some(b => b.text === 'Control ilustrativo' || b.items?.some(it => it.t === 'Control ilustrativo')))));
+      if (name.endsWith('.json')) assert.deepEqual(await page.evaluate(() => S.deck.meta.origen), { tool: 'doe', kind: 'informe-v1', id: 'anterior' });
     }
-    const registro = await page.evaluate(async () => erlenExchange.prepareTransfer({ source: 'doe', target: 'slides', payload: { format: 'erlen-context-copy-v1', kind: 'informe-v1', source: { tool: 'doe', title: 'Importación ilustrativa', version: '0.3.0' }, snapshot: { titulo: 'Informe ilustrativo', subtitulo: 'Prueba', fecha: '2026-09-30', secciones: [{ titulo: 'Método', bloques: [{ tipo: 'parrafo', texto: 'Control ilustrativo' }] }], procedencia: { app: 'Erlen DoE', proyecto: 'Importación ilustrativa', simulado: true } } } }));
+    const before = await page.evaluate(() => JSON.stringify(S.deck));
     await page.evaluate(() => openImportarPresentacion());
-    await page.getByLabel('Archivo de presentación', { exact: true }).setInputFiles({ name: 'copia-doe.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(registro)) });
-    await page.getByRole('button', { name: 'Crear presentación', exact: true }).waitFor();
-    await page.getByRole('button', { name: 'Crear presentación', exact: true }).click();
-    assert.equal(await page.evaluate(() => S.deck.meta.title), 'Informe ilustrativo');
-    await page.evaluate(() => { window.__verify = erlenExchange.verifyTransfer; erlenExchange.verifyTransfer = (...args) => new Promise(ok => { window.__finishVerify = async () => ok(await window.__verify(...args)); }); openImportarPresentacion(); });
-    await page.getByLabel('Archivo de presentación', { exact: true }).setInputFiles({ name: 'copia-doe.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(registro)) });
-    await page.waitForFunction(() => typeof window.__finishVerify === 'function'); await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
-    await page.evaluate(async () => { await window.__finishVerify(); erlenExchange.verifyTransfer = window.__verify; });
-    await page.waitForTimeout(50); assert.equal(await page.locator('.modal').count(), 0);
-    assert.equal(await page.evaluate(() => S.deck.meta.title), 'Informe ilustrativo');
+    await page.getByLabel('Archivo de presentación', { exact: true }).setInputFiles({ name: 'ajeno.json', mimeType: 'application/json', buffer: Buffer.from('{"kind":"informe-v1","snapshot":{"titulo":"Informe"}}') });
+    await status().filter({ hasText: /no trae diapositivas/ }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Abrir copia editable' }).isDisabled(), true);
+    assert.equal(await page.evaluate(() => JSON.stringify(S.deck)), before);
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
   });
 
   await t.test('Cancel, unreadable files, external images and exhausted storage retain the open document', async () => {

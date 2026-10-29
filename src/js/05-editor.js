@@ -189,7 +189,7 @@ function mountToolbar() {
   if (f.block.type === 'geo') add('△', 'Elegir la figura y sus rótulos', () => openGeometria(f.block));
   bar.append(h('div', { class: 'tb-sep2' }));
   add('⋯', 'Más acciones…', ev => menuBloque(f, ev));
-  add('⚙', 'Propiedades en el panel', () => { S.tab = 'bloque'; renderInspector(); openDrawer(true); });
+  add('⚙', 'Propiedades en el panel', () => abrePanelLateral('bloque'));
   add('✕', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Eliminar selección' : 'Eliminar bloque', eliminarSeleccionActiva, 'tb-danger');
   el.append(bar);
   if (ARRASTRA_CUERPO[f.block.type]) {
@@ -259,7 +259,7 @@ function menuBloque(f, ev) {
   }
   it('⇥', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Mover bloque activo a otra diapositiva o zona…' : 'Mover a otra diapositiva o zona…', null, () => openMoverBloque(f.block));
   menu.append(h('div', { class: 'm-sep' }));
-  it('⚙', 'Propiedades', 'en el panel derecho', () => { S.tab = 'bloque'; renderInspector(); openDrawer(true); });
+  it('⚙', 'Propiedades', 'en el panel derecho', () => abrePanelLateral('bloque'));
   it('▣', 'Propiedades en una ventana', null, () => openBlockProps(f.block));
   showMenu(menu, ev.currentTarget || ev.target);
 }
@@ -425,7 +425,8 @@ function iniciaGiroLibre(ev, id) {
     ['x','y','w','h'].every(k => posicionLibreDe(slide, f.block)[k] === posicion[k]) &&
     ['giro','voltearH','voltearV'].every(k => transformacionLibreDe(f.block)[k] === anterior[k]);
   const cap = env.parentElement?.querySelector(':scope > figcaption');
-  const restaura = () => { if (env.isConnected) { env.style.transform = cssTransformacionLibre(transformacionLibreDe(f.block)); if (cap) ajustaPieImagen(env, cap); } };
+  const svg = env.closest('.slide')?.querySelector('.lienzo-conectores');
+  const restaura = () => { if (env.isConnected) { env.style.transform = cssTransformacionLibre(transformacionLibreDe(f.block)); if (cap) ajustaPieImagen(env, cap); pintaConectoresLienzo(svg, slide, deck); } };
   const quita = () => {
     document.removeEventListener('pointermove', mueve); document.removeEventListener('pointerup', suelta);
     document.removeEventListener('pointercancel', cancela); document.removeEventListener('keydown', escapa, true);
@@ -442,6 +443,7 @@ function iniciaGiroLibre(ev, id) {
     if (e.shiftKey) grados = Math.round(grados / 15) * 15;
     grados = redondeaLibre(((grados + 180) % 360 + 360) % 360 - 180);
     actual = {...anterior, giro:grados}; env.style.transform = cssTransformacionLibre(actual); if (cap) ajustaPieImagen(env, cap);
+    pintaConectoresLienzo(svg, slide, deck, null, new Map([[id, grados]]));
   };
   const suelta = e => {
     if (!mismo(e)) return;
@@ -484,7 +486,7 @@ function montaMarcoSeleccionLibre() {
 
 /* El panel no es modal: el lienzo sigue disponible y ambos comparten la misma
    selección. La primera fila representa la capa más cercana a quien mira. */
-let arrastreCapa = null, aplazaPanelCapas = false, panelCapasPendiente = false, temporizadorCapas = null;
+let arrastreCapa = null, aplazaPanelCapas = false, panelCapasPendiente = false, temporizadorCapas = null, abridorPanelCapas = null;
 function terminaInteraccionCapas() {
   if (!aplazaPanelCapas || arrastreCapa) return;
   clearTimeout(temporizadorCapas);
@@ -505,12 +507,16 @@ function cierraPanelCapas() {
   $('.canvas-wrap')?.classList.remove('capas-abierto');
   const boton = $('#lienzoObjetosBtn'); if (boton) boton.setAttribute('aria-expanded', 'false');
   renderCanvas();
-  if (dentro && boton && !boton.hidden && !boton.disabled) boton.focus({preventScroll:true});
+  const destino = [abridorPanelCapas, boton].find(el => el?.isConnected && !el.disabled && !el.closest('[hidden]'));
+  abridorPanelCapas = null;
+  if (dentro && destino) destino.focus({preventScroll:true});
 }
-function openObjetosLienzo() {
+function openObjetosLienzo(abridor) {
   const panel = $('#panelCapas'), sl = curSlide();
   if (!panel || !sl.lienzoLibre || !zonasDe(sl.layout)) return;
   if (!panel.hidden) { cierraPanelCapas(); return; }
+  const control = abridor?.currentTarget || abridor;
+  abridorPanelCapas = control?.tagName === 'BUTTON' ? control : document.activeElement;
   panel.hidden = false; $('.canvas-wrap').classList.add('capas-abierto');
   $('#lienzoObjetosBtn')?.setAttribute('aria-expanded', 'true');
   renderCanvas();
@@ -709,6 +715,8 @@ function iniciaGestoLibre(ev, id, accion) {
   try { ev.currentTarget.setPointerCapture(pointer); } catch (e) {}
   const mismo = e => pointer == null || e.pointerId === pointer;
   const pinta = (n, p) => Object.assign(n.style, { left: p.x + '%', top: p.y + '%', width: p.w + '%', height: p.h + '%' });
+  const svg = raiz.querySelector('.lienzo-conectores');
+  const conectaVista = ps => pintaConectoresLienzo(svg, sl, deck, new Map(ids.map((id, i) => [id, ps[i]])));
   const guias = g => {
     if (g.x == null && g.y == null) { quitaGuias(); return; }
     const capa = capaGuias(); if (!capa) return; capa.replaceChildren();
@@ -732,16 +740,16 @@ function iniciaGestoLibre(ev, id, accion) {
         dyFinal = clamp(redondeaLibre(dyFinal), -caja.y, 100 - caja.y - caja.h);
         quitaGuias();
       }
-      posiciones.forEach((q, i) => pinta(elementos[i], {...q,
-        x:clamp(q.x + dxFinal, 0, 100 - q.w), y:clamp(q.y + dyFinal, 0, 100 - q.h)}));
-      pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), posiciones.map(q => ({...q, x:q.x + dxFinal, y:q.y + dyFinal})));
+      const nuevas = posiciones.map(q => ({...q, x:clamp(q.x + dxFinal, 0, 100 - q.w), y:clamp(q.y + dyFinal, 0, 100 - q.h)}));
+      nuevas.forEach((q, i) => pinta(elementos[i], q));
+      pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), nuevas); conectaVista(nuevas);
       return;
     } else if (ids.length > 1 || proporcionInicial) {
       const anchoPx = caja.w / 100 * rect.width, altoPx = caja.h / 100 * rect.height;
       const vx = (accion.includes('e') ? 1 : -1) * anchoPx, vy = (accion.includes('s') ? 1 : -1) * altoPx;
       factorFinal = 1 + ((e.clientX - x0) * vx + (e.clientY - y0) * vy) / (vx * vx + vy * vy);
       const nuevas = calculaEscalaLibre(posiciones, accion, factorFinal);
-      if (nuevas) { nuevas.forEach((q, i) => pinta(elementos[i], q)); if (ids.length === 1) previa = nuevas[0]; pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), nuevas); }
+      if (nuevas) { nuevas.forEach((q, i) => pinta(elementos[i], q)); if (ids.length === 1) previa = nuevas[0]; pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), nuevas); conectaVista(nuevas); }
       return;
     } else {
       if (accion.includes('e')) p.w = clamp(p0.w + dx, 1, 100 - p0.x);
@@ -750,7 +758,7 @@ function iniciaGestoLibre(ev, id, accion) {
       if (accion.includes('n')) { p.y = clamp(p0.y + dy, 0, p0.y + p0.h - 1); p.h = p0.y + p0.h - p.y; }
     }
     previa = Object.fromEntries(Object.entries(p).map(([k, v]) => [k, redondeaLibre(v)]));
-    pinta(el, previa);
+    pinta(el, previa); conectaVista([previa]);
   };
   const quita = () => {
     document.removeEventListener('pointermove', mueve);
@@ -766,7 +774,7 @@ function iniciaGestoLibre(ev, id, accion) {
       if (n.isConnected) pinta(n, actual);
       return actual;
     });
-    if (raiz.isConnected) pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), actuales);
+    if (raiz.isConnected) { pintaMarcoSeleccionLibre(raiz.querySelector('.seleccion-marco'), actuales); conectaVista(actuales); }
   };
   const cancela = e => { if (e && e.type === 'pointercancel' && !mismo(e)) return; quita(); restaura(); };
   const escapa = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancela(); } };
@@ -943,38 +951,73 @@ function actualizaControlesComposicion() {
   barra.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout));
   const organizar = $('#lienzoOrganizarBtn');
   if (organizar) organizar.disabled = idsSeleccionados().size < 2;
+  actualizaCinta();
 }
 
-function menuOrganizaLienzo(anchor) {
+function alternaImanLienzo() {
+  S.prefs.imanLienzo = S.prefs.imanLienzo === false; guardaPrefs();
+  $('#lienzoImanBtn')?.setAttribute('aria-pressed', String(S.prefs.imanLienzo));
+  actualizaCinta();
+}
+
+/* Los menús del pie y de la cinta comparten opciones y validaciones. */
+function opcionesOrganizaLienzo() {
   const deck = S.deck, slide = curSlide(), ids = [...idsSeleccionados()];
   const bloqueada = ids.some(id => findBlock(id)?.block.locked);
-  const menu = h('div', { class: 'menu' });
-  for (const [texto, accion] of [
+  return [
     ['Alinear a la izquierda', 'izquierda'], ['Alinear al centro', 'centro'], ['Alinear a la derecha', 'derecha'],
     ['Alinear arriba', 'arriba'], ['Alinear en medio', 'medio'], ['Alinear abajo', 'abajo'],
     ['Distribuir horizontalmente', 'distribuir-h'], ['Distribuir verticalmente', 'distribuir-v']
-  ]) menu.append(h('button', { type: 'button', disabled: bloqueada || ids.length < (accion.startsWith('distribuir') ? 3 : 2), onclick: () => {
-    closeMenus();
+  ].map(([etiqueta, accion]) => ({etiqueta, deshabilitado: () => bloqueada || ids.length < (accion.startsWith('distribuir') ? 3 : 2), accion: () => {
     const actuales = idsSeleccionados();
     if (S.deck !== deck || curSlide() !== slide || actuales.size !== ids.length || !ids.every(id => actuales.has(id))) {
       toast('La selección cambió. Vuelve a abrir Organizar.', 'warn'); return;
     }
     if (!organizaSeleccionLibre(deck, slide, ids, accion)) toast('No hay cambios que aplicar a la selección.', 'warn');
     if (S.selBlock) enfocaBloqueLibre(S.selBlock);
-  } }, texto));
-  showMenu(menu, anchor);
+  }}));
 }
 
-function menuFormasLienzo(anchor) {
-  const menu = h('div', { class: 'menu' });
-  for (const [texto, tipo] of [['Rectángulo', 'rect'], ['Elipse', 'circle'], ['Línea', 'line'], ['Flecha', 'arrow']]) {
-    menu.append(h('button', { type: 'button', onclick: () => {
-      closeMenus();
-      insertaFormaLibre(tipo).catch(error => toast(error.message || 'No se pudo insertar la forma.', 'warn'));
-    } }, texto));
+function opcionesConectoresLienzo() {
+  const deck = S.deck, slide = curSlide(), ids = [...idsSeleccionados()], hasta = S.selBlock;
+  const desde = ids.find(id => id !== hasta), bloques = new Map(zonas(slide).flat().map(b => [b.id, b]));
+  const existe = (slide.conectores || []).some(c => c.desde === desde && c.hasta === hasta);
+  const puede = ids.length === 2 && desde && hasta && ids.every(id => bloques.get(id)?.type !== 'spacer');
+  const opciones = [{etiqueta: puede ? 'Conectar: ' + nombreConector(bloques.get(desde), slide) + ' → ' + nombreConector(bloques.get(hasta), slide) : 'Selecciona dos objetos para conectar',
+    deshabilitado: () => !puede || existe, accion: () => {
+    if (conectaBloques(deck, slide, desde, hasta)) {
+      const visible = conectoresVisibles(slide, deck).some(c => c.desde === desde && c.hasta === hasta);
+      toast(visible ? 'Conexión creada' : 'Conexión creada; separa los objetos para verla', null, {t:'Deshacer', fn:doUndo});
+    }
+    else toast('La selección cambió o la conexión ya existe.', 'warn');
+  }}];
+  for (const c of slide.conectores || []) {
+    const nombre = nombreConector(bloques.get(c.desde), slide) + ' → ' + nombreConector(bloques.get(c.hasta), slide);
+    opciones.push({etiqueta:'Eliminar conexión: ' + nombre, accion:() => {
+      if (eliminaConector(deck, slide, c.desde, c.hasta)) toast('Conexión eliminada', null, {t:'Deshacer', fn:doUndo});
+      else toast('La conexión ya no está en esta diapositiva.', 'warn');
+    }});
   }
+  return opciones;
+}
+
+function opcionesFormasLienzo() {
+  return [['Rectángulo', 'rect'], ['Elipse', 'circle'], ['Línea', 'line'], ['Flecha', 'arrow']]
+    .map(([etiqueta, tipo]) => ({etiqueta, accion:() => {
+      insertaFormaLibre(tipo).catch(error => toast(error.message || 'No se pudo insertar la forma.', 'warn'));
+    }}));
+}
+
+function menuOpcionesLienzo(anchor, opciones, clase = '') {
+  const menu = h('div', {class:'menu' + (clase ? ' ' + clase : '')});
+  for (const o of opciones) menu.append(h('button', {type:'button', disabled:!!o.deshabilitado?.(), onclick:() => {
+    closeMenus(); o.accion();
+  }}, o.etiqueta));
   showMenu(menu, anchor);
 }
+function menuOrganizaLienzo(anchor) { menuOpcionesLienzo(anchor, opcionesOrganizaLienzo()); }
+function menuConectoresLienzo(anchor) { menuOpcionesLienzo(anchor, opcionesConectoresLienzo(), 'menu-conectores'); }
+function menuFormasLienzo(anchor) { menuOpcionesLienzo(anchor, opcionesFormasLienzo()); }
 
 let ignoraClicLibre = false;
 /* La selección por recuadro no interfiere con un clic, texto editable ni
@@ -1058,10 +1101,7 @@ function initCanvasEvents() {
   if (pie && !$('#lienzoObjetosBtn')) pie.append(h('button', { id: 'lienzoObjetosBtn', type: 'button', class: 'btn btn-sm',
     hidden: true, 'aria-controls':'panelCapas', 'aria-expanded':'false', title: 'Elegir bloques y ordenar las capas', onclick: openObjetosLienzo }, 'Capas'));
   if (pie && !$('#lienzoImanBtn')) pie.append(h('button', { id: 'lienzoImanBtn', type: 'button', class: 'btn btn-sm lienzo-control',
-    hidden: true, 'aria-pressed': 'true', title: 'Ajustar a guías al mover; mantén Alt para omitir el ajuste', onclick: e => {
-      S.prefs.imanLienzo = S.prefs.imanLienzo === false; guardaPrefs();
-      e.currentTarget.setAttribute('aria-pressed', String(S.prefs.imanLienzo));
-    } }, 'Imán'));
+    hidden: true, 'aria-pressed': 'true', title: 'Ajustar a guías al mover; mantén Alt para omitir el ajuste', onclick: alternaImanLienzo }, 'Imán'));
   if (pie && !$('#lienzoComposicion')) {
     const organizar = h('button', { id: 'lienzoOrganizarBtn', type: 'button', class: 'btn btn-sm', 'aria-label': 'Organizar selección',
       onclick: e => menuOrganizaLienzo(e.currentTarget) }, 'Organizar');
@@ -1069,7 +1109,9 @@ function initCanvasEvents() {
       onclick: e => menuFormasLienzo(e.currentTarget) }, 'Formas');
     const catalogo = h('button', { id: 'lienzoCatalogoBtn', type: 'button', class: 'btn btn-sm', 'aria-label': 'Explorar figuras científicas',
       onclick: openCatalogoFiguras }, 'Figuras');
-    pie.append(h('div', { id: 'lienzoComposicion', class: 'lienzo-composicion', hidden: true }, formas, catalogo, organizar));
+    const conectores = h('button', {id:'lienzoConectoresBtn', type:'button', class:'btn btn-sm',
+      title:'Conectar dos objetos o eliminar conexiones', onclick:e => menuConectoresLienzo(e.currentTarget)}, 'Conectores');
+    pie.append(h('div', { id: 'lienzoComposicion', class: 'lienzo-composicion', hidden: true }, formas, catalogo, organizar, conectores));
   }
   inner.addEventListener('pointerdown', iniciaSeleccionPorMarco);
   /* Arrastrar una imagen dispara el arrastre nativo del navegador, que cancela

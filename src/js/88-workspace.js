@@ -18,27 +18,39 @@ function wsConservar() {
   }
   return true;
 }
-/* Pantalla de inicio: el componente común de la suite (src/diseno/suite-inicio.js,
-   cargado tal cual por _orden.txt; docs/COHERENCIA-APPS.md §3 del portal). Aquí solo se
-   declara qué muestra —ejemplos, biblioteca, recursos— y se conservan las rutas por hash
-   de siempre: #suite/<vista> para el inicio y #presentaciones para el editor. */
+/* Inicio, biblioteca y recursos locales. Las rutas anteriores con otro prefijo
+   se reconocen por su vista y se normalizan sin crear una entrada en el historial. */
 let INICIO = null;
-/* Vistas de la URL (históricas, enlazadas desde fuera) ↔ vistas del componente. */
-const SUITE_VISTAS = {inicio:'inicio', biblioteca:'biblioteca', plantillas:'ejemplos', herramientas:'recursos', servicio:'acerca'};
-const SUITE_RUTAS = Object.fromEntries(Object.entries(SUITE_VISTAS).map(([ruta, vista]) => [vista, ruta]));
-function suiteVistaValida(v) { return Object.hasOwn(SUITE_VISTAS, v) ? v : 'inicio'; }
-function suiteRuta(hash) { return hash === '#presentaciones' ? 'editor' : suiteVistaValida(String(hash || '').replace(/^#suite\/?/, '')); }
-function suiteUrl(v) { const hash = v === 'editor' ? '#presentaciones' : '#suite/' + suiteVistaValida(v); if (location.hash !== hash) history.pushState(null, '', location.pathname + location.search + hash); }
-/* #copy=<id> no es una vista: es una copia de la suite que llega (88e-informe.js). Se retira
-   de la URL antes de decidir la vista, que queda en el inicio, y se enseña encima su vista previa. */
-function suiteDesdeUrl() { const copia = copiaEnUrl(); if (!location.hash) history.replaceState(null, '', location.pathname + location.search + '#suite/inicio'); const v = suiteRuta(location.hash); v === 'editor' ? wsCerrar() : wsInicio(v); if (copia !== null) recibeCopiaSuite(copia); }
+const WS_VISTAS = {inicio:'inicio', biblioteca:'biblioteca', plantillas:'ejemplos', herramientas:'recursos', servicio:'acerca'};
+const WS_RUTAS = Object.fromEntries(Object.entries(WS_VISTAS).map(([ruta, vista]) => [vista, ruta]));
+function wsVistaValida(v) { return Object.hasOwn(WS_VISTAS, v) ? v : 'inicio'; }
+function wsRuta(hash) {
+  if (hash === '#presentaciones') return 'editor';
+  const partes = String(hash || '').replace(/^#/, '').split('/');
+  return wsVistaValida(partes.length > 1 ? partes[partes.length - 1] : partes[0]);
+}
+function wsUrl(v, reemplazar = false) {
+  const vista = wsVistaValida(v), hash = v === 'editor' ? '#presentaciones' : vista === 'inicio' ? '#inicio' : '#inicio/' + vista;
+  if (location.hash !== hash) history[reemplazar ? 'replaceState' : 'pushState'](null, '', location.pathname + location.search + hash);
+}
+function wsDesdeUrl() {
+  const vista = wsRuta(location.hash);
+  wsUrl(vista, true);
+  vista === 'editor' ? wsCerrar() : wsInicio(vista);
+}
 const wsAbierto = () => !!(INICIO && INICIO.abierta);
 /* Lo que hace falta al volver al editor, se venga del inicio o de un enlace directo. */
 function wsAlEditor() {
-  suiteUrl('editor');
+  wsUrl('editor');
   S.prefs.sinPrimera = true; guardaPrefs(); ocultaPrimera();
   renderAll();
-  $('#deckTitleInput').focus();
+  const titulo = $('#deckTitleInput');
+  titulo.focus();
+  /* Si no cabe, empezar por el principio sin cambiar el cursor al editar. */
+  if (titulo.scrollWidth > titulo.clientWidth) {
+    titulo.setSelectionRange(0, 0);
+    titulo.scrollLeft = 0;
+  }
 }
 function wsCerrar() {
   if (wsAbierto()) INICIO.cerrar(); else wsAlEditor();
@@ -54,10 +66,10 @@ function wsNueva(deck) {
 function wsAccion(fn) { return () => { if (wsCerrar() !== false) fn(); }; }
 function wsBoton(texto, fn, principal) { return h('button', {class:'btn btn-sm' + (principal ? ' btn-pri' : ''),onclick:fn}, texto); }
 function wsInicio(vista) {
-  const v = suiteVistaValida(vista || 'inicio');
+  const v = wsVistaValida(vista || 'inicio');
   if (!wsAbierto() && !wsConservar()) return;
-  INICIO.abrir(SUITE_VISTAS[v]);
-  suiteUrl(v);
+  INICIO.abrir(WS_VISTAS[v]);
+  wsUrl(v);
 }
 const wsCambiar = wsInicio;
 /* Biblioteca: las presentaciones guardadas con nombre en este navegador, de la más reciente a la más antigua. */
@@ -244,22 +256,13 @@ function wsReporte() {
 function wsServicio(body) {
  body.append(h('h2',null,'Tabula · Presentaciones'),h('p',{class:'ws-lead'},'Editor libre, versión '+edVersion()+'. Tus presentaciones se guardan en este dispositivo.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:ERLEN_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:ERLEN_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
 }
-/* ---------- el marco común de la suite ----------
-   erlenMarco (src/diseno/suite-marco.js) reorganiza los nodos que la app ya tiene —sin
-   clonarlos ni reconstruirlos— en la forma común de COHERENCIA-APPS §4: cabecera (marca,
-   nombre, menú de suite, título, estado, acciones y utilidades), cinta, tira de
-   diapositivas a la izquierda, lienzo al centro y panel de detalles a la derecha. La
-   marca del marco vuelve al inicio común; el editor se queda con sus listeners, su
-   historial y sus atajos. */
+/* El marco local mueve los nodos del editor sin clonarlos, conservando sus
+   listeners, selección e historial. La marca vuelve al inicio de Tabula. */
 let MARCO = null;
 const MARCA_SLIDES = window.ERLEN_SLIDES_MARCA;
-/* Catálogo de despliegue embebido por herramientas/build.mjs (ERLEN_SUITE_CATALOG):
-   {items, home} para el menú de la suite. Sin él, el componente conserva su
-   detección standalone: nunca se inventan enlaces. */
-function catalogoSuite() { return erlenSuiteNavigation.catalogoDe(document) || undefined; }
 function montaMarco() {
   MARCO = erlenMarco($('#app'), {
-    app: 'slides', nombre: 'Tabula', mey: false,
+    app: 'slides', nombre: 'Tabula',
     inicio: () => wsInicio(),
     elementos: {
       titulo: $('#deckTitleInput'),
@@ -270,19 +273,15 @@ function montaMarco() {
       navegacion: $('.filmstrip'),
       trabajo: $('.canvas-wrap'),
       detalles: $('#inspector')
-    },
-    navegacionSuite: catalogoSuite()
+    }
   });
   const marca = MARCO.elemento.querySelector('.erlen-marco-marca');
   if (marca) marca.innerHTML = MARCA_SLIDES;
 }
 
 function wsInit() {
-  /* Menú de suite solo con catálogo de despliegue y con esta app en él: sin catálogo,
-     navegación local segura y jamás enlaces inventados. */
-  const catalogo = catalogoSuite();
   INICIO = erlenInicio($('#inicioRoot'), {
-    app: 'slides', mey: false,
+    app: 'slides',
     nombre: 'Tabula', corto: '', objetos: 'presentaciones',
     marca: MARCA_SLIDES,
     estado: 'Disponible · beta', subtitulo: 'Presentaciones científicas y visuales',
@@ -298,27 +297,16 @@ function wsInit() {
       enlaces:[{etiqueta:'Código fuente · AGPLv3', url:ERLEN_SOURCE_URL}, {etiqueta:'Manual, ejemplos y límites conocidos', url:ERLEN_SOURCE_URL + '/blob/main/docs/uso.md'}]},
     fuente: {url:ERLEN_SOURCE_URL, licencia:'AGPLv3'},
     editor: MARCO.elemento,   /* todo el cromo del marco queda inert detrás del inicio */
-    menuSuite: catalogo && catalogo.items.some(i => i.id === 'slides') ? host => erlenSuiteNavigation(host, 'slides', catalogo) : undefined,
+    apariencia: () => openAparienciaApp(),
     alAbrir: () => { openDrawer(false); closeMenus(); },
     alCerrar: wsAlEditor
   });
-  // The shared home component repaints its brand on navigation; keep its
-  // synchronized source untouched and apply this app's name after each paint.
-  const nombreInicio = () => {
-    const nombre = INICIO.elemento.querySelector('.erlen-inicio-marca > span:not(.erlen-inicio-marca-icono)');
-    if (nombre && nombre.textContent !== 'Tabula') nombre.textContent = 'Tabula';
-  };
-  new MutationObserver(nombreInicio).observe(INICIO.elemento, { childList: true, subtree: true });
-  nombreInicio();
-  // The shared components set a suite favicon when mounted; restore Slides' own mark.
-  const icono = document.querySelector('link[rel="icon"]');
-  if (icono) icono.href = 'data:image/svg+xml,' + encodeURIComponent(MARCA_SLIDES);
   /* La navegación interna del componente no toca la URL: se refleja aquí, tras cada clic. */
-  INICIO.elemento.addEventListener('click', () => { if (INICIO.abierta) suiteUrl(SUITE_RUTAS[INICIO.vista]); });
-  window.addEventListener('hashchange',suiteDesdeUrl);
+  INICIO.elemento.addEventListener('click', () => { if (INICIO.abierta) wsUrl(WS_RUTAS[INICIO.vista]); });
+  window.addEventListener('hashchange',wsDesdeUrl);
   $('#edicionBadge').addEventListener('click',openEdicion);
   pintaEdicion();
-  /* ?plantilla=<id>: el portal enlaza así los ejemplos. Se consume una vez y se retira de la URL. */
+  /* ?plantilla=<id>: acceso directo a un ejemplo, que se consume una sola vez. */
   const params=new URLSearchParams(location.search);
   const solicitado=params.get('plantilla');
   const plantilla=solicitado && PLANTILLAS.find(p=>p.id===solicitado);
@@ -330,7 +318,7 @@ function wsInit() {
     if(wsConservar() && loadDeck(plantilla.build(),null)){toast('Ejemplo didáctico: sustituye los datos por los de tu trabajo.');}
     wsCerrar();
   } else {
-    suiteDesdeUrl();
+    wsDesdeUrl();
     if(solicitado&&wsAbierto())INICIO.avisar('No existe el ejemplo «'+solicitado.slice(0,60)+'». Elige un punto de partida en la colección de inicio.',{error:true});
   }
   if(abrir!==null)wsAbrirDelAsistente(abrir);
@@ -340,7 +328,7 @@ function wsInit() {
    La herramienta abrir_en_editor del servidor MCP (mcp/extensiones/editor.mjs) sirve esta
    misma app en 127.0.0.1 y deja preparado un proyecto detrás de una clave de un solo uso.
    Se pide al mismo origen, con ruta relativa; se enseña qué llega y solo se abre si la
-   persona lo confirma. Fuera de ese servidor (la suite en /slides/, npm start) la clave no
+   persona lo confirma. Fuera de ese servidor la clave no
    existe y se dice, sin tocar nada. */
 const MCP_ABRIR = 'mcp/abrir/';
 function wsRechazoAsistente(texto) {
@@ -368,8 +356,15 @@ async function wsAbrirDelAsistente(clave) {
   wsVistaAsistente(r.deck, String(datos.archivo || 'proyecto.json').slice(0, 200), r.avisos);
   return r.deck;
 }
+/* Nombre libre en la biblioteca: nunca se sobrescribe una presentación. */
+function wsNombreLibre(base) {
+  const store = decksStore(), b = String(base || '').trim() || 'Sin título';
+  let nombre = b, i = 2;
+  while (Object.hasOwn(store, nombre)) nombre = b + ' (' + i++ + ')';
+  return nombre;
+}
 function wsVistaAsistente(deck, archivo, avisos) {
-  const titulo = String(deck.meta.title || '').trim(), base = titulo || archivo.replace(/\.json$/i, ''), nombre = infNombreLibre(base);
+  const titulo = String(deck.meta.title || '').trim(), base = titulo || archivo.replace(/\.json$/i, ''), nombre = wsNombreLibre(base);
   const lista = h('div', { class: 'es-prev' });
   deck.slides.forEach((sl, i) => lista.append(h('div', { class: 'es-fila' }, h('span', { class: 'es-n' }, String(i + 1)),
     h('span', { class: 'es-t' }, (sl.layout === 'title' ? titulo || 'Portada' : sl.title || 'Sin título').replace(/\\\$/g, '$')))));
@@ -383,12 +378,12 @@ function wsVistaAsistente(deck, archivo, avisos) {
     foot: [h('button', { class: 'btn', onclick: closeModal }, 'Cancelar'),
       h('button', { class: 'btn btn-pri', onclick: () => wsAbreAsistente(deck, base) }, 'Abrir en el editor')] });
 }
-/* Como una copia de DoE: primero la biblioteca (si no cabe, no se abre nada) y después el editor.
+/* Primero la biblioteca (si no cabe, no se abre nada) y después el editor.
    El nombre se elige después de conservar la abierta, que puede haber ocupado el propuesto. */
 function wsAbreAsistente(deck, base) {
   if (!confirmaCambioArchivo()) return false;
   if (!wsConservar()) return false;
-  const store = decksStore(), nombre = infNombreLibre(base);
+  const store = decksStore(), nombre = wsNombreLibre(base);
   Object.defineProperty(store, nombre, { value: { deck: deepCopy(deck), when: Date.now() }, enumerable: true, configurable: true, writable: true });
   if (!lsSet(LS_DECKS, store)) { toast('No hay espacio en este navegador para la presentación. Descarga un respaldo y libera espacio; no se abrió nada.', 'warn'); return false; }
   closeModal();

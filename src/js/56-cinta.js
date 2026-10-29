@@ -2,10 +2,9 @@
 'use strict';
 /* ================= la cinta de arriba =================
    Las herramientas del editor en una cinta con pestañas, como en las apps de
-   oficina. Es la disposición de fábrica. La cinta la pinta el componente común
-   de la suite (src/diseno/suite-cinta.js, cargado tal cual por _orden.txt;
-   erlen-suite docs/COHERENCIA-APPS.md §5): aquí solo se declara qué hay en
-   cada pestaña y se llama a las mismas funciones que el panel de la derecha.
+   oficina. Es la disposición de fábrica. El componente local src/diseno/cinta.js
+   pinta la cinta; aquí se declara qué hay en cada pestaña y se llama a las
+   mismas funciones que el panel de la derecha.
    Lo que necesita un formulario largo (un deslizador, un color, todas las
    propiedades de un bloque) se abre en el panel de detalles, a la derecha,
    que se cierra con ✕ o Escape. */
@@ -98,16 +97,19 @@ function cintaInsertar() {
       grande('ins-chem', 'Reacción', 'ArrowRightLeft', insertar('chem'), { d: 'Reacción química con mhchem' }),
       grande('ins-image', 'Figura', 'Image', insertar('image')),
       grande('ins-table', 'Tabla', 'Table', insertar('table'))),
+    grupoC('Datos y ciencia',
+      grande('ins-chart', 'Gráfica de datos', 'ChartLine', insertar('chart'), { d: 'Gráfica con datos y ejes editables' }),
+      peque('ins-func', 'Gráfica dinámica', 'ChartSpline', insertar('func'), { d: 'Fórmulas con parámetros interactivos' }),
+      menuC('quimica-lab', 'Química y laboratorio', 'FlaskConical', () => [
+        { etiqueta: 'Crear figura científica…', descripcion: 'Espectros, moléculas y datos con su procedencia', accion: openCiencia },
+        { separador: true }, ...opcionesBloques(['estruct', 'montaje'])()]),
+      menuC('matematicas', 'Matemáticas', 'Pi', opcionesBloques(['teorema', 'geo']))),
     grupoC('Más contenido',
       peque('figura-capas', 'Figura por capas', 'Layers3', () => openFiguraCapas(), { d: 'Texto, formas e imágenes editables; también con el teclado' }),
       peque('catalogo-figuras', 'Catálogo científico', 'Images', openCatalogoFiguras, { d: 'Piezas científicas para el lienzo libre de la diapositiva' }),
       peque('diagrama-texto', 'Diagrama desde texto', 'Workflow', () => openDiagramaTexto()),
       menuC('mas-bloques', 'Más bloques', 'Blocks', opcionesBloques(['galeria', 'quote', 'bblock', 'code', 'spacer'])),
-      menuC('datos-medios', 'Datos y medios', 'ChartLine', opcionesBloques(['chart', 'func', 'video', 'smart']), { d: 'Gráficas, video y diagramas' }),
-      menuC('quimica-lab', 'Química y laboratorio', 'FlaskConical', () => [
-        { etiqueta: 'Crear figura científica…', descripcion: 'Espectros, moléculas y datos con su procedencia', accion: openCiencia },
-        { separador: true }, ...opcionesBloques(['estruct', 'montaje'])()]),
-      menuC('matematicas', 'Matemáticas', 'Pi', opcionesBloques(['teorema', 'geo']))),
+      menuC('datos-medios', 'Video y diagramas', 'Film', opcionesBloques(['video', 'smart']))),
     grupoC('Citas',
       peque('referencias', 'Referencias…', 'BookMarked', () => openReferencias(), { d: 'DOI o BibTeX, citas y bibliografía' }),
       peque('zotero', 'Desde Zotero…', 'LibraryBig', () => openZotero(), { d: 'Traer de tu biblioteca de Zotero' }),
@@ -147,7 +149,23 @@ function cintaDiseno() {
 
 function cintaDiapositiva() {
   const sl = () => curSlide();
+  const libre = () => !!(sl().lienzoLibre && zonasDe(sl().layout));
   return { id: 'diapo', etiqueta: 'Diapositiva', grupos: [
+    grupoC('Lienzo',
+      inter('lienzo-libre', 'Lienzo libre', 'MousePointer2', alternaLienzoLibre, libre,
+        { d: 'Colocar y mover objetos libremente', deshabilitado: () => !zonasDe(sl().layout) }),
+      peque('lienzo-capas', 'Capas', 'ListOrdered', openObjetosLienzo,
+        { d: 'Seleccionar y ordenar objetos', deshabilitado: () => !libre() }),
+      inter('lienzo-iman', 'Imán', 'Magnet', alternaImanLienzo, () => S.prefs.imanLienzo !== false,
+        { d: 'Ajustar objetos a guías; Alt omite el ajuste', deshabilitado: () => !libre() }),
+      menuC('lienzo-formas', 'Formas', 'Shapes', opcionesFormasLienzo,
+        { d: 'Insertar formas editables', deshabilitado: () => !libre() }),
+      peque('lienzo-catalogo', 'Catálogo científico', 'Images', openCatalogoFiguras,
+        { d: 'Añadir piezas científicas con sus créditos', deshabilitado: () => !libre() }),
+      menuC('lienzo-organizar', 'Organizar', 'AlignHorizontalSpaceAround', opcionesOrganizaLienzo,
+        { d: 'Alinear o distribuir la selección', deshabilitado: () => !libre() || idsSeleccionados().size < 2 }),
+      menuC('lienzo-conectores', 'Conectores', 'Waypoints', opcionesConectoresLienzo,
+        { d: 'Conectar objetos o eliminar conexiones', deshabilitado: () => !libre() })),
     grupoC('Acomodo',
       menuC('acomodo', 'Acomodo', 'LayoutDashboard', () => LAYOUTS.map(l => opc(l.name, () => changeLayout(curSlide(), l.id), () => sl().layout === l.id, l.d)),
         { d: 'Cómo se reparte el contenido' }),
@@ -212,7 +230,10 @@ function cintaVista() {
       menuC('apariencia', 'Apariencia', 'SunMoon', () => [
         opc('Clara', () => cambiaTemaApp('claro'), () => S.prefs.tema === 'claro'),
         opc('Oscura', () => cambiaTemaApp('oscuro'), () => S.prefs.tema === 'oscuro'),
-        opc('La del sistema', () => cambiaTemaApp('auto'), () => (S.prefs.tema || 'auto') === 'auto')], { d: 'Apariencia del editor' }),
+        opc('La del sistema', () => cambiaTemaApp('auto'), () => (S.prefs.tema || 'auto') === 'auto'),
+        { separador: true },
+        { etiqueta: 'Más opciones de apariencia…', descripcion: 'Tema, color y estilo', accion: () => openAparienciaApp() }
+      ], { d: 'Apariencia del editor' }),
       inter('densidad', 'Compacta', 'Rows3', () => { const c = $('#densChk'); if (c) { c.checked = !c.checked; c.dispatchEvent(new Event('change', { bubbles: true })); } }, compacta,
         { d: 'Interfaz compacta: menos aire entre controles' }),
       menuC('herramientas', 'Herramientas', 'PanelTop', () => SITIOS_BARRA.map(x => opc(x.n, () => ponDisposicion(x.id), () => disposicion() === x.id, x.d)),
@@ -333,6 +354,15 @@ function abreArchivo(ancla) {
 
 /* ---------- montaje y refresco ---------- */
 let CINTA = null;
+function muestraPestanaCinta() {
+  const fila = $('#cinta .erlen-cinta-pestanas');
+  const tab = fila?.querySelector('[role=tab][aria-selected=true]');
+  if (!tab || !fila.clientWidth) return;
+  const borde = fila.getBoundingClientRect(), actual = tab.getBoundingClientRect();
+  if (actual.left < borde.left) fila.scrollLeft += actual.left - borde.left;
+  else if (actual.right > borde.right) fila.scrollLeft += actual.right - borde.right;
+}
+window.addEventListener('resize', muestraPestanaCinta);
 function configCinta() {
   return {
     app: 'slides',
@@ -340,6 +370,7 @@ function configCinta() {
     archivo: { etiqueta: 'Archivo', accion: abreArchivo },
     pestanas: [cintaInicio(), cintaInsertar(), cintaDiseno(), cintaDiapositiva(), cintaPresentar(), cintaVista()],
     contextuales: cintaContextual,
+    alCambiar: muestraPestanaCinta,
     inicial: 'inicio'
   };
 }
@@ -387,6 +418,21 @@ function actualizaCinta() {
   if (a && !a.hasAttribute('aria-haspopup')) {
     a.setAttribute('aria-haspopup', 'menu'); a.setAttribute('aria-expanded', 'false');
     a.title = 'Archivo: abrir, guardar, exportar y acerca de';
+  }
+  const capas = CINTA.elemento.querySelector('[data-control=lienzo-capas]');
+  if (capas) {
+    capas.setAttribute('aria-controls', 'panelCapas');
+    capas.setAttribute('aria-expanded', String(!!$('#panelCapas') && !$('#panelCapas').hidden));
+  }
+  /* El componente refresca estados sin repintar; las etiquetas de selección
+     también cambian, pero no deben reemplazar el botón que tiene el foco. */
+  if (CINTA.elemento.querySelector('[data-pestana=bloque][aria-selected=true]')) {
+    for (const c of (cintaContextual()[0]?.grupos || []).flatMap(g => g.controles)) {
+      const b = CINTA.elemento.querySelector('[data-control="' + c.id + '"]');
+      const texto = b?.querySelector('.erlen-cinta-texto');
+      if (texto && texto.textContent !== c.etiqueta) texto.textContent = c.etiqueta;
+      if (b) b.title = c.titulo;
+    }
   }
   const hamb = $('#hambBtn');
   if (hamb) { hamb.title = 'Panel de detalles'; hamb.setAttribute('aria-label', 'Abrir el panel de detalles'); }

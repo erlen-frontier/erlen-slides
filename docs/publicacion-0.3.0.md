@@ -1,5 +1,7 @@
 # Notas de la versión 0.3.0
 
+> Nota histórica: el intercambio y la importación de informes DoE descritos aquí se retiraron posteriormente de Tabula independiente. Los proyectos ya convertidos conservan su procedencia.
+
 Slides recibe su primera copia de otra app de la suite: el informe de un análisis de **Erlen DoE**, que se abre como presentación nueva para contarlo en una reunión de grupo. El contrato que fija qué viaja es `docs/intercambio-doe.md` del portal (tipo `informe-v1`); cómo viaja, `web/exchange-v2.mjs`, que aquí se copia literalmente.
 
 ## Del informe a las diapositivas

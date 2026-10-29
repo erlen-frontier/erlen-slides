@@ -12,7 +12,7 @@ La licencia AGPL-3.0-only cubre Tabula y el trabajo original de Erlen Slides del
 | 3Dmol.js | Estructuras tridimensionales | BSD-3-Clause y avisos de dependencias · https://github.com/3dmol/3Dmol.js |
 | Plotly.js basic | Gráficas desde datos | MIT · https://github.com/plotly/plotly.js |
 | Floating UI | Posicionamiento de interfaz | MIT · https://github.com/floating-ui/floating-ui |
-| Intercambio de copias de Erlen Suite (`web/exchange-v2.mjs`) | Leer la copia que DoE envía a Slides | MIT · Erlen contributors; aviso íntegro en el propio archivo y en `src/js/88d-intercambio.js` |
+| Componentes de interfaz de Erlen | Base visual del inicio, marco y cinta | MIT · Erlen contributors; aviso íntegro en `src/diseno/licencias/MIT.txt` |
 | Lucide | Iconos de interfaz | ISC; ver texto que incluye atribuciones adicionales · https://github.com/lucide-icons/lucide |
 | PptxGenJS 4.0.1 | PowerPoint editable | MIT · https://github.com/gitbrent/PptxGenJS |
 | Reveal.js 6.0.2 | Presentación HTML autónoma | MIT · https://github.com/hakimel/reveal.js |

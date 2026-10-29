@@ -68,10 +68,9 @@
      curva para ambos temas: el material cambia con la luz, el gesto no. */
   --spring-panel:linear(0,0.0068,0.027,0.06 8.1%,0.153,0.312 18.7%,0.595 27.5%,0.795 34.7%,0.94 41.5%,1.035 48.4%,1.084 55.3%,1.095 60.5%,1.088 66.2%,1.052 74.4%,1.013 82.3%,0.997 89.9%,1);
 }
-/* ---- material cristal: el patrón de COHERENCIA-APPS §0.1 ----
+/* ---- material cristal ----
    .vidrio es la capa en flujo (barra superior): reflejo, relieve y contorno,
-   sin desenfoque, porque nada se desplaza por debajo y porque contiene el menú
-   de la suite (<erlen-suite-nav> se recoloca mal bajo un backdrop-filter).
+   sin desenfoque, porque nada se desplaza por debajo.
    Las superficies que crea el JS (.pop, .menu, .modal, .toast) repiten el
    material flotante en su regla, con desenfoque. Los respaldos opacos los
    dan los tokens del paquete. */
@@ -1266,10 +1265,13 @@ body.con-dis .app{width:calc(100% - 372px);transition:width .22s cubic-bezier(.3
 @media (max-width:640px){ .dis{width:100vw;border-left:none} }
 
 /* ---------- la cinta de arriba ----------
-   La cinta es el componente común de la suite (diseno/cinta.css, src/js/55a-suite-cinta.js).
+   La cinta es el componente local de diseno/cinta.css y diseno/cinta.js.
    Aquí solo su sitio en el editor y el panel de detalles que se abre desde ella. */
 .cinta{flex:none;min-width:0;position:relative;z-index:5}
 .cinta .erlen-cinta{border-bottom-color:var(--line)}
+/* Al cambiar de tema, el color y el fondo de los interruptores deben cambiar
+   juntos para no perder contraste durante la transición entre claro y oscuro. */
+.cinta .erlen-cinta-boton:is([data-control="lienzo-libre"],[data-control="lienzo-iman"]){transition-property:border-color,box-shadow}
 .cinta-cerrar{display:flex;align-items:center;gap:var(--e2);padding:var(--e2) var(--e3);border-bottom:1px solid var(--line);
   font:600 var(--t1) var(--ui);color:var(--mut)}
 .cinta-cerrar span{flex:1}

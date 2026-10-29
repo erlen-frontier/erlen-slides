@@ -1,6 +1,6 @@
-/* Erlen Suite · paquete de diseño 2.0.0 · base del cromo de las apps (docs/GUIA-DISENO.md §0 y §3–§5, docs/CONTRATO-APP.md §2).
-   Solo cromo: cabecera, controles, estado, pie. El contenido del usuario (documento, hoja, figura, diapositiva) no se toca y sigue opaco.
-   Cristal (2.0.0): cabecera, paneles, diálogos y .erlen-vidrio usan los tokens --erlen-vidrio* de tokens.css, que ya traen sus respaldos.
+/* Base del cromo de Tabula, derivada del diseño MIT de Erlen.
+   Solo cromo: cabecera, controles, estado, pie. El contenido de las diapositivas sigue opaco.
+   Cabecera, paneles, diálogos y .erlen-vidrio usan los tokens --erlen-vidrio* de tokens.css, que ya traen sus respaldos.
    Ningún color literal aquí: todo es var(--erlen-*) de tokens.css. Licencia: licencias/MIT.txt */
 *,::before,::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -39,19 +39,14 @@ code,kbd,pre,samp{font-family:var(--erlen-font-mono);font-size:.94em}
 .erlen-lectura{font:var(--erlen-texto-base)/var(--erlen-interlineado) var(--erlen-font-cuerpo);max-width:var(--erlen-ancho-lectura)}
 /* Foco ámbar visible en todo lo enfocable. */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px;border-radius:4px}
-/* Cabecera común: marca, título, badge y hueco para el menú de suite (erlen-suite-nav se monta dentro, a la derecha). */
-/* Sin backdrop-filter en la propia cabecera: crearía un bloque contenedor para el menú fijo de erlen-suite-nav que vive dentro.
-   Si una app la fija arriba (sticky), añade el desenfoque en un ::before (ver docs/COHERENCIA-APPS.md §0). */
+/* Cabecera del editor: marca, título, estado y acciones. */
 .erlen-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:64px;padding:var(--erlen-esp-3) 4%;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 -1px 0 var(--erlen-vidrio-borde)}
 /* El nombre de la app cede espacio con base 0: con base auto su texto inflaba la primera línea y
-   bajaba la tira de controles a una segunda fila (p. ej. dft y data a 1440 px). Elipsis en
-   marco.css; a ≤ 600 px queda oculto visualmente. */
+   bajaba la tira de controles a una segunda fila. Elipsis en marco.css;
+   a ≤ 600 px queda oculto visualmente. */
 .erlen-app-header h1{flex:1 1 0%;min-width:0;overflow-wrap:anywhere}
 .erlen-app-header .erlen-marca{font-weight:700;white-space:nowrap}
 :root[data-erlen-color] .erlen-app-header .erlen-marca{color:var(--erlen-verde)}
-.erlen-app-header>erlen-suite-nav,.erlen-app-header .erlen-menu{margin-left:auto;flex:0 0 auto;min-height:40px;display:flex;align-items:center}
-.erlen-app-header .erlen-menu:empty{min-width:88px}
-.erlen-app-header .erlen-menu>erlen-suite-nav{margin-left:0}
 .badge,.erlen-badge{display:inline-block;font:700 var(--erlen-texto-xs)/1 var(--erlen-font-ui);color:var(--erlen-tinta);background:var(--erlen-verde-suave);border-radius:var(--erlen-radio-badge);padding:6px 10px;white-space:nowrap}
 /* Controles: 44 px de alto, radio de campo, borde de línea; un solo .primary por bloque. El primario lleva el brillo especular del cristal. */
 button,input,select,textarea{font:inherit;color:inherit;margin:0}
@@ -108,7 +103,7 @@ dialog.erlen-dialogo::backdrop{background:color-mix(in srgb,var(--erlen-tinta) 2
 .erlen-entrada-archivo>input[type="file"]:focus-visible+label{outline:3px solid var(--erlen-foco);outline-offset:3px;border-radius:4px}
 .erlen-entrada-archivo>input[type="file"]:disabled+label{opacity:.55;cursor:not-allowed}
 @media(max-width:760px){.erlen-app-header{padding:var(--erlen-esp-3) var(--erlen-esp-4)}.erlen-app-footer{padding:var(--erlen-esp-5) var(--erlen-esp-4)}}
-@media print{.erlen-app-header,.erlen-app-footer,erlen-suite-nav{display:none}}
+@media print{.erlen-app-header,.erlen-app-footer{display:none}}
 
 /* Iconos del cromo: conserva el significado, las dimensiones y los estados. */
 :root[data-erlen-estilo] :is(.erlen-app-header,.erlen-cinta,.erlen-cinta-menu,.erlen-inicio-cabecera,.erlen-inicio-lateral,.erlen-marco-navegacion,.erlen-marco-detalles) :is(.erlen-icono,svg[viewBox="0 0 24 24"]){stroke-width:var(--erlen-icono-grosor);stroke-linecap:var(--erlen-icono-terminal);stroke-linejoin:var(--erlen-icono-union);stroke-dasharray:var(--erlen-icono-guion);shape-rendering:var(--erlen-icono-render);filter:var(--erlen-icono-filtro);background:var(--erlen-icono-placa);border-radius:var(--erlen-icono-radio);box-shadow:var(--erlen-icono-relieve)}
@@ -116,5 +111,5 @@ dialog.erlen-dialogo::backdrop{background:color-mix(in srgb,var(--erlen-tinta) 2
 
 :root[data-erlen-estilo] :is(.erlen-app-header,.erlen-cinta,.erlen-cinta-menu,.erlen-inicio-cabecera,.erlen-inicio-lateral,.erlen-marco-navegacion,.erlen-marco-detalles) :is(.erlen-icono,svg[viewBox="0 0 24 24"]) :is(path,line,polyline,polygon,circle,rect,ellipse){stroke-width:inherit;stroke-linecap:inherit;stroke-linejoin:inherit;stroke-dasharray:inherit}
 
-/* Material al pulsar: cromo compartido; no cambia color semántico, posición ni foco. */
+/* Material al pulsar: no cambia color semántico, posición ni foco. */
 :root[data-erlen-estilo] :is(.erlen-boton,.erlen-capsula,.erlen-inicio-boton,.erlen-cinta-boton,.erlen-cinta-archivo,.erlen-cinta-pestana,.erlen-marco-acciones button,.erlen-marco-utilidades button):active:not(:disabled,[aria-disabled="true"]){box-shadow:var(--erlen-control-presionado)}

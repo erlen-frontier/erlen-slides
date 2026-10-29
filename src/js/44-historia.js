@@ -53,9 +53,7 @@ function restauraHistoria(i) {
 function traeDiapositiva(i, k) {
   const e = leeHistoria()[i];
   if (!e || !e.deck || !e.deck.slides[k]) return;
-  const sl = deepCopy(e.deck.slides[k]);
-  sl.id = uid();
-  for (const arr of zonas(sl)) arr.forEach(b => b.id = uid());
+  const sl = copiaDiapositiva(e.deck.slides[k]);
   S.deck.slides.splice(S.cur + 1, 0, sl);
   S.cur = S.cur + 1; SESION.nuevas++;
   commit(); closeModal();
@@ -169,5 +167,4 @@ function initHistoria() {
     }
   });
 }
-
 

@@ -108,7 +108,7 @@ test('Under /slides/ the request stays relative to the deployment, and the norma
   try {
     await esperaModal(dom.window.document);
     assert.equal(new URL(r.pedidas[0].u, dom.window.location.href).pathname, '/slides/mcp/abrir/' + CLAVE);
-    assert.equal(dom.window.location.pathname + dom.window.location.search + dom.window.location.hash, '/slides/#suite/biblioteca', 'Se conserva la vista pedida');
+    assert.equal(dom.window.location.pathname + dom.window.location.search + dom.window.location.hash, '/slides/#inicio/biblioteca', 'Se conserva la vista pedida y se normaliza la ruta antigua');
   } finally { dom.window.close(); }
   const sin = red(responde({}));
   const normal = await editor('http://localhost:8130/', {fetch: sin.fetch});

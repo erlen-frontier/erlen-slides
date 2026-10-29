@@ -262,12 +262,47 @@ function saneaDeck(bruto) {
         if (!sl.todo.length) delete sl.todo;
       }
     }
+    const relaciones = sl.conectores, conteos = new Map(), idsConectores = new Map();
+    if (relaciones != null) {
+      const originales = CLAVES_ZONA.flatMap(k => Array.isArray(sl[k]) ? sl[k] : [])
+        .concat(Array.isArray(sl._guardados) ? sl._guardados : []);
+      for (const b of originales) if (typeof b?.id === 'string') conteos.set(b.id, (conteos.get(b.id) || 0) + 1);
+    }
+    const saneaConId = b => {
+      const original = b?.id, limpio = saneaBloque(b, avisos, deck);
+      if (!limpio) return null;
+      if (vistos.has(limpio.id)) limpio.id = uid();
+      vistos.add(limpio.id);
+      if (conteos.get(original) === 1) idsConectores.set(original, limpio.id);
+      return limpio;
+    };
     CLAVES_ZONA.forEach(k => {
       if (sl[k] == null) return;
       if (!Array.isArray(sl[k])) { sl[k] = []; return; }
-      sl[k] = sl[k].map(b => saneaBloque(b, avisos, deck)).filter(Boolean);
-      sl[k].forEach(b => { if (vistos.has(b.id)) b.id = uid(); vistos.add(b.id); });
+      sl[k] = sl[k].map(saneaConId).filter(Boolean);
     });
+    if (relaciones != null) {
+      /* Los bloques apartados al cambiar de diseño ya se conservaban intactos.
+         Solo hay que resolver sus IDs; no volver a sanear sus datos ni fuentes. */
+      if (Array.isArray(sl._guardados)) sl._guardados.forEach(b => {
+        if (!b || typeof b !== 'object' || typeof b.id !== 'string' || !b.id) return;
+        const original = b.id;
+        if (vistos.has(b.id)) b.id = uid();
+        vistos.add(b.id);
+        if (conteos.get(original) === 1) idsConectores.set(original, b.id);
+      });
+      const pares = new Set();
+      sl.conectores = (Array.isArray(relaciones) ? relaciones : []).flatMap(c => {
+        if (!c || typeof c.desde !== 'string' || typeof c.hasta !== 'string' || c.desde === c.hasta ||
+            !idsConectores.has(c.desde) || !idsConectores.has(c.hasta)) return [];
+        const desde = idsConectores.get(c.desde), hasta = idsConectores.get(c.hasta), par = JSON.stringify([desde, hasta]);
+        if (pares.has(par)) return [];
+        pares.add(par); return [{desde, hasta}];
+      });
+      if (!Array.isArray(relaciones) || relaciones.length !== sl.conectores.length)
+        avisos.push('la diapositiva ' + (i + 1) + ' tenía conexiones inválidas o ambiguas; se descartaron');
+      if (!sl.conectores.length) delete sl.conectores;
+    }
     prepararZonas(sl, sl.layout);
     materializaPosicionesLibres(sl);
     limpias.push(sl);
@@ -316,5 +351,3 @@ function openAvisosImport(avisos) {
     foot: [h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Entendido')]
   });
 }
-
-

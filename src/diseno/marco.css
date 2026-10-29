@@ -1,96 +1,5 @@
-/* Mey vive encima de la página, sin reservar huecos ni interceptar controles ajenos. */
-.mey-libre{position:fixed;left:0;top:0;z-index:501;display:block;width:auto;height:auto;min-width:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:var(--erlen-radio-pequeno);background:transparent;color:var(--erlen-tinta);box-shadow:none;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transition:none;line-height:0}
-.mey-libre:hover{background:transparent}.mey-libre[data-arrastrando]{cursor:grabbing}.mey-libre svg{display:block;pointer-events:none;max-width:none}.mey-libre:focus-visible,.mey-libre-pausa:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px}
-.mey-libre-pausa{position:fixed;right:16px;bottom:12px;z-index:501;min-height:44px;padding:8px 14px;border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-campo);background:var(--erlen-vidrio-fuerte);color:var(--erlen-tinta-suave);font:500 var(--erlen-texto-xs)/1.4 var(--erlen-font-ui);cursor:pointer}
-.mey-libre-pausa--integrada{position:static;flex:0 0 auto;white-space:nowrap;z-index:auto}
-@media print{.mey-libre,.mey-libre-pausa{display:none}}
-
-/* Las ilustraciones de estados vacíos ceden ante la presencia compartida. */
-html[data-erlen-mey-presencia] .recientes-vacio .mey{display:none}
-
-/* Arte elegido para Mey: cambia el material, no sus poses, atuendo ni movimiento.
-   Los pigmentos conservan la paleta personal. Los ojos siguen planos y nítidos.
-   El tile de marca y el favicon de 16 × 16 quedan fuera de estos tratamientos. */
-:root[data-erlen-estilo]{--mey-arte-filtro:none;--mey-arte-render:auto;--mey-arte-radio:0px;--mey-arte-trazo:0px;--mey-arte-contorno:var(--erlen-tinta);--mey-arte-vidrio:1;--mey-arte-banda:1;--mey-arte-guion:none;--mey-arte-ojos:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="glassmorfismo"]{--mey-arte-filtro:drop-shadow(0 -1px 0 var(--erlen-superficie)) drop-shadow(0 2px 2px var(--erlen-linea-fuerte));--mey-arte-radio:.12px;--mey-arte-trazo:.07px;--mey-arte-contorno:var(--erlen-superficie);--mey-arte-vidrio:.78;--mey-arte-banda:.9}
-:root[data-erlen-estilo="neumorfismo"]{--mey-arte-filtro:drop-shadow(-2px -2px 1px var(--erlen-superficie)) drop-shadow(2px 2px 1px var(--erlen-linea-fuerte));--mey-arte-radio:.08px;--mey-arte-trazo:.035px;--mey-arte-contorno:var(--erlen-linea-fuerte)}
-:root[data-erlen-estilo="neobrutalismo"]{--mey-arte-filtro:drop-shadow(3px 3px 0 var(--erlen-tinta));--mey-arte-render:crispEdges;--mey-arte-trazo:.16px}
-:root[data-erlen-estilo="minimalismo"]{--mey-arte-render:crispEdges;--mey-arte-trazo:.05px;--mey-arte-contorno:var(--erlen-linea-fuerte)}
-:root[data-erlen-estilo="art-deco"]{--mey-arte-filtro:drop-shadow(1px 1px 0 var(--erlen-ambar));--mey-arte-render:crispEdges;--mey-arte-trazo:.10px;--mey-arte-contorno:var(--erlen-ambar);--mey-arte-banda:.94}
-:root[data-erlen-estilo="claymorfismo"]{--mey-arte-filtro:drop-shadow(-1px -1px 1px var(--erlen-superficie)) drop-shadow(0 3px 2px var(--erlen-linea-fuerte));--mey-arte-radio:.24px;--mey-arte-trazo:.025px;--mey-arte-contorno:var(--erlen-superficie)}
-:root[data-erlen-estilo="bauhaus"]{--mey-arte-filtro:drop-shadow(3px 0 0 var(--erlen-cromo-luz)) drop-shadow(0 3px 0 var(--erlen-verde));--mey-arte-render:crispEdges;--mey-arte-trazo:.20px}
-:root[data-erlen-estilo="frutiger-aero"]{--mey-arte-filtro:drop-shadow(0 -2px 0 var(--erlen-superficie)) drop-shadow(0 2px 1px var(--erlen-verde-suave));--mey-arte-radio:.16px;--mey-arte-trazo:.10px;--mey-arte-contorno:var(--erlen-superficie);--mey-arte-vidrio:.9;--mey-arte-banda:1}
-:root[data-erlen-estilo="esqueuomorfismo"]{--mey-arte-filtro:drop-shadow(-1px -1px 0 var(--erlen-superficie)) drop-shadow(1.5px 1.5px .6px var(--erlen-linea-fuerte));--mey-arte-radio:.045px;--mey-arte-trazo:.10px;--mey-arte-contorno:var(--erlen-linea-fuerte)}
-:root[data-erlen-estilo="retro-digital"]{--mey-arte-filtro:drop-shadow(-1px -1px 0 var(--erlen-superficie)) drop-shadow(2px 2px 0 var(--erlen-linea-fuerte));--mey-arte-render:crispEdges;--mey-arte-trazo:.08px}
-:root[data-erlen-estilo="y2k"]{--mey-arte-filtro:drop-shadow(-1px -1px 0 var(--erlen-superficie)) drop-shadow(2px 1px 1px var(--erlen-linea-fuerte));--mey-arte-radio:.15px;--mey-arte-trazo:.085px;--mey-arte-contorno:var(--erlen-superficie);--mey-arte-vidrio:.95;--mey-arte-banda:.75}
-:root[data-erlen-estilo="cyberpunk"]{--mey-arte-filtro:drop-shadow(0 0 3px var(--erlen-verde)) drop-shadow(0 0 6px var(--erlen-verde-suave));--mey-arte-render:crispEdges;--mey-arte-trazo:.13px;--mey-arte-contorno:var(--erlen-verde);--mey-arte-vidrio:.8;--mey-arte-banda:.9}
-:root[data-erlen-estilo="blueprint"]{--mey-arte-render:crispEdges;--mey-arte-trazo:.075px;--mey-arte-contorno:var(--erlen-verde);--mey-arte-vidrio:.18;--mey-arte-banda:.18;--mey-arte-guion:.45 .15;--mey-arte-ojos:var(--erlen-tinta)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]){filter:var(--mey-arte-filtro);shape-rendering:var(--mey-arte-render)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) :is([data-mey-pigmento="g"],[data-mey-pigmento="w"]){rx:var(--mey-arte-radio);ry:var(--mey-arte-radio);stroke:var(--mey-arte-contorno);stroke-width:var(--mey-arte-trazo);stroke-dasharray:var(--mey-arte-guion);stroke-linejoin:round;paint-order:stroke fill}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) [data-mey-pigmento="g"]{fill-opacity:var(--mey-arte-vidrio)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) [data-mey-pigmento="g"]:nth-of-type(3n){fill-opacity:var(--mey-arte-banda)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) [data-mey-pigmento="e"]{fill:var(--mey-arte-ojos);fill-opacity:1;stroke:none;rx:0;ry:0;shape-rendering:crispEdges}
-/* Un acabado quieto no añade relojes, flashes ni desplazamientos. Los respaldos
-   de legibilidad devuelven los pigmentos planos y los píxeles originales. */
-:root:root[data-erlen-estilo][data-erlen-material="solido"]{--mey-arte-filtro:none;--mey-arte-render:crispEdges;--mey-arte-radio:0px;--mey-arte-trazo:0px;--mey-arte-vidrio:1;--mey-arte-banda:1;--mey-arte-guion:none;--mey-arte-ojos:var(--erlen-mey-ojos)}
-@media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active),print{:root:root[data-erlen-estilo]{--mey-arte-filtro:none;--mey-arte-render:crispEdges;--mey-arte-radio:0px;--mey-arte-trazo:0px;--mey-arte-vidrio:1;--mey-arte-banda:1;--mey-arte-guion:none;--mey-arte-ojos:var(--erlen-mey-ojos)}}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root:root[data-erlen-estilo]{--mey-arte-filtro:none;--mey-arte-render:crispEdges;--mey-arte-radio:0px;--mey-arte-trazo:0px;--mey-arte-vidrio:1;--mey-arte-banda:1;--mey-arte-guion:none;--mey-arte-ojos:var(--erlen-mey-ojos)}}
-
-/* Sprites artísticos: contornos conectados, vidrio/líquido completos y ojos planos.
-   No son filtros sobre la cuadrícula: Original y los respaldos usan los píxeles. */
-:root[data-erlen-estilo]{--mey-vector-visible:inline;--mey-pixel-visible:none;--mey-vector-angular:inline;--mey-vector-suave:none;--mey-vector-trazo:.16;--mey-vector-borde:var(--erlen-mey-ojos);--mey-vector-ojos:var(--erlen-mey-ojos)}
-:root:is([data-erlen-estilo="glassmorfismo"],[data-erlen-estilo="neumorfismo"],[data-erlen-estilo="minimalismo"],[data-erlen-estilo="claymorfismo"],[data-erlen-estilo="frutiger-aero"],[data-erlen-estilo="esqueuomorfismo"],[data-erlen-estilo="y2k"]){--mey-vector-angular:none;--mey-vector-suave:inline}
-:root[data-erlen-estilo="glassmorfismo"]{--mey-vector-trazo:.35;--mey-vector-borde:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="neumorfismo"]{--mey-vector-trazo:.2;--mey-vector-borde:var(--erlen-superficie)}
-:root[data-erlen-estilo="neobrutalismo"]{--mey-vector-trazo:.8;--mey-vector-borde:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="minimalismo"]{--mey-vector-trazo:.3;--mey-vector-borde:var(--erlen-tinta);--mey-vector-ojos:var(--erlen-tinta);--mey-arte-render:auto}
-:root[data-erlen-estilo="art-deco"]{--mey-vector-trazo:.5;--mey-vector-borde:var(--erlen-ambar)}
-:root[data-erlen-estilo="claymorfismo"]{--mey-vector-trazo:.15;--mey-vector-borde:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="bauhaus"]{--mey-vector-trazo:.6;--mey-vector-borde:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="frutiger-aero"]{--mey-vector-trazo:.3;--mey-vector-borde:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="esqueuomorfismo"]{--mey-vector-trazo:.4;--mey-vector-borde:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="retro-digital"]{--mey-vector-trazo:.4;--mey-vector-borde:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="y2k"]{--mey-vector-trazo:.45;--mey-vector-borde:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="cyberpunk"]{--mey-vector-trazo:.4;--mey-vector-borde:var(--erlen-verde);--mey-vector-ojos:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="blueprint"]{--mey-vector-trazo:.3;--mey-vector-borde:var(--erlen-verde);--mey-vector-ojos:var(--erlen-tinta)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) .mey-ilustracion{display:var(--mey-vector-visible)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) rect[data-mey-pigmento]{display:var(--mey-pixel-visible)}
-:root[data-erlen-estilo] .mey-vector[data-mey-vector="angular"]{display:var(--mey-vector-angular)}
-:root[data-erlen-estilo] .mey-vector[data-mey-vector="suave"]{display:var(--mey-vector-suave)}
-:root[data-erlen-estilo] .mey-vector-contorno{stroke:var(--mey-vector-borde);stroke-width:var(--mey-vector-trazo);stroke-linejoin:round;fill:none}
-:root[data-erlen-estilo] .mey-vector [data-mey-material]{stroke:var(--mey-vector-borde);stroke-width:calc(var(--mey-vector-trazo)*.55);stroke-linejoin:round;paint-order:stroke fill}
-:root[data-erlen-estilo] .mey-vector [data-mey-material="e"]{fill:var(--mey-vector-ojos);stroke:none;opacity:1}
-:root:is([data-erlen-estilo="glassmorfismo"],[data-erlen-estilo="neumorfismo"],[data-erlen-estilo="claymorfismo"],[data-erlen-estilo="frutiger-aero"],[data-erlen-estilo="esqueuomorfismo"],[data-erlen-estilo="y2k"]) .mey-material-luz{stop-color:color-mix(in srgb,var(--erlen-mey-reflejo) var(--mey-material-brillo),currentColor)}
-:root:is([data-erlen-estilo="glassmorfismo"],[data-erlen-estilo="neumorfismo"],[data-erlen-estilo="claymorfismo"],[data-erlen-estilo="frutiger-aero"],[data-erlen-estilo="esqueuomorfismo"],[data-erlen-estilo="y2k"]) .mey-material-sombra{stop-color:color-mix(in srgb,var(--erlen-mey-ojos) var(--mey-material-profundidad),currentColor)}
-:root[data-erlen-estilo="minimalismo"] .mey-vector [data-mey-material="g"]{fill:var(--erlen-superficie)}
-:root[data-erlen-estilo="cyberpunk"] .mey-vector [data-mey-material="g"]{fill:var(--erlen-espacio-fondo)}
-:root[data-erlen-estilo="cyberpunk"] .mey-vector [data-mey-material="w"]{fill:var(--erlen-espacio-fondo);stroke:var(--erlen-verde);stroke-width:.35}
-:root[data-erlen-estilo="blueprint"] .mey-vector :is([data-mey-material="g"],[data-mey-material="w"]){fill:none;stroke:var(--erlen-verde);stroke-width:.25;stroke-dasharray:none}
-:root[data-erlen-estilo="neobrutalismo"] .mey-vector :is([data-mey-material],.mey-vector-contorno){stroke-linejoin:miter}
-:root[data-erlen-estilo] [data-mey-decoracion]{pointer-events:none;fill:none;stroke:none}
-:root:is([data-erlen-estilo="glassmorfismo"],[data-erlen-estilo="frutiger-aero"]) [data-mey-decoracion="cristal"]{display:inline;fill:var(--erlen-mey-reflejo);opacity:.75}
-:root[data-erlen-estilo="frutiger-aero"] [data-mey-decoracion="aero"]{display:inline;stroke:var(--erlen-mey-reflejo);stroke-width:.35;fill:none}
-:root[data-erlen-estilo="art-deco"] [data-mey-decoracion="deco"]{display:inline;stroke:var(--erlen-ambar);stroke-width:.25}
-:root[data-erlen-estilo="bauhaus"] [data-mey-decoracion="bauhaus"]{display:inline;fill:var(--erlen-ambar);stroke:var(--erlen-mey-ojos);stroke-width:.25}
-:root[data-erlen-estilo="bauhaus"] [data-mey-decoracion="bauhaus"] path:first-of-type{fill:var(--erlen-cromo-luz)}
-:root[data-erlen-estilo="y2k"] [data-mey-decoracion="metal"]{display:inline;fill:var(--erlen-mey-reflejo);opacity:.85}
-:root[data-erlen-estilo="cyberpunk"] [data-mey-decoracion="circuito"]{display:inline;stroke:var(--erlen-verde);stroke-width:.35}
-:root[data-erlen-estilo="blueprint"] [data-mey-decoracion="plano"]{display:inline;stroke:var(--erlen-verde);stroke-width:.15;opacity:.7}
-:root[data-erlen-estilo="retro-digital"] [data-mey-decoracion="retro"]{display:inline;stroke:var(--erlen-mey-ojos);stroke-width:.35;opacity:.4}
-:root:root[data-erlen-estilo][data-erlen-material="solido"]{--mey-vector-visible:none;--mey-pixel-visible:inline}
-@media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active),print{:root:root[data-erlen-estilo]{--mey-vector-visible:none;--mey-pixel-visible:inline}}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root:root[data-erlen-estilo]{--mey-vector-visible:none;--mey-pixel-visible:inline}}
-
-/* Iluminación de cada material, mezclada con la paleta elegida de Mey. */
-:root[data-erlen-estilo="glassmorfismo"]{--mey-material-brillo:90%;--mey-material-profundidad:45%}
-:root[data-erlen-estilo="neumorfismo"]{--mey-material-brillo:65%;--mey-material-profundidad:28%}
-:root[data-erlen-estilo="claymorfismo"]{--mey-material-brillo:55%;--mey-material-profundidad:32%}
-:root[data-erlen-estilo="frutiger-aero"]{--mey-material-brillo:80%;--mey-material-profundidad:35%}
-:root[data-erlen-estilo="esqueuomorfismo"]{--mey-material-brillo:65%;--mey-material-profundidad:48%}
-:root[data-erlen-estilo="y2k"]{--mey-material-brillo:100%;--mey-material-profundidad:65%}
-
-/* Erlen Suite · paquete de diseño 2.2.0 · marco común de las apps (docs/COHERENCIA-APPS.md §4).
-   Estructura compartida de mountMarco (suite-marco.mjs): cabecera, cinta, cuerpo con navegación,
+/* Marco de Tabula, adaptado del diseño de Erlen.
+   Estructura de mountMarco (marco.mjs): cabecera, cinta, cuerpo con navegación,
    trabajo y detalles, y pie. Solo cromo: el área de trabajo del usuario se queda opaca
    (var(--erlen-superficie) / var(--erlen-papel)), nunca con vidrio. Ningún color literal aquí:
    todo es var(--erlen-*) de tokens.css, que ya trae los respaldos de accesibilidad del material
@@ -100,9 +9,7 @@ html[data-erlen-mey-presencia] .recientes-vacio .mey{display:none}
 /* Solo el área de trabajo cede espacio: cabecera, cinta y pie nunca se comprimen ni solapan. */
 .erlen-marco>.erlen-app-header,.erlen-marco>.erlen-marco-cinta,.erlen-marco>.erlen-app-footer{flex:none}
 .erlen-marco :focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px}
-/* Cabecera: marca, nombre, menú de suite, título, estado y acciones. El desenfoque vive en el
-   ::before, nunca en la cabecera: un backdrop-filter en un antepasado recoloca el menú fijo de
-   <erlen-suite-nav> (docs/COHERENCIA-APPS.md §0.1). */
+/* Cabecera: marca, nombre, título, estado y acciones. El desenfoque vive en el ::before. */
 .erlen-marco>.erlen-app-header{position:relative;z-index:2;display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:60px;padding:var(--erlen-esp-2) var(--erlen-esp-5);border-bottom:1px solid var(--erlen-vidrio-contorno)}
 .erlen-marco>.erlen-app-header::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro);pointer-events:none}
 .erlen-marco-marca{display:inline-flex;align-items:center;gap:var(--erlen-esp-2);min-height:44px;padding:var(--erlen-esp-1) var(--erlen-esp-2);border:1px solid transparent;border-radius:var(--erlen-radio-capsula);background:transparent;color:var(--erlen-tinta);font:700 var(--erlen-texto-ui)/1.2 var(--erlen-font-ui);cursor:pointer}
@@ -110,34 +17,31 @@ html[data-erlen-mey-presencia] .recientes-vacio .mey{display:none}
 .erlen-marco-marca svg{width:26px;height:26px;flex:none}
 .erlen-marco-marca .erlen-marco-marca-nombre{font-family:var(--erlen-font-titulo);font-size:var(--erlen-texto-lg);letter-spacing:-.3px}
 .erlen-marco-nombre{font-family:var(--erlen-font-titulo);font-size:var(--erlen-h1-app);font-weight:400;line-height:1.12;letter-spacing:-.4px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-/* El nombre de la app ocupa lo que mide su texto. base.css da a todo h1 de cabecera «flex:1 1 0%» y, sin esto, el nombre se
-   repartía a partes iguales el espacio libre con la tira de controles: a 1440 px el nombre era una caja de 631 px con 263 px
-   de texto y la tira (título, estado, acciones) se quedaba en 630 px y desbordaba (FEM, auditoría ux-simulacion E3). */
+/* El nombre de la app ocupa lo que mide su texto: base.css da a todo h1 de cabecera
+   «flex:1 1 0%», que repartiría el espacio libre con la tira de controles. */
 .erlen-marco>.erlen-app-header .erlen-marco-nombre{flex:0 1 auto}
-.erlen-marco-suite{margin-left:auto;display:flex;align-items:center}
 /* Sin filas de más en escritorio: si no cabe, el desborde lo absorbe el título (elipsis) o la
-   tira gana scroll con degradado en el borde (data-desborde, lo vigila suite-marco.mjs).
-   Base 0 en la tira: con base auto su contenido decidía el salto de línea de la cabecera y la
-   tiraba a una segunda fila a 1024 px (analyze, data, projects, release, dft, spreadsheets). */
+   tira gana scroll con degradado en el borde (data-desborde, lo vigila marco.mjs).
+   Base 0 en la tira: con base auto su contenido podría forzar una segunda fila de cabecera. */
 .erlen-marco-controles{display:flex;align-items:center;flex-wrap:nowrap;gap:var(--erlen-esp-3);flex:1 1 0%;min-width:0;overflow-x:auto;scrollbar-width:none;padding-block:var(--erlen-esp-1);margin-block:calc(var(--erlen-esp-1)*-1)}
 .erlen-marco-controles::-webkit-scrollbar{display:none}
-/* El nombre del documento no se reduce a 80 px, pero cuando falta ancho es el primero en ceder
+/* El título aprovecha el espacio libre hasta su máximo, pero cede cuando falta ancho
    (ver el bloque de escritorio más abajo). */
-.erlen-marco-titulo{flex:0 0 auto;max-width:clamp(160px,45%,28rem);display:flex;align-items:center;gap:var(--erlen-esp-2)}
+.erlen-marco-titulo{flex:1 1 auto;max-width:clamp(160px,45%,28rem);display:flex;align-items:center;gap:var(--erlen-esp-2)}
 /* Estado: en móvil y tableta (≤ 920 px) no cede y la tira se desplaza con degradado en el borde
    (data-desborde). En escritorio ver el bloque siguiente. */
 .erlen-marco-estado{flex:none;margin-inline-start:auto;display:flex;align-items:center;justify-content:flex-end;gap:var(--erlen-esp-2);font-size:var(--erlen-texto-sm);color:var(--erlen-tinta-suave);white-space:nowrap}
 .erlen-marco-acciones,.erlen-marco-utilidades{display:flex;align-items:center;flex:none;gap:var(--erlen-esp-2)}
 /* Escritorio (> 920 px, una sola fila): lo que cede cuando falta ancho son el nombre y el estado,
    nunca las acciones. Con un proyecto abierto el nombre y el mensaje de estado medían lo que mide su
-   texto y empujaban fuera de la tira el botón principal (Guardar, Calcular, Descargar…). El nombre
+   texto y empujaban fuera de la tira el botón principal. El nombre
    cede primero (3 veces más rápido que el estado) y lleva elipsis con el nombre completo en el
    tooltip; el estado se parte en las líneas que haga falta, sin recorte (WCAG 1.4.12): si el mensaje
    es largo y el ancho escaso la cabecera crece en vez de cortar el texto. Los mensajes deben ser
    cortos; el estado de la cabecera es un resumen y un aviso que importa (por ejemplo «ejemplo
    simulado, no citable») debe vivir también en el cuerpo de la app. */
 @media (min-width:921px){
- .erlen-marco-titulo{flex:0 3 auto;min-width:min(6rem,100%)}
+ .erlen-marco-titulo{flex:1 3 auto;min-width:min(6rem,100%)}
  .erlen-marco-titulo>*{min-width:0}
  .erlen-marco-estado{flex:0 1 auto;min-width:min(9rem,100%);white-space:normal}
  .erlen-marco-estado #status{min-width:0;white-space:normal}
@@ -147,12 +51,6 @@ html[data-erlen-mey-presencia] .recientes-vacio .mey{display:none}
 [data-desborde="inicio"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px);mask-image:linear-gradient(90deg,transparent,#000 28px)}
 [data-desborde="ambos"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent)}
 @media (forced-colors:active),print{[data-desborde]{-webkit-mask-image:none;mask-image:none}}
-.erlen-marco-mey{flex:none}
-/* Variante decorativa (apps sin panel de ayuda): Mey solo mira, no recibe clics. */
-span.erlen-marco-mey{pointer-events:none}
-/* Variante botón (con config.ayuda): abre el panel de Mey; objetivo táctil completo. */
-button.erlen-marco-mey{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0 var(--erlen-esp-2);font:500 var(--erlen-texto-xs)/1.4 var(--erlen-font-ui);white-space:nowrap;border:1px solid transparent;border-radius:var(--erlen-radio-capsula);background:transparent;cursor:pointer}
-button.erlen-marco-mey:hover{background:var(--erlen-vidrio-tinte)}
 /* Cinta de herramientas a todo el ancho, debajo de la cabecera; su aspecto lo pone cinta.css. */
 .erlen-marco-cinta{flex:none;position:relative;z-index:1}
 .erlen-marco-sin-cinta>.erlen-marco-cinta{display:none}
@@ -167,12 +65,12 @@ button.erlen-marco-mey:hover{background:var(--erlen-vidrio-tinte)}
 .erlen-marco-trabajo{min-width:0;min-height:0;overflow:auto;background:var(--erlen-papel)}
 .erlen-marco-detalles{min-width:0;overflow:auto;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-left:1px solid var(--erlen-linea)}
 .erlen-marco-cuerpo:not(.con-detalles)>.erlen-marco-detalles{display:none}
-.erlen-marco-suite:empty,.erlen-marco-titulo:empty,.erlen-marco-estado:empty,.erlen-marco-mey:empty,.erlen-marco-acciones:empty,.erlen-marco-utilidades:empty,.erlen-marco-navegacion:empty,.erlen-marco-detalles:empty{display:none}
-/* Pie: estado a la izquierda y enlaces de la suite a la derecha. */
+.erlen-marco-titulo:empty,.erlen-marco-estado:empty,.erlen-marco-acciones:empty,.erlen-marco-utilidades:empty,.erlen-marco-navegacion:empty,.erlen-marco-detalles:empty{display:none}
+/* Pie: estado y enlaces. */
 .erlen-marco>.erlen-app-footer{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--erlen-esp-3);padding:var(--erlen-esp-4) var(--erlen-esp-5);border-top:1px solid var(--erlen-linea);background:var(--erlen-superficie);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
 .erlen-marco>.erlen-app-footer:empty{display:none}
-/* Barra inferior de la acción principal (suite-marco.mjs la monta solo con ≤ 920 px de ancho y más de 500 px
-   de alto): en el teléfono vertical el botón principal (Guardar, Calcular, Descargar…) quedaba a 412-650 px
+/* Barra inferior de la acción principal (marco.mjs la monta solo con ≤ 920 px de ancho y más de 500 px
+   de alto): en el teléfono vertical el botón principal quedaba a 412-650 px
    de una pantalla de 375 y solo se alcanzaba desplazando la tira. Ocupa su propia fila del marco, así que no
    tapa el trabajo ni el pie; el botón conserva su tamaño táctil y, en tableta, no se estira más de 24 rem. */
 .erlen-marco-barra-accion{display:none}
@@ -180,7 +78,7 @@ button.erlen-marco-mey:hover{background:var(--erlen-vidrio-tinte)}
 @media (max-width:920px) and (min-height:501px){
  .erlen-marco-barra-accion{flex:none;position:relative;z-index:2;display:flex;justify-content:flex-end;gap:var(--erlen-esp-3);padding:var(--erlen-esp-2) var(--erlen-esp-4);padding-bottom:calc(var(--erlen-esp-2) + env(safe-area-inset-bottom,0px));border-top:1px solid var(--erlen-linea);background:var(--erlen-superficie)}
  .erlen-marco>.erlen-marco-barra-accion>*{flex:1 1 auto;max-width:24rem;min-height:var(--erlen-alto-control)!important;justify-content:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- /* Los avisos flotantes de las apps (.toasts, .sheet-toasts, .lens-toasts) dejan libre la barra: tapaban el botón. */
+ /* Los avisos flotantes dejan libre la barra para no tapar el botón. */
  :root:has(.erlen-marco.con-barra-accion) :is(.toasts,.sheet-toasts,.lens-toasts){margin-bottom:calc(var(--erlen-alto-control) + var(--erlen-esp-4) + 1px + env(safe-area-inset-bottom,0px))}
 }
 /* Cajón accesible (navegación en móvil, detalles a ≤ 920 px): diálogo con máscara, foco atrapado,
@@ -194,31 +92,6 @@ button.erlen-marco-mey:hover{background:var(--erlen-vidrio-tinte)}
 .erlen-marco-cajon-cerrar{min-height:44px;min-width:44px;padding:var(--erlen-esp-2);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);cursor:pointer}
 .erlen-marco-cajon-cerrar:hover{background:var(--erlen-verde-suave)}
 .erlen-marco-cajon-cuerpo{min-height:0;overflow:auto}
-/* Panel de ayuda de Mey (suite-mey-ayuda.mjs, dentro del cajón): guía con comandos reales de
-   la cinta y los ejecuta solo al pulsar «Hazlo». Solo tokens --erlen-*. */
-.erlen-ayuda{display:flex;flex-direction:column;gap:var(--erlen-esp-3);font-family:var(--erlen-font-ui);color:var(--erlen-tinta)}
-.erlen-ayuda-cabecera{display:flex;align-items:flex-start;gap:var(--erlen-esp-3)}
-.erlen-ayuda-mascota{flex:none;width:48px}
-.erlen-ayuda-mascota svg{display:block;width:100%;height:auto}
-.erlen-ayuda-titulo{margin:0;font:700 var(--erlen-texto-ui)/1.2 var(--erlen-font-ui)}
-.erlen-ayuda-intro{margin:var(--erlen-esp-1) 0 0;font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
-.erlen-ayuda-buscar{display:flex;flex-direction:column;gap:var(--erlen-esp-1)}
-.erlen-ayuda-buscar-rotulo{font-size:var(--erlen-texto-xs);font-weight:600}
-.erlen-ayuda-entrada{min-height:44px;padding:0 var(--erlen-esp-3);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:inherit;font:inherit}
-.erlen-ayuda-estado{margin:0;min-height:1.2em;font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
-.erlen-ayuda-sincinta{margin:0;padding:var(--erlen-esp-2) var(--erlen-esp-3);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-pequeno);background:var(--erlen-superficie-2);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
-.erlen-ayuda-empieza{margin:0;font-size:var(--erlen-texto-xs);letter-spacing:.06em;text-transform:uppercase;color:var(--erlen-tinta-suave)}
-.erlen-ayuda-lista{margin:0;padding:0;list-style:none;display:flex;flex-direction:column}
-.erlen-ayuda-fila{display:flex;flex-wrap:wrap;align-items:center;gap:var(--erlen-esp-1) var(--erlen-esp-2);padding:var(--erlen-esp-2) 0;border-top:1px solid var(--erlen-linea)}
-.erlen-ayuda-etiqueta{flex:1 1 auto;min-width:0;font-size:var(--erlen-texto-sm)}
-.erlen-ayuda-ruta,.erlen-ayuda-texto{flex-basis:100%;font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
-.erlen-ayuda-no{font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
-.erlen-ayuda-acciones{display:flex;gap:var(--erlen-esp-1);margin-inline-start:auto}
-.erlen-ayuda-acciones button{min-height:32px;padding:0 var(--erlen-esp-3);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-capsula);background:var(--erlen-superficie);color:inherit;font:600 var(--erlen-texto-xs)/1.2 var(--erlen-font-ui);cursor:pointer}
-.erlen-ayuda-acciones button:hover{background:var(--erlen-verde-suave)}
-.erlen-ayuda-acciones .erlen-ayuda-hazlo{border-color:var(--erlen-verde);color:var(--erlen-verde)}
-.erlen-ayuda-acciones button:disabled{opacity:.5;cursor:default}
-@media (any-pointer:coarse),(max-width:920px){.erlen-ayuda-acciones button{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}}
 /* Botón de cajón de navegación: solo en estrecho (≤ 920 px). */
 .erlen-marco-abrir-cajon{display:none;min-height:44px;min-width:44px;padding:var(--erlen-esp-2);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);cursor:pointer}
 .erlen-marco-abrir-cajon:hover{background:var(--erlen-verde-suave)}
@@ -241,7 +114,7 @@ button.erlen-marco-mey:hover{background:var(--erlen-vidrio-tinte)}
     El padding evita que el overflow-x recorte el anillo de foco de 3 px (aquí sin margen
     negativo: la cabecera de dos filas necesita sus 121 px). */
  .erlen-marco-controles{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;gap:var(--erlen-esp-2);padding:var(--erlen-esp-1);margin-block:0}
- .erlen-marco-titulo{flex:0 0 auto;min-width:120px;max-width:min(60vw,20rem)}
+ .erlen-marco-titulo{min-width:120px;max-width:min(60vw,20rem)}
 }
 /* ≤ 600 px: la tira de controles sigue en una fila con scroll, sin filas de más; 44 px en todo.
    El nombre (h1, única de la vista) se oculta visualmente pero sigue en el árbol de accesibilidad:

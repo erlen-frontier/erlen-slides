@@ -56,6 +56,30 @@ function zona(sl, i) {
 /* Todas las zonas con contenido de una diapositiva. */
 function zonas(sl) { return CLAVES_ZONA.map(k => sl[k] || []); }
 
+/* Al cambiar a una portada o sección, los bloques se guardan temporalmente. */
+function bloquesConectables(sl) {
+  return zonas(sl).flat().concat(Array.isArray(sl._guardados) ? sl._guardados : []);
+}
+function limpiaConectores(sl) {
+  if (!Array.isArray(sl.conectores)) { delete sl.conectores; return; }
+  const ids = new Set(bloquesConectables(sl).map(b => b?.id));
+  sl.conectores = sl.conectores.filter(c => c && c.desde !== c.hasta && ids.has(c.desde) && ids.has(c.hasta));
+  if (!sl.conectores.length) delete sl.conectores;
+}
+/* Una copia de diapositiva necesita IDs nuevos también en sus relaciones. */
+function copiaDiapositiva(sl) {
+  const copia = deepCopy(sl), ids = new Map(); copia.id = uid();
+  for (const b of bloquesConectables(copia)) {
+    if (!b || typeof b !== 'object') continue;
+    const anterior = b.id; b.id = uid(); ids.set(anterior, b.id);
+  }
+  if (Array.isArray(copia.conectores)) copia.conectores = copia.conectores
+    .filter(c => ids.has(c.desde) && ids.has(c.hasta))
+    .map(c => ({desde:ids.get(c.desde), hasta:ids.get(c.hasta)}));
+  limpiaConectores(copia);
+  return copia;
+}
+
 function findBlock(id, deck = S.deck) {
   for (const sl of deck.slides) {
     for (const arr of zonas(sl)) {
@@ -290,7 +314,7 @@ function commit(opts) {
   /* La bibliografía se pone al día antes de guardar el paso, para que deshacer
      devuelva la presentación entera y no la deje a medias. */
   if (typeof sincronizaBib === 'function') sincronizaBib(S.deck);
-  S.deck.slides.forEach(materializaPosicionesLibres);
+  S.deck.slides.forEach(sl => { materializaPosicionesLibres(sl); limpiaConectores(sl); });
   S.undo.push(S._snap || snapDeck(S.deck));
   S.redo.length = 0;
   S._snap = snapDeck(S.deck);
@@ -342,8 +366,7 @@ function addSlide(layout, at) {
   commit();
 }
 function dupSlide(i) {
-  const c = deepCopy(S.deck.slides[i]); c.id = uid();
-  for (const arr of zonas(c)) arr.forEach(b => b.id = uid());
+  const c = copiaDiapositiva(S.deck.slides[i]);
   S.deck.slides.splice(i + 1, 0, c); S.cur = i + 1; S.selBlock = null; SESION.nuevas++; commit();
 }
 function delSlide(i) {

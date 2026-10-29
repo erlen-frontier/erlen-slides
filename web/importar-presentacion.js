@@ -114,13 +114,6 @@ function openImportarPresentacion() {
       else if (/\.json$/i.test(f.name)) {
         const bruto = JSON.parse(await f.text());
         if (cerrado || actual !== turno || S.deck !== original) return;
-        if (bruto?.version === 2 && typeof bruto.payloadJSON === 'string') {
-          let verificado;
-          try { verificado = await erlenExchange.verifyTransfer(bruto, 'slides'); }
-          catch (e) { if (!cerrado && actual === turno && S.deck === original) rechazaCopia(e); return; }
-          if (!cerrado && actual === turno && S.deck === original) recibeRegistro(verificado);
-          return;
-        }
         r = saneaDeck(bruto); if (r.error) throw new Error(r.error);
         if (SANEA_REMOTOS.length) throw new Error('El proyecto incluye recursos remotos. Incrusta las imágenes en el proyecto original antes de importarlo desde esta vista.');
       } else throw new Error('Selecciona un archivo .json, .pptx o .md.');

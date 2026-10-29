@@ -1,6 +1,85 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 'use strict';
 
+/* Las relaciones no modifican los bloques ni sus fuentes científicas. */
+function conectaBloques(deck, slide, desde, hasta) {
+  if (typeof flushEdicion === 'function') flushEdicion();
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre || !zonasDe(slide.layout) || desde === hasta) return false;
+  const seleccion = idsSeleccionados(), bloques = zonas(slide).flat();
+  if (seleccion.size !== 2 || !seleccion.has(desde) || !seleccion.has(hasta) || S.selBlock !== hasta ||
+      ![desde, hasta].every(id => bloques.some(b => b.id === id && b.type !== 'spacer' && bloqueVisible(b, deck)))) return false;
+  if ((slide.conectores || []).some(c => c.desde === desde && c.hasta === hasta)) return false;
+  (slide.conectores ||= []).push({desde, hasta});
+  commit(); return true;
+}
+function eliminaConector(deck, slide, desde, hasta) {
+  if (typeof flushEdicion === 'function') flushEdicion();
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre) return false;
+  const indice = (slide.conectores || []).findIndex(c => c.desde === desde && c.hasta === hasta);
+  if (indice < 0) return false;
+  slide.conectores.splice(indice, 1); commit(); return true;
+}
+function nombreConector(b, slide = null) {
+  const nombre = (BLOCK_DEFS.find(d => d.id === b?.type) || {}).name || b?.type || 'Objeto';
+  const texto = String(b?.text || b?.caption || b?.title || b?.tex || b?.alt || nombre).replace(/\s+/g, ' ').slice(0, 80);
+  if (!slide || !b) return texto;
+  const iguales = zonas(slide).flat().filter(x => nombreConector(x) === texto);
+  return iguales.length > 1 ? texto + ' (' + (iguales.indexOf(b) + 1) + ')' : texto;
+}
+
+/* Intersección con la caja en unidades de diapositiva, no de porcentajes:
+   la dirección debe ser correcta tanto en 16:9 como en 4:3. Las formas
+   simples sin pie usan su contorno interior y su giro; otros bloques usan su caja. */
+function conectoresVisibles(sl, deck, posiciones = null, giros = null) {
+  if (!sl.lienzoLibre || !zonasDe(sl.layout) || !Array.isArray(sl.conectores)) return [];
+  const [W, H] = slideDims(deck), porId = new Map(zonas(sl).flat().map(b => [b.id, b]));
+  const caja = b => {
+    const p = posiciones?.get(b.id) || posicionLibreDe(sl, b);
+    let w = p.w * W / 100, h = p.h * H / 100, elipse = false, forma = false;
+    const o = b.figura?.objects?.length === 1 ? b.figura.objects[0] : null;
+    if (esFormaLibre(b) && !b.caption && o && ['rect', 'circle'].includes(b.formaLibre) && o.kind === b.formaLibre &&
+        Number.isFinite(o.width) && Number.isFinite(o.height) && o.width > 0 && o.height > 0 &&
+        b.figura.width > 0 && b.figura.height > 0 && !o.angle &&
+        Math.abs(o.x + o.width / 2 - b.figura.width / 2) < .01 && Math.abs(o.y + o.height / 2 - b.figura.height / 2) < .01) {
+      w *= (b.w || 70) / 100 * o.width / b.figura.width; h *= o.height / b.figura.height; elipse = b.formaLibre === 'circle'; forma = true;
+    }
+    return {x:(p.x + p.w / 2) * W / 100, y:(p.y + p.h / 2) * H / 100, w, h, elipse,
+      giro:forma ? (giros?.get(b.id) ?? transformacionLibreDe(b).giro) * Math.PI / 180 : 0};
+  };
+  const borde = (c, dx, dy) => {
+    const cos = Math.cos(c.giro), sin = Math.sin(c.giro), x = dx * cos + dy * sin, y = -dx * sin + dy * cos;
+    if (c.elipse) return 1 / Math.sqrt((x / (c.w / 2)) ** 2 + (y / (c.h / 2)) ** 2);
+    return Math.min(x ? c.w / 2 / Math.abs(x) : Infinity, y ? c.h / 2 / Math.abs(y) : Infinity);
+  };
+  const resultado = [];
+  for (const c of sl.conectores) {
+    const desde = porId.get(c.desde), hasta = porId.get(c.hasta);
+    if (!desde || !hasta || !bloqueVisible(desde, deck) || !bloqueVisible(hasta, deck)) continue;
+    const a = caja(desde), b = caja(hasta), dx = b.x - a.x, dy = b.y - a.y;
+    if (!dx && !dy) continue;
+    const inicio = borde(a, dx, dy), fin = borde(b, dx, dy);
+    /* Si se superponen no hay un segmento entre contornos. Se conserva la
+       relación y vuelve a verse al separar los objetos. */
+    if (inicio + fin >= 1) continue;
+    resultado.push({desde:c.desde, hasta:c.hasta, x1:a.x + dx * inicio, y1:a.y + dy * inicio,
+      x2:b.x - dx * fin, y2:b.y - dy * fin});
+  }
+  return resultado;
+}
+function pintaConectoresLienzo(svg, sl, deck, posiciones = null, giros = null) {
+  if (!svg) return;
+  const bloques = new Map(zonas(sl).flat().map(b => [b.id, b]));
+  const conexiones = conectoresVisibles(sl, deck, posiciones, giros), color = temaDe(deck).fg;
+  svg.setAttribute('aria-label', conexiones.map(c => nombreConector(bloques.get(c.desde), sl) + ' hacia ' + nombreConector(bloques.get(c.hasta), sl)).join('; ') || 'Sin conectores visibles');
+  svg.replaceChildren(...conexiones.map(c => {
+    const dx = c.x2 - c.x1, dy = c.y2 - c.y1, largo = Math.hypot(dx, dy), ux = dx / largo, uy = dy / largo;
+    const punta = Math.min(16, largo / 2), ancho = punta * .42;
+    return sv('g', {'data-desde':c.desde, 'data-hasta':c.hasta},
+      sv('line', {x1:c.x1, y1:c.y1, x2:c.x2, y2:c.y2, stroke:color, 'stroke-width':3, 'stroke-linecap':'round'}),
+      sv('path', {d:`M${c.x2},${c.y2} L${c.x2 - punta * ux - ancho * uy},${c.y2 - punta * uy + ancho * ux} L${c.x2 - punta * ux + ancho * uy},${c.y2 - punta * uy - ancho * ux} Z`, fill:color}));
+  }));
+}
+
 /* La capa es independiente de la zona: se guarda con el bloque para que la
    duplicación de diapositivas conserve el orden aunque cambien los IDs. */
 function bloquesEnCapas(sl, deck = S.deck) {
