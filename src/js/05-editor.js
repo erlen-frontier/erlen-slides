@@ -63,7 +63,11 @@ function renderCanvas() {
     libre.title = disponible ? 'Activar o desactivar la colocación libre en esta diapositiva' : 'Este diseño no admite bloques';
   }
   const objetos = $('#lienzoObjetosBtn');
-  if (objetos) { objetos.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout)); objetos.disabled = !zonas(curSlide()).some(z => z.length); }
+  if (objetos) {
+    objetos.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout));
+    objetos.disabled = !zonasDe(curSlide().layout);
+    objetos.setAttribute('aria-expanded', String(!!$('#panelCapas') && !$('#panelCapas').hidden));
+  }
   const iman = $('#lienzoImanBtn');
   if (iman) {
     iman.hidden = !(curSlide().lienzoLibre && zonasDe(curSlide().layout));
@@ -72,6 +76,7 @@ function renderCanvas() {
   actualizaControlesComposicion();
   mountToolbar();
   pintaSeleccionBloques();
+  pintaPanelCapas();
   if (restaurarFoco) {
     const destino = Array.from(inner.querySelectorAll('.blk[data-bid]')).find(el => el.dataset.bid === restaurarFoco.id);
     if (destino) {
@@ -110,6 +115,7 @@ function selectBlock(id, aditiva = false) {
   else if (!id && S.tab === 'bloque') S.tab = S.tabPrev || 'insert';
   if (id !== antes || S.tab === 'bloque') renderInspector();
   actualizaControlesComposicion();
+  sincronizaPanelCapas();
 }
 function etiquetaBloqueLibre(id, b) {
   const nombre = (BLOCK_DEFS.find(d => d.id === b?.type) || {}).name || b?.type || 'Bloque';
@@ -469,54 +475,197 @@ function montaMarcoSeleccionLibre() {
   raiz.append(marco);
 }
 
-/* Una lista independiente de la posición permite alcanzar también elementos
-   completamente cubiertos por otros o al trabajar solo con teclado. */
+/* El panel no es modal: el lienzo sigue disponible y ambos comparten la misma
+   selección. La primera fila representa la capa más cercana a quien mira. */
+let arrastreCapa = null, aplazaPanelCapas = false, panelCapasPendiente = false, temporizadorCapas = null;
+function terminaInteraccionCapas() {
+  if (!aplazaPanelCapas || arrastreCapa) return;
+  clearTimeout(temporizadorCapas);
+  temporizadorCapas = setTimeout(() => {
+    aplazaPanelCapas = false; temporizadorCapas = null;
+    if (panelCapasPendiente) { panelCapasPendiente = false; pintaPanelCapas(); }
+  }, 0);
+}
+function limpiaIndicadorCapas() {
+  $$('#panelCapas [data-insercion]').forEach(el => delete el.dataset.insercion);
+}
+function cierraPanelCapas() {
+  const panel = $('#panelCapas'); if (!panel || panel.hidden) return;
+  const dentro = panel.contains(document.activeElement);
+  arrastreCapa = null; aplazaPanelCapas = false; panelCapasPendiente = false; clearTimeout(temporizadorCapas);
+  limpiaIndicadorCapas(); panel.hidden = true;
+  panel.querySelector('.capas-lista')?.replaceChildren();
+  $('.canvas-wrap')?.classList.remove('capas-abierto');
+  const boton = $('#lienzoObjetosBtn'); if (boton) boton.setAttribute('aria-expanded', 'false');
+  renderCanvas();
+  if (dentro && boton && !boton.hidden && !boton.disabled) boton.focus({preventScroll:true});
+}
 function openObjetosLienzo() {
-  const deck = S.deck, sl = curSlide();
-  if (!sl.lienzoLibre || !zonasDe(sl.layout)) return;
-  const lista = h('div', { class: 'lienzo-lista' }), marcados = new Set(idsSeleccionados());
-  const selecciona = h('button', { class: 'btn btn-pri', disabled: !marcados.size, onclick: () => {
-    if (S.deck !== deck || curSlide() !== sl) return;
-    const bloques = bloquesEnCapas(sl).filter(b => marcados.has(b.id));
-    if (!bloques.length) return;
-    const grupos = new Set(bloques.map(b => b.group).filter(Boolean));
-    for (const b of bloquesEnCapas(sl)) if (b.group && grupos.has(b.group)) marcados.add(b.id);
-    const ultimo = bloques.at(-1);
-    closeModal(); selectBlock(ultimo.id);
-    const ids = idsSeleccionados(); ids.clear(); for (const id of marcados) ids.add(id);
-    pintaSeleccionBloques(); mountToolbar(); enfocaBloqueLibre(ultimo.id);
-  } }, 'Seleccionar marcados');
-  function pinta() {
-    lista.replaceChildren();
-    const orden = bloquesEnCapas(sl).slice().reverse();
-    orden.forEach((b, i) => {
-      const nombre = (BLOCK_DEFS.find(d => d.id === b.type) || {}).name || b.type;
-      const detalle = String(b.text || b.caption || b.title || b.tex || b.alt || '').replace(/\s+/g, ' ').slice(0, 80);
-      const referencia = detalle || nombre;
-      const oculto = typeof bloqueVisible === 'function' && !bloqueVisible(b, deck);
-      const marca = h('input', { type: 'checkbox', disabled: oculto, checked: !oculto && marcados.has(b.id), 'aria-label': 'Marcar ' + referencia,
-        onchange: e => { e.target.checked ? marcados.add(b.id) : marcados.delete(b.id); selecciona.disabled = !marcados.size; } });
-      const elige = h('button', { type: 'button', class: 'btn lienzo-lista-nombre', disabled: oculto, onclick: () => {
-        if (S.deck !== deck || curSlide() !== sl || !findBlock(b.id)) return;
-        closeModal(); selectBlock(b.id); enfocaBloqueLibre(b.id);
-      } }, (orden.length - i) + ' · ' + nombre + (detalle ? ' · ' + detalle : '') + (b.locked ? ' · bloqueado' : '') + (oculto ? ' · oculto en este nivel' : ''));
-      const capa = (direccion, signo, etiqueta, desactivado) => h('button', { type: 'button', class: 'btn btn-sm',
-        disabled: b.locked || oculto || desactivado, 'aria-label': etiqueta + ' capa ' + referencia,
-        'data-capa-id': b.id, 'data-capa-direccion': direccion,
-        onclick: () => { if (mueveCapaLibre(deck, sl, b.id, direccion)) {
-          pinta();
-          const botones = Array.from(lista.querySelectorAll('[data-capa-id]'));
-          const siguiente = botones.find(n => n.dataset.capaId === String(b.id) && n.dataset.capaDireccion === direccion && !n.disabled);
-          (siguiente || botones.find(n => n.dataset.capaId === String(b.id) && !n.disabled))?.focus();
-        } } }, signo);
-      lista.append(h('div', { class: 'lienzo-lista-fila' }, marca, elige,
-        capa('adelante', '↑', 'Adelantar', i === 0), capa('atras', '↓', 'Retrasar', i === orden.length - 1)));
-    });
+  const panel = $('#panelCapas'), sl = curSlide();
+  if (!panel || !sl.lienzoLibre || !zonasDe(sl.layout)) return;
+  if (!panel.hidden) { cierraPanelCapas(); return; }
+  panel.hidden = false; $('.canvas-wrap').classList.add('capas-abierto');
+  $('#lienzoObjetosBtn')?.setAttribute('aria-expanded', 'true');
+  renderCanvas();
+}
+function iniciaPanelCapas() {
+  const wrap = $('.canvas-wrap'); if (!wrap || $('#panelCapas')) return;
+  const cerrar = h('button', {type:'button', class:'icon-btn', 'aria-label':'Cerrar panel de capas', title:'Cerrar panel de capas', onclick:cierraPanelCapas}, '✕');
+  const lista = h('div', {class:'lienzo-lista capas-lista', role:'list', 'aria-label':'Orden de capas'});
+  const seleccionar = h('button', {type:'button', class:'btn btn-sm', 'data-panel-seleccionar':'', onclick:() => {
+    if (S.selBlock && idsSeleccionados().has(S.selBlock)) enfocaBloqueLibre(S.selBlock);
+  }, title:'Enfocar la selección en el lienzo'}, 'Seleccionar marcados');
+  const panel = h('aside', {id:'panelCapas', class:'panel-capas', role:'region', 'aria-label':'Capas de la diapositiva', hidden:true},
+    h('div', {class:'capas-cab'}, h('div', null, h('strong', null, 'Capas'), h('span', null, 'De delante hacia atrás')), cerrar),
+    h('p', {class:'capas-ayuda'}, 'Selecciona, bloquea o arrastra. Las flechas también cambian el orden.'),
+    h('p', {class:'capas-estado', role:'status', 'aria-live':'polite'}), lista,
+    h('div', {class:'capas-pie'}, seleccionar));
+  /* Perder el foco en un editor puede repintar el panel durante el primer
+     clic. Mantener el nodo hasta soltar evita que ese clic se pierda. */
+  panel.addEventListener('pointerdown', () => {
+    aplazaPanelCapas = true;
+    const suelta = e => {
+      if (e.type === 'blur' && e.target !== window) return;
+      document.removeEventListener('pointerup', suelta, true);
+      document.removeEventListener('pointercancel', suelta, true);
+      window.removeEventListener('blur', suelta, true);
+      if (e.type === 'blur') { arrastreCapa = null; limpiaIndicadorCapas(); }
+      terminaInteraccionCapas();
+    };
+    document.addEventListener('pointerup', suelta, true);
+    document.addEventListener('pointercancel', suelta, true);
+    window.addEventListener('blur', suelta, true);
+  });
+  panel.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cierraPanelCapas(); } });
+  wrap.append(panel);
+}
+function miniaturaCapa(b, nombre) {
+  const mini = h('span', {class:'capa-mini', 'aria-hidden':'true'});
+  if (b.type === 'image' && b.src) {
+    const img = h('img', {src:b.src, alt:''}); aplicaVistaImagen(img, b.src, 'thumb'); mini.append(img);
+  } else {
+    const iconos = {text:'T', bullets:'≡', image:'▧', chart:'▥', func:'ƒ', math:'∑', chem:'⚗', table:'▦', galeria:'▤', video:'▶', smart:'◇'};
+    mini.textContent = iconos[b.type] || String(nombre || '•').slice(0, 1).toUpperCase();
   }
-  pinta();
-  openModal({ title: 'Bloques de la diapositiva', body: h('div', null,
-    h('p', { class: 'hint' }, 'La primera capa está delante. Elige un bloque o marca varios para moverlos juntos.'), lista),
-    foot: [h('button', { class: 'btn', onclick: closeModal }, 'Cerrar'), selecciona] });
+  return mini;
+}
+function sincronizaPanelCapas() {
+  const panel = $('#panelCapas'); if (!panel || panel.hidden) return;
+  const sl = curSlide(), seleccion = idsSeleccionados(), orden = bloquesEnCapas(sl).slice().reverse();
+  const disponibles = new Map(orden.map(b => [String(b.id), b]));
+  const estado = panel.querySelector('.capas-estado');
+  if (estado) estado.textContent = !sl.lienzoLibre || !zonasDe(sl.layout) ? 'Activa el lienzo libre en esta diapositiva.' :
+    !orden.length ? 'Esta diapositiva todavía no tiene capas.' : seleccion.size ? seleccion.size + (seleccion.size === 1 ? ' capa seleccionada' : ' capas seleccionadas') : 'Ninguna capa seleccionada';
+  const seleccionar = panel.querySelector('[data-panel-seleccionar]'); if (seleccionar) seleccionar.disabled = !seleccion.size;
+  for (const fila of panel.querySelectorAll('[data-capa-fila]')) {
+    const b = disponibles.get(fila.dataset.capaFila); if (!b) continue;
+    const elegido = seleccion.has(b.id), varios = elegido && seleccion.size > 1;
+    const ids = varios ? new Set(seleccion) : new Set([b.id]);
+    const bloqueada = orden.some(x => ids.has(x.id) && x.locked);
+    const oculto = typeof bloqueVisible === 'function' && !bloqueVisible(b, S.deck);
+    fila.classList.toggle('seleccionada', elegido);
+    fila.classList.toggle('activa', S.selBlock === b.id);
+    const marca = fila.querySelector('[data-capa-accion="marca"]'); if (marca) marca.checked = elegido && !oculto;
+    const asa = fila.querySelector('[data-capa-arrastrar]');
+    if (asa) { asa.classList.toggle('deshabilitada', bloqueada || oculto); asa.setAttribute('draggable', String(!bloqueada && !oculto)); }
+    for (const [direccion, paso, palabra] of [['adelante',-1,'Adelantar'], ['atras',1,'Retrasar']]) {
+      const boton = fila.querySelector('[data-capa-direccion="'+direccion+'"]'); if (!boton) continue;
+      const puede = orden.some((x, i) => ids.has(x.id) && orden[i + paso] && !ids.has(orden[i + paso].id));
+      boton.disabled = oculto || bloqueada || !puede;
+      boton.setAttribute('aria-label', palabra + (varios ? ' selección desde ' : ' capa ') + fila.dataset.capaReferencia);
+    }
+  }
+}
+function pintaPanelCapas() {
+  const panel = $('#panelCapas'); if (!panel || panel.hidden) return;
+  if (aplazaPanelCapas) { panelCapasPendiente = true; return; }
+  const deck = S.deck, sl = curSlide(), lista = panel.querySelector('.capas-lista');
+  if (arrastreCapa && (arrastreCapa.deck !== deck || arrastreCapa.slide !== sl)) arrastreCapa = null;
+  const foco = document.activeElement, filaFoco = foco?.closest?.('[data-capa-fila]');
+  const restaurar = panel.contains(foco) && filaFoco ? {id:filaFoco.dataset.capaFila, accion:foco.dataset.capaAccion} : null;
+  const desplazamiento = lista.scrollTop;
+  const orden = sl.lienzoLibre && zonasDe(sl.layout) ? bloquesEnCapas(sl).slice().reverse() : [];
+  const actuales = new Map(Array.from(lista.children).map(fila => [fila.dataset.capaFila, fila]));
+  const ids = new Set(orden.map(b => String(b.id)));
+  for (const [id, fila] of actuales) if (!ids.has(id) || fila._capa?.deck !== deck || fila._capa?.slide !== sl) { fila.remove(); actuales.delete(id); }
+  for (const [i, b] of orden.entries()) {
+    const nombre = (BLOCK_DEFS.find(d => d.id === b.type) || {}).name || b.type;
+    const detalle = String(b.text || b.caption || b.title || b.tex || b.alt || '').replace(/\s+/g, ' ').slice(0, 80);
+    const referencia = detalle || nombre, oculto = typeof bloqueVisible === 'function' && !bloqueVisible(b, deck);
+    let existente = actuales.get(String(b.id));
+    const previo = existente?._capa;
+    if (previo && previo.b === b && previo.nombre === nombre && previo.detalle === detalle && previo.oculto === oculto &&
+        previo.locked === !!b.locked && previo.src === b.src && previo.tipo === b.type) {
+      if (lista.children[i] !== existente) lista.insertBefore(existente, lista.children[i] || null);
+      continue;
+    }
+    if (existente) existente.remove();
+    const marca = h('input', {type:'checkbox', disabled:oculto, 'aria-label':'Marcar '+referencia, 'data-capa-accion':'marca', onchange:e => {
+      if (S.deck !== deck || curSlide() !== sl || findBlock(b.id)?.block !== b) return;
+      if (e.target.checked !== idsSeleccionados().has(b.id)) selectBlock(b.id, true);
+    }});
+    const asa = h('span', {class:'capa-asa', 'data-capa-arrastrar':'', draggable:'true', 'aria-hidden':'true',
+      title:'Arrastrar para cambiar el orden'}, '⠿');
+    const elige = h('button', {type:'button', class:'lienzo-lista-nombre', 'data-capa-accion':'seleccionar', disabled:oculto, onclick:e => {
+      if (S.deck !== deck || curSlide() !== sl || findBlock(b.id)?.block !== b) return;
+      selectBlock(b.id, e.ctrlKey || e.metaKey || e.shiftKey); if (S.selBlock) enfocaBloqueLibre(S.selBlock);
+    }}, h('span', {class:'capa-nombre'}, detalle || nombre), h('span', {class:'capa-tipo'}, nombre + (oculto ? ' · oculto en este nivel' : '') + (b.locked ? ' · bloqueado' : '')));
+    const capa = (direccion, signo, palabra) => h('button', {type:'button', class:'capa-accion', 'data-capa-id':b.id,
+      'data-capa-accion':direccion, 'data-capa-direccion':direccion, 'aria-label':palabra+' capa '+referencia,
+      onclick:() => {
+        if (S.deck !== deck || curSlide() !== sl || findBlock(b.id)?.block !== b) return;
+        const seleccion = idsSeleccionados(), ids = seleccion.has(b.id) ? [...seleccion] : [b.id];
+        mueveCapasLibres(deck, sl, ids, direccion);
+      }}, signo);
+    const bloqueado = !!b.locked;
+    const candado = sv('svg', {viewBox:'0 0 24 24', class:'capa-icono', 'aria-hidden':'true', focusable:'false'},
+      sv('rect', {x:5,y:10,width:14,height:11,rx:2}),
+      sv('path', {d:bloqueado ? 'M8 10V7a4 4 0 0 1 8 0v3' : 'M8 10V7a4 4 0 0 1 7.8-1.2'}));
+    const bloqueo = h('button', {type:'button', class:'capa-accion capa-bloqueo', disabled:oculto, 'data-capa-accion':'bloqueo',
+      'aria-label':(bloqueado ? 'Desbloquear' : 'Bloquear')+' capa '+referencia, title:bloqueado ? 'Desbloquear capa' : 'Bloquear capa',
+      onclick:() => {
+        if (S.deck !== deck || curSlide() !== sl || findBlock(b.id)?.block !== b) return;
+        try {
+          flushEdicion();
+          if (S.deck === deck && curSlide() === sl && findBlock(b.id)?.block === b && !!b.locked === bloqueado)
+            aplicaLoteBloques(deck, sl, [b.id], bloqueado ? 'desbloquear' : 'bloquear');
+        } catch (error) { toast(error.message, 'warn'); }
+      }}, candado);
+    const fila = h('div', {class:'lienzo-lista-fila capa-fila', role:'listitem', 'data-capa-fila':b.id, 'data-capa-referencia':referencia},
+      asa, marca, miniaturaCapa(b,nombre), elige, bloqueo, capa('adelante','↑','Adelantar'), capa('atras','↓','Retrasar'));
+    fila._capa = {deck, slide:sl, b, nombre, detalle, oculto, locked:!!b.locked, src:b.src, tipo:b.type};
+    asa.addEventListener('dragstart', e => {
+      if (S.deck !== deck || curSlide() !== sl || findBlock(b.id)?.block !== b) { e.preventDefault(); return; }
+      if (!idsSeleccionados().has(b.id)) selectBlock(b.id);
+      const ids = [...idsSeleccionados()], bloques = bloquesEnCapas(sl);
+      if (!ids.length || bloques.some(x => ids.includes(x.id) && x.locked)) { e.preventDefault(); toast('Desbloquea la selección antes de cambiar su orden.', 'warn'); return; }
+      arrastreCapa = {deck, slide:sl, ids, orden:bloques.slice()};
+      e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'tabula-capa');
+    });
+    asa.addEventListener('dragend', () => { arrastreCapa = null; limpiaIndicadorCapas(); terminaInteraccionCapas(); });
+    const marcaDestino = e => {
+      if (!arrastreCapa || arrastreCapa.deck !== S.deck || arrastreCapa.slide !== curSlide() || arrastreCapa.ids.includes(b.id)) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move'; limpiaIndicadorCapas();
+      const r = fila.getBoundingClientRect(); fila.dataset.insercion = e.clientY < r.top + r.height / 2 ? 'antes' : 'despues';
+    };
+    fila.addEventListener('dragenter', marcaDestino);
+    fila.addEventListener('dragover', marcaDestino);
+    fila.addEventListener('drop', e => {
+      const arrastre = arrastreCapa; if (!arrastre) return;
+      e.preventDefault(); e.stopPropagation(); const r = fila.getBoundingClientRect(), antes = e.clientY < r.top + r.height / 2;
+      arrastreCapa = null; limpiaIndicadorCapas();
+      const seleccion = idsSeleccionados();
+      if (seleccion.size !== arrastre.ids.length || arrastre.ids.some(id => !seleccion.has(id))) return;
+      insertaCapasLibres(arrastre.deck, arrastre.slide, arrastre.ids, b.id, antes, arrastre.orden);
+    });
+    lista.insertBefore(fila, lista.children[i] || null);
+  }
+  sincronizaPanelCapas(); lista.scrollTop = desplazamiento;
+  if (restaurar) {
+    const fila = Array.from(lista.querySelectorAll('[data-capa-fila]')).find(el => el.dataset.capaFila === restaurar.id);
+    const destino = Array.from(fila?.querySelectorAll('[data-capa-accion]') || []).find(el => el.dataset.capaAccion === restaurar.accion && !el.disabled);
+    (destino || fila?.querySelector('.lienzo-lista-nombre:not([disabled])'))?.focus({preventScroll:true});
+  }
 }
 
 /* La vista previa es solo DOM: cancelar nunca escribe en el modelo ni crea
@@ -895,10 +1044,11 @@ function iniciaSeleccionPorMarco(ev) {
 function initCanvasEvents() {
   const inner = $('#stageInner');
   const pie = $('.canvas-foot .foot-izq');
+  iniciaPanelCapas();
   if (pie && !$('#lienzoLibreBtn')) pie.append(h('button', { id: 'lienzoLibreBtn', type: 'button', class: 'btn btn-sm lienzo-control',
     'aria-pressed': 'false', onclick: alternaLienzoLibre }, 'Lienzo libre'));
   if (pie && !$('#lienzoObjetosBtn')) pie.append(h('button', { id: 'lienzoObjetosBtn', type: 'button', class: 'btn btn-sm',
-    hidden: true, title: 'Elegir bloques y ordenar las capas', onclick: openObjetosLienzo }, 'Capas'));
+    hidden: true, 'aria-controls':'panelCapas', 'aria-expanded':'false', title: 'Elegir bloques y ordenar las capas', onclick: openObjetosLienzo }, 'Capas'));
   if (pie && !$('#lienzoImanBtn')) pie.append(h('button', { id: 'lienzoImanBtn', type: 'button', class: 'btn btn-sm lienzo-control',
     hidden: true, 'aria-pressed': 'true', title: 'Ajustar a guías al mover; mantén Alt para omitir el ajuste', onclick: e => {
       S.prefs.imanLienzo = S.prefs.imanLienzo === false; guardaPrefs();

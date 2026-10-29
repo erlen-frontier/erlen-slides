@@ -44,6 +44,32 @@ function mueveCapasLibres(deck, slide, ids, direccion) {
 function mueveCapaLibre(deck, slide, id, direccion) {
   return mueveCapasLibres(deck, slide, [id], direccion);
 }
+
+/* Inserta la selección antes o después de una capa en el orden visible
+   (delante primero). La captura impide que un arrastre antiguo sobrescriba
+   cambios hechos mientras el puntero estaba en movimiento. */
+function insertaCapasLibres(deck, slide, ids, destino, antes, captura) {
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre) return false;
+  if (typeof flushEdicion === 'function') flushEdicion();
+  if (deck !== S.deck || slide !== curSlide() || !Array.isArray(ids) || !ids.length || typeof antes !== 'boolean') return false;
+  const original = bloquesEnCapas(slide), elegidos = new Set(ids);
+  const seleccionActual = idsSeleccionados();
+  if (seleccionActual.size !== elegidos.size || [...elegidos].some(id => !seleccionActual.has(id))) return false;
+  if (!Array.isArray(captura) || captura.length !== original.length || original.some((b, i) => b !== captura[i])) return false;
+  const seleccion = original.filter(b => elegidos.has(b.id));
+  if (seleccion.length !== elegidos.size || seleccion.some(b => b.locked || (typeof bloqueVisible === 'function' && !bloqueVisible(b, deck)))) return false;
+  if (elegidos.has(destino) || !original.some(b => b.id === destino)) return false;
+  const visibles = original.slice().reverse(), movidos = visibles.filter(b => elegidos.has(b.id));
+  const restantes = visibles.filter(b => !elegidos.has(b.id));
+  const indice = restantes.findIndex(b => b.id === destino);
+  if (indice < 0) return false;
+  restantes.splice(indice + (antes ? 0 : 1), 0, ...movidos);
+  const nuevo = restantes.reverse();
+  if (nuevo.every((b, i) => b === original[i])) return false;
+  nuevo.forEach((b, i) => { b.capaLibre = i; });
+  commit();
+  return true;
+}
 function mueveCapasSeleccionadas(direccion) {
   const ids = idsSeleccionados();
   const elegidos = ids.has(S.selBlock) ? [...ids] : S.selBlock ? [S.selBlock] : [];

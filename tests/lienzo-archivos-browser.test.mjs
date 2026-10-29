@@ -70,7 +70,7 @@ test('canvas composition survives desktop save, reopen and a failed save', {time
   const before = await page.evaluate(() => curSlide().blocks.map(b => ({type:b.formaLibre, position:{...b.posLibre}})));
   assert.ok(before[1].position.x > before[0].position.x && before[1].position.y > before[0].position.y);
 
-  await page.getByRole('button', {name:'Capas', exact:true}).click();
+  if (!await page.locator('#panelCapas').isVisible()) await page.getByRole('button', {name:'Capas', exact:true}).click();
   await page.getByRole('checkbox', {name:'Marcar Rectángulo'}).check();
   await page.getByRole('checkbox', {name:'Marcar Elipse'}).check();
   await page.getByRole('button', {name:'Seleccionar marcados'}).click();
@@ -109,7 +109,7 @@ test('canvas composition survives desktop save, reopen and a failed save', {time
     assert.ok(await image.evaluate(el => el.complete && el.naturalWidth > 0));
   }
 
-  await page.getByRole('button', {name:'Capas', exact:true}).click();
+  if (!await page.locator('#panelCapas').isVisible()) await page.getByRole('button', {name:'Capas', exact:true}).click();
   await page.locator('.lienzo-lista-nombre').filter({hasText:'Rectángulo'}).click();
   await page.keyboard.press('ArrowLeft');
   await page.keyboard.press('Control+s');

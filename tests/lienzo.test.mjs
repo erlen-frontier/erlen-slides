@@ -84,7 +84,7 @@ test('new blocks remain individually selectable even when the canvas has many it
   assert.equal(new Set(posiciones.map(p=>p.join(','))).size, 9);
   assert.equal(run("!!document.querySelector('#lienzoObjetosBtn')"),true);
   run("document.querySelector('#lienzoObjetosBtn').click()");
-  const boton=run("[...document.querySelectorAll('#modalRoot button')].find(b=>b.textContent.includes('Bloque 2'))");
+  const boton=run("[...document.querySelectorAll('#panelCapas button')].find(b=>b.textContent.includes('Bloque 2'))");
   assert.ok(boton);
   boton.click();
   assert.equal(run('S.selBlock'),'bloque-2');
@@ -95,7 +95,7 @@ test('choosing a block puts keyboard focus where arrows move and resize it', asy
   run(`curSlide().lienzoLibre=true;curSlide().blocks[0].posLibre={x:10,y:20,w:35,h:25};
     snapNow();renderAll();document.querySelector('#lienzoObjetosBtn').focus();
     document.querySelector('#lienzoObjetosBtn').click();
-    [...document.querySelectorAll('#modalRoot button')].find(b=>b.textContent.includes('Texto de prueba')).click();`);
+    [...document.querySelectorAll('#panelCapas button')].find(b=>b.textContent.includes('Texto de prueba')).click();`);
   assert.equal(run('document.activeElement.dataset.bid'),'texto-libre');
   run("document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}))");
   assert.deepEqual(JSON.parse(run("JSON.stringify(findBlock('texto-libre').block.posLibre)")),{x:11,y:20,w:35,h:25});
