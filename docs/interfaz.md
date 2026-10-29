@@ -14,6 +14,8 @@ La navegación organiza Inicio, Mis presentaciones, Ejemplos editables y Recurso
 
 Arriba, la barra con la marca, el título, el guardado y «Presentar»; debajo, la cinta de herramientas común de la suite («Archivo», Inicio, Insertar, Diseño, Diapositiva, Presentar, Vista y la pestaña del bloque seleccionado). Debajo, de izquierda a derecha: secuencia de diapositivas, lienzo y, cuando lo pides desde la cinta, el panel de detalles. Debajo del lienzo están posición, zoom y vista general. El gráfico del ejemplo conserva sus datos; no es una captura pegada.
 
+Al seleccionar un objeto, una barra sobre el lienzo muestra las acciones correspondientes a texto, imágenes o formas junto con las acciones de organización. El panel de capas puede permanecer abierto mientras se usa la barra y la diapositiva.
+
 ## Química y matemáticas
 
 ![Química](images/quimica.png)

@@ -281,7 +281,7 @@ function cuerpoProps(b, op) {
   };
   if (b.type === 'text') {
     row('Tamaño', segOf(b.size || 'n', [['s', 'Pequeño'], ['n', 'Normal'], ['l', 'Grande']], v => b.size = v));
-    row('Alineación', segOf(b.align || 'left', [['left', 'Izquierda'], ['center', 'Centrado']], v => b.align = v));
+    row('Alineación', segOf(b.align || 'left', [['left', 'Izquierda'], ['center', 'Centrado'], ['right', 'Derecha']], v => b.align = v));
   } else if (b.type === 'bullets') {
     body.append(h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!b.step, onchange: e => b.step = e.target.checked }), 'Revelar punto por punto al presentar (\\pause)'));
     body.append(h('p', { class: 'hint' }, 'Dentro de la diapositiva: Enter agrega un punto nuevo, Tab lo anida, Mayús+Tab lo regresa, Retroceso en un punto vacío lo elimina.'));

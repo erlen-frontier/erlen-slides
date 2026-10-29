@@ -476,10 +476,12 @@ function texBlocks(arr, ind) {
     switch (b.type) {
       case 'text': {
         const body = texBlockText(b.text);
-        if (b.align === 'center') L.push(p + '\\begin{center}\n' + p + body + '\n' + p + '\\end{center}');
-        else if (b.size === 's') L.push(p + '{\\small ' + body + '}');
-        else if (b.size === 'l') L.push(p + '{\\large ' + body + '}');
-        else L.push(p + body);
+        const estilos = [b.size === 's' ? '\\small' : b.size === 'l' ? '\\large' : '',
+          b.negrita === true ? '\\bfseries' : '', b.cursiva === true ? '\\itshape' : ''].filter(Boolean);
+        const contenido = estilos.length ? '{' + estilos.join(' ') + ' ' + body + '}' : body;
+        if (b.align === 'center') L.push(p + '\\begin{center}\n' + p + contenido + '\n' + p + '\\end{center}');
+        else if (b.align === 'right') L.push(p + '{\\raggedleft ' + contenido + '\\par}');
+        else L.push(p + contenido);
         break;
       }
       case 'bullets': {

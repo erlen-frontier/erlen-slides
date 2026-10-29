@@ -4,6 +4,7 @@
 03b-herramientas-lienzo.js
 04-render.js
 05-editor.js
+05b-barra-contextual.js
 06-panels.js
 07-modals.js
 08-present.js

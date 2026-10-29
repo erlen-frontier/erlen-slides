@@ -91,7 +91,7 @@ window.ERLEN_EXPORTADORES = (() => {
         const caja = el => { const r = el.getBoundingClientRect(); const p = { x: (r.left - r0.left) * k, y: (r.top - r0.top) * k, w: r.width * k, h: r.height * k }; if (!Object.values(p).every(Number.isFinite) || p.w <= 0 || p.h <= 0) throw new Error('Diapositiva ' + (i + 1) + ': no se pudo medir el contenido.'); return p; };
         const texto = (el, t, extra = {}) => {
           if (!el || !String(t || '').trim()) return;
-          const cs = getComputedStyle(el); pagina.addText(String(t), { ...caja(el), fontFace: fuente, fontSize: Math.max(6, parseFloat(cs.fontSize) * k * 72), color: hex(cs.color, th.bg), margin: 0, breakLine: false, valign: 'top', align: ['left', 'center', 'right', 'justify'].includes(cs.textAlign) ? cs.textAlign : 'left', bold: +cs.fontWeight >= 600, ...extra });
+          const cs = getComputedStyle(el); pagina.addText(String(t), { ...caja(el), fontFace: fuente, fontSize: Math.max(6, parseFloat(cs.fontSize) * k * 72), color: hex(cs.color, th.bg), margin: 0, breakLine: false, valign: 'top', align: ['left', 'center', 'right', 'justify'].includes(cs.textAlign) ? cs.textAlign : 'left', bold: +cs.fontWeight >= 600, italic: /^(italic|oblique)/.test(cs.fontStyle), ...extra });
         };
         const fondo = el => { if (!el) return; const bg = getComputedStyle(el).backgroundColor; if (opaco(bg)) pagina.addShape('rect', { ...caja(el), fill: { color: hex(bg, th.bg) }, line: { transparency: 100 } }); };
         const foto = async (el, alt) => { const uri = await rasteriza(el, css, 2); if (!uri) throw new Error('Diapositiva ' + (i + 1) + ': no se pudo exportar una figura.'); pagina.addImage({ ...caja(el), data: uri, altText: alt || 'Figura' }); };
