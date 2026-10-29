@@ -1,4 +1,3 @@
-import {aplicarIconoAplicacion} from './productos.mjs';
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,21 +16,18 @@ import {aplicarIconoAplicacion} from './productos.mjs';
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import {mey} from './mey.mjs';
-/* Pantalla de inicio común de Erlen Suite (docs/COHERENCIA-APPS.md §3 del portal), el
-   patrón de Erlen Slides convertido en componente. La app declara textos, «Nuevo…»,
-   ejemplos, su biblioteca y recursos; este módulo pinta la barra lateral, la colección de
-   inicio y las vistas, filtra, deja el editor inerte y lleva el foco y el título de la
-   pestaña. Solo importa a Mey (diseno/mey.mjs; en el IIFE va incrustada) y no guarda datos:
-   la biblioteca la da la app.
+/* Pantalla de inicio de Tabula. La app declara textos, «Nuevo…», ejemplos, su biblioteca
+   y recursos; este módulo pinta la navegación, la colección y las vistas, filtra, deja el
+   editor inerte y lleva el foco y el título de la pestaña. No guarda datos: la biblioteca
+   la da la app.
    Estilos en diseno/inicio.css, solo con tokens --erlen-*.
 
    mountInicio(host, {
-     nombre: 'Erlen Notes', corto: 'NOTES', objetos: 'páginas',      // «Mis páginas»
-     marca?: '<svg…>', estado: 'Versión alfa', subtitulo: 'Cuadernos de investigación',
-     eyebrow: 'CUADERNO CIENTÍFICO · ERLEN NOTES', titulo: ['Cuadernos ', 'científicos'],
+     nombre: 'Tabula', corto: '', objetos: 'presentaciones', // «Mis presentaciones»
+     marca?: '<svg…>', estado: 'Versión beta', subtitulo: 'Presentaciones',
+     eyebrow: 'PRESENTACIONES · TABULA', titulo: ['Crea ', 'tus ideas'],
      lead: 'Frase de una o dos líneas.',
-     nuevo: {etiqueta:'Nueva página', detalle:'Página en blanco', accion},
+     nuevo: {etiqueta:'Nueva presentación', detalle:'Presentación en blanco', accion},
      importar?: {etiqueta:'Importar…', accion},
      continuar?: () => ({etiqueta:'Seguir con «X»', accion}) | null,
      objetivos?: [{id, titulo, descripcion?, etiqueta?, accion}], // tareas con datos propios; no ejemplos
@@ -49,15 +45,12 @@ import {mey} from './mey.mjs';
      acerca?: {texto, enlaces:[{etiqueta, url}]},
      fuente?: {url, licencia:'AGPLv3'},
      editor?: Element,            // se vuelve inert mientras el inicio está abierto
-     menuSuite?: contenedor => {}, // monta <erlen-suite-nav> en la cabecera
-     app?: 'notes',                // perfil de Mey; por defecto, corto en minúsculas
-     mey?: false | pose => '<svg…>', // una presencia compartida entre inicio y editor; false la quita.
-                                   // La función SVG solo se usa como respaldo sin animación disponible.
+     apariencia?: () => {},       // abre los ajustes de apariencia
      alAbrir?, alCerrar?
    })
    Devuelve {elemento, abrir(vista), cerrar(), actualizar(), avisar(texto,{error}), abierta, vista, destruir()}.
    avisar() muestra un aviso persistente (role=status, o alert si es error) arriba del contenido
-   hasta que cambia la vista; menuSuite se llama una sola vez y su nodo se conserva.
+   hasta que cambia la vista.
    Vistas: 'inicio', 'biblioteca', 'ejemplos', 'recursos', 'acerca'. */
 const VISTAS=['inicio','biblioteca','ejemplos','recursos','acerca'];
 
@@ -65,11 +58,10 @@ export function mountInicio(host,config){
  if(!host||!host.ownerDocument)throw Error('mountInicio necesita un elemento anfitrión.');
  if(!config||typeof config.nombre!=='string'||!config.nuevo||typeof config.nuevo.accion!=='function')throw Error('mountInicio necesita nombre y nuevo.accion.');
  const doc=host.ownerDocument;
- aplicarIconoAplicacion(doc,(config.app||config.corto||'').toLowerCase());
  const objetos=config.objetos||'documentos';
  const nombres={inicio:'Inicio',biblioteca:'Mis '+objetos,ejemplos:'Ejemplos editables',recursos:'Recursos y respaldos',acerca:'Acerca de'};
  const disponibles=VISTAS.filter(v=>v==='inicio'||v==='acerca'||(v==='biblioteca'&&config.biblioteca)||(v==='ejemplos'&&config.ejemplos&&config.ejemplos.length)||(v==='recursos'&&config.recursos&&config.recursos.length));
- let vista='inicio',abierta=false,tituloPrevio=null,busqueda='',orden='recientes',aviso=null,hueco=null;
+ let vista='inicio',abierta=false,tituloPrevio=null,busqueda='',orden='recientes',aviso=null;
 
  const el=(tag,attrs,...hijos)=>{
   const n=doc.createElement(tag);
@@ -79,16 +71,6 @@ export function mountInicio(host,config){
  };
  const boton=(texto,accion,clase='',attrs={})=>{const b=el('button',{type:'button',class:('erlen-inicio-boton '+clase).trim(),...attrs},typeof texto==='string'?el('span',{class:'erlen-inicio-boton-texto'},texto):texto);if(typeof texto==='string'&&!attrs.title)b.title=texto;b.addEventListener('click',accion);return b;};
  const marca=()=>{const s=el('span',{class:'erlen-inicio-marca-icono','aria-hidden':'true'});if(config.marca)s.innerHTML=config.marca;return s;};
- // El recorrido compartido es la única presencia; el SVG es un respaldo sin RAF.
- const ilustracion=pose=>{
-  if(config.mey===false||doc.defaultView?.requestAnimationFrame)return null;
-  const s=el('span',{class:'erlen-inicio-mey','aria-hidden':'true'});
-  if(typeof config.mey==='function'){s.innerHTML=config.mey(pose);return s;}
-  // Mey viva del paquete: se adapta sola al hueco y al perfil de la app, y toma cada mejora de diseno/mey.mjs.
-  if(mey.definir(doc.defaultView))s.append(el('erlen-mey',{lugar:'vacio',pose,app:config.app||(config.corto||'').toLowerCase()||null}));
-  else s.innerHTML=mey(pose);
-  return s;
- };
  const alEditor=fn=>()=>{cerrar();fn();};
 
  const raiz=el('main',{class:'erlen-inicio',hidden:true,'aria-label':config.nombre});
@@ -104,7 +86,7 @@ export function mountInicio(host,config){
   const acerca=el('a',{href:'#',class:'erlen-inicio-enlace','aria-current':vista==='acerca'?'page':null},'Acerca de');
   acerca.addEventListener('click',e=>{e.preventDefault();abrir('acerca');});
   const lateral=el('aside',{class:'erlen-inicio-lateral'},
-   el('div',{class:'erlen-inicio-marca'},marca(),el('span',null,'Erlen'),config.corto?el('small',null,config.corto):null),
+   el('div',{class:'erlen-inicio-marca'},marca(),el('span',null,config.nombre),config.corto?el('small',null,config.corto):null),
    nav,
    el('div',{class:'erlen-inicio-lateral-pie'},acerca,
     config.fuente?el('a',{class:'erlen-inicio-fuente',href:config.fuente.url,target:'_blank',rel:'noopener'},'Código fuente · '+(config.fuente.licencia||'')):null,
@@ -112,7 +94,7 @@ export function mountInicio(host,config){
   const acciones=el('div',{class:'erlen-inicio-cabecera-acciones'},el('span',{class:'erlen-inicio-local'},'En este navegador'));
   const cont=config.continuar&&config.continuar();
   if(cont)acciones.append(boton(cont.etiqueta,alEditor(cont.accion),'secundario'));
-  if(config.menuSuite){if(!hueco){hueco=el('span',{class:'erlen-inicio-suite'});config.menuSuite(hueco);}acciones.append(hueco);}
+  if(typeof config.apariencia==='function')acciones.append(boton('Apariencia',()=>config.apariencia(),'secundario'));
   const cabecera=el('header',{class:'erlen-inicio-cabecera'},el('span',null,config.subtitulo||config.nombre),acciones);
   const contenido=el('div',{class:'erlen-inicio-contenido'});
   raiz.append(el('div',{class:'erlen-inicio-marco'},lateral,el('div',{class:'erlen-inicio-panel'},cabecera,contenido)));
@@ -122,7 +104,7 @@ export function mountInicio(host,config){
  }
 
  const titulo=(texto,em)=>el('h1',{class:'erlen-inicio-titulo',tabindex:'-1'},texto,em?el('em',null,em):null);
- const cabeceraVista=(c,nombre)=>c.append(el('header',{class:'erlen-inicio-vista-cabecera'},el('span',{class:'erlen-inicio-eyebrow'},(config.corto?'ERLEN '+config.corto:config.nombre.toUpperCase())),titulo(nombre)));
+ const cabeceraVista=(c,nombre)=>c.append(el('header',{class:'erlen-inicio-vista-cabecera'},el('span',{class:'erlen-inicio-eyebrow'},config.nombre.toUpperCase()),titulo(nombre)));
  function tarjetaNueva(){
   const b=el('button',{type:'button',class:'erlen-inicio-nueva'},el('span',{class:'erlen-inicio-mas','aria-hidden':'true'},'+'),el('span',{class:'erlen-inicio-nueva-datos'},el('strong',null,config.nuevo.etiqueta),config.nuevo.detalle?el('small',null,config.nuevo.detalle):null));
   b.addEventListener('click',alEditor(config.nuevo.accion));
@@ -157,8 +139,6 @@ export function mountInicio(host,config){
   c.append(el('div',{class:'erlen-inicio-bienvenida'},
    el('div',null,config.eyebrow?el('span',{class:'erlen-inicio-eyebrow'},config.eyebrow):null,titulo(texto,em),config.lead?el('p',{class:'erlen-inicio-lead'},config.lead):null),
    config.ejemplos&&config.ejemplos.length?el('label',{class:'erlen-inicio-buscar'},buscar):null));
-  if(config.mey!==false&&!doc.defaultView?.requestAnimationFrame&&typeof config.mey!=='function'&&mey.definir(doc.defaultView))
-   c.append(el('div',{class:'erlen-inicio-recreo','aria-hidden':'true'},el('erlen-mey',{lugar:'recreo',app:config.app||(config.corto||'').toLowerCase()||null})));
   const accionesMeta=el('div',{class:'erlen-inicio-acciones'});
   if(config.ejemplos&&config.ejemplos.length>3)accionesMeta.append(boton('Explorar ejemplos',()=>abrir('ejemplos'),'secundario'));
   if(config.importar)accionesMeta.append(boton(config.importar.etiqueta||'Importar…',alEditor(config.importar.accion),'secundario'));
@@ -187,8 +167,8 @@ export function mountInicio(host,config){
    rejilla.replaceChildren();
    if(!items.length){
     const v=config.biblioteca.vacio||{};
-    rejilla.append(total?el('div',{class:'erlen-inicio-vacio'},ilustracion('pensando'),el('h3',null,'No hay coincidencias'),el('p',null,'Prueba con otro nombre o limpia la búsqueda.'))
-     :el('div',{class:'erlen-inicio-vacio'},ilustracion('dormido'),el('h3',null,v.titulo||'Aquí empieza tu trabajo'),el('p',null,v.texto||'Crea uno nuevo o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'),boton(config.nuevo.etiqueta,alEditor(config.nuevo.accion),'primario')));
+    rejilla.append(total?el('div',{class:'erlen-inicio-vacio'},el('h3',null,'No hay coincidencias'),el('p',null,'Prueba con otro nombre o limpia la búsqueda.'))
+     :el('div',{class:'erlen-inicio-vacio'},el('h3',null,v.titulo||'Aquí empieza tu trabajo'),el('p',null,v.texto||'Crea uno nuevo o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'),boton(config.nuevo.etiqueta,alEditor(config.nuevo.accion),'primario')));
    }
    for(const i of items){
     const nombre=i.titulo||'Sin título';
@@ -234,7 +214,6 @@ export function mountInicio(host,config){
    a.enlaces&&a.enlaces.length?el('ul',null,a.enlaces.map(l=>el('li',null,el('a',{href:l.url,target:'_blank',rel:'noopener'},l.etiqueta)))):null));
  }
 
- let recorridoLibre=null,recorridoPropio=false,pausaAnterior=null;
  function abrir(v='inicio'){
   const nueva=disponibles.includes(v)?v:'inicio';
   if(nueva!==vista)aviso=null;
@@ -242,18 +221,12 @@ export function mountInicio(host,config){
   if(!abierta){tituloPrevio=doc.title;abierta=true;raiz.hidden=false;if(config.editor)config.editor.setAttribute('inert','');doc.body.classList.add('erlen-inicio-abierto');if(config.alAbrir)config.alAbrir();}
   pintar();
   raiz.scrollTop=0;
-  if(config.mey!==false&&doc.defaultView?.requestAnimationFrame){
-   if(!recorridoLibre?.elemento.isConnected){recorridoPropio=!mey.recorridoActual(doc);recorridoLibre=mey.recorrerPagina({documento:doc});}
-   if(recorridoLibre?.pausa.classList.contains('mey-libre-pausa--integrada')){pausaAnterior=recorridoLibre.pausa.parentElement;recorridoLibre.ubicarPausa(null);}
-  }
   doc.title=nombres[vista]+' · '+config.nombre;
   raiz.querySelector('.erlen-inicio-titulo')?.focus({preventScroll:true});
  }
  function cerrar(){
   if(!abierta)return;
   abierta=false;raiz.hidden=true;aviso=null;
-  if(pausaAnterior?.isConnected)recorridoLibre?.ubicarPausa(pausaAnterior);pausaAnterior=null;
-  if(recorridoPropio)recorridoLibre?.actualizar({evitar:config.editor?[config.editor]:[]});
   if(config.editor)config.editor.removeAttribute('inert');
   doc.body.classList.remove('erlen-inicio-abierto');
   if(tituloPrevio!==null)doc.title=tituloPrevio;
@@ -265,6 +238,6 @@ export function mountInicio(host,config){
   avisar(texto,{error=false}={}){aviso=texto?{texto:String(texto),error:!!error}:null;if(abierta)pintar();},
   get abierta(){return abierta;},
   get vista(){return vista;},
-  destruir(){cerrar();if(recorridoPropio)recorridoLibre?.detener();recorridoLibre=null;raiz.remove();}
+  destruir(){cerrar();raiz.remove();}
  };
 }

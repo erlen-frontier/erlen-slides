@@ -29,8 +29,7 @@ function seleccionadas() {
 function duplicaSeleccion() {
   const v = seleccionadas(); if (!v.length) return;
   v.slice().reverse().forEach(i => {
-    const c = deepCopy(S.deck.slides[i]); c.id = uid();
-    for (const arr of zonas(c)) arr.forEach(b => b.id = uid());
+    const c = copiaDiapositiva(S.deck.slides[i]);
     S.deck.slides.splice(i + 1, 0, c);
   });
   S.sel.clear(); commit();
@@ -884,4 +883,3 @@ function pickLogo() {
   }
   inp.click();
 }
-

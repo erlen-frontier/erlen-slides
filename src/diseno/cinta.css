@@ -1,15 +1,14 @@
-/* Erlen Suite · paquete de diseño 2.0.0 · cinta de herramientas (diseno/suite-cinta.mjs; docs/COHERENCIA-APPS.md §5).
-   Solo tokens --erlen-*. Autónoma: no depende de base.css (Slides no lo carga), y neutraliza las reglas de
-   elemento de base.css sobre <button> para que la cinta se vea igual en todas las apps.
+/* Cinta de herramientas de Tabula. Usa los tokens locales y neutraliza las reglas de
+   elemento de base.css sobre <button>.
    Cristal (2.0.0): la cinta es una lámina de cristal fuerte con brillo especular; la pestaña activa es una lente en cápsula
    y «Archivo» una cápsula del acento. Un solo desenfoque (la cinta) y otro en el menú abierto. Licencia: licencias/MIT.txt */
 .erlen-cinta{position:relative;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 6px 18px -12px var(--erlen-vidrio-contorno);font-family:var(--erlen-font-ui);color:var(--erlen-tinta);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro)}
 .erlen-cinta button,.erlen-cinta-menu button{min-height:0;margin:0;padding:0;border:1px solid transparent;border-radius:var(--erlen-radio-campo);background:transparent;color:inherit;font:inherit;line-height:1.2;cursor:pointer;text-decoration:none;box-shadow:none;transform:none}
 .erlen-cinta button:disabled,.erlen-cinta-menu button:disabled{opacity:.45;cursor:default}
 .erlen-cinta :focus-visible,.erlen-cinta-menu :focus-visible{outline:3px solid var(--erlen-foco);outline-offset:1px}
-/* Resalte de Mey: la ayuda señala durante unos segundos el botón del comando encontrado.
+/* El comando encontrado se señala durante unos segundos.
    Sin animación a propósito: también cumple su función con prefers-reduced-motion. */
-.erlen-cinta [data-erlen-mey-resalta]{outline:3px solid var(--erlen-foco);outline-offset:2px}
+.erlen-cinta [data-cinta-resalta]{outline:3px solid var(--erlen-foco);outline-offset:2px}
 .erlen-cinta-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 
 /* Pestañas: una fila de cápsulas; la activa se eleva como una lente de cristal con el texto en el acento, «Archivo» a la izquierda. */

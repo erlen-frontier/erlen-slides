@@ -155,6 +155,20 @@ test('Beamer warns in the editor and generated source when placement will change
   assert.match(fragmentos[2],/posici[oó]n libre/i);
 });
 
+test('Beamer and Markdown warn when they cannot preserve connections', async t => {
+  const {run} = await prepara(t);
+  run("curSlide().lienzoLibre=true;curSlide().conectores=[{desde:'texto-libre',hasta:'grafica-libre'}]");
+  const fragmentos=run('toBeamer(S.deck).split(MARCA_DIAPO)');
+  assert.doesNotMatch(fragmentos[1],/conectores/i);
+  assert.match(fragmentos[2],/conectores[^\n]*no se conservan/i);
+  run('openTexView()');
+  assert.match(run("document.querySelector('#modalRoot').textContent"),/conectores no se conservan/i);
+  const deck=JSON.parse(run('JSON.stringify(S.deck)'));
+  const md=aMarkdown(deck,{zonasPorDiseno:{title:0,content:1}});
+  assert.match(md.md,/<!-- Los conectores no se conservan en Markdown/);
+  assert.ok(md.avisos.some(a=>/Diapositiva 2: los conectores no se conservan/i.test(a)));
+});
+
 test('Markdown reports when free placement does not survive export', () => {
   const deck = {v:1, meta:{title:'Prueba'}, slides:[{layout:'content',title:'Diapositiva',lienzoLibre:true,
     blocks:[{id:'t',type:'text',text:'Texto',posLibre:{x:10,y:20,w:35,h:25}}]}]};

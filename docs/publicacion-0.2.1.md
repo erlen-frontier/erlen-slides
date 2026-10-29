@@ -1,5 +1,7 @@
 # Notas de la versión 0.2.1
 
+> Nota histórica: el menú de Suite descrito aquí se retiró posteriormente de Tabula independiente.
+
 El editor no cambia. Lo que llega es el menú común de Erlen, que hasta ahora no vivía en este repositorio.
 
 ## El menú de la suite vuelve a la fuente

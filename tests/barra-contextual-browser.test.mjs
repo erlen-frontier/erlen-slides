@@ -102,6 +102,22 @@ test('contextual controls follow the selected object and keep the canvas usable'
     assert.equal(await page.evaluate(()=>document.activeElement?.dataset.barraAccion),'negrita');
   });
 
+  await t.test('all block property controls open the visible details panel with the ribbon',async()=>{
+    for(const via of ['barra','flotante','menu']){
+      await reset();await page.evaluate(()=>selectBlock('texto'));
+      if(via==='barra') await barra.getByRole('button',{name:'Propiedades del bloque'}).click();
+      if(via==='flotante') await page.getByRole('button',{name:'Propiedades en el panel'}).click();
+      if(via==='menu') {
+        await page.getByRole('button',{name:'Más acciones…'}).click();
+        await page.locator('.menu button').filter({hasText:'Propiedades'}).first().click();
+      }
+      assert.equal(await page.locator('#inspector').isVisible(),true,via);
+      assert.ok(await page.locator('#inspBody').locator('> *').count()>0,via);
+      assert.equal(await page.evaluate(()=>S.tab),'bloque',via);
+      await page.evaluate(()=>cierraPanelDetalles());
+    }
+  });
+
   await t.test('the existing object toolbar does not cover text near the top of a narrow canvas',async()=>{
     await page.setViewportSize({width:390,height:844});await reset();
     await page.evaluate(()=>{findBlock('texto').block.posLibre={x:20,y:0,w:60,h:25};renderAll();selectBlock('texto');});

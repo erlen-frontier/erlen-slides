@@ -483,8 +483,7 @@ var ERLEN_MCP = (function () {
     },
     duplicaDiapositiva: a => {
       const d = a.deck, i = indiceDiapositiva(d, a.diapositiva);
-      const c = deepCopy(d.slides[i]); c.id = uid();
-      CLAVES_ZONA.forEach(k => (c[k] || []).forEach(b => { b.id = uid(); }));
+      const c = copiaDiapositiva(d.slides[i]);
       d.slides.splice(i + 1, 0, c);
       const r = valida(d);
       r.resultado = { original: i + 1, copia: i + 2, id: c.id };

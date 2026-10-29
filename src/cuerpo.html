@@ -1,10 +1,6 @@
-<!-- Armazón de la suite Erlen (docs/COHERENCIA-APPS.md del portal). El marco común
-     (src/diseno/suite-marco.js) mueve estos nodos a sus huecos — cabecera con la marca,
-     el nombre y el menú de suite; título editable, estado de guardado, acciones y
-     utilidades; cinta; tira de diapositivas a la izquierda; lienzo al centro; panel de
-     detalles a la derecha — sin clonarlos ni reconstruirlos, así que los listeners, la
-     selección y el foco del editor se conservan. La pantalla de inicio común se monta
-     aparte, sobre <body>, y deja todo esto inerte mientras está abierta. -->
+<!-- El marco de Tabula mueve estos nodos a sus huecos sin clonarlos ni reconstruirlos;
+     los listeners, la selección y el foco del editor se conservan. El inicio se monta
+     aparte y deja el editor inerte mientras está abierto. -->
 <div class="app" id="app">
   <input class="deck-title" id="deckTitleInput" aria-label="Título de la presentación" title="Título de la presentación" placeholder="Presentación sin título">
   <span class="save-ind" id="saveInd" role="status" aria-live="polite"></span>
@@ -19,7 +15,7 @@
   </div>
   <div class="cabecera-utilidades" id="cabecera-utilidades">
     <button class="icon-btn hamb" id="hambBtn" aria-controls="inspector" aria-expanded="false" title="Panel de edición" aria-label="Abrir panel de edición">☰</button>
-    <button id="edicionBadge" class="ed-badge" aria-label="Acerca de Tabula">AGPLv3</button>
+    <button id="edicionBadge" class="ed-badge" aria-label="AGPLv3 · Acerca de Tabula">AGPLv3</button>
     <button class="icon-btn" id="buscarBtn" title="Buscar y reemplazar (Ctrl+F)" aria-label="Buscar">⌕</button>
     <button class="icon-btn only-wide" id="temaBtn" title="Apariencia del editor" aria-label="Apariencia del editor">◐</button>
     <input type="checkbox" id="densChk" class="dens-chk only-wide" aria-label="Interfaz compacta">

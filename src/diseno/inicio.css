@@ -1,100 +1,8 @@
-/* Mey vive encima de la página, sin reservar huecos ni interceptar controles ajenos. */
-.mey-libre{position:fixed;left:0;top:0;z-index:501;display:block;width:auto;height:auto;min-width:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:var(--erlen-radio-pequeno);background:transparent;color:var(--erlen-tinta);box-shadow:none;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transition:none;line-height:0}
-.mey-libre:hover{background:transparent}.mey-libre[data-arrastrando]{cursor:grabbing}.mey-libre svg{display:block;pointer-events:none;max-width:none}.mey-libre:focus-visible,.mey-libre-pausa:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px}
-.mey-libre-pausa{position:fixed;right:16px;bottom:12px;z-index:501;min-height:44px;padding:8px 14px;border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-campo);background:var(--erlen-vidrio-fuerte);color:var(--erlen-tinta-suave);font:500 var(--erlen-texto-xs)/1.4 var(--erlen-font-ui);cursor:pointer}
-.mey-libre-pausa--integrada{position:static;flex:0 0 auto;white-space:nowrap;z-index:auto}
-@media print{.mey-libre,.mey-libre-pausa{display:none}}
-
-/* Las ilustraciones de estados vacíos ceden ante la presencia compartida. */
-html[data-erlen-mey-presencia] .recientes-vacio .mey{display:none}
-
-/* Arte elegido para Mey: cambia el material, no sus poses, atuendo ni movimiento.
-   Los pigmentos conservan la paleta personal. Los ojos siguen planos y nítidos.
-   El tile de marca y el favicon de 16 × 16 quedan fuera de estos tratamientos. */
-:root[data-erlen-estilo]{--mey-arte-filtro:none;--mey-arte-render:auto;--mey-arte-radio:0px;--mey-arte-trazo:0px;--mey-arte-contorno:var(--erlen-tinta);--mey-arte-vidrio:1;--mey-arte-banda:1;--mey-arte-guion:none;--mey-arte-ojos:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="glassmorfismo"]{--mey-arte-filtro:drop-shadow(0 -1px 0 var(--erlen-superficie)) drop-shadow(0 2px 2px var(--erlen-linea-fuerte));--mey-arte-radio:.12px;--mey-arte-trazo:.07px;--mey-arte-contorno:var(--erlen-superficie);--mey-arte-vidrio:.78;--mey-arte-banda:.9}
-:root[data-erlen-estilo="neumorfismo"]{--mey-arte-filtro:drop-shadow(-2px -2px 1px var(--erlen-superficie)) drop-shadow(2px 2px 1px var(--erlen-linea-fuerte));--mey-arte-radio:.08px;--mey-arte-trazo:.035px;--mey-arte-contorno:var(--erlen-linea-fuerte)}
-:root[data-erlen-estilo="neobrutalismo"]{--mey-arte-filtro:drop-shadow(3px 3px 0 var(--erlen-tinta));--mey-arte-render:crispEdges;--mey-arte-trazo:.16px}
-:root[data-erlen-estilo="minimalismo"]{--mey-arte-render:crispEdges;--mey-arte-trazo:.05px;--mey-arte-contorno:var(--erlen-linea-fuerte)}
-:root[data-erlen-estilo="art-deco"]{--mey-arte-filtro:drop-shadow(1px 1px 0 var(--erlen-ambar));--mey-arte-render:crispEdges;--mey-arte-trazo:.10px;--mey-arte-contorno:var(--erlen-ambar);--mey-arte-banda:.94}
-:root[data-erlen-estilo="claymorfismo"]{--mey-arte-filtro:drop-shadow(-1px -1px 1px var(--erlen-superficie)) drop-shadow(0 3px 2px var(--erlen-linea-fuerte));--mey-arte-radio:.24px;--mey-arte-trazo:.025px;--mey-arte-contorno:var(--erlen-superficie)}
-:root[data-erlen-estilo="bauhaus"]{--mey-arte-filtro:drop-shadow(3px 0 0 var(--erlen-cromo-luz)) drop-shadow(0 3px 0 var(--erlen-verde));--mey-arte-render:crispEdges;--mey-arte-trazo:.20px}
-:root[data-erlen-estilo="frutiger-aero"]{--mey-arte-filtro:drop-shadow(0 -2px 0 var(--erlen-superficie)) drop-shadow(0 2px 1px var(--erlen-verde-suave));--mey-arte-radio:.16px;--mey-arte-trazo:.10px;--mey-arte-contorno:var(--erlen-superficie);--mey-arte-vidrio:.9;--mey-arte-banda:1}
-:root[data-erlen-estilo="esqueuomorfismo"]{--mey-arte-filtro:drop-shadow(-1px -1px 0 var(--erlen-superficie)) drop-shadow(1.5px 1.5px .6px var(--erlen-linea-fuerte));--mey-arte-radio:.045px;--mey-arte-trazo:.10px;--mey-arte-contorno:var(--erlen-linea-fuerte)}
-:root[data-erlen-estilo="retro-digital"]{--mey-arte-filtro:drop-shadow(-1px -1px 0 var(--erlen-superficie)) drop-shadow(2px 2px 0 var(--erlen-linea-fuerte));--mey-arte-render:crispEdges;--mey-arte-trazo:.08px}
-:root[data-erlen-estilo="y2k"]{--mey-arte-filtro:drop-shadow(-1px -1px 0 var(--erlen-superficie)) drop-shadow(2px 1px 1px var(--erlen-linea-fuerte));--mey-arte-radio:.15px;--mey-arte-trazo:.085px;--mey-arte-contorno:var(--erlen-superficie);--mey-arte-vidrio:.95;--mey-arte-banda:.75}
-:root[data-erlen-estilo="cyberpunk"]{--mey-arte-filtro:drop-shadow(0 0 3px var(--erlen-verde)) drop-shadow(0 0 6px var(--erlen-verde-suave));--mey-arte-render:crispEdges;--mey-arte-trazo:.13px;--mey-arte-contorno:var(--erlen-verde);--mey-arte-vidrio:.8;--mey-arte-banda:.9}
-:root[data-erlen-estilo="blueprint"]{--mey-arte-render:crispEdges;--mey-arte-trazo:.075px;--mey-arte-contorno:var(--erlen-verde);--mey-arte-vidrio:.18;--mey-arte-banda:.18;--mey-arte-guion:.45 .15;--mey-arte-ojos:var(--erlen-tinta)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]){filter:var(--mey-arte-filtro);shape-rendering:var(--mey-arte-render)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) :is([data-mey-pigmento="g"],[data-mey-pigmento="w"]){rx:var(--mey-arte-radio);ry:var(--mey-arte-radio);stroke:var(--mey-arte-contorno);stroke-width:var(--mey-arte-trazo);stroke-dasharray:var(--mey-arte-guion);stroke-linejoin:round;paint-order:stroke fill}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) [data-mey-pigmento="g"]{fill-opacity:var(--mey-arte-vidrio)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) [data-mey-pigmento="g"]:nth-of-type(3n){fill-opacity:var(--mey-arte-banda)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) [data-mey-pigmento="e"]{fill:var(--mey-arte-ojos);fill-opacity:1;stroke:none;rx:0;ry:0;shape-rendering:crispEdges}
-/* Un acabado quieto no añade relojes, flashes ni desplazamientos. Los respaldos
-   de legibilidad devuelven los pigmentos planos y los píxeles originales. */
-:root:root[data-erlen-estilo][data-erlen-material="solido"]{--mey-arte-filtro:none;--mey-arte-render:crispEdges;--mey-arte-radio:0px;--mey-arte-trazo:0px;--mey-arte-vidrio:1;--mey-arte-banda:1;--mey-arte-guion:none;--mey-arte-ojos:var(--erlen-mey-ojos)}
-@media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active),print{:root:root[data-erlen-estilo]{--mey-arte-filtro:none;--mey-arte-render:crispEdges;--mey-arte-radio:0px;--mey-arte-trazo:0px;--mey-arte-vidrio:1;--mey-arte-banda:1;--mey-arte-guion:none;--mey-arte-ojos:var(--erlen-mey-ojos)}}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root:root[data-erlen-estilo]{--mey-arte-filtro:none;--mey-arte-render:crispEdges;--mey-arte-radio:0px;--mey-arte-trazo:0px;--mey-arte-vidrio:1;--mey-arte-banda:1;--mey-arte-guion:none;--mey-arte-ojos:var(--erlen-mey-ojos)}}
-
-/* Sprites artísticos: contornos conectados, vidrio/líquido completos y ojos planos.
-   No son filtros sobre la cuadrícula: Original y los respaldos usan los píxeles. */
-:root[data-erlen-estilo]{--mey-vector-visible:inline;--mey-pixel-visible:none;--mey-vector-angular:inline;--mey-vector-suave:none;--mey-vector-trazo:.16;--mey-vector-borde:var(--erlen-mey-ojos);--mey-vector-ojos:var(--erlen-mey-ojos)}
-:root:is([data-erlen-estilo="glassmorfismo"],[data-erlen-estilo="neumorfismo"],[data-erlen-estilo="minimalismo"],[data-erlen-estilo="claymorfismo"],[data-erlen-estilo="frutiger-aero"],[data-erlen-estilo="esqueuomorfismo"],[data-erlen-estilo="y2k"]){--mey-vector-angular:none;--mey-vector-suave:inline}
-:root[data-erlen-estilo="glassmorfismo"]{--mey-vector-trazo:.35;--mey-vector-borde:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="neumorfismo"]{--mey-vector-trazo:.2;--mey-vector-borde:var(--erlen-superficie)}
-:root[data-erlen-estilo="neobrutalismo"]{--mey-vector-trazo:.8;--mey-vector-borde:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="minimalismo"]{--mey-vector-trazo:.3;--mey-vector-borde:var(--erlen-tinta);--mey-vector-ojos:var(--erlen-tinta);--mey-arte-render:auto}
-:root[data-erlen-estilo="art-deco"]{--mey-vector-trazo:.5;--mey-vector-borde:var(--erlen-ambar)}
-:root[data-erlen-estilo="claymorfismo"]{--mey-vector-trazo:.15;--mey-vector-borde:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="bauhaus"]{--mey-vector-trazo:.6;--mey-vector-borde:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="frutiger-aero"]{--mey-vector-trazo:.3;--mey-vector-borde:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="esqueuomorfismo"]{--mey-vector-trazo:.4;--mey-vector-borde:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="retro-digital"]{--mey-vector-trazo:.4;--mey-vector-borde:var(--erlen-mey-ojos)}
-:root[data-erlen-estilo="y2k"]{--mey-vector-trazo:.45;--mey-vector-borde:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="cyberpunk"]{--mey-vector-trazo:.4;--mey-vector-borde:var(--erlen-verde);--mey-vector-ojos:var(--erlen-mey-reflejo)}
-:root[data-erlen-estilo="blueprint"]{--mey-vector-trazo:.3;--mey-vector-borde:var(--erlen-verde);--mey-vector-ojos:var(--erlen-tinta)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) .mey-ilustracion{display:var(--mey-vector-visible)}
-:root[data-erlen-estilo] svg.erlen-mey:not([viewBox="0 0 16 16"]) rect[data-mey-pigmento]{display:var(--mey-pixel-visible)}
-:root[data-erlen-estilo] .mey-vector[data-mey-vector="angular"]{display:var(--mey-vector-angular)}
-:root[data-erlen-estilo] .mey-vector[data-mey-vector="suave"]{display:var(--mey-vector-suave)}
-:root[data-erlen-estilo] .mey-vector-contorno{stroke:var(--mey-vector-borde);stroke-width:var(--mey-vector-trazo);stroke-linejoin:round;fill:none}
-:root[data-erlen-estilo] .mey-vector [data-mey-material]{stroke:var(--mey-vector-borde);stroke-width:calc(var(--mey-vector-trazo)*.55);stroke-linejoin:round;paint-order:stroke fill}
-:root[data-erlen-estilo] .mey-vector [data-mey-material="e"]{fill:var(--mey-vector-ojos);stroke:none;opacity:1}
-:root:is([data-erlen-estilo="glassmorfismo"],[data-erlen-estilo="neumorfismo"],[data-erlen-estilo="claymorfismo"],[data-erlen-estilo="frutiger-aero"],[data-erlen-estilo="esqueuomorfismo"],[data-erlen-estilo="y2k"]) .mey-material-luz{stop-color:color-mix(in srgb,var(--erlen-mey-reflejo) var(--mey-material-brillo),currentColor)}
-:root:is([data-erlen-estilo="glassmorfismo"],[data-erlen-estilo="neumorfismo"],[data-erlen-estilo="claymorfismo"],[data-erlen-estilo="frutiger-aero"],[data-erlen-estilo="esqueuomorfismo"],[data-erlen-estilo="y2k"]) .mey-material-sombra{stop-color:color-mix(in srgb,var(--erlen-mey-ojos) var(--mey-material-profundidad),currentColor)}
-:root[data-erlen-estilo="minimalismo"] .mey-vector [data-mey-material="g"]{fill:var(--erlen-superficie)}
-:root[data-erlen-estilo="cyberpunk"] .mey-vector [data-mey-material="g"]{fill:var(--erlen-espacio-fondo)}
-:root[data-erlen-estilo="cyberpunk"] .mey-vector [data-mey-material="w"]{fill:var(--erlen-espacio-fondo);stroke:var(--erlen-verde);stroke-width:.35}
-:root[data-erlen-estilo="blueprint"] .mey-vector :is([data-mey-material="g"],[data-mey-material="w"]){fill:none;stroke:var(--erlen-verde);stroke-width:.25;stroke-dasharray:none}
-:root[data-erlen-estilo="neobrutalismo"] .mey-vector :is([data-mey-material],.mey-vector-contorno){stroke-linejoin:miter}
-:root[data-erlen-estilo] [data-mey-decoracion]{pointer-events:none;fill:none;stroke:none}
-:root:is([data-erlen-estilo="glassmorfismo"],[data-erlen-estilo="frutiger-aero"]) [data-mey-decoracion="cristal"]{display:inline;fill:var(--erlen-mey-reflejo);opacity:.75}
-:root[data-erlen-estilo="frutiger-aero"] [data-mey-decoracion="aero"]{display:inline;stroke:var(--erlen-mey-reflejo);stroke-width:.35;fill:none}
-:root[data-erlen-estilo="art-deco"] [data-mey-decoracion="deco"]{display:inline;stroke:var(--erlen-ambar);stroke-width:.25}
-:root[data-erlen-estilo="bauhaus"] [data-mey-decoracion="bauhaus"]{display:inline;fill:var(--erlen-ambar);stroke:var(--erlen-mey-ojos);stroke-width:.25}
-:root[data-erlen-estilo="bauhaus"] [data-mey-decoracion="bauhaus"] path:first-of-type{fill:var(--erlen-cromo-luz)}
-:root[data-erlen-estilo="y2k"] [data-mey-decoracion="metal"]{display:inline;fill:var(--erlen-mey-reflejo);opacity:.85}
-:root[data-erlen-estilo="cyberpunk"] [data-mey-decoracion="circuito"]{display:inline;stroke:var(--erlen-verde);stroke-width:.35}
-:root[data-erlen-estilo="blueprint"] [data-mey-decoracion="plano"]{display:inline;stroke:var(--erlen-verde);stroke-width:.15;opacity:.7}
-:root[data-erlen-estilo="retro-digital"] [data-mey-decoracion="retro"]{display:inline;stroke:var(--erlen-mey-ojos);stroke-width:.35;opacity:.4}
-:root:root[data-erlen-estilo][data-erlen-material="solido"]{--mey-vector-visible:none;--mey-pixel-visible:inline}
-@media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active),print{:root:root[data-erlen-estilo]{--mey-vector-visible:none;--mey-pixel-visible:inline}}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root:root[data-erlen-estilo]{--mey-vector-visible:none;--mey-pixel-visible:inline}}
-
-/* Iluminación de cada material, mezclada con la paleta elegida de Mey. */
-:root[data-erlen-estilo="glassmorfismo"]{--mey-material-brillo:90%;--mey-material-profundidad:45%}
-:root[data-erlen-estilo="neumorfismo"]{--mey-material-brillo:65%;--mey-material-profundidad:28%}
-:root[data-erlen-estilo="claymorfismo"]{--mey-material-brillo:55%;--mey-material-profundidad:32%}
-:root[data-erlen-estilo="frutiger-aero"]{--mey-material-brillo:80%;--mey-material-profundidad:35%}
-:root[data-erlen-estilo="esqueuomorfismo"]{--mey-material-brillo:65%;--mey-material-profundidad:48%}
-:root[data-erlen-estilo="y2k"]{--mey-material-brillo:100%;--mey-material-profundidad:65%}
-
-/* Erlen Suite · paquete de diseño 2.0.0 · pantalla de inicio (diseno/suite-inicio.mjs; docs/COHERENCIA-APPS.md §3).
-   Solo tokens --erlen-*. Autónoma: no depende de base.css (Slides no lo carga) y neutraliza sus reglas de
-   elemento sobre <button>, <h1>, <p> y campos.
-   Cristal (2.0.0): atmósfera de color detrás, barra lateral y tarjetas de cristal sin desenfoque (sobre un degradado liso
-   no aporta nada y costaría una capa por tarjeta); solo la cabecera fija desenfoca lo que pasa por debajo, en un ::before
-   para no romper el menú fijo de erlen-suite-nav que vive dentro. Miniaturas y campos, opacos. Licencia: licencias/MIT.txt */
+/* Pantalla de inicio de Tabula, adaptada del diseño de Erlen.
+   Solo tokens --erlen-*. Neutraliza las reglas de elemento sobre <button>, <h1>, <p> y campos.
+   Atmósfera de color detrás, barra lateral y tarjetas de cristal sin desenfoque; la cabecera
+   fija desenfoca lo que pasa por debajo mediante su ::before. Miniaturas y campos, opacos.
+   Licencia: licencias/MIT.txt */
 .erlen-inicio{position:fixed;inset:0;z-index:300;isolation:isolate;overflow:auto;overscroll-behavior:contain;background:var(--erlen-papel);color:var(--erlen-tinta);font:400 var(--erlen-texto-ui)/var(--erlen-interlineado-ui) var(--erlen-font-ui);-webkit-font-smoothing:antialiased}
 /* Atmósfera en su propia capa fija: se rasteriza una vez; desplazar el inicio o pasar por una tarjeta translúcida no
    obliga a repintar sus degradados. */
@@ -141,8 +49,6 @@ html[data-erlen-mey-presencia] .recientes-vacio .mey{display:none}
 .erlen-inicio-vista-cabecera .erlen-inicio-titulo{font-size:42px}
 .erlen-inicio .erlen-inicio-lead{max-width:60ch;color:var(--erlen-tinta-suave);line-height:1.65}
 .erlen-inicio-buscar{display:flex;min-width:min(100%,320px)}
-.erlen-inicio-recreo{min-height:115px;margin:var(--erlen-esp-4) 0 var(--erlen-esp-6);padding:var(--erlen-esp-2) var(--erlen-esp-4) var(--erlen-esp-4);border-bottom:1px solid var(--erlen-vidrio-contorno)}
-.erlen-inicio-recreo erlen-mey{display:block;height:90px}
 
 /* Campos y botones propios (no dependen de base.css). */
 .erlen-inicio .erlen-inicio-campo{width:100%;min-height:var(--erlen-alto-control);padding:0 var(--erlen-esp-4);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-capsula);background:var(--erlen-superficie);color:var(--erlen-tinta);font:400 var(--erlen-texto-ui) var(--erlen-font-ui);box-shadow:inset 0 1px 2px var(--erlen-vidrio-contorno)}
@@ -203,9 +109,6 @@ html[data-erlen-mey-presencia] .recientes-vacio .mey{display:none}
 .erlen-inicio-tarjeta .erlen-inicio-acciones{gap:var(--erlen-esp-1)}
 .erlen-inicio-tarjeta .erlen-inicio-boton{min-height:36px;padding:0 var(--erlen-esp-2);font-size:var(--erlen-texto-xs)}
 .erlen-inicio-vacio{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:var(--erlen-esp-3);padding:var(--erlen-esp-7) var(--erlen-esp-5);border:1px dashed var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-tarjeta);background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio);box-shadow:var(--erlen-vidrio-relieve);text-align:center}
-/* Mey (diseno/mey.mjs) en un hueco de 96 px: <erlen-mey> elige 6 px por celda (96×108). */
-.erlen-inicio-mey{display:block;width:96px}
-.erlen-inicio-mey svg{display:block;width:100%;height:auto}
 .erlen-inicio-vacio h3{font:400 24px/1.2 var(--erlen-font-titulo)}
 .erlen-inicio-vacio p{max-width:52ch;color:var(--erlen-tinta-suave)}
 .erlen-inicio-recientes{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:var(--erlen-esp-2);margin-top:var(--erlen-esp-4)!important}
@@ -245,9 +148,8 @@ html[data-erlen-mey-presencia] .recientes-vacio .mey{display:none}
  .erlen-inicio-controles{grid-template-columns:1fr}
  .erlen-inicio-cabecera{position:relative;min-height:56px;padding-block:var(--erlen-esp-2)}
  .erlen-inicio-cabecera>span{display:none}
- /* Sin menú de suite ni «Continuar» (app fuera del portal, file://) la cabecera no tendría nada visible: se retira en
-    vez de dejar una franja de cristal vacía entre la barra lateral y el contenido (2.0.1). */
- .erlen-inicio-cabecera:not(:has(.erlen-inicio-cabecera-acciones>:not(.erlen-inicio-local,.erlen-inicio-suite:empty))){display:none}
+ /* Sin acciones visibles, se evita una franja de cristal vacía entre la navegación y el contenido. */
+ .erlen-inicio-cabecera:not(:has(.erlen-inicio-cabecera-acciones>:not(.erlen-inicio-local))){display:none}
  .erlen-inicio-cabecera-acciones{width:100%;justify-content:flex-end;gap:var(--erlen-esp-2)}
 }
 .erlen-inicio-cabecera-acciones{min-width:0;flex-wrap:wrap;justify-content:flex-end}

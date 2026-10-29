@@ -1,4 +1,4 @@
-/* erlen-diseno 2.11.10 · generado por @erlen/design/tools/generate; no editar a mano */
+/* Cinta local de Tabula, derivada del componente MIT de Erlen. */
 const erlenCinta=(()=>{
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
@@ -18,7 +18,7 @@ const erlenCinta=(()=>{
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* Cinta de herramientas común de Erlen Suite (docs/COHERENCIA-APPS.md §5 del portal).
+/* Cinta de herramientas de Tabula.
    Declarativa: la app describe pestañas, grupos y controles; este módulo pinta la
    cinta al estilo de las apps de oficina, con el patrón ARIA de pestañas y barra de
    herramientas, teclado completo, menús, pestañas contextuales y plegado. No importa
@@ -26,8 +26,8 @@ const erlenCinta=(()=>{
    Estilos en diseno/cinta.css, solo con tokens --erlen-*.
 
    mountCinta(host, {
-     app: 'notes',                        // clave de preferencias (plegado)
-     etiqueta: 'Herramientas de Notes',   // nombre accesible de la cinta
+     app: 'slides',                       // clave de preferencias (plegado)
+     etiqueta: 'Herramientas',            // nombre accesible de la cinta
      archivo: {etiqueta:'Archivo', accion},  // opcional: botón «Archivo» a la izquierda
      pestanas: [{id, etiqueta, grupos:[{etiqueta, controles:[control…]}]}],
      contextuales: () => [pestaña…],      // opcional: pestañas según la selección
@@ -41,7 +41,7 @@ const erlenCinta=(()=>{
               deshabilitado?:()=>bool} | {separador:true}
    icono: texto (un glifo), un nodo, o una cadena SVG escrita por la propia app.
    Devuelve {elemento, actualizar(), seleccionar(id), plegar(bool), comandos(), enfocar(clave,pestana?), destruir()}.
-   comandos() lista los comandos ejecutables del estado actual (fuente única para ayudas como Mey);
+   comandos() lista los comandos ejecutables del estado actual;
    enfocar(clave,pestana?) lleva el foco al botón del comando y lo resalta unos segundos. */
 const TIPOS=['grande','pequeno','interruptor','menu'];
 let contador=0;
@@ -315,10 +315,10 @@ function mountCinta(host,config){
  let resalte=null,resaltado=null;
  function resaltar(b){
   if(resalte)win.clearTimeout(resalte);
-  if(resaltado&&resaltado.isConnected)resaltado.removeAttribute('data-erlen-mey-resalta');
+  if(resaltado&&resaltado.isConnected)resaltado.removeAttribute('data-cinta-resalta');
   resaltado=b;
-  b.setAttribute('data-erlen-mey-resalta','');
-  resalte=win.setTimeout(()=>{resalte=null;resaltado=null;b.removeAttribute('data-erlen-mey-resalta');},2400);
+  b.setAttribute('data-cinta-resalta','');
+  resalte=win.setTimeout(()=>{resalte=null;resaltado=null;b.removeAttribute('data-cinta-resalta');},2400);
  }
  function enfocar(clave,pestana){
   const hallado=listarComandos().find(x=>x.comando.clave===clave&&(!pestana||x.comando.pestana===pestana));

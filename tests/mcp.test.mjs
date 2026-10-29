@@ -267,6 +267,34 @@ test('MCP: la revisión de tiempo no cuenta las diapositivas de respaldo', async
   });
 });
 
+test('MCP: duplicar y eliminar bloques conserva la integridad de los conectores y permite deshacer', {timeout: 120000}, async () => {
+  await conServidor(async (c, dir) => {
+    const creada = await c.llama('crear_presentacion', {archivo:'conexiones', diapositivas:[
+      {diseno:'content', zonas:[[{tipo:'text',text:'Origen'}, {tipo:'text',text:'Destino'}]]}
+    ]});
+    assert.equal(creada.error,false,creada.texto);
+    const d = proyecto(dir,'conexiones'), sl = d.slides[1], [a,b] = sl.blocks;
+    sl.lienzoLibre=true;
+    a.posLibre={x:10,y:20,w:20,h:20}; b.posLibre={x:60,y:40,w:20,h:20};
+    sl.conectores=[{desde:a.id,hasta:b.id}];
+    writeFileSync(join(dir,'conexiones.json'),JSON.stringify(d));
+    const copia = await c.llama('duplicar_diapositiva',{archivo:'conexiones',diapositiva:2});
+    assert.equal(copia.error,false,copia.texto);
+    let copiada = proyecto(dir,'conexiones').slides[2];
+    assert.notEqual(copiada.conectores[0].desde,a.id);
+    assert.notEqual(copiada.conectores[0].hasta,b.id);
+    assert.equal(copiada.blocks.find(x=>x.id===copiada.conectores[0].desde).text,'Origen');
+    assert.equal(copiada.blocks.find(x=>x.id===copiada.conectores[0].hasta).text,'Destino');
+    const borrada = await c.llama('eliminar_bloque',{archivo:'conexiones',bloque:copiada.conectores[0].hasta});
+    assert.equal(borrada.error,false,borrada.texto);
+    assert.equal(proyecto(dir,'conexiones').slides[2].conectores,undefined);
+    assert.equal((await c.llama('deshacer',{archivo:'conexiones'})).error,false);
+    copiada=proyecto(dir,'conexiones').slides[2];
+    assert.equal(copiada.blocks.find(x=>x.id===copiada.conectores[0].hasta).text,'Destino');
+    assert.deepEqual(proyecto(dir,'conexiones').slides[1].conectores,[{desde:a.id,hasta:b.id}]);
+  });
+});
+
 /* En el zigzag, una gráfica con su ecuación de ajuste era más alta que su
    fila y se salía por arriba, bajo el título; vista_previa no lo veía porque
    solo medía hacia abajo y a la derecha. */

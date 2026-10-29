@@ -21,7 +21,6 @@ Tabula reúne edición de diapositivas, herramientas visuales y científicas y m
 - **Importación y figuras:** una entrada para JSON, PPTX y Markdown, con vista previa antes de guardar una copia. PowerPoint se adapta a bloques de Erlen; sus gráficas se recuperan como tablas de datos. Las figuras por capas conservan objetos editables y pueden crearse mediante lista y controles de teclado.
 - **Catálogo científico:** 1000 piezas de Erlen Figures, disponibles sin conexión para insertar y organizar como objetos del lienzo libre. Cada figura conserva su autoría y licencia; los créditos pueden descargarse antes de compartir.
 - **Compartir con revisión:** elige formato y revisa recortes, descripciones accesibles, recursos externos y límites de edición. Las notas privadas se incluyen en PowerPoint y HTML solo si marcas la opción; el proyecto JSON siempre las conserva.
-- **Desde Erlen DoE:** el informe de un análisis llega como presentación nueva para la reunión de grupo, con vista previa, tablas recortadas a lo que cabe, gráficas editables y la procedencia en la última diapositiva. [Cómo funciona](docs/uso.md#un-informe-de-erlen-doe-como-presentación).
 - **Exportaciones:** PDF mediante impresión, PowerPoint con objetos compatibles editables, fuente Beamer, SVG científico, Markdown, HTML imprimible y presentación HTML autónoma con funciones interactivas. Grabación local con micrófono opcional. Cada formato tiene [límites documentados](docs/uso.md#exportaciones).
 - **Herramientas libres:** KaTeX, RDKit, Kekule.js, 3Dmol.js, Plotly, Mermaid, Reveal.js, PptxGenJS, pptxtojson y Fabric.js. Los componentes adicionales se cargan desde los archivos de la propia aplicación.
 
@@ -71,7 +70,7 @@ Cada ejemplo contiene **seis diapositivas**, notas, archivo JSON editable, fuent
 
 El autoguardado usa el almacenamiento de **este navegador y este origen web**. Borrar los datos del sitio, cambiar de navegador o moverlo a otra dirección no traslada tu biblioteca. Descarga proyectos JSON y respaldos ZIP. El historial de recuperación local no sustituye una copia externa.
 
-Tabula conserva las claves de almacenamiento de Erlen Slides para que las bibliotecas existentes del mismo navegador y origen sigan disponibles. Para traer una presentación desde otro navegador u origen, expórtala como JSON e impórtala aquí. La única excepción es explícita: una copia que Erlen DoE envía a Slides por la suite, que se abre solo desde su enlace y solo se guarda tras confirmarla. No contiene configuración de producción, telemetría automática ni claves de servicios.
+Tabula conserva las claves de almacenamiento de Erlen Slides para que las bibliotecas existentes del mismo navegador y origen sigan disponibles. Para traer una presentación desde otro navegador u origen, expórtala como JSON e impórtala aquí. Tabula no admite el intercambio de copias entre aplicaciones ni convierte informes específicos de otras herramientas; el servidor MCP general sigue disponible. No contiene configuración de producción, telemetría automática ni claves de servicios.
 
 ## Desarrollo y validación
 
@@ -93,4 +92,4 @@ La interfaz contiene un enlace visible al código fuente. Si modificas y desplie
 
 ## Código y verificación
 
-Esta actualización incorpora la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`, junto con los recursos compartidos necesarios para ejecutarla de forma autónoma. La política actual retira la sincronización automática con Suite; la compilación y las pruebas se ejecutan localmente. El repositorio conserva workflows históricos: comprueba la configuración de Actions antes de publicar una etiqueta.
+Tabula parte de la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`. Es una distribución independiente: la compilación y las pruebas se ejecutan localmente. El repositorio conserva workflows históricos: comprueba la configuración de Actions antes de publicar una etiqueta.

@@ -144,6 +144,7 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 - `revisar_presentacion` corre en JSDOM y no mide: el desbordamiento lo comprueba `vista_previa`, en Chromium, y el contraste, la revisión del propio editor.
 - Chromium se busca solo: el de `playwright-core`, Chrome o Edge instalados, otros Chromium de Playwright y los del sistema. `ERLEN_CHROMIUM` fija uno.
 - El PowerPoint es el del editor: texto y tablas editables, gráficas como imagen. Ábrelo antes de enviarlo.
+- Los conectores creados en el editor se conservan al duplicar diapositivas y se eliminan con sus extremos. El PowerPoint los muestra como flechas estáticas; Beamer y Markdown no los conservan y lo advierten. El JSON v1 guarda las relaciones para seguir editándolas; versiones anteriores pueden ignorarlas al volver a guardar.
 - El `.tex` requiere una instalación de LaTeX u Overleaf; su compilación no forma parte de la validación. Las figuras con forma, marco, sombra o filtro salen sin ese estilo (se avisa); «Exportar figuras» del editor las da con él. Las imágenes GIF, WebP o SVG hay que convertirlas a PNG o PDF.
 - La primera llamada tarda unos segundos: carga la aplicación. Las siguientes son inmediatas.
 

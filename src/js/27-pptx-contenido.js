@@ -138,6 +138,16 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
   todos('.zona-tit, .comp-tit, .paso-tit, .celda-tit, .paso-n, .dt-num, .dt-rot, .ct-autor, .fl-rot, .pt-tit, .tf-rot, .obj-tit')
     .filter(el => el.textContent.trim()).forEach(el => texto(el, el.textContent));
 
+  /* Las relaciones comparten el filtro y las coordenadas del lienzo, pero en
+     PowerPoint son líneas independientes, colocadas detrás de los bloques. */
+  if (Array.isArray(sl.conectores) && sl.conectores.length) {
+    const escY = 7.5 * EMU_PULG / slideDims(deck)[1], color = hex6(temaDe(deck).fg, ctx.fondo);
+    for (const c of conectoresVisibles(sl, deck)) {
+      F.push(xmlConector(id(), Math.round(c.x1 * esc), Math.round(c.y1 * escY),
+        Math.round(c.x2 * esc), Math.round(c.y2 * escY), color, Math.round(3 * esc)));
+    }
+  }
+
   /* bloques */
   for (const el of todos('.blk[data-bid]')) {
     const f0 = findBlockEn(deck, el.dataset.bid);
@@ -230,5 +240,3 @@ function findBlockEn(deck, id) {
   }
   return null;
 }
-
-

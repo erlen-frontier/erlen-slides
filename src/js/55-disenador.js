@@ -668,6 +668,10 @@ function propuestasDiapositiva(deck, i, opciones) {
     if (out.some(x => x.id === p.id)) return;
     const copia = deepCopy(deck);
     try { p.aplica(copia, i); } catch (e) { return; }
+    /* No ofrecer una idea que elimine un extremo o lo separe de su pareja:
+       la relación no tiene una correspondencia inequívoca en el resultado. */
+    const ids = new Set(bloquesConectables(copia.slides[i]).map(b => b.id));
+    if ((sl.conectores || []).some(c => !ids.has(c.desde) || !ids.has(c.hasta))) return;
     const hu = huella(copia);
     if (vistas.has(hu)) return;
     vistas.add(hu);
@@ -778,5 +782,4 @@ function disenadorAlPonerImagen(b) {
   if (S.prefs && S.prefs.sinDisenador) return;
   setTimeout(() => { if (b.src) abreDisenador(b); }, 260);
 }
-
 

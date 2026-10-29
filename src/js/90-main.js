@@ -24,6 +24,33 @@ function showMenu(menu, anchor) {
   _menuLibreCleanup=()=>{clearTimeout(timer);document.removeEventListener('mousedown',off);limpia();};
 }
 
+/* Preferencias de la aplicación: no modifican el tema de la presentación. */
+function openAparienciaApp() {
+  const opciones = lista => lista.map(({ id, nombre }) => h('option', { value: id }, nombre));
+  const tema = h('select', { id: uid(), class: 'field', onchange: e => cambiaTemaApp(e.target.value) },
+    opciones([{ id: 'auto', nombre: 'Según el sistema' }, { id: 'claro', nombre: 'Claro' }, { id: 'oscuro', nombre: 'Oscuro' }]));
+  const color = h('select', { id: uid(), class: 'field', onchange: e => colorTabula.guardar(window, e.target.value) }, opciones(colorTabula.colores));
+  const estilo = h('select', { id: uid(), class: 'field', onchange: e => colorTabula.guardarEstilo(window, e.target.value) }, opciones(colorTabula.estilos));
+  tema.value = ['auto', 'claro', 'oscuro'].includes(S.prefs.tema) ? S.prefs.tema : 'auto';
+  const sincroniza = () => { color.value = colorTabula.leer(window); estilo.value = colorTabula.leerEstilo(window); };
+  const fila = (nombre, campo) => h('div', { class: 'irow' }, h('label', { for: campo.id }, nombre), h('div', { style: 'flex:1.4' }, campo));
+  sincroniza();
+  openModal({
+    title: 'Apariencia de Tabula', size: 'modal-sm',
+    body: h('div', null,
+      h('p', null, 'Estos ajustes cambian la aplicación, no las diapositivas. Se aplican al momento.'),
+      fila('Tema', tema), fila('Color de acento', color), fila('Estilo visual', estilo),
+      h('p', null, 'Se guardan en este navegador; si el almacenamiento está bloqueado, duran solo esta sesión.')),
+    foot: [h('button', { class: 'btn', onclick: () => {
+      cambiaTemaApp('auto'); tema.value = 'auto';
+      colorTabula.guardar(window, 'verde'); colorTabula.guardarEstilo(window, 'original');
+    } }, 'Restablecer'), h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Cerrar')],
+    onclose: () => { window.removeEventListener('tabula-color', sincroniza); window.removeEventListener('tabula-estilo', sincroniza); }
+  });
+  window.addEventListener('tabula-color', sincroniza);
+  window.addEventListener('tabula-estilo', sincroniza);
+}
+
 function initShortcuts() {
   window.addEventListener('keydown', e => {
     if (P.on || CL.on || (typeof AR !== 'undefined' && AR.on) || (typeof TL !== 'undefined' && TL.on)) return;
@@ -155,7 +182,7 @@ function initChrome() {
   }
   $('#decksBtn').addEventListener('click', e => fileMenu(e.currentTarget));
   $('#moreBtn').addEventListener('click', e => {
-    const menu = h('div', { class: 'menu' }), item = mkItem(menu);
+    const ancla = e.currentTarget, menu = h('div', { class: 'menu' }), item = mkItem(menu);
     item('▶', 'Presentar con vista de presentador', 'o tecla P al presentar', () => { startPresent(false); alternaPresentador(); });
     menu.append(h('div', { class: 'm-sep' }));
     item('▤', 'Mis presentaciones…', null, openDecks);
@@ -187,22 +214,16 @@ function initChrome() {
     const ap = S.prefs.tema;
     item(ap === 'claro' ? '☀' : ap === 'oscuro' ? '☾' : '◐', 'Apariencia del editor',
       ap === 'claro' ? 'clara' : ap === 'oscuro' ? 'oscura' : 'la del sistema',
-      () => cambiaTemaApp(ap === 'auto' ? 'claro' : ap === 'claro' ? 'oscuro' : 'auto'));
+      () => { ancla.focus(); openAparienciaApp(); });
     item('✦', 'Asistente', null, alternaAsistente);
     item('⌂', 'Inicio y biblioteca', null, wsInicio);
     item('?', 'Ayuda y atajos', null, openHelp);
-    showMenu(menu, e.currentTarget);
+    showMenu(menu, ancla);
   });
   $('#helpBtn').addEventListener('click', openHelp);
   $('#asisBtn').addEventListener('click', () => alternaAsistente());
   if (typeof aplicaDisposicion === 'function') aplicaDisposicion();
-  $('#temaBtn').addEventListener('click', e => {
-    const menu = h('div', { class: 'menu' });
-    [['auto', '◐', 'La del sistema'], ['claro', '☀', 'Clara'], ['oscuro', '☾', 'Oscura']].forEach(([v, ic, n]) =>
-      menu.append(h('button', { class: S.prefs.tema === v ? 'on' : '', onclick: () => { closeMenus(); cambiaTemaApp(v); } },
-        h('span', { class: 'mi' }, ic), h('span', null, n))));
-    showMenu(menu, e.currentTarget);
-  });
+  $('#temaBtn').addEventListener('click', openAparienciaApp);
   $('#buscarBtn').addEventListener('click', () => openBuscar());
   $('#zoomIn').addEventListener('click', () => { S.zoom = clamp((S.zoom || effZoom()) * 1.2, 0.1, 3); renderCanvas(); });
   $('#zoomOut').addEventListener('click', () => { S.zoom = clamp((S.zoom || effZoom()) / 1.2, 0.1, 3); renderCanvas(); });

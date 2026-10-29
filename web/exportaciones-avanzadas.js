@@ -100,6 +100,17 @@ window.ERLEN_EXPORTADORES = (() => {
         for (const el of raiz.querySelectorAll('.ft-t,.ft-s,.tp-title,.tp-sub,.tp-auth,.tp-inst,.tp-date,.sec-kicker,.sec-name,.zona-tit,.comp-tit,.paso-tit,.celda-tit,.paso-n,.dt-num,.dt-rot,.ct-autor,.fl-rot,.pt-tit,.tf-rot,.obj-tit')) {
           if (el.querySelector('.katex')) await foto(el, 'Texto con matemáticas'); else texto(el, el.textContent);
         }
+        /* Las coordenadas ya están en unidades de diapositiva, no en píxeles
+           del banco. Las líneas independientes quedan detrás de los bloques. */
+        if (Array.isArray(sl.conectores) && sl.conectores.length) {
+          const ky = 7.5 / H;
+          for (const c of conectoresVisibles(sl, deck)) pagina.addShape('line', {
+            x: Math.min(c.x1, c.x2) * k, y: Math.min(c.y1, c.y2) * ky,
+            w: Math.abs(c.x2 - c.x1) * k, h: Math.abs(c.y2 - c.y1) * ky,
+            flipH: c.x2 < c.x1, flipV: c.y2 < c.y1,
+            line: { color: hex(th.fg, th.bg), width: 3 * k * 72, endArrowType: 'triangle' }
+          });
+        }
         for (const el of raiz.querySelectorAll('.blk[data-bid]')) {
           const b = findBlockEn(deck, el.dataset.bid)?.block; if (!b || b.type === 'spacer') continue;
           const pie = el.querySelector('figcaption,.chart-cap,.smart-cap,.tab-caption');

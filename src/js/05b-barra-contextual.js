@@ -192,7 +192,7 @@ function pintaBarraContextual() {
   }
   btn(g,icono(bloqueada ? 'LockOpen' : 'Lock','▣'),(bloqueada ? 'Desbloquear ' : 'Bloquear ')+sufijo,'bloqueo',() => cambiaBloqueoSeleccion(!bloqueada));
   btn(g,icono('Trash2','✕'),'Eliminar '+sufijo,'eliminar',eliminarSeleccionActiva,{disabled:bloqueada});
-  btn(g,icono('Settings2','⚙'),'Propiedades del bloque','propiedades',() => { S.tab='bloque'; renderInspector(); openDrawer(true); },{disabled:bloqueada});
+  btn(g,icono('Settings2','⚙'),'Propiedades del bloque','propiedades',() => abrePanelLateral('bloque'),{disabled:bloqueada});
   actualizaBarraContextual(bar,ctx); bar.scrollLeft = desplazamiento;
   if (foco) bar.querySelector('[data-barra-accion="'+foco+'"]')?.focus({preventScroll:true});
 }

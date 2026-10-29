@@ -37,6 +37,17 @@ test('Long text proposes a flowing layout and splitting in two, without losing o
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
+test('Designer does not offer a proposal that separates connected objects',async()=>{const {dom,errors,run}=await editor();try{
+ monta(dom,[{type:'text',text:LARGO.slice(0,2).join('\n\n')},{type:'text',text:LARGO.slice(2).join('\n\n')}]);
+ assert.ok(ids(propuestas(run)).includes('dos-diapositivas'));
+ run("curSlide().lienzoLibre=true;curSlide().conectores=[{desde:curSlide().blocks[0].id,hasta:curSlide().blocks[1].id}];snapNow()");
+ const antes=run('JSON.stringify(curSlide())'), ps=propuestas(run);
+ assert.equal(ids(ps).includes('dos-diapositivas'),false);
+ assert.ok(ps.some(p=>p.sl.conectores?.length===1),'se conservan las propuestas que mantienen ambos extremos');
+ assert.equal(run('JSON.stringify(curSlide())'),antes);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
 test('A short ordered list becomes a SmartArt process; a list with branches, a hierarchy',async()=>{const {dom,errors,run}=await editor();try{
  monta(dom,[{type:'bullets',items:[{t:'1. Coprecipitación a pH 10',lvl:0},{t:'2. Envejecimiento 24 h',lvl:0},{t:'3. Lavado y secado',lvl:0},{t:'4. Caracterización por DRX',lvl:0}]}]);
  let ps=propuestas(run);

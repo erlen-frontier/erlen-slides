@@ -153,3 +153,83 @@ test('a block that becomes hidden is removed from the moving selection', async t
   run("selectBlock('a');document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}))");
   assert.equal(run("findBlock('c').block.posLibre.x"), x);
 });
+
+test('connectors follow slide geometry, hide with their endpoints, and preserve scientific data', async t => {
+  const {run,errors} = await prepara(t);
+  run("curSlide().conectores=[{desde:'a',hasta:'b'}];snapNow()");
+  const fuente = run("JSON.stringify(findBlock('c').block)");
+  const coordenadas = () => valor(run, `(()=>{
+    const line=renderSlide(S.deck,S.cur,'export',99).querySelector('.lienzo-conectores line');
+    return line && ['x1','y1','x2','y2'].map(k=>+line.getAttribute(k));
+  })()`);
+  const iguales = (actual, esperadas) => actual.forEach((n,i)=>assert.ok(Math.abs(n-esperadas[i])<.001,JSON.stringify(actual)));
+  iguales(coordenadas(),[384,252,640,324]);
+  run("S.deck.meta.aspect='43'");
+  iguales(coordenadas(),[307.2,268.8,512,345.6]);
+  run("findBlock('b').block.nivel='comite';S.deck.meta.nivel='congreso'");
+  assert.equal(coordenadas(),null);
+  run("delete findBlock('b').block.nivel;findBlock('b').block.posLibre={x:18,y:20,w:20,h:20}");
+  assert.equal(coordenadas(),null,'dos cajas superpuestas no producen una flecha engañosa');
+  assert.deepEqual(valor(run,'curSlide().conectores'),[{desde:'a',hasta:'b'}]);
+  run("findBlock('b').block.posLibre={x:50,y:40,w:20,h:20}");
+  iguales(coordenadas(),[307.2,268.8,512,345.6]);
+  assert.equal(run("JSON.stringify(findBlock('c').block)"),fuente);
+  assert.deepEqual(errors,[]);
+});
+
+test('a shape with a caption anchors to the whole block instead of assuming the image fills it', async t => {
+  const {run,errors} = await prepara(t);
+  run(`Object.assign(findBlock('b').block, {type:'image',formaLibre:'circle',w:100,caption:'Pie de figura',
+    src:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg"/%3E',
+    figura:{width:300,height:150,objects:[{kind:'circle',x:8,y:8,width:284,height:134,angle:0}]},
+    transformacionLibre:{giro:45,voltearH:false,voltearV:false}});
+    curSlide().conectores=[{desde:'a',hasta:'b'}];`);
+  const destino = () => valor(run, `(()=>{
+    const line=renderSlide(S.deck,S.cur,'export',99).querySelector('.lienzo-conectores line');
+    return ['x2','y2'].map(k=>+line.getAttribute(k));
+  })()`);
+  assert.deepEqual(destino(),[640,324]);
+  run("delete findBlock('b').block.caption");
+  const girada = destino();
+  assert.ok(Math.abs(girada[0] - 676.073836) < .001 && Math.abs(girada[1] - 334.145766) < .001, JSON.stringify(girada));
+  run("findBlock('b').block.posLibre.y=20;findBlock('b').block.w=50;findBlock('b').block.transformacionLibre.giro=0");
+  const estrecha = destino();
+  assert.ok(Math.abs(estrecha[0] - (768 - 128 * 284 / 600)) < .001, JSON.stringify(estrecha));
+  assert.equal(estrecha[1],216);
+  assert.deepEqual(errors,[]);
+});
+
+test('project import remaps unambiguous connector IDs and rejects ambiguous links with a warning', async t => {
+  const {run,errors} = await prepara(t);
+  run(`window.__original=deepCopy(S.deck);
+    __original.slides[0].blocks=[{id:'a',type:'text',text:'Colisión en otra diapositiva'}];
+    __original.slides[1].blocks2[0].fuente={nombre:'fuente.csv',cuando:'2026-01-01',n:2,huella:'1234'};
+    __original.slides[1].conectores=[{desde:'a',hasta:'b'}];`);
+  const valido = valor(run,'saneaDeck(__original)');
+  const sl = valido.deck.slides[1], enlace = sl.conectores[0];
+  assert.notEqual(enlace.desde,'a');
+  assert.equal(sl.blocks.find(b=>b.id===enlace.desde).text,'A');
+  assert.equal(sl.blocks.find(b=>b.id===enlace.hasta).text,'B');
+  assert.equal(sl.blocks2[0].data,'x,y\n1,2');
+  assert.deepEqual(sl.blocks2[0].fuente,{nombre:'fuente.csv',cuando:'2026-01-01',n:2,huella:'1234'});
+  run("__original.slides[1].blocks2.push({id:'a',type:'text',text:'Identidad ambigua'});__original.slides[1].conectores.push({desde:'b',hasta:'b'},{desde:'a',hasta:'inexistente'})");
+  const ambiguo = valor(run,'saneaDeck(__original)');
+  assert.equal(ambiguo.deck.slides[1].conectores,undefined);
+  assert.match(ambiguo.avisos.join(' '),/conexiones inválidas o ambiguas/i);
+  assert.deepEqual(errors,[]);
+});
+
+test('reopening a section keeps the complete source of a connected, temporarily stored chart', async t => {
+  const {run,errors} = await prepara(t);
+  run(`findBlock('c').block.fuente={nombre:'muestra-'.repeat(18)+'.csv',cuando:'2026-10-28',n:1,huella:'1234'};
+    curSlide().conectores=[{desde:'a',hasta:'c'}];
+    changeLayout(curSlide(),'section');
+    S.deck.slides[0].blocks=[{id:'c',type:'text',text:'Colisión en otra diapositiva'}];`);
+  const original = valor(run,"curSlide()._guardados.find(b=>b.id==='c')");
+  const reabierta = valor(run,'saneaDeck(JSON.parse(JSON.stringify(S.deck))).deck.slides[S.cur]');
+  const guardada = reabierta._guardados.find(b=>b.id===reabierta.conectores[0].hasta);
+  assert.notEqual(guardada.id,original.id,'la colisión de IDs se resuelve sin perder la relación');
+  delete guardada.id; delete original.id;
+  assert.deepEqual(guardada,original,'los datos y la procedencia permanecen intactos');
+  assert.deepEqual(errors,[]);
+});

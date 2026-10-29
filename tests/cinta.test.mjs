@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
-/* La cinta de arriba: el componente común de la suite (src/diseno/suite-cinta.js)
+/* La cinta de arriba: el componente local (src/diseno/cinta.js)
    montado por src/js/56-cinta.js. JSDOM no mide geometría: aquí se comprueban
    estructura, estados, teclado y ARIA; la vista se revisa en un navegador real. */
 const FIJAS=['Inicio','Insertar','Diseño','Diapositiva','Presentar','Vista'];
@@ -54,6 +54,71 @@ test('Selecting a block adds a contextual tab named after its type, without stea
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
+test('Contextual action names follow a multiple selection without replacing the focused button',async()=>{const {dom,errors,run}=await editor();try{
+ const d=dom.window.document;
+ run("wsNueva();addSlide('content');alternaLienzoLibre();addBlockToSlide('text',1);window.__a=S.selBlock;addBlockToSlide('text',1);window.__b=S.selBlock;selectBlock(__a)");
+ d.querySelector('#cinta [data-contextual]').click();
+ const duplicar=d.querySelector('#cinta [data-control=duplicar-bloque]');duplicar.focus();
+ assert.equal(duplicar.textContent,'Duplicar');
+ run('selectBlock(__b,true)');
+ assert.equal(duplicar.textContent,'Duplicar selección');
+ assert.equal(d.querySelector('#cinta [data-control=duplicar-bloque]'),duplicar);
+ assert.equal(d.activeElement,duplicar);
+ run('selectBlock(__b,true)');
+ assert.equal(duplicar.textContent,'Duplicar');
+ assert.equal(d.activeElement,duplicar);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+test('Canvas controls in the ribbon share state with the controls below the slide',async()=>{const {dom,errors,run}=await editor();try{
+ const d=dom.window.document;run('wsNueva()');d.querySelector('#cinta [data-pestana=diapo]').click();
+ const boton=id=>d.querySelector('#cinta [data-control="'+id+'"]');
+ assert.ok(boton('lienzo-libre'),'El lienzo está en Diapositiva incluso sin selección');
+ assert.equal(boton('lienzo-libre').disabled,true,'La portada no admite bloques');
+ run("addSlide('content')");
+ assert.equal(boton('lienzo-libre').disabled,false);
+ assert.equal(boton('lienzo-libre').getAttribute('aria-pressed'),'false');
+ for(const id of ['lienzo-capas','lienzo-iman','lienzo-formas','lienzo-catalogo','lienzo-organizar','lienzo-conectores'])assert.equal(boton(id).disabled,true,id);
+ boton('lienzo-libre').click();
+ assert.equal(boton('lienzo-libre').getAttribute('aria-pressed'),'true');
+ assert.equal(d.querySelector('#lienzoLibreBtn').getAttribute('aria-pressed'),'true');
+ assert.equal(boton('lienzo-catalogo').disabled,false);
+ assert.equal(boton('lienzo-capas').getAttribute('aria-controls'),'panelCapas');
+ assert.equal(boton('lienzo-capas').getAttribute('aria-expanded'),'false');
+ boton('lienzo-capas').focus();boton('lienzo-capas').click();
+ assert.equal(d.querySelector('#panelCapas').hidden,false);
+ assert.equal(boton('lienzo-capas').getAttribute('aria-expanded'),'true');
+ d.querySelector('#panelCapas [aria-label="Cerrar panel de capas"]').focus();
+ d.querySelector('#panelCapas [aria-label="Cerrar panel de capas"]').click();
+ assert.equal(boton('lienzo-capas').getAttribute('aria-expanded'),'false');
+ assert.equal(d.activeElement,boton('lienzo-capas'),'El foco vuelve al control que abrió el panel');
+ boton('lienzo-iman').click();
+ assert.equal(boton('lienzo-iman').getAttribute('aria-pressed'),'false');
+ assert.equal(d.querySelector('#lienzoImanBtn').getAttribute('aria-pressed'),'false');
+ d.querySelector('#lienzoImanBtn').click();
+ assert.equal(boton('lienzo-iman').getAttribute('aria-pressed'),'true');
+ run("addBlockToSlide('text',1);window.__primero=S.selBlock;addBlockToSlide('text',1);selectBlock(__primero,true)");
+ assert.equal(boton('lienzo-organizar').disabled,false);
+ assert.equal(boton('lienzo-conectores').disabled,false);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+test('Scientific chart tools are directly available without changing existing data',async()=>{const {dom,errors,run}=await editor();try{
+ const d=dom.window.document;run("wsNueva();addSlide('content')");
+ d.querySelector('#cinta [data-pestana=insertar]').click();
+ const grafica=d.querySelector('#cinta [data-control=ins-chart]');
+ const dinamica=d.querySelector('#cinta [data-control=ins-func]');
+ assert.equal(grafica.textContent,'Gráfica de datos');
+ assert.equal(dinamica.textContent,'Gráfica dinámica');
+ grafica.click();
+ assert.equal(run('findBlock(S.selBlock).block.type'),'chart');
+ run('closeModal();window.__grafica=S.selBlock;window.__datos=JSON.stringify(findBlock(__grafica).block)');
+ dinamica.click();
+ assert.equal(run('findBlock(S.selBlock).block.type'),'func');
+ assert.equal(run('JSON.stringify(findBlock(__grafica).block)'),run('__datos'));
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
 test('Archivo opens its menu with file, export and about options',async()=>{const {dom,errors,run}=await editor();try{
  const d=dom.window.document;run('wsNueva()');
  const archivo=d.querySelector('#cinta .erlen-cinta-archivo');
@@ -74,7 +139,9 @@ test('Archivo opens its menu with file, export and about options',async()=>{cons
  run('closeModal()');
  const etiquetas=[];for(const t of pestanas(d)){t.click();etiquetas.push(...[...d.querySelectorAll('#cinta .erlen-cinta-texto')].map(x=>x.textContent));}
  for(const o of ['Mis presentaciones','Guardar como…','PDF','PowerPoint','Kit de defensa'])assert.equal(etiquetas.includes(o),false,o+' debe vivir solo en Archivo');
- assert.equal(new Set(etiquetas.filter(e=>e!=='Más opciones…')).size,etiquetas.filter(e=>e!=='Más opciones…').length,'Ninguna herramienta repetida entre pestañas');
+ assert.equal(etiquetas.filter(e=>e==='Catálogo científico').length,2,'El catálogo también se encuentra junto a las herramientas del lienzo');
+ const unicas=etiquetas.filter(e=>e!=='Más opciones…'&&e!=='Catálogo científico');
+ assert.equal(new Set(unicas).size,unicas.length,'Las demás herramientas no se repiten entre pestañas');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
@@ -117,12 +184,11 @@ test('Long properties open in a temporary details panel that closes with the but
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
-test('The ribbon script is the synced suite package copy and its stylesheet is inlined in the build',()=>{
- // El build carga el script directamente del paquete sincronizado: sin copias que se desfasen.
+test('The local ribbon script and stylesheet are inlined in the build',()=>{
  const orden=readFileSync(new URL('../src/js/_orden.txt',import.meta.url),'utf8').trim().split('\n');
- assert.ok(orden.indexOf('../diseno/suite-cinta.js')>=0&&orden.indexOf('../diseno/suite-cinta.js')===orden.indexOf('56-cinta.js')-1,'El componente va justo antes de 56-cinta.js');
+ assert.ok(orden.indexOf('../diseno/cinta.js')>=0&&orden.indexOf('../diseno/cinta.js')===orden.indexOf('56-cinta.js')-1,'El componente va justo antes de 56-cinta.js');
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
- assert.ok(html.includes(readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8')),'cinta.css del paquete, íntegro en el build');
+ assert.ok(html.includes(readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8')),'cinta.css íntegro en el build');
  assert.ok(html.includes('const erlenCinta=(()=>{'));
  assert.ok(Buffer.byteLength(html)<=3.6*1024*1024,'El HTML único no pasa de 3,6 MiB (tipografías variables y componentes compartidos): '+Buffer.byteLength(html));
  assert.doesNotMatch(readFileSync(new URL('../src/css/01-editor.css',import.meta.url),'utf8'),/\.cinta-(b|tab|tabs|fila|grupo|items|bigs|col|gn|hoja|fl|sep)\b/,'No queda CSS de la cinta antigua');

@@ -114,6 +114,121 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     assert.equal(await page.getByRole('button',{name:'Organizar selección'}).isEnabled(),true);
   });
 
+  await t.test('connectors follow a pointer gesture, cancel safely and can be removed and undone',async()=>{
+    await reset();
+    await page.evaluate(()=>cierraPanelCapas());
+    await page.getByRole('button',{name:'Conectores'}).click();
+    assert.equal(await page.getByRole('button',{name:'Selecciona dos objetos para conectar'}).isDisabled(),true);
+    await page.keyboard.press('Escape');
+    await page.locator('#lienzoObjetosBtn').click();
+    await page.getByRole('checkbox',{name:'Marcar A'}).check();
+    await page.getByRole('checkbox',{name:'Marcar B'}).check();
+    await page.getByRole('button',{name:'Seleccionar marcados'}).click();
+    await page.getByRole('button',{name:'Cerrar panel de capas'}).click();
+    await page.getByRole('button',{name:'Conectores'}).click();
+    await page.getByRole('button',{name:'Conectar: A → B'}).click();
+    assert.deepEqual(await page.evaluate(()=>curSlide().conectores),[{desde:'a',hasta:'b'}]);
+    const linea=page.locator('#stageInner .lienzo-conectores line');
+    assert.equal(await page.locator('#stageInner .lienzo-conectores').getAttribute('aria-label'),'A hacia B');
+    const original=await linea.evaluate(el=>['x1','y1','x2','y2'].map(k=>+el.getAttribute(k)));
+    assert.deepEqual(original,[384,216,640,216]);
+    await page.evaluate(()=>{S.prefs.imanLienzo=false;selectBlock('b');});
+    const previo=await page.evaluate(()=>({...findBlock('b').block.posLibre}));
+    const asa=await page.getByRole('button',{name:'Mover bloque'}).boundingBox();
+    await page.mouse.move(asa.x+asa.width/2,asa.y+asa.height/2);await page.mouse.down();
+    await page.mouse.move(asa.x+asa.width/2+50,asa.y+asa.height/2+35,{steps:5});
+    assert.notDeepEqual(await linea.evaluate(el=>['x1','y1','x2','y2'].map(k=>+el.getAttribute(k))),original);
+    assert.deepEqual(await page.evaluate(()=>({...findBlock('b').block.posLibre})),previo,'la vista previa aún no modifica el proyecto');
+    await page.keyboard.press('Escape');await page.mouse.up();
+    assert.deepEqual(await linea.evaluate(el=>['x1','y1','x2','y2'].map(k=>+el.getAttribute(k))),original);
+    const asa2=await page.getByRole('button',{name:'Mover bloque'}).boundingBox();
+    await page.mouse.move(asa2.x+asa2.width/2,asa2.y+asa2.height/2);await page.mouse.down();
+    await page.mouse.move(asa2.x+asa2.width/2+50,asa2.y+asa2.height/2+35,{steps:5});await page.mouse.up();
+    assert.notDeepEqual(await page.evaluate(()=>({...findBlock('b').block.posLibre})),previo);
+    await page.evaluate(()=>doUndo());
+    assert.deepEqual(await page.evaluate(()=>({...findBlock('b').block.posLibre})),previo);
+    assert.deepEqual(await linea.evaluate(el=>['x1','y1','x2','y2'].map(k=>+el.getAttribute(k))),original);
+    await page.getByRole('button',{name:'Conectores'}).click();
+    await page.getByRole('button',{name:'Eliminar conexión: A → B'}).click();
+    assert.equal(await linea.count(),0);
+    await page.evaluate(()=>doUndo());assert.equal(await linea.count(),1);
+  });
+
+  await t.test('connections survive project reopening, duplication and changes of slide layout',async()=>{
+    await reset();await page.evaluate(()=>{selectBlock('a');selectBlock('b',true);});
+    await page.getByRole('button',{name:'Conectores'}).click();
+    await page.getByRole('button',{name:'Conectar: A → B'}).click();
+    const original=await page.evaluate(()=>JSON.stringify(S.deck));
+    const abierto=await page.evaluate(()=>saneaDeck(JSON.parse(JSON.stringify(S.deck))));
+    assert.equal(abierto.deck.v,1);
+    assert.deepEqual(abierto.deck.slides[1].conectores,[{desde:'a',hasta:'b'}]);
+    assert.equal(await page.evaluate(()=>JSON.stringify(S.deck)),original);
+    await page.getByRole('button',{name:'Duplicar selección',exact:true}).first().click();
+    const copia=await page.evaluate(()=>({conexiones:curSlide().conectores,bloques:curSlide().blocks.map(b=>({id:b.id,text:b.text}))}));
+    assert.equal(copia.conexiones.length,2);
+    const copiada=copia.conexiones[1];
+    assert.notEqual(copiada.desde,'a');assert.notEqual(copiada.hasta,'b');
+    assert.equal(copia.bloques.find(b=>b.id===copiada.desde).text,'A');
+    assert.equal(copia.bloques.find(b=>b.id===copiada.hasta).text,'B');
+    await page.evaluate(()=>doUndo());
+    await page.keyboard.press('Control+d');
+    const duplicada=await page.evaluate(()=>({sl:curSlide(),original:S.deck.slides[S.cur-1]}));
+    assert.equal(duplicada.sl.conectores.length,1);
+    assert.notEqual(duplicada.sl.conectores[0].desde,'a');
+    assert.equal(duplicada.sl.blocks.find(b=>b.id===duplicada.sl.conectores[0].desde).text,'A');
+    await page.evaluate(()=>changeLayout(curSlide(),'section'));
+    const restaurado=await page.evaluate(()=>saneaDeck(JSON.parse(JSON.stringify(S.deck))).deck.slides[S.cur]);
+    assert.equal(restaurado.conectores.length,1);
+    assert.ok(restaurado._guardados.some(b=>b.id===restaurado.conectores[0].hasta));
+    await page.evaluate(()=>changeLayout(curSlide(),'blanco'));
+    assert.equal(await page.locator('#stageInner .lienzo-conectores line').count(),1);
+    await page.evaluate(()=>delBlock(curSlide().conectores[0].desde));
+    assert.equal(await page.evaluate(()=>curSlide().conectores),undefined);
+    await page.evaluate(()=>doUndo());
+    assert.equal(await page.locator('#stageInner .lienzo-conectores line').count(),1);
+  });
+
+  await t.test('presentation steps and exported files preserve the direction and timing of connections',async()=>{
+    await reset();
+    const salida=await page.evaluate(async()=>{
+      const sl=curSlide();sl.blocks[0].step=true;sl.blocks[1].step=true;
+      sl.blocks[1].posLibre.y=40;sl.conectores=[{desde:'b',hasta:'a'}];
+      const original=JSON.stringify(S.deck), ext=await extensionSlides('exportador');
+      const pasos=[0,1,2].map(n=>{
+        const r=renderSlide(S.deck,S.cur,'present',n), g=r.querySelector('.lienzo-conectores g');
+        return {count:+r.dataset.frags,step:+g.dataset.frag,visible:g.classList.contains('on')};
+      });
+      const html=await (await ext.creaHTML(S.deck)).text(), ppt=await ext.creaPPTX(S.deck);
+      const avanzado=await (await window.JSZip.loadAsync(ppt.blob)).file('ppt/slides/slide2.xml').async('string');
+      const guardar=window.downloadFile;let blob;
+      window.downloadFile=async(_name,b)=>{blob=b;return true;};
+      try {await exportPPTX();} finally {window.downloadFile=guardar;closeModal();}
+      const clasico=await (await window.JSZip.loadAsync(blob)).file('ppt/slides/slide2.xml').async('string');
+      return {pasos,html,avanzado,clasico,sinCambios:JSON.stringify(S.deck)===original};
+    });
+    assert.deepEqual(salida.pasos,[{count:2,step:1,visible:false},{count:2,step:1,visible:false},{count:2,step:1,visible:true}]);
+    assert.equal(salida.sinCambios,true);
+    for(const xml of [salida.avanzado,salida.clasico]) {
+      assert.match(xml,/<a:prstGeom prst="line"/);
+      assert.match(xml,/<a:tailEnd type="triangle"/);
+      assert.match(xml,/flipH="1"/);assert.match(xml,/flipV="1"/);
+    }
+    const offline=await context.newPage();
+    try {
+      await offline.setContent(salida.html,{waitUntil:'load'});
+      await offline.waitForFunction(()=>typeof presenter!=='undefined' && presenter.isReady());
+      await offline.evaluate(()=>presenter.slide(1));
+      const flecha=offline.locator('.present .lienzo-conectores g');
+      assert.equal(await flecha.getAttribute('data-fragment-index'),'1');
+      assert.equal(await flecha.evaluate(el=>el.classList.contains('visible')),false);
+      await offline.evaluate(()=>presenter.next());
+      await offline.waitForFunction(()=>document.querySelector('.present .blk[data-bid="a"]').classList.contains('visible'));
+      assert.equal(await flecha.evaluate(el=>el.classList.contains('visible')),false);
+      await offline.evaluate(()=>presenter.next());
+      await offline.waitForFunction(()=>document.querySelector('.present .lienzo-conectores g').classList.contains('visible'));
+    } finally { await offline.close(); }
+  });
+
   await t.test('basic shapes are inserted as editable local figure blocks',async()=>{
     await reset();
     await page.getByRole('button',{name:'Insertar formas'}).click();
@@ -204,6 +319,91 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     const vista=await page.evaluate(()=>({ancho:document.documentElement.scrollWidth,ventana:innerWidth,
       formas:document.querySelector('#lienzoFormasBtn').getBoundingClientRect().toJSON()}));
     assert.ok(vista.ancho<=vista.ventana+1 && vista.formas.left>=0 && vista.formas.right<=vista.ventana,JSON.stringify(vista));
+    await page.evaluate(()=>{findBlock('a').block.text='A'.repeat(80);findBlock('b').block.text='B'.repeat(80);renderAll();selectBlock('a');selectBlock('b',true);});
+    await page.getByRole('button',{name:'Conectores'}).click();
+    const menu=await page.locator('.menu-conectores').evaluate(el=>({ancho:el.clientWidth,contenido:el.scrollWidth,
+      botones:[...el.querySelectorAll('button')].map(b=>({ancho:b.clientWidth,contenido:b.scrollWidth}))}));
+    assert.ok(menu.contenido<=menu.ancho+1 && menu.botones.every(b=>b.contenido<=b.ancho+1),JSON.stringify(menu));
+  });
+
+  await t.test('the selected ribbon tab stays visible when the viewport narrows or the tab changes',async()=>{
+    await page.keyboard.press('Escape');await page.setViewportSize({width:1440,height:1000});await reset();
+    await page.locator('#cinta [data-pestana=diapo]').click();
+    await page.setViewportSize({width:390,height:844});
+    const rects=()=>page.evaluate(()=>{
+      const fila=document.querySelector('#cinta .erlen-cinta-pestanas').getBoundingClientRect();
+      const tab=document.querySelector('#cinta [role=tab][aria-selected=true]').getBoundingClientRect();
+      return {fila:{left:fila.left,right:fila.right},tab:{left:tab.left,right:tab.right}};
+    });
+    await page.waitForFunction(()=>{
+      const fila=document.querySelector('#cinta .erlen-cinta-pestanas').getBoundingClientRect();
+      const tab=document.querySelector('#cinta [role=tab][aria-selected=true]').getBoundingClientRect();
+      return tab.left>=fila.left-1 && tab.right<=fila.right+1;
+    });
+    assert.ok((await rects()).tab.right<=390);
+    await page.locator('#cinta [data-pestana=inicio]').click();
+    await page.locator('#cinta [data-pestana=diapo]').click();
+    const medida=await rects();
+    assert.ok(medida.tab.left>=medida.fila.left-1 && medida.tab.right<=medida.fila.right+1,JSON.stringify(medida));
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),390);
+  });
+
+  await t.test('canvas switches remain legible while the editor theme changes',async()=>{
+    await page.setViewportSize({width:1440,height:1000});await reset();
+    await page.locator('#cinta [data-pestana=diapo]').click();
+    await page.evaluate(()=>cambiaTemaApp('claro'));await page.waitForTimeout(200);
+    await page.evaluate(()=>cambiaTemaApp('oscuro'));
+    const oscuro=await new AxeBuilder({page}).include('#cinta').analyze();
+    assert.deepEqual(oscuro.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id),[]);
+    await page.waitForTimeout(200);await page.evaluate(()=>cambiaTemaApp('claro'));
+    const claro=await new AxeBuilder({page}).include('#cinta').analyze();
+    assert.deepEqual(claro.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id),[]);
+  });
+
+  await t.test('the ribbon canvas menus operate on the same objects and keep the footer usable',async()=>{
+    await page.keyboard.press('Escape');await page.setViewportSize({width:1440,height:1000});await reset();
+    await page.locator('#cinta [data-pestana=diapo]').click();
+    const cinta=page.locator('#cinta'), menu=name=>page.getByRole('menu',{name,exact:true});
+    const formas=cinta.locator('[data-control=lienzo-formas]');
+    await formas.focus();await page.keyboard.press('ArrowDown');
+    assert.equal(await formas.getAttribute('aria-expanded'),'true');
+    await menu('Formas').getByRole('menuitem',{name:'Rectángulo'}).click();
+    await page.waitForFunction(()=>curSlide().blocks.some(b=>b.formaLibre==='rect'));
+    await page.keyboard.press('Control+z');
+    assert.equal(await page.evaluate(()=>curSlide().blocks.some(b=>b.formaLibre==='rect')),false);
+
+    await page.evaluate(()=>{selectBlock('a');selectBlock('b',true);});
+    const organizar=cinta.locator('[data-control=lienzo-organizar]');
+    await organizar.click();
+    assert.equal(await menu('Organizar').getByRole('menuitem',{name:'Distribuir horizontalmente'}).isDisabled(),true);
+    await menu('Organizar').getByRole('menuitem',{name:'Alinear a la izquierda'}).click();
+    assert.deepEqual((await posiciones()).map(p=>p.x),[10,10,75]);
+    await page.keyboard.press('Control+z');assert.deepEqual((await posiciones()).map(p=>p.x),[10,50,75]);
+    await page.evaluate(()=>{findBlock('b').block.locked=true;renderAll();selectBlock('a');selectBlock('b',true);});
+    await organizar.click();
+    assert.equal(await menu('Organizar').getByRole('menuitem',{name:'Alinear a la izquierda'}).isDisabled(),true);
+    await page.keyboard.press('Escape');
+    assert.deepEqual((await posiciones()).map(p=>p.x),[10,50,75]);
+    await page.evaluate(()=>{findBlock('b').block.locked=false;renderAll();selectBlock('a');selectBlock('b',true);});
+
+    const conectores=cinta.locator('[data-control=lienzo-conectores]');
+    await conectores.click();await menu('Conectores').getByRole('menuitem',{name:'Conectar: A → B'}).click();
+    assert.deepEqual(await page.evaluate(()=>curSlide().conectores),[{desde:'a',hasta:'b'}]);
+    await page.evaluate(()=>selectBlock(null));
+    await conectores.click();await menu('Conectores').getByRole('menuitem',{name:'Eliminar conexión: A → B'}).click();
+    assert.equal(await page.locator('#stageInner .lienzo-conectores line').count(),0);
+    await page.keyboard.press('Control+z');assert.equal(await page.locator('#stageInner .lienzo-conectores line').count(),1);
+
+    await cinta.locator('[data-control=lienzo-catalogo]').click();
+    const catalogo=page.getByRole('dialog',{name:'Catálogo científico'});
+    await catalogo.getByRole('searchbox',{name:'Buscar figuras'}).waitFor();
+    await catalogo.getByRole('button',{name:'Cancelar'}).click();
+    await cinta.locator('[data-control=lienzo-capas]').click();
+    await cinta.locator('[data-pestana=presentar]').click();
+    await page.getByRole('button',{name:'Cerrar panel de capas'}).click();
+    assert.equal(await page.locator('#lienzoObjetosBtn').evaluate(el=>document.activeElement===el),true,
+      'El foco vuelve al control del pie cuando ya no existe el abridor de la cinta');
+    assert.equal(await page.locator('#lienzoFormasBtn').isVisible(),true);
   });
 
   mkdirSync(fileURLToPath(new URL('../.local/',import.meta.url)),{recursive:true});

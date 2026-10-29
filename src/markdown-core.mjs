@@ -561,13 +561,17 @@ export function aMarkdown(deck, {zonasPorDiseno, carpetaFiguras, incrustarFigura
   (deck.slides || []).forEach((sl, k) => {
     const n = k + 1, nz = zonasPorDiseno[sl.layout] ?? 1;
     const lienzoLibre = sl.lienzoLibre && nz > 0 && ['blocks','blocks2','blocks3','blocks4','blocks5','blocks6'].some(c => Array.isArray(sl[c]) && sl[c].length);
+    const conectores = Array.isArray(sl.conectores) && sl.conectores.length > 0;
+    const comentaConectores = () => { if (conectores) L.push('<!-- Los conectores no se conservan en Markdown; consulta el proyecto JSON. -->'); };
     if (lienzoLibre) {
       avisos.push('Diapositiva ' + n + ': la posición libre no se conserva en Markdown; el acomodo cambiará al importar.');
     }
-    if (k === 0 && sl.layout === 'title') { ajustes(sl); notas(sl); L.push(''); return; }
+    if (conectores) avisos.push('Diapositiva ' + n + ': los conectores no se conservan en Markdown; consulta el proyecto JSON.');
+    if (k === 0 && sl.layout === 'title') { comentaConectores(); ajustes(sl); notas(sl); L.push(''); return; }
     if (k === 0) avisos.push('La primera diapositiva no es una portada: al importar se añadirá una delante.');
     if (sl.layout === 'section') {
       L.push('# ' + protege(unaLinea(sl.title)));
+      comentaConectores();
       ajustes(sl); notas(sl); L.push('');
       return;
     }
@@ -575,6 +579,7 @@ export function aMarkdown(deck, {zonasPorDiseno, carpetaFiguras, incrustarFigura
     if (titulo) L.push('## ' + protege(titulo));
     else L.push('---', '');
     if (lienzoLibre) L.push('<!-- La posición libre no se conserva en Markdown; consulta el proyecto JSON. -->');
+    comentaConectores();
     const inferido = porZonas[nz];
     if (!titulo || sl.layout !== inferido) L.push('<!-- diseno: ' + sl.layout + ' -->');
     ajustes(sl);
@@ -607,4 +612,3 @@ export function aMarkdown(deck, {zonasPorDiseno, carpetaFiguras, incrustarFigura
   if (perdidos.size) avisos.push('No tienen equivalente en Markdown y no se exportan: ' + [...perdidos].join(', ') + '.');
   return {md: L.join('\n').replace(/\n{3,}/g, '\n\n').replace(/\s*$/, '\n'), figuras, avisos};
 }
-

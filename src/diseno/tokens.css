@@ -1,6 +1,6 @@
 /* Vidrio mineral · decisión del usuario 2026-09-30. Tipografía original de Erlen: Latin Modern y Computer Modern; se conserva también en documentos y exportación. */
-/* Erlen Suite · paquete de diseño 2.0.0 · tokens (docs/DISENO-PAQUETE.md, docs/GUIA-DISENO.md §0 y §2–§6).
-   Fuente única en el portal: diseno/tokens.css. Los valores viven aquí y solo aquí; el cromo de cada app usa var(--erlen-*), nunca literales.
+/* Tokens del cromo de Tabula, derivados del diseño MIT de Erlen.
+   Los componentes usan var(--erlen-*).
    2.0.0 · cristal (vidrio líquido): el material de la capa de controles también vive aquí, con sus respaldos opacos (sin
    backdrop-filter, prefers-reduced-transparency, prefers-contrast:more, forced-colors y [data-erlen-material="solido"]).
    Claro por defecto; oscuro por prefers-color-scheme (salvo [data-theme="light"]) o por [data-theme="dark"]. Licencia: licencias/MIT.txt */
@@ -13,8 +13,7 @@
  --erlen-peligro:#a22d26;--erlen-peligro-suave:#fce8e3;
  --erlen-linea:#dbe2d8;--erlen-linea-fuerte:#c4d1bf;
  --erlen-foco:var(--erlen-ambar);
- --erlen-mey-ojos:#18171b;--erlen-mey-reflejo:#fdfdfd;
- /* Sobre oscuro (hero y franjas del portal; en las apps solo si una sección lo pide) */
+ /* Sobre oscuro */
  --erlen-espacio-fondo:#070a12;--erlen-espacio-tinta:#ecf0eb;--erlen-espacio-acento:#adcabd;--erlen-espacio-borde:#ffffff1f;
  /* Tipografía (familia de Knuth, fuentes.css) */
  --erlen-font-titulo:"LM Roman",Georgia,"Times New Roman",serif;
@@ -78,8 +77,8 @@
  --erlen-vidrio-reflejo:linear-gradient(180deg,#ffffff17 0,#ffffff08 38%,#ffffff00 62%);
  --erlen-vidrio-relieve:inset 0 1px 0 #ffffff2e,inset 0 0 0 1px #ffffff0d,inset 0 -1px 0 #ffffff0d,0 1px 2px #00000040,0 10px 28px #00000059;
  --erlen-atmosfera-a:color-mix(in srgb,var(--erlen-luz) 7%,transparent);--erlen-atmosfera-b:color-mix(in srgb,#d2c1e3 5%,transparent)}
-/* La preferencia de color solo toca el acento del cromo, no documentos, Mey, iconos o
-   --erlen-foco. Contraste mínimo 4,5:1 en ambas superficies de las apps. */
+/* La preferencia de color solo toca el acento del cromo, no las diapositivas,
+   los iconos o --erlen-foco. Contraste mínimo 4,5:1 en ambas superficies. */
 :root[data-erlen-color="violeta"]{--erlen-verde:#624b7b;--erlen-verde-suave:#eee8f6;--erlen-luz:#d2c1e3}
 :root[data-erlen-color="azul"]{--erlen-verde:#244e73;--erlen-verde-suave:#e6effb;--erlen-luz:#b9d2e8}
 :root[data-erlen-color="cobre"]{--erlen-verde:#6a532b;--erlen-verde-suave:#f5ebe2;--erlen-luz:#e0cca4}

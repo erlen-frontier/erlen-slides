@@ -16,6 +16,17 @@ function search(app, query) {
   return [...app.dom.window.document.querySelectorAll('.cp-fila')];
 }
 
+function paletteBlocks(app, layout = 'arriba') {
+  app.run(`{
+    const deck = blankDeck(), slide = {id:'palette-slide', layout:'blanco', title:'', lienzoLibre:true, blocks:[]};
+    for (const [id, x] of [['A', 10], ['B', 70], ['C', 40]]) {
+      const b = newBlock('text'); Object.assign(b, {id, text:id, posLibre:{x, y:15, w:15, h:15}}); slide.blocks.push(b);
+    }
+    deck.slides.push(slide); loadDeck(deck, null, true); wsCerrar(); S.cur=1; S.selBlock=null;
+    ponDisposicion('${layout}'); snapNow(); renderAll();
+  }`);
+}
+
 test('Tabula has its own mark and no Mey in home or editor', async t => {
   const app = await appFor(t);
   const d = app.dom.window.document;
@@ -92,6 +103,91 @@ test('a tool result does not run after the selected slide changes', async t => {
   assert.equal(app.run('__tools.length'), 0);
   assert.match(app.dom.window.document.querySelector('#toasts').textContent, /cambi[oó].*busca/i);
 });
+
+for (const layout of ['arriba', 'lado']) {
+  for (const caso of [
+    {nombre: 'replaced', inicial: ['B', 'C'], final: ['A', 'C'], x1: 50, x2: 650},
+    {nombre: 'added', inicial: ['B', 'C'], final: ['A', 'B', 'C'], x1: 50, x2: 950},
+    {nombre: 'removed', inicial: ['A', 'B', 'C'], final: ['B', 'C'], x1: 350, x2: 950}
+  ]) {
+    test(`a palette ribbon result rejects ${caso.nombre} selection members in the ${layout} layout`, async t => {
+      const app = await appFor(t), d = app.dom.window.document, w = app.dom.window;
+      paletteBlocks(app, layout);
+      d.querySelector('#lienzoObjetosBtn').click();
+      for (const id of caso.inicial) d.querySelector(`[aria-label="Marcar ${id}"]`).click();
+      d.querySelector('[aria-label="Cerrar panel de capas"]').click();
+      assert.deepEqual(Array.from(app.run('idsSeleccionados()')).sort(), caso.inicial.slice().sort());
+      assert.equal(app.run('S.selBlock'), 'C');
+
+      // A marquee begun before opening the palette can finish after the results are painted.
+      // JSDOM does not measure geometry, so the slide rectangle is simulated here.
+      const slide = d.querySelector('#stageInner .slide');
+      slide.getBoundingClientRect = () => ({left:0, top:0, width:1000, height:1000, right:1000, bottom:1000});
+      slide.dispatchEvent(new w.MouseEvent('pointerdown', {bubbles:true, button:0, clientX:caso.x1, clientY:50}));
+      d.dispatchEvent(new w.MouseEvent('pointermove', {bubbles:true, clientX:caso.x2, clientY:400}));
+      assert.ok(d.querySelector('.lienzo-marquee'));
+      d.body.dispatchEvent(new w.KeyboardEvent('keydown', {bubbles:true, ctrlKey:true, key:'k'}));
+      const result = search(app, 'duplicar seleccion').find(b => b.textContent.includes('Duplicar selección'));
+      assert.ok(result);
+      d.dispatchEvent(new w.MouseEvent('pointerup', {bubbles:true, clientX:caso.x2, clientY:400}));
+      assert.deepEqual(Array.from(app.run('idsSeleccionados()')).sort(), caso.final.slice().sort());
+      assert.equal(app.run('S.selBlock'), 'C', 'the active block remains the same');
+
+      const before = app.run('JSON.stringify(S.deck)'), undo = app.run('S.undo.length');
+      result.click();
+      assert.equal(app.run('JSON.stringify(S.deck)'), before, 'the old result must not duplicate the new selection');
+      assert.equal(app.run('S.undo.length'), undo);
+      assert.match(d.querySelector('#toasts').textContent, /cambi[oó].*busca/i);
+
+      // Searching again authorizes the current selection, not the old one.
+      d.body.dispatchEvent(new w.KeyboardEvent('keydown', {bubbles:true, ctrlKey:true, key:'k'}));
+      const fresh = search(app, 'duplicar seleccion').find(b => b.textContent.includes('Duplicar selección'));
+      assert.ok(fresh);
+      fresh.click();
+      const textos = Array.from(app.run('curSlide().blocks.map(b => b.text)')).sort();
+      assert.deepEqual(textos, ['A', 'B', 'C', ...caso.final].sort());
+      assert.equal(app.run('S.undo.length'), undo + 1);
+      assert.deepEqual(app.errors, []);
+    });
+  }
+}
+
+test('the palette accepts the same selected IDs in a different order', async t => {
+  const app = await appFor(t);
+  paletteBlocks(app);
+  app.run("selectBlock('A');selectBlock('C',true);openPaleta();");
+  const result = search(app, 'duplicar seleccion').find(b => b.textContent.includes('Duplicar selección'));
+  assert.ok(result);
+  app.run("{ const ids=idsSeleccionados(); ids.delete('A'); ids.add('A'); }");
+  assert.deepEqual(Array.from(app.run('idsSeleccionados()')), ['C', 'A']);
+  assert.equal(app.run('S.selBlock'), 'C');
+  const undo = app.run('S.undo.length');
+  result.click();
+  assert.deepEqual(Array.from(app.run('curSlide().blocks.map(b => b.text)')).sort(), ['A', 'A', 'B', 'C', 'C']);
+  assert.equal(app.run('S.undo.length'), undo + 1);
+});
+
+for (const caso of [
+  {grupo: 'legacy', query: 'acomodo dos columnas', etiqueta: 'Acomodo: Dos columnas'},
+  {grupo: 'File', query: 'exportar proyecto', etiqueta: 'Proyecto (.json)'}
+]) {
+  test(`a ${caso.grupo} palette result also rejects changed selection members`, async t => {
+    const app = await appFor(t), d = app.dom.window.document;
+    paletteBlocks(app);
+    app.run("selectBlock('A');selectBlock('C',true);window.__exports=0;exportJSON=()=>window.__exports++;openPaleta();");
+    const result = search(app, caso.query).find(b => b.textContent.includes(caso.etiqueta));
+    assert.ok(result);
+    app.run("selectBlock('B');selectBlock('C',true);");
+    assert.deepEqual(Array.from(app.run('idsSeleccionados()')).sort(), ['B', 'C']);
+    assert.equal(app.run('S.selBlock'), 'C');
+    const before = app.run('JSON.stringify(S.deck)'), undo = app.run('S.undo.length');
+    result.click();
+    assert.equal(app.run('JSON.stringify(S.deck)'), before);
+    assert.equal(app.run('S.undo.length'), undo);
+    assert.equal(app.run('__exports'), 0);
+    assert.match(d.querySelector('#toasts').textContent, /cambi[oó].*busca/i);
+  });
+}
 
 test('similarly named slide and block tools are independently discoverable', async t => {
   const app = await appFor(t);

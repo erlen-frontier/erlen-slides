@@ -54,9 +54,7 @@ function buscaEnMemoria(q) {
 /* Trae una diapositiva de otra charla con lo que necesita para vivir aquí. */
 function traeDeMemoria(r) {
   const d = r.ch.deck;
-  const copia = deepCopy(r.sl);
-  copia.id = uid();
-  zonas(copia).forEach(z => z.forEach(b => { b.id = uid(); }));
+  const copia = copiaDiapositiva(r.sl);
   delete copia.bibAuto; delete copia.respaldo;
   /* referencias citadas en ella */
   const claves = new Set();
@@ -108,5 +106,4 @@ function openMemoria(q0) {
       h('p', { class: 'hint', style: 'margin-top:8px' }, 'Busca en la charla abierta y en las guardadas en Archivo → Mis presentaciones. Al traer una, vienen sus datos, sus referencias y sus glosas.')),
     foot: [h('button', { class: 'btn btn-pri', onclick: () => closeModal() }, 'Listo')] });
 }
-
 

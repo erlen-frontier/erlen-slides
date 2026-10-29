@@ -10,6 +10,26 @@ import {conServidor, proyecto} from './_mcp-cliente.mjs';
 
 const extensiones = fileURLToPath(new URL('./fixtures/mcp-extension/', import.meta.url));
 
+test('MCP: no ofrece herramientas ni prompt de informes DoE', {timeout: 120000}, async () => {
+  await conServidor(async c => {
+    const {result: {tools}} = await c.pide('tools/list');
+    for (const nombre of ['importar_informe_doe', 'vista_previa_informe']) {
+      assert.ok(!tools.some(t => t.name === nombre), nombre);
+      const r = await c.llama(nombre, {});
+      assert.equal(r.error, true);
+      assert.match(r.texto, /Herramienta desconocida/);
+    }
+    const {result: {prompts}} = await c.pide('prompts/list');
+    assert.ok(!prompts.some(p => p.name === 'charla_desde_informe_doe'));
+    const p = await c.pide('prompts/get', {name: 'charla_desde_informe_doe', arguments: {archivo_informe: 'informe.json'}});
+    assert.equal(p.error.code, -32602);
+    assert.match(p.error.message, /Prompt desconocido/);
+    assert.ok(tools.some(t => t.name === 'crear_presentacion'));
+    assert.ok(tools.some(t => t.name === 'estadisticas_presentacion'));
+    assert.ok(prompts.some(p => p.name === 'presentacion_desde_resultados'));
+  });
+});
+
 test('MCP: cada gancho de las extensiones', {timeout: 120000}, async () => {
   await conServidor(async (c, dir) => {
     const {result: {tools}} = await c.pide('tools/list');

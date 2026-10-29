@@ -1,4 +1,3 @@
-import {aplicarIconoAplicacion} from './productos.mjs';
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,15 +16,14 @@ import {aplicarIconoAplicacion} from './productos.mjs';
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* Marco común de las apps de Erlen Suite (docs/COHERENCIA-APPS.md §4): cabecera con marca,
-   nombre, menú de suite, título, estado y acciones; cinta debajo; cuerpo con navegación,
-   trabajo y detalles; pie. mountMarco solo organiza los nodos que la app le pasa: los mueve,
+/* Marco del editor de Tabula: cabecera con marca, nombre, título, estado y acciones;
+   cinta debajo; cuerpo con navegación, trabajo y detalles; pie. mountMarco solo organiza
+   los nodos que la app le pasa: los mueve,
    no los clona ni los reconstruye, así que las referencias, los listeners y la selección del
    dominio se conservan. Estilos en diseno/marco.css, solo con tokens --erlen-*.
 
    mountMarco(host, {
-     app: 'notes',                  // id de la app en la suite; perfil de Mey y menú
-     nombre: 'Erlen Notes',         // nombre visible (h1 del marco)
+     nombre: 'Tabula',              // nombre visible (h1 del marco)
      inicio: () => {},              // obligatorio, sin argumentos: activa el inicio real de la app
      elementos: {                   // nodos propiedad de la app; solo trabajo es obligatorio
        titulo?,                     // título editable del documento
@@ -37,34 +35,19 @@ import {aplicarIconoAplicacion} from './productos.mjs';
        trabajo,                     // documento, hoja, lienzo… (conserva su scroll y zoom)
        detalles?,                   // propiedades largas a la derecha
        pie?                         // estado y enlaces en el pie
-     },
-     navegacionSuite?: {items, home},  // catálogo serializado de mountSuiteNavigation; sin él,
-                                       // el menú conserva su detección standalone
-     mey?: false                    // por defecto Mey en la cabecera/estado (lugar «barra»)
-     ayuda?: {                      // panel de Mey que guía y ejecuta comandos (suite-mey-ayuda.mjs)
-       cinta?: ()=>cintaHandle|null,   // función: la cinta se recrea en varias apps
-       pasos?: [{control, pestana?, texto}] | ()=>[…],  // atajos sugeridos (controles de cinta)
-       extras?: ()=>[Comando…]         // comandos fuera de la cinta (menú Archivo, cabecera)
      }
    })
    Devuelve {elemento, abrirDetalles(), cerrarDetalles(), abrirNavegacion(), cerrarNavegacion(),
-   abrirAyuda(), cerrarAyuda(), destruir()} (los controles del cajón de navegación son una
-   extensión aditiva deliberada del contrato original: el cajón móvil no existía cuando se
-   escribió; `abrirAyuda` abre el panel de Mey cuando la app pasa `ayuda`). Montar dos veces en
-   el mismo host es un error. Al destruir, los nodos vuelven a su padre original, se restauran
-   los `inert` previos, se libera el menú de suite, Mey y los listeners, y se retira el marco. */
-import {mountSuiteNavigation} from './suite-nav.mjs';
-import {mey} from './mey.mjs';
-import {crearAyudaMey,TEXTOS_AYUDA_MEY} from './suite-mey-ayuda.mjs';
+   destruir()}. Montar dos veces en el mismo host es un error. Al destruir, los nodos vuelven
+   a su padre original, se restauran los `inert` previos, se liberan los listeners del marco
+   y se retira el marco. */
 
 const SLOTS=['titulo','estado','acciones','utilidades','cinta','navegacion','trabajo','detalles','pie'];
 const ESTRECHO=920;
-// Acción principal de la cabecera: las apps la marcan con una de estas clases. En móvil vertical sube a
-// una barra inferior (ver «barraAccion»); una app sin acción marcada conserva su tira.
+// Acción principal de la cabecera: se marca con una de estas clases. En móvil vertical sube a
+// una barra inferior (ver «barraAccion»); sin acción marcada se conserva la tira.
 const PRIMARIA='.primary,.primario,.btn-pri,.btn-primary,.principal';
 const ALTO_BAJO=500;
-
-const MARCA_SVG='<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M25 10h14v13.2c0 1.2.4 2.3 1.1 3.2L52.6 45A8 8 0 0 1 46 56H18a8 8 0 0 1-6.6-11.7l12.5-18.6c.7-.9 1.1-2 1.1-3.2Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/><path d="M17.6 43h28.8l4.4 6.5A4.3 4.3 0 0 1 46.7 55H17.3a4.3 4.3 0 0 1-4.1-5.8Z" fill="var(--erlen-verde,#245b43)"/><path d="M22 16h20" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>';
 
 function crear(tag,clase,doc){const el=doc.createElement(tag);if(clase)el.className=clase;return el;}
 
@@ -91,10 +74,8 @@ export function mountMarco(host,config){
  const doc=host.ownerDocument;
  if(!doc||!doc.defaultView)throw new Error('mountMarco: el host necesita un documento con ventana.');
  if(!config||typeof config!=='object')throw new Error('mountMarco: falta la configuración.');
- const {app,nombre,inicio,elementos,navegacionSuite}=config;
- if(typeof app!=='string'||!app.trim())throw new Error('mountMarco: falta app.');
+ const {nombre,inicio,elementos}=config;
  if(typeof nombre!=='string'||!nombre.trim())throw new Error('mountMarco: falta nombre.');
- aplicarIconoAplicacion(doc,app);
  if(typeof inicio!=='function')throw new Error('mountMarco: inicio debe ser un callback sin argumentos.');
  if(!elementos||typeof elementos!=='object')throw new Error('mountMarco: faltan elementos.');
  for(const [clave,nodo] of Object.entries(elementos)){
@@ -104,14 +85,6 @@ export function mountMarco(host,config){
  const trabajo=elementos.trabajo;
  if(!trabajo||!trabajo.ownerDocument)throw new Error('mountMarco: falta el nodo de trabajo.');
  if(trabajo.ownerDocument!==doc)throw new Error('mountMarco: los nodos deben pertenecer al documento del host.');
- if(navegacionSuite!==undefined&&(!navegacionSuite||!Array.isArray(navegacionSuite.items)||!navegacionSuite.home))throw new Error('mountMarco: navegacionSuite debe ser {items, home}.');
- if(config.ayuda!==undefined){
-  const a=config.ayuda;
-  if(!a||typeof a!=='object'||Array.isArray(a))throw new Error('mountMarco: ayuda inválida: ayuda');
-  if(a.cinta!==undefined&&a.cinta!==null&&typeof a.cinta!=='function')throw new Error('mountMarco: ayuda inválida: cinta');
-  if(a.pasos!==undefined&&a.pasos!==null&&!Array.isArray(a.pasos)&&typeof a.pasos!=='function')throw new Error('mountMarco: ayuda inválida: pasos');
-  if(a.extras!==undefined&&a.extras!==null&&typeof a.extras!=='function')throw new Error('mountMarco: ayuda inválida: extras');
- }
  if(host.querySelector('.erlen-marco'))throw new Error('mountMarco: el host ya tiene un marco montado.');
 
  const win=doc.defaultView;
@@ -140,17 +113,12 @@ export function mountMarco(host,config){
  };
  const estadoPrevio=guardarSeleccion();
 
- // data-erlen-app para los perfiles de Mey; se restaura al destruir.
- const raiz=doc.documentElement;
- const appPrevia=raiz.getAttribute('data-erlen-app');
- raiz.setAttribute('data-erlen-app',app);
-
  const marco=crear('div','erlen-marco',doc);
  const cabecera=crear('header','erlen-app-header',doc);
  const marca=crear('button','erlen-marco-marca',doc);
  marca.type='button';marca.title='Volver a '+nombre;
  marca.setAttribute('aria-label','Volver a '+nombre);
- marca.innerHTML=MARCA_SVG+'<span class="erlen-marco-marca-nombre">Erlen</span>';
+ marca.textContent=nombre;
  const alPulsarMarca=()=>inicio();
  marca.addEventListener('click',alPulsarMarca);
  const abrirCajonNav=crear('button','erlen-marco-abrir-cajon',doc);
@@ -158,30 +126,17 @@ export function mountMarco(host,config){
  abrirCajonNav.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
  const h1=crear('h1','erlen-marco-nombre',doc);
  h1.textContent=nombre;
- const huecoSuite=crear('div','erlen-marco-suite',doc);
  const titulo=crear('div','erlen-marco-titulo',doc);
  const estado=crear('div','erlen-marco-estado',doc);
- const conAyuda=!!config.ayuda&&config.mey!==false;
- const meyHueco=crear(conAyuda?'button':'span','erlen-marco-mey',doc);
- if(conAyuda){
-  meyHueco.type='button';
-  meyHueco.setAttribute('aria-haspopup','dialog');
-  const idioma=(doc.documentElement.lang||'').toLowerCase().startsWith('en')?'en':'es';
-  meyHueco.setAttribute('aria-label',idioma==='en'?'Mey, help for '+nombre:'Mey, ayuda de '+nombre);
-  meyHueco.title=TEXTOS_AYUDA_MEY[idioma].titulo;
-  meyHueco.addEventListener('click',abrirAyuda);
- }
  const acciones=crear('div','erlen-marco-acciones',doc);
  const utilidades=crear('div','erlen-marco-utilidades',doc);
  const controles=crear('div','erlen-marco-controles',doc);
  controles.append(titulo,estado,acciones,utilidades);
- cabecera.append(abrirCajonNav,marca,h1,huecoSuite,controles);
+ cabecera.append(abrirCajonNav,marca,h1,controles);
  for(const [contenedor,clave] of [[titulo,'titulo'],[estado,'estado'],[acciones,'acciones'],[utilidades,'utilidades']]){
   if(elementos[clave])contenedor.append(elementos[clave]);
   else if(contenedor!==estado)contenedor.remove();
  }
- estado.append(meyHueco);
- if(config.mey===false)meyHueco.remove();
  // El nombre del documento cede primero cuando falta ancho (marco.css, escritorio): si queda
  // recortado, su texto completo pasa a title y se restituye el title anterior cuando vuelve a caber.
  const nombreDoc=elementos.titulo;
@@ -220,7 +175,7 @@ export function mountMarco(host,config){
  if(pie){pie.append(elementos.pie);marco.append(pie);}
  host.append(marco);
  restaurarSeleccion(estadoPrevio);
- 
+
  // Barra inferior de la acción principal (≤ 920 px y alto > 500 px: móvil y tableta en vertical). En la
  // tira de la cabecera la acción quedaba a 412-650 px de un teléfono de 375 y solo se alcanzaba
  // desplazando la tira. El botón se mueve (no se clona): conserva listeners y referencias, y
@@ -289,17 +244,6 @@ export function mountMarco(host,config){
   return {despegar(){elemento.removeEventListener('scroll',programa);win.removeEventListener('resize',programa);if(observador)observador.disconnect();if(mutador)mutador.disconnect();}};
  }
  const vigias=[vigilarDesborde(controles,false),vigilarDesborde(pie,true)].filter(Boolean);
-
- const navSuite=(()=>{
-  // Sin catálogo, el menú standalone solo conoce las apps históricas: una app fuera de esa lista
-  // (analyze, data, projects, release, editor histórico…) se queda sin menú en vez de romper el
-  // arranque. Con catálogo explícito el menú siempre se monta para su app.
-  try{return mountSuiteNavigation(huecoSuite,app,navegacionSuite);}catch{return null;}
- })();
- const libre=config.mey!==false&&!!doc.defaultView.requestAnimationFrame;
- const controlMey=config.mey===false||libre?null:mey.montar(meyHueco,{lugar:'barra',app});
- if(libre){if(conAyuda)meyHueco.textContent=(doc.documentElement.lang||'').startsWith('en')?'Mey · help':'Mey · ayuda';else meyHueco.remove();}
- const paseoMey=libre?mey.recorrerPagina({documento:doc,evitar:[trabajo],pausaEn:controles,accion:conAyuda?abrirAyuda:undefined}):null;
 
  // ---- Cajón accesible (navegación en estrecho; detalles a ≤ 920 px) ----
  let cajon=null,mascara=null,guardados=[],focoPrevio=null,devolver=null,alCerrarCajon=null,tipoCajon=null;
@@ -381,7 +325,7 @@ export function mountMarco(host,config){
  }
  // El cajón de navegación (estrecho) y su columna (ancho) se abren y cierran igual que los
  // detalles: tras elegir una entrada en móvil la app lo cierra para ver el trabajo, y en
- // escritorio puede ofrecer su propio conmutador de columna («Vista → Catálogo»).
+ // escritorio puede ofrecer su propio conmutador de columna.
  function abrirNavegacion(){
   if(!elementos.navegacion)return;
   if(win.innerWidth<=ESTRECHO)abrirCajon(elementos.navegacion,{tituloCajon:'Navegación',izquierda:true,tipo:'navegacion',devolver:nodo=>nodoNav.append(nodo)});
@@ -414,25 +358,6 @@ export function mountMarco(host,config){
   }
  }
  win.addEventListener('resize',adaptarPaneles);
- // Panel de ayuda de Mey (con config.ayuda): un cajón modal igual en escritorio y en estrecho.
- // La búsqueda toma el foco al abrir, no el primer enfocable del cajón.
- let panelAyuda=null;
- function abrirAyuda(){
-  if(!config.ayuda)return;
-  if(cajon&&tipoCajon==='ayuda')return;
-  panelAyuda=crearAyudaMey(doc,{
-   app,nombre,mascota:paseoMey?false:mey('hola'),
-   cinta:config.ayuda.cinta||(()=>null),
-   pasos:config.ayuda.pasos||[],
-   extras:config.ayuda.extras||(()=>[]),
-   cerrar:cerrarAyuda
-  });
-  abrirCajon(panelAyuda.nodo,{tituloCajon:'Mey',tipo:'ayuda',devolver:nodo=>nodo.remove(),onClose:()=>{panelAyuda.destruir();panelAyuda=null;}});
-  panelAyuda.enfocarBusqueda();
- }
- function cerrarAyuda(){
-  if(cajon&&tipoCajon==='ayuda')cerrarCajon();
- }
  abrirCajonNav.addEventListener('click',abrirNavegacion);
 
  function destruir(){
@@ -441,9 +366,6 @@ export function mountMarco(host,config){
   win.removeEventListener('resize',adaptarPaneles);
   if(barraAccion){win.removeEventListener('resize',sincronizarBarraAccion);vigiaAccion?.disconnect();devolverPrimaria();barraAccion.remove();}
   for(const vigia of vigias)vigia.despegar();
-  controlMey?.detener();
-  paseoMey?.detener();
-  navSuite?.dispose?.();
   marca.removeEventListener('click',alPulsarMarca);
   // Restaurar de atrás hacia delante conserva la posición original entre hermanos.
   const antesDeDevolver=guardarSeleccion();
@@ -454,8 +376,7 @@ export function mountMarco(host,config){
    else padre.append(nodo);
   }
   restaurarSeleccion(antesDeDevolver);
-  if(appPrevia===null)raiz.removeAttribute('data-erlen-app');else raiz.setAttribute('data-erlen-app',appPrevia);
   marco.remove();
  }
- return {elemento:marco,abrirDetalles,cerrarDetalles,abrirNavegacion,cerrarNavegacion,abrirAyuda,cerrarAyuda,destruir};
+ return {elemento:marco,abrirDetalles,cerrarDetalles,abrirNavegacion,cerrarNavegacion,destruir};
 }

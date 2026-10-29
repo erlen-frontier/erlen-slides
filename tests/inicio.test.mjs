@@ -1,6 +1,5 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync,existsSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
-/* La pantalla de inicio: el componente común de la suite (src/diseno/suite-inicio.js) montado
-   por src/js/88-workspace.js con las rutas por hash de siempre. JSDOM no mide geometría: aquí se
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
+/* La pantalla de inicio local montada por src/js/88-workspace.js. JSDOM no mide geometría: aquí se
    comprueban estructura, rutas, foco, inercia del editor y datos; la vista se revisa en un navegador real. */
 const raiz=d=>d.querySelector('#inicioRoot main.erlen-inicio');
 const nav=(d,texto)=>[...raiz(d).querySelectorAll('.erlen-inicio-enlace')].find(a=>a.textContent===texto);
@@ -10,19 +9,15 @@ const espera=()=>new Promise(r=>setTimeout(r,0));
    de un setTimeout(0). Se espera al evento mismo, y un turno más para que la vista termine de pintarse. */
 const aHash=(w,h)=>new Promise(r=>{w.addEventListener('hashchange',()=>setTimeout(r,0),{once:true});w.location.hash=h;});
 
-test('The home screen is the synced suite component and its stylesheet is inlined in the build; the old portada is gone',()=>{
- // El build genera el componente desde el paquete sincronizado, sin incluir Mey.
+test('The local home component and stylesheet are inlined in the build',()=>{
  const orden=readFileSync(new URL('../src/js/_orden.txt',import.meta.url),'utf8').trim().split('\n');
- assert.ok(orden.indexOf('../diseno/suite-inicio.js')>=0&&orden.indexOf('../diseno/suite-inicio.js')===orden.indexOf('88-workspace.js')-1,'El componente va justo antes de 88-workspace.js');
- assert.equal(orden.includes('88a-suite.js'),false,'La portada propia ya no se carga');
- assert.equal(existsSync(new URL('../src/js/88a-suite.js',import.meta.url)),false);
+ assert.ok(orden.indexOf('../diseno/inicio.mjs')>=0&&orden.indexOf('../diseno/inicio.mjs')===orden.indexOf('88-workspace.js')-1,'El componente va justo antes de 88-workspace.js');
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
- const cinta=readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8'),inicioOriginal=readFileSync(new URL('../src/diseno/inicio.css',import.meta.url),'utf8');
- const inicioCss=inicioOriginal.slice(inicioOriginal.indexOf('/* Erlen Suite · paquete de diseño'));
- assert.ok(html.includes(inicioCss),'inicio.css del paquete, sin el preámbulo de Mey, en el build');
+ const cinta=readFileSync(new URL('../src/diseno/cinta.css',import.meta.url),'utf8'),inicioCss=readFileSync(new URL('../src/diseno/inicio.css',import.meta.url),'utf8');
+ assert.ok(html.includes(inicioCss),'inicio.css está íntegro en el build');
  assert.ok(html.indexOf(inicioCss)>html.indexOf(cinta),'inicio.css va tras cinta.css');
  assert.ok(html.includes('const erlenInicio=(()=>{'));
- assert.ok(Buffer.byteLength(html)<=3.6*1024*1024,'El HTML único no pasa de 3,6 MiB (tipografías variables y componentes compartidos): '+Buffer.byteLength(html));
+ assert.ok(Buffer.byteLength(html)<=3.6*1024*1024,'El HTML único no pasa de 3,6 MiB: '+Buffer.byteLength(html));
  const css=readFileSync(new URL('../src/css/_orden.txt',import.meta.url),'utf8').trim().split('\n').map(n=>readFileSync(new URL('../src/css/'+n,import.meta.url),'utf8')).join('\n');
  assert.doesNotMatch(css,/\.(suite-(shell|sidebar|brand|topbar|content|welcome|archive-[a-z]+|search|page-heading)|slides-(showcase|example|new-card)|ws-(shell|hero|card|grid|thumb|empty|section-head|controls|eyebrow|note)|workspace)\b/,'No queda CSS de la portada antigua');
  assert.doesNotMatch(readFileSync(new URL('../src/cuerpo.html',import.meta.url),'utf8'),/workspaceRoot/);
@@ -31,7 +26,7 @@ test('The home screen is the synced suite component and its stylesheet is inline
 test('Slides opens on its home screen: inert editor, focus on the h1, frozen status literal, collection and illustrative examples',async()=>{const {dom,errors,run}=await editor();try{
  const d=dom.window.document,w=dom.window;
  assert.equal(raiz(d).hidden,false,'Al abrir se ve el inicio, no el editor vacío');
- assert.equal(w.location.hash,'#suite/inicio');
+ assert.equal(w.location.hash,'#inicio');
  assert.equal(d.querySelector('.erlen-marco').hasAttribute('inert'),true,'El editor queda inerte bajo el inicio');
  assert.ok(d.body.classList.contains('erlen-inicio-abierto'));
  assert.equal(d.activeElement,raiz(d).querySelector('h1'),'El foco va al h1');
@@ -69,22 +64,24 @@ test('Slides opens on its home screen: inert editor, focus on the h1, frozen sta
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
-test('Hash routes keep their historical names and follow the component navigation both ways',async()=>{const {dom,errors,run}=await editor('http://localhost:8130/#suite/herramientas');try{
+test('Local hash routes follow navigation in both directions and accept historical links',async()=>{const {dom,errors,run}=await editor('http://localhost:8130/#suite/herramientas');try{
  const d=dom.window.document,w=dom.window;
  assert.equal(run('INICIO.vista'),'recursos','#suite/herramientas abre Recursos y respaldos');
+ assert.equal(w.location.hash,'#inicio/herramientas','El enlace histórico se normaliza');
+ assert.equal(w.history.length,1,'La normalización no crea una entrada en el historial');
  assert.equal(d.title,'Recursos y respaldos · Tabula');
  const pares=[['Mis presentaciones','biblioteca'],['Ejemplos editables','plantillas'],['Recursos y respaldos','herramientas'],['Acerca de','servicio'],['Inicio','inicio']];
- for(const [texto,ruta] of pares){nav(d,texto).click();assert.equal(w.location.hash,'#suite/'+ruta,texto);assert.equal(nav(d,texto).getAttribute('aria-current'),'page');assert.equal(d.activeElement,raiz(d).querySelector('h1'));}
+ for(const [texto,ruta] of pares){nav(d,texto).click();assert.equal(w.location.hash,ruta==='inicio'?'#inicio':'#inicio/'+ruta,texto);assert.equal(nav(d,texto).getAttribute('aria-current'),'page');assert.equal(d.activeElement,raiz(d).querySelector('h1'));}
  // Hacia atrás: cambiar el hash abre la vista, #presentaciones vuelve al editor.
- await aHash(w,'#suite/plantillas');
+ await aHash(w,'#inicio/plantillas');
  assert.equal(run('INICIO.vista'),'ejemplos');
  const titulos=[...raiz(d).querySelectorAll('.erlen-inicio-ejemplo h2')].map(h=>h.textContent);
  assert.equal(titulos.length,12,'Los doce ejemplos editables');
  await aHash(w,'#presentaciones');
  assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('.erlen-marco').hasAttribute('inert'));
- await aHash(w,'#suite/servicio');
+ await aHash(w,'#inicio/servicio');
  assert.equal(run('INICIO.vista'),'acerca');assert.match(raiz(d).textContent,/versión 0\.3\.0/);assert.match(raiz(d).textContent,/AGPLv3/);
- await aHash(w,'#suite/nada');assert.equal(run('INICIO.vista'),'inicio','Una vista desconocida cae en Inicio');
+ await aHash(w,'#inicio/nada');assert.equal(run('INICIO.vista'),'inicio','Una vista desconocida cae en Inicio');
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
@@ -126,7 +123,7 @@ test('Opening the home screen keeps the draft; the library opens, duplicates in 
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
 
-test('An empty library explains where work is kept; personal templates are listed and can be removed with undo',async()=>{const {dom,errors,run}=await editor('http://localhost:8130/#suite/biblioteca');try{
+test('An empty library explains where work is kept; personal templates are listed and can be removed with undo',async()=>{const {dom,errors,run}=await editor('http://localhost:8130/#inicio/biblioteca');try{
  const d=dom.window.document;
  assert.match(raiz(d).textContent,/Aquí empieza tu próxima charla/);
  assert.ok(boton(d,'Nueva presentación'),'El estado vacío ofrece crear una');
@@ -152,3 +149,54 @@ test('An unknown direct example link opens the home screen with an explicit noti
  assert.match(raiz(d).querySelector('.erlen-inicio-aviso[role=alert]').textContent,/No existe el ejemplo «no-existe»/);
  assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
+
+test('Appearance migrates once, stays isolated, and changes only the application',async()=>{
+ const {dom,errors,run}=await editor('http://localhost:8130/',{preparar:w=>{
+  w.localStorage.setItem('erlen-color','violeta');w.localStorage.setItem('erlen-estilo','bauhaus');
+ }});try{
+  const w=dom.window,d=w.document,almacen=w.localStorage,acceso=boton(d,'Apariencia');
+  assert.equal(d.documentElement.dataset.erlenColor,'violeta');assert.equal(d.documentElement.dataset.erlenEstilo,'bauhaus');
+  assert.equal(almacen.getItem('tabula.apariencia.color'),'violeta');assert.equal(almacen.getItem('tabula.apariencia.estilo'),'bauhaus');
+  const antes=run('JSON.stringify(S.deck)'),inerciaAnterior=raiz(d).inert;acceso.focus();acceso.click();
+  const dialogo=d.querySelector('#modalRoot [role=dialog]');assert.ok(dialogo);assert.equal(raiz(d).inert,true);
+  const campo=nombre=>d.getElementById([...dialogo.querySelectorAll('label')].find(l=>l.textContent===nombre).htmlFor);
+  const elegir=(nombre,valor)=>{const el=campo(nombre);el.value=valor;el.dispatchEvent(new w.Event('change',{bubbles:true}));};
+  assert.equal(campo('Color de acento').value,'violeta');assert.equal(campo('Estilo visual').value,'bauhaus');
+  elegir('Tema','oscuro');elegir('Color de acento','azul');elegir('Estilo visual','blueprint');
+  assert.equal(d.documentElement.dataset.theme,'dark');assert.equal(d.documentElement.dataset.erlenColor,'azul');assert.equal(d.documentElement.dataset.erlenEstilo,'blueprint');
+  assert.equal(almacen.getItem('erlen-color'),'violeta');assert.equal(almacen.getItem('erlen-estilo'),'bauhaus');
+  almacen.setItem('erlen-color','cobre');w.dispatchEvent(new w.StorageEvent('storage',{key:'erlen-color',newValue:'cobre',storageArea:almacen}));
+  assert.equal(d.documentElement.dataset.erlenColor,'azul','Las claves antiguas no sincronizan la apariencia');
+  almacen.setItem('tabula.apariencia.color','platino');w.dispatchEvent(new w.StorageEvent('storage',{key:'tabula.apariencia.color',newValue:'platino',storageArea:almacen}));
+  assert.equal(d.documentElement.dataset.erlenColor,'platino');assert.equal(campo('Color de acento').value,'platino','Otra pestaña de Tabula actualiza el diálogo');
+  [...dialogo.querySelectorAll('button')].find(b=>b.textContent==='Restablecer').click();
+  assert.equal(campo('Tema').value,'auto');assert.equal(campo('Color de acento').value,'verde');assert.equal(campo('Estilo visual').value,'original');
+  assert.equal(almacen.getItem('erlen-color'),'cobre');assert.equal(almacen.getItem('erlen-estilo'),'bauhaus');
+  assert.equal(run('JSON.stringify(S.deck)'),antes,'La presentación no se modifica');
+  [...dialogo.querySelectorAll('button')].find(b=>b.textContent==='Cerrar').click();
+  assert.equal(raiz(d).inert,inerciaAnterior);assert.equal(d.activeElement,acceso);assert.deepEqual(errors,[]);
+ }finally{dom.window.close();}
+});
+
+test('Appearance remains usable when storage is blocked and existing local choices take precedence',async()=>{
+ const bloqueado=await editor('http://localhost:8130/',{preparar:w=>Object.defineProperty(w,'localStorage',{configurable:true,get(){throw new w.DOMException('Bloqueado','SecurityError');}})});
+ try{
+  const w=bloqueado.dom.window,d=w.document;boton(d,'Apariencia').click();
+  const dialogo=d.querySelector('#modalRoot [role=dialog]'),label=[...dialogo.querySelectorAll('label')].find(l=>l.textContent==='Color de acento');
+  const campo=d.getElementById(label.htmlFor);campo.value='cobre';campo.dispatchEvent(new w.Event('change',{bubbles:true}));
+  assert.equal(d.documentElement.dataset.erlenColor,'cobre');
+  [...dialogo.querySelectorAll('button')].find(b=>b.textContent==='Cerrar').click();boton(d,'Apariencia').click();
+  const nuevo=d.querySelector('#modalRoot [role=dialog]'),etiqueta=[...nuevo.querySelectorAll('label')].find(l=>l.textContent==='Color de acento');
+  assert.equal(d.getElementById(etiqueta.htmlFor).value,'cobre','La elección dura la sesión');
+  assert.deepEqual(bloqueado.errors,[]);
+ }finally{bloqueado.dom.window.close();}
+ const propia=await editor('http://localhost:8130/',{preparar:w=>{
+  w.localStorage.setItem('tabula.apariencia.color','verde');w.localStorage.setItem('tabula.apariencia.estilo','original');
+  w.localStorage.setItem('erlen-color','violeta');w.localStorage.setItem('erlen-estilo','bauhaus');
+ }});
+ try{
+  assert.equal(propia.dom.window.document.documentElement.dataset.erlenColor,undefined);
+  assert.equal(propia.dom.window.document.documentElement.dataset.erlenEstilo,undefined);
+  assert.deepEqual(propia.errors,[]);
+ }finally{propia.dom.window.close();}
+});

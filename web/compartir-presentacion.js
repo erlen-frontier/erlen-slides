@@ -11,6 +11,8 @@ async function revisaSalida(formato, deck = S.deck) {
   const coreFiguras = deck.slides.some(sl => zonas(sl).flat().some(b => b.figura)) ? await extensionSlides('figurascore') : null;
   const medida = document.createElement('canvas').getContext('2d');
   deck.slides.forEach((sl, i) => {
+    if (formato === 'beamer' && Array.isArray(sl.conectores) && sl.conectores.length && !fueraDeRama(sl, deck))
+      add('aviso', i, 'Los conectores no se conservan en Beamer.', 'Guarda el proyecto JSON para conservar las relaciones.');
     if (!sl.lienzoLibre || !zonasDe(sl.layout) || !zonas(sl).some(z => z.length)) return;
     if (formato === 'beamer') add('aviso', i, 'La posición libre no se conserva en Beamer.', 'El acomodo cambiará; revisa el código y el resultado compilado.');
     if (formato === 'pptx') add('aviso', i, 'La posición libre puede diferir en PowerPoint.', 'Abre la exportación y revisa tamaño, orden y recortes de sus elementos.');

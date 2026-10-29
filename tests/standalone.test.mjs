@@ -1,10 +1,10 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {editor} from '../herramientas/test-browser.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {IDBFactory} from 'fake-indexeddb';import {editor} from '../herramientas/test-browser.mjs';
 test('Slides boots independently; all navigation and resource actions resolve',async()=>{const {dom,errors,run}=await editor();try{
  assert.match(dom.window.document.title,/Tabula/);
- // La pantalla de inicio es el componente común (src/diseno/suite-inicio.js); cada ruta histórica abre su vista.
+ // Cada ruta local abre su vista de inicio.
  const inicio=()=>dom.window.document.querySelector('#inicioRoot main.erlen-inicio');
  const vistas={inicio:'inicio',plantillas:'ejemplos',biblioteca:'biblioteca',herramientas:'recursos',servicio:'acerca'};
- for(const [view,vista] of Object.entries(vistas)){run('wsCambiar('+JSON.stringify(view)+')');assert.equal(inicio().hidden,false);assert.equal(run('INICIO.vista'),vista);assert.equal(dom.window.location.hash,'#suite/'+view);}
+ for(const [view,vista] of Object.entries(vistas)){run('wsCambiar('+JSON.stringify(view)+')');assert.equal(inicio().hidden,false);assert.equal(run('INICIO.vista'),vista);assert.equal(dom.window.location.hash,view==='inicio'?'#inicio':'#inicio/'+view);}
  run('wsNueva()');assert.equal(inicio().hidden,true);assert.equal(dom.window.location.hash,'#presentaciones');assert.equal(run('S.deck.slides[0].blocks.length'),0);
  run('openDecks()');run('closeModal()');run('openEdicion()');assert.match(dom.window.document.querySelector('#modalRoot').textContent,/AGPLv3/);assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
@@ -29,39 +29,34 @@ test('Build has no production endpoints, cloud SDK, external font requests or ot
  assert.match(html,/github.com\/erlen-frontier\/erlen-slides/);
 });
 
-test('The suite menu appears only when mounted at /slides/, and links out without importing other editors',async()=>{
- // Montado en la suite: el menú común, con su aviso MIT íntegro en el build.
+test('The editor stays independent at the root and in a subdirectory',async()=>{
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
- const licencia=readFileSync(new URL('../src/diseno/suite-navigation.js',import.meta.url),'utf8');
  for(const clausula of ['SPDX-License-Identifier: MIT','Permission is hereby granted','WITHOUT WARRANTY OF ANY KIND'])
-  assert.ok(html.includes(clausula)&&licencia.includes(clausula),'Falta parte del aviso MIT: '+clausula);
- // El menú se carga directamente del paquete de diseño sincronizado (sin copia local).
- const montado=await editor('http://localhost:8130/slides/');
+  assert.ok(html.includes(clausula),'Falta parte del aviso MIT de los componentes: '+clausula);
+ assert.doesNotMatch(html,/erlen-suite-catalog|erlen-suite-exchange-v2/);
+ for(const ruta of ['/','/slides/']){
+  const app=await editor('http://localhost:8130'+ruta);
+  try{
+   const d=app.dom.window.document;
+   assert.equal(d.querySelector('erlen-suite-nav'),null,'No hay menú de otras aplicaciones en '+ruta);
+   assert.ok(d.querySelector('#inicioRoot main.erlen-inicio:not([hidden])'));
+   app.run('wsNueva()');
+   assert.equal(d.querySelector('.erlen-marco').hasAttribute('inert'),false);
+   assert.equal(d.querySelector('erlen-suite-nav'),null,'El editor tampoco monta el menú en '+ruta);
+   assert.deepEqual(app.errors,[]);
+  }finally{app.dom.window.close();}
+ }
+});
+
+test('A retired copy link does not open or delete an existing transfer',async()=>{
+ const db=new IDBFactory(),id='0b8c1f3e-5a7d-4c2e-9f10-1234567890ab',valor={id,payloadJSON:'original'};
+ await new Promise((ok,fail)=>{const r=db.open('erlen-suite-exchange-v2',1);r.onupgradeneeded=()=>r.result.createObjectStore('transfers',{keyPath:'id'});r.onerror=()=>fail(r.error);r.onsuccess=()=>{const base=r.result,tx=base.transaction('transfers','readwrite');tx.objectStore('transfers').put(valor);tx.oncomplete=()=>{base.close();ok();};tx.onerror=()=>fail(tx.error);};});
+ const app=await editor('http://localhost:8130/slides/#copy='+id,{indexedDB:db});
  try{
-  const host=montado.dom.window.document.querySelector('erlen-suite-nav');
-  assert.ok(host,'El menú no se montó bajo /slides/.');
-  const enlaces=[...host.shadowRoot.querySelectorAll('a')];
-  // Con catálogo de despliegue: sus apps más la portada; sin él, la lista standalone del paquete.
-  const embebido=montado.dom.window.document.getElementById('erlen-suite-catalog');
-  if(embebido){
-   const catalogo=JSON.parse(embebido.textContent);
-   assert.equal(enlaces.length,catalogo.items.length+1,'La portada y cada app del catálogo de despliegue.');
-   for(const item of catalogo.items)assert.ok(enlaces.some(a=>a.getAttribute('href')===item.href),'Falta el enlace del catálogo: '+item.id);
-  }else{
-   const rutas=enlaces.map(a=>a.getAttribute('href'));
-   assert.equal(new Set(rutas).size,rutas.length,'El menú no repite enlaces.');
-   for(const ruta of ['/','/slides/','/notes/','/documents/','/figures/','/doe/'])
-    assert.ok(rutas.includes(ruta),'Falta una ruta de la suite: '+ruta);
-  }
-  assert.equal(host.shadowRoot.querySelector('[aria-current]').getAttribute('href'),'/slides/');
-  assert.equal(host.shadowRoot.querySelector('details').open,false,'El menú abre cerrado.');
-  for(const a of enlaces.filter(a=>!a.hasAttribute('aria-current')))assert.equal(a.target,'_blank');
-  assert.deepEqual(montado.errors,[]);
- }finally{montado.dom.window.close();}
- // Distribución independiente: sin apps hermanas, no se inventan enlaces rotos.
- const suelto=await editor('http://localhost:8130/');
- try{
-  assert.equal(suelto.dom.window.document.querySelector('erlen-suite-nav'),null,'Fuera de /slides/ no debe aparecer.');
-  assert.deepEqual(suelto.errors,[]);
- }finally{suelto.dom.window.close();}
+  assert.equal(app.dom.window.location.hash,'#inicio');
+  assert.equal(app.dom.window.document.querySelector('#modalRoot [role=dialog]'),null);
+  assert.equal(app.run('Object.keys(decksStore()).length'),0);
+  const guardado=await new Promise((ok,fail)=>{const r=db.open('erlen-suite-exchange-v2',1);r.onerror=()=>fail(r.error);r.onsuccess=()=>{const base=r.result,tx=base.transaction('transfers','readonly'),lectura=tx.objectStore('transfers').get(id);lectura.onsuccess=()=>ok(lectura.result);lectura.onerror=()=>fail(lectura.error);tx.oncomplete=()=>base.close();};});
+  assert.deepEqual(guardado,valor);assert.deepEqual(app.errors,[]);
+ }finally{app.dom.window.close();}
 });
