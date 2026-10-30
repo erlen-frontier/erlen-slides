@@ -16,6 +16,7 @@ function camposTexto(deck) {
     add(i, 'Notas', () => sl.notes || '', v => sl.notes = v);
     (sl.zt || []).forEach((_, z) => add(i, 'Encabezado ' + (z + 1), () => (sl.zt || [])[z] || '', v => { sl.zt = sl.zt || []; sl.zt[z] = v; }));
     zonas(sl).forEach(arr => arr.forEach(b => {
+      const primero = out.length;
       const nom = (BLOCK_DEFS.find(x => x.id === b.type) || {}).name || b.type;
       if (b.type === 'bullets') (b.items || []).forEach((it, k) => add(i, nom, () => it.t || '', v => it.t = v));
       else if (b.type === 'table') (b.rows || []).forEach((r, ri) => r.forEach((_, ci) => add(i, nom, () => b.rows[ri][ci] || '', v => b.rows[ri][ci] = v)));
@@ -32,11 +33,40 @@ function camposTexto(deck) {
         add(i, nom, () => it.t || '', v => it.t = v);
         add(i, nom, () => it.d || '', v => it.d = v);
       });
+      if (b.locked) for (let j = primero; j < out.length; j++) out[j].bloqueado = true;
     }));
   });
   return out;
 }
-const sinAcentos = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const sinMarcas = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+const sinAcentos = x => sinMarcas(x).toLowerCase();
+
+/* La normalización puede quitar o añadir unidades UTF-16. Cada grupo de
+   carácter y marcas conserva sus límites en la fuente, no en la búsqueda. */
+function coincidenciasTexto(txt, aguja, caso) {
+  const res = [];
+  if (!aguja) return res;
+  let hay = txt, inicios = [], finales = [];
+  if (!caso) {
+    hay = '';
+    for (const parte of txt.matchAll(/\P{M}\p{M}*|\p{M}+/gu)) {
+      const normal = sinMarcas(parte[0]), fin = parte.index + parte[0].length;
+      hay += normal;
+      for (let i = 0; i < normal.length; i++) { inicios.push(parte.index); finales.push(fin); }
+    }
+    hay = hay.toLowerCase();
+  }
+  let p = hay.indexOf(aguja);
+  while (p >= 0) {
+    const z = p + aguja.length;
+    /* No sustituir solo una fracción de un carácter descompuesto ni sus marcas. */
+    const completo = caso || ((p === 0 || inicios[p - 1] !== inicios[p]) &&
+      (z === hay.length || finales[z - 1] !== finales[z]));
+    if (completo) res.push(caso ? [p, z] : [inicios[p], finales[z - 1]]);
+    p = hay.indexOf(aguja, p + (completo ? aguja.length : 1));
+  }
+  return res;
+}
 
 function buscaEn(deck, q, opts) {
   opts = opts || {};
@@ -44,17 +74,15 @@ function buscaEn(deck, q, opts) {
   if (!q) return res;
   const norm = t => opts.caso ? String(t) : sinAcentos(t);
   const aguja = norm(q);
+  if (!aguja) return res;
   camposTexto(deck).forEach(c => {
     const txt = c.get();
     if (!txt) return;
-    const hay = norm(txt);
-    let p = hay.indexOf(aguja), n = 0;
-    while (p >= 0) {
-      n++;
-      if (n === 1) res.push({ campo: c, i: c.i, et: c.et, ctx: contexto(txt, p, q.length), n: 0 });
-      p = hay.indexOf(aguja, p + aguja.length);
+    const encontrados = coincidenciasTexto(txt, aguja, opts.caso);
+    if (encontrados.length) {
+      const [a, z] = encontrados[0];
+      res.push({ campo: c, i: c.i, et: c.et, ctx: contexto(txt, a, z - a), n: encontrados.length });
     }
-    if (n) res[res.length - 1].n = n;
   });
   return res;
 }
@@ -70,10 +98,11 @@ function reemplazaTodo(deck, q, por, opts) {
   if (!aguja) return 0;
   camposTexto(deck).forEach(c => {
     const txt = c.get();
-    if (!txt) return;
-    const hay = norm(txt);
-    let out = '', p = 0, k = hay.indexOf(aguja), cambios = [];
-    while (k >= 0) { out += txt.slice(p, k) + por; p = k + q.length; cambios.push([k, p, por]); n++; k = hay.indexOf(aguja, p); }
+    if (!txt || c.bloqueado) return;
+    let out = '', p = 0, cambios = [];
+    for (const [a, z] of coincidenciasTexto(txt, aguja, opts.caso)) {
+      out += txt.slice(p, a) + por; p = z; cambios.push([a, z, por]); n++;
+    }
     if (cambios.length) { out += txt.slice(p); c.set(out, cambios); }
   });
   return n;
@@ -84,14 +113,18 @@ function openBuscar(inicial) {
   const campoQ = h('input', { class: 'field', placeholder: 'Buscar en toda la presentación…', value: inicial || '' });
   const campoR = h('input', { class: 'field', placeholder: 'Reemplazar por…' });
   const lista = h('div', { class: 'bu-lista' });
-  const resumen = h('span', { class: 'foot-note' });
+  const aviso = h('p', { class: 'hint', role: 'status', hidden: true });
+  const resumen = h('span', { class: 'foot-note', role: 'status' });
   const pinta = () => {
     const q = campoQ.value.trim();
+    aviso.hidden = true;
     lista.innerHTML = '';
     const r = buscaEn(S.deck, q, opts);
     const total = r.reduce((a, x) => a + x.n, 0);
+    const bloqueados = r.reduce((a, x) => a + (x.campo.bloqueado ? x.n : 0), 0);
+    const diapositivas = new Set(r.map(x => x.i)).size;
     resumen.textContent = !q ? 'Escribe para buscar en títulos, viñetas, tablas, cajas, pies de figura y notas.'
-      : total ? `${total} ${total === 1 ? 'coincidencia' : 'coincidencias'} en ${new Set(r.map(x => x.i)).size} diapositivas`
+      : total ? `${total} ${total === 1 ? 'coincidencia' : 'coincidencias'} en ${diapositivas} ${diapositivas === 1 ? 'diapositiva' : 'diapositivas'}${bloqueados ? ` · ${bloqueados} en bloques bloqueados` : ''}`
       : 'Sin coincidencias';
     if (!q || !r.length) return;
     let ultima = -1;
@@ -102,25 +135,36 @@ function openBuscar(inicial) {
         lista.append(h('div', { class: 'bu-cab' }, `${x.i + 1} · ${(sl.title || '').trim() || (LAY[sl.layout] || {}).name || ''}`));
       }
       lista.append(h('button', { class: 'bu-fila', onclick: () => { closeModal(); S.cur = x.i; S.selBlock = null; renderAll(); } },
-        h('span', { class: 'bu-et' }, x.et),
+        h('span', { class: 'bu-et' }, x.et + (x.campo.bloqueado ? ' · bloqueado' : '')),
         h('span', { class: 'bu-tx' }, x.ctx.antes, h('mark', null, x.ctx.coincide), x.ctx.despues),
         x.n > 1 ? h('span', { class: 'bu-n' }, '×' + x.n) : null));
     });
   };
-  campoQ.addEventListener('input', deb(pinta, 160));
-  const caja = h('label', { class: 'check' }, h('input', { type: 'checkbox', onchange: e => { opts.caso = e.target.checked; pinta(); } }), 'Distinguir mayúsculas y acentos');
-  const cuerpo = h('div', null, campoQ, h('div', { style: 'height:8px' }), campoR, caja, lista);
+  const actualiza = deb(pinta, 160);
+  campoQ.addEventListener('input', actualiza);
+  const caja = h('label', { class: 'check' }, h('input', { type: 'checkbox', onchange: e => { opts.caso = e.target.checked; actualiza.now(); } }), 'Distinguir mayúsculas y acentos');
+  const cuerpo = h('div', null, campoQ, h('div', { style: 'height:8px' }), campoR, caja, aviso, lista);
   openModal({
     title: 'Buscar y reemplazar', size: 'modal-lg', body: cuerpo,
     foot: [resumen,
       h('button', { class: 'btn', onclick: () => {
+        actualiza.now();
         const q = campoQ.value.trim();
-        if (!q) { toast('Escribe qué buscar'); return; }
+        if (!q) { aviso.hidden = false; aviso.textContent = 'Escribe qué buscar.'; return; }
+        const bloqueados = buscaEn(S.deck, q, opts).reduce((a, x) => a + (x.campo.bloqueado ? x.n : 0), 0);
         const n = reemplazaTodo(S.deck, q, campoR.value, opts);
-        if (!n) { toast('No hubo coincidencias'); return; }
+        const omitidas = `${bloqueados} ${bloqueados === 1 ? 'coincidencia' : 'coincidencias'} en bloques bloqueados`;
+        if (!n) {
+          aviso.hidden = false;
+          aviso.textContent = bloqueados ? `No se hizo ningún reemplazo: ${omitidas}.` : 'No hubo coincidencias.';
+          return;
+        }
         commit();
-        toast(n + (n === 1 ? ' reemplazo hecho' : ' reemplazos hechos'), null, { t: 'Deshacer', fn: doUndo });
+        const hechos = n + (n === 1 ? ' reemplazo hecho' : ' reemplazos hechos');
+        toast(hechos + (bloqueados ? ` · ${omitidas}` : ''), null, { t: 'Deshacer', fn: doUndo });
         pinta();
+        aviso.hidden = false;
+        aviso.textContent = hechos + (bloqueados ? `; ${omitidas} no ${bloqueados === 1 ? 'se modificó' : 'se modificaron'}.` : '.');
       } }, 'Reemplazar todo'),
       h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Cerrar')]
   });
@@ -322,4 +366,3 @@ function openPaleta() {
   pinta();
   setTimeout(() => inp.focus(), 40);
 }
-

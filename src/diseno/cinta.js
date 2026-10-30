@@ -191,7 +191,7 @@ function mountCinta(host,config){
  function abrirMenu(c,ancla){
   cerrarMenu();
   const opciones=typeof c.opciones==='function'?c.opciones():(c.opciones||[]);
-  const m=el('div',{class:'erlen-cinta-menu',role:'menu','aria-label':c.etiqueta});
+  const m=el('div',{class:'erlen-cinta-menu',role:'menu','aria-label':c.etiqueta,tabindex:'-1'});
   for(const o of opciones){
    if(o.separador){m.append(el('div',{class:'erlen-cinta-separador',role:'separator'}));continue;}
    const conMarca=typeof o.marcado==='function';
@@ -225,7 +225,7 @@ function mountCinta(host,config){
   const temporizador=win.setTimeout(()=>doc.addEventListener('pointerdown',fuera),0);
   menu={m,ancla,fuera,temporizador};
   const primero=m.querySelector('.erlen-cinta-opcion:not([disabled])');
-  if(primero)primero.focus();
+  (primero||m).focus();
  }
  function cerrarMenu(devolverFoco){
   if(!menu)return;

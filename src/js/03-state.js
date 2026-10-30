@@ -75,7 +75,7 @@ function copiaDiapositiva(sl) {
   }
   if (Array.isArray(copia.conectores)) copia.conectores = copia.conectores
     .filter(c => ids.has(c.desde) && ids.has(c.hasta))
-    .map(c => ({desde:ids.get(c.desde), hasta:ids.get(c.hasta)}));
+    .map(c => ({...c, desde:ids.get(c.desde), hasta:ids.get(c.hasta)}));
   limpiaConectores(copia);
   return copia;
 }

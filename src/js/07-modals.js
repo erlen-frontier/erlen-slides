@@ -625,6 +625,8 @@ function openHelp(pestana) {
         K('Q', 'Al presentar: respaldo para preguntas'),
         K('Ctrl K', 'Ir a / hacer'), K('Ctrl F', 'Buscar y reemplazar'), K('Ctrl G', 'Ver todas las diapositivas'),
         K('Ctrl V', 'Pegar imagen, tabla o ecuación'),
+        K('Ctrl B', 'Negrita al editar texto'), K('Ctrl I', 'Cursiva al editar texto'),
+        K('Ctrl A', 'Seleccionar objetos visibles con foco en un bloque'),
         K('Ctrl Z', 'Deshacer'), K('Ctrl ⇧ Z', 'Rehacer'), K('Ctrl D', 'Duplicar diapositiva'),
         K('Ctrl M', 'Nueva diapositiva'), K('Ctrl S', 'Guardar como'),
         K('↑ ↓', 'Cambiar de diapositiva'), K('Supr', 'Eliminar el bloque seleccionado'),

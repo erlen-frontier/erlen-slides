@@ -158,13 +158,15 @@ function xmlRect(id, f, relleno, radio) {
 }
 /* La geometría de línea va de la esquina superior izquierda a la inferior
    derecha; las reflexiones llevan su extremo con flecha hasta el destino. */
-function xmlConector(id, x1, y1, x2, y2, color, grosor) {
+function xmlConector(id, x1, y1, x2, y2, color, grosor, flecha = 'fin') {
   const x = Math.min(x1, x2), y = Math.min(y1, y2);
   const voltear = (x2 < x1 ? ' flipH="1"' : '') + (y2 < y1 ? ' flipV="1"' : '');
+  const inicio = flecha === 'ambos' ? '<a:headEnd type="triangle"/>' : flecha === 'ninguna' ? '<a:headEnd type="none"/>' : '';
+  const fin = '<a:tailEnd type="' + (flecha === 'ninguna' ? 'none' : 'triangle') + '"/>';
   return '<p:sp><p:nvSpPr><p:cNvPr id="' + id + '" name="Conector ' + id + '"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>' +
     '<p:spPr><a:xfrm' + voltear + '><a:off x="' + x + '" y="' + y + '"/><a:ext cx="' + Math.abs(x2 - x1) + '" cy="' + Math.abs(y2 - y1) + '"/></a:xfrm>' +
     '<a:prstGeom prst="line"><a:avLst/></a:prstGeom><a:noFill/><a:ln w="' + grosor + '"><a:solidFill><a:srgbClr val="' + color + '"/></a:solidFill>' +
-    '<a:tailEnd type="triangle"/></a:ln></p:spPr></p:sp>';
+    inicio + fin + '</a:ln></p:spPr></p:sp>';
 }
 function xmlImagen(id, f, rid, alt, orientacion = null) {
   const atributos = orientacion ? (orientacion.giro ? ' rot="' + Math.round((orientacion.giro < 0 ? orientacion.giro + 360 : orientacion.giro) * 60000) + '"' : '') +

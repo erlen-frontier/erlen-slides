@@ -114,6 +114,74 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     assert.equal(await page.getByRole('button',{name:'Organizar selección'}).isEnabled(),true);
   });
 
+  await t.test('canvas menus close with Escape and keep keyboard focus and selection',async()=>{
+    await reset();
+    const conectores=page.locator('#lienzoConectoresBtn'), menu=page.locator('.menu-conectores');
+    await conectores.focus();await page.keyboard.press('Enter');
+    assert.equal(await menu.getByRole('button',{name:'Selecciona dos objetos para conectar'}).isDisabled(),true);
+    assert.equal(await menu.getAttribute('aria-label'),'Conectores');
+    assert.equal(await menu.evaluate(el=>document.activeElement===el),true,'Un menú sin opciones activas recibe el foco');
+    await page.keyboard.press('Escape');
+    assert.equal(await menu.count(),0);
+    assert.equal(await conectores.evaluate(el=>document.activeElement===el),true);
+    const margenFoco=await conectores.evaluate(el=>{
+      const tira=el.closest('.foot-izq').getBoundingClientRect(), boton=el.getBoundingClientRect();
+      const estilo=getComputedStyle(el);
+      return {izquierda:boton.left-tira.left,derecha:tira.right-boton.right,
+        anillo:parseFloat(estilo.outlineWidth)+parseFloat(estilo.outlineOffset),visible:el.matches(':focus-visible')};
+    });
+    // El desplazamiento horizontal y los rectángulos pueden redondear a subpíxeles distintos.
+    assert.ok(margenFoco.visible && margenFoco.anillo>=6 && margenFoco.izquierda>=margenFoco.anillo-.5 &&
+      margenFoco.derecha>=margenFoco.anillo-.5,JSON.stringify(margenFoco));
+    assert.deepEqual(await seleccion(),[]);
+
+    await page.evaluate(()=>{selectBlock('a');selectBlock('b',true);});
+    const formas=page.locator('#lienzoFormasBtn');
+    await formas.focus();await page.keyboard.press('Enter');
+    const rectangulo=page.getByRole('button',{name:'Rectángulo',exact:true});
+    assert.equal(await rectangulo.evaluate(el=>document.activeElement===el),true);
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await page.getByRole('button',{name:'Elipse',exact:true}).evaluate(el=>document.activeElement===el),true);
+    await page.keyboard.press('Escape');
+    assert.equal(await rectangulo.count(),0);
+    assert.equal(await formas.evaluate(el=>document.activeElement===el),true);
+    assert.deepEqual(await seleccion(),['a','b']);
+
+    await conectores.click();
+    assert.equal(await page.getByRole('button',{name:'Conectar: A → B'}).evaluate(el=>document.activeElement===el),true);
+    await page.keyboard.press('Escape');
+    assert.equal(await menu.count(),0);
+    assert.equal(await conectores.evaluate(el=>document.activeElement===el),true);
+    assert.deepEqual(await seleccion(),['a','b']);
+    assert.deepEqual(await page.evaluate(()=>curSlide().conectores || []),[]);
+
+    await formas.focus();await page.keyboard.press('Enter');await page.keyboard.press('Tab');
+    assert.equal(await page.getByRole('button',{name:'Elipse',exact:true}).evaluate(el=>document.activeElement===el),true);
+    await page.keyboard.press('Shift+Tab');await page.keyboard.press('Shift+Tab');
+    assert.equal(await rectangulo.count(),0);
+    assert.equal(await formas.evaluate(el=>document.activeElement===el),true);
+    await page.keyboard.press('Enter');await page.keyboard.press('ArrowUp');await page.keyboard.press('Tab');
+    assert.equal(await rectangulo.count(),0);
+    assert.equal(await page.locator('#lienzoCatalogoBtn').evaluate(el=>document.activeElement===el),true);
+    await formas.focus();await page.keyboard.press('Enter');await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+    await page.waitForFunction(()=>curSlide().blocks.some(b=>b.formaLibre==='circle'));
+    await page.keyboard.press('Control+z');
+    assert.equal(await page.evaluate(()=>curSlide().blocks.some(b=>b.formaLibre==='circle')),false);
+
+    await page.evaluate(()=>selectBlock(null));
+    await page.locator('#cinta [data-pestana=diapo]').click();
+    const cinta=page.locator('#cinta [data-control=lienzo-conectores]');
+    await cinta.focus();await page.keyboard.press('Enter');
+    const menuCinta=page.getByRole('menu',{name:'Conectores'});
+    assert.equal(await menuCinta.getByRole('menuitem',{name:'Selecciona dos objetos para conectar'}).isDisabled(),true);
+    assert.equal(await menuCinta.evaluate(el=>document.activeElement===el),true,'La cinta permite cerrar un menú sin acciones activas');
+    await page.keyboard.press('Escape');
+    assert.equal(await menuCinta.count(),0);
+    assert.equal(await cinta.getAttribute('aria-expanded'),'false');
+    assert.equal(await cinta.evaluate(el=>document.activeElement===el),true);
+    await page.locator('#cinta [data-pestana=inicio]').click();
+  });
+
   await t.test('connectors follow a pointer gesture, cancel safely and can be removed and undone',async()=>{
     await reset();
     await page.evaluate(()=>cierraPanelCapas());
@@ -152,6 +220,65 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     await page.getByRole('button',{name:'Eliminar conexión: A → B'}).click();
     assert.equal(await linea.count(),0);
     await page.evaluate(()=>doUndo());assert.equal(await linea.count(),1);
+  });
+
+  await t.test('connector styles are editable, undoable and retained by project and copies',async()=>{
+    await reset();await page.evaluate(()=>{selectBlock('a');selectBlock('b',true);});
+    await page.getByRole('button',{name:'Conectores'}).click();
+    await page.getByRole('button',{name:'Conectar: A → B'}).click();
+    const abrir = async () => {
+      await page.getByRole('button',{name:'Conectores'}).click();
+      await page.getByRole('button',{name:'Editar conexión: A → B'}).click();
+      return page.getByRole('dialog',{name:'Estilo de conexión'});
+    };
+    let dialogo = await abrir();
+    assert.equal(await dialogo.getByLabel('Usar color del tema').isChecked(),true);
+    assert.equal(await dialogo.getByLabel('Color personalizado').isDisabled(),true);
+    const accesibilidad = await new AxeBuilder({page}).include('#modalRoot').analyze();
+    assert.deepEqual(accesibilidad.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id),[]);
+    await dialogo.getByLabel('Usar color del tema').uncheck();
+    await dialogo.getByLabel('Color personalizado').fill('#bd325f');
+    await dialogo.getByLabel('Grosor (1–8)').fill('7');
+    await dialogo.getByLabel('Extremos').selectOption('ambos');
+    await dialogo.getByRole('button',{name:'Aplicar'}).click();
+    const esperado = {desde:'a',hasta:'b',color:'#bd325f',grosor:7,flecha:'ambos'};
+    assert.deepEqual(await page.evaluate(()=>curSlide().conectores[0]),esperado);
+    const linea = page.locator('#stageInner .lienzo-conectores line');
+    assert.equal(await linea.getAttribute('stroke'),'#bd325f');
+    assert.equal(await linea.getAttribute('stroke-width'),'7');
+    assert.equal(await page.locator('#stageInner .lienzo-conectores path').count(),2);
+    assert.deepEqual(await page.evaluate(()=>saneaDeck(JSON.parse(JSON.stringify(S.deck))).deck.slides[1].conectores[0]),esperado);
+    await page.keyboard.press('Control+z');
+    assert.deepEqual(await page.evaluate(()=>curSlide().conectores[0]),{desde:'a',hasta:'b'});
+    await page.keyboard.press('Control+Shift+z');
+    assert.deepEqual(await page.evaluate(()=>curSlide().conectores[0]),esperado);
+    await page.evaluate(()=>{selectBlock('a');selectBlock('b',true);});
+    await page.getByRole('button',{name:'Duplicar selección',exact:true}).first().click();
+    const copia = await page.evaluate(()=>curSlide().conectores[1]);
+    assert.notEqual(copia.desde,'a');assert.notEqual(copia.hasta,'b');
+    assert.deepEqual({color:copia.color,grosor:copia.grosor,flecha:copia.flecha},
+      {color:'#bd325f',grosor:7,flecha:'ambos'});
+    await page.keyboard.press('Control+z');
+    await page.keyboard.press('Control+d');
+    const diapositiva = await page.evaluate(()=>curSlide().conectores[0]);
+    assert.notEqual(diapositiva.desde,'a');assert.notEqual(diapositiva.hasta,'b');
+    assert.deepEqual({color:diapositiva.color,grosor:diapositiva.grosor,flecha:diapositiva.flecha},
+      {color:'#bd325f',grosor:7,flecha:'ambos'});
+    await page.keyboard.press('Control+z');
+    dialogo = await abrir();
+    await dialogo.getByLabel('Usar color del tema').check();
+    await dialogo.getByLabel('Grosor (1–8)').fill('3');
+    await dialogo.getByLabel('Extremos').selectOption('ninguna');
+    await dialogo.getByRole('button',{name:'Aplicar'}).click();
+    assert.deepEqual(await page.evaluate(()=>curSlide().conectores[0]),{desde:'a',hasta:'b',flecha:'ninguna'});
+    assert.equal(await page.locator('#stageInner .lienzo-conectores path').count(),0);
+    assert.equal(await linea.getAttribute('stroke'),await page.evaluate(()=>temaDe(S.deck).fg));
+    dialogo = await abrir();
+    await page.evaluate(()=>{curSlide().conectores[0].grosor=8;});
+    await dialogo.getByRole('button',{name:'Aplicar'}).click();
+    assert.match(await dialogo.getByRole('status').textContent(),/conexión cambió/i);
+    assert.equal(await page.evaluate(()=>curSlide().conectores[0].grosor),8);
+    await dialogo.getByRole('button',{name:'Cancelar'}).click();
   });
 
   await t.test('connections survive project reopening, duplication and changes of slide layout',async()=>{
@@ -316,14 +443,97 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     await reset();await page.evaluate(()=>{selectBlock('a');selectBlock('b',true);});
     const {violations}=await new AxeBuilder({page}).include('#lienzoComposicion').analyze();
     assert.deepEqual(violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id),[]);
+    await page.locator('#lienzoImanBtn').focus();await page.keyboard.press('Tab');
+    assert.equal(await page.locator('#lienzoFormasBtn').evaluate(b=>document.activeElement===b),true);
     const vista=await page.evaluate(()=>({ancho:document.documentElement.scrollWidth,ventana:innerWidth,
       formas:document.querySelector('#lienzoFormasBtn').getBoundingClientRect().toJSON()}));
     assert.ok(vista.ancho<=vista.ventana+1 && vista.formas.left>=0 && vista.formas.right<=vista.ventana,JSON.stringify(vista));
+    await page.getByRole('button',{name:'Conectores'}).click();
+    await page.getByRole('button',{name:'Conectar: A → B'}).click();
+    await page.getByRole('button',{name:'Conectores'}).click();
+    await page.getByRole('button',{name:'Editar conexión: A → B'}).click();
+    const dialogo=page.getByRole('dialog',{name:'Estilo de conexión'});
+    await dialogo.getByLabel('Extremos').selectOption('ambos');
+    const cabida=await dialogo.getByLabel('Extremos').evaluate(el=>{
+      const estilo=getComputedStyle(el), ctx=document.createElement('canvas').getContext('2d');
+      ctx.font=estilo.font; return {ancho:el.clientWidth, texto:ctx.measureText(el.selectedOptions[0].textContent).width};
+    });
+    assert.ok(cabida.ancho>=cabida.texto+40,JSON.stringify(cabida));
+    const modalAccesible=await new AxeBuilder({page}).include('#modalRoot').analyze();
+    assert.deepEqual(modalAccesible.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id),[]);
+    await dialogo.getByRole('button',{name:'Cancelar'}).click();
     await page.evaluate(()=>{findBlock('a').block.text='A'.repeat(80);findBlock('b').block.text='B'.repeat(80);renderAll();selectBlock('a');selectBlock('b',true);});
     await page.getByRole('button',{name:'Conectores'}).click();
     const menu=await page.locator('.menu-conectores').evaluate(el=>({ancho:el.clientWidth,contenido:el.scrollWidth,
       botones:[...el.querySelectorAll('button')].map(b=>({ancho:b.clientWidth,contenido:b.scrollWidth}))}));
     assert.ok(menu.contenido<=menu.ancho+1 && menu.botones.every(b=>b.contenido<=b.ancho+1),JSON.stringify(menu));
+  });
+
+  await t.test('the ribbon keeps a compact height without losing insertion controls',async()=>{
+    await page.keyboard.press('Escape');await page.setViewportSize({width:1280,height:720});await reset();
+    await page.evaluate(()=>selectBlock('a'));
+    const nombres=['inicio','insertar','diseno','diapo','presentar','vista'];
+    for(const nombre of [...nombres,'contextual']){
+      const tab=nombre==='contextual'?'#cinta [data-contextual]':'#cinta [data-pestana='+nombre+']';
+      await page.locator(tab).click();
+      const cinta=await page.evaluate(()=>{
+        const panel=document.querySelector('#cinta .erlen-cinta-panel'),fila=panel.querySelector('.erlen-cinta-fila');
+        return {alto:panel.getBoundingClientRect().height,ancho:fila.clientWidth,contenido:fila.scrollWidth};
+      });
+      assert.ok(cinta.alto<=83,JSON.stringify({nombre,...cinta}));
+      if(nombre==='insertar')assert.ok(cinta.contenido<=cinta.ancho+1,JSON.stringify(cinta));
+    }
+    await page.setViewportSize({width:390,height:844});
+    for(const nombre of [...nombres,'contextual']){
+      const tab=nombre==='contextual'?'#cinta [data-contextual]':'#cinta [data-pestana='+nombre+']';
+      await page.locator(tab).click();
+      const cinta=await page.evaluate(()=>{
+        const panel=document.querySelector('#cinta .erlen-cinta-panel');
+        return {alto:panel.getBoundingClientRect().height,grupos:[...panel.querySelectorAll('[role=group]:not([hidden])')].map(g=>g.getAttribute('aria-label')),
+          botones:[...panel.querySelectorAll('button:not([hidden])')].map(b=>{
+          const r=b.getBoundingClientRect(),t=b.querySelector('.erlen-cinta-texto').getBoundingClientRect();
+          return {nombre:b.textContent,width:r.width,height:r.height,cabe:t.left>=r.left-1 && t.right<=r.right+1 && t.top>=r.top-1 && t.bottom<=r.bottom+1};
+        })};
+      });
+      assert.ok(cinta.alto<=53 && cinta.grupos.length>0 && cinta.grupos.every(Boolean) && cinta.botones.every(b=>b.width>=44 && b.height>=44 && b.cabe),JSON.stringify({nombre,...cinta}));
+    }
+  });
+
+  await t.test('portrait canvas controls reserve space and scroll without covering the slide',async()=>{
+    for(const {width,height,aspect,capas} of [
+      {width:320,height:700,aspect:'169',capas:false},
+      {width:390,height:844,aspect:'43',capas:true}
+    ]){
+      await page.setViewportSize({width,height});await reset();
+      await page.evaluate(aspect=>{S.deck.meta.aspect=aspect;renderAll();selectBlock('a');selectBlock('b',true);},aspect);
+      if(capas)await page.locator('#lienzoObjetosBtn').click();
+      await page.locator('#lienzoConectoresBtn').focus();
+      const layout=await page.evaluate(()=>{
+        const rect=s=>document.querySelector(s).getBoundingClientRect();
+        const sc=document.querySelector('#canvasScroll'),pie=rect('.canvas-foot'),tira=rect('.foot-izq'),boton=rect('#lienzoConectoresBtn');
+        const zoom=[...document.querySelectorAll('.zoombox button')].filter(b=>b.getClientRects().length).map(b=>{
+          const r=b.getBoundingClientRect();return {width:r.width,height:r.height};
+        });
+        return {ancho:document.documentElement.scrollWidth,ventana:innerWidth,lienzo:rect('#canvasScroll').toJSON(),pie:pie.toJSON(),
+          tira:tira.toJSON(),boton:boton.toJSON(),panel:document.querySelector('#panelCapas').hidden?null:rect('#panelCapas').toJSON(),
+          desplazamiento:sc.scrollHeight-sc.clientHeight,zoom};
+      });
+      assert.ok(layout.ancho<=layout.ventana+1 && layout.lienzo.bottom<=layout.pie.top+1,JSON.stringify(layout));
+      if(capas)assert.ok(layout.pie.bottom<=layout.panel.top+1 && layout.lienzo.height>70,JSON.stringify(layout));
+      assert.ok(layout.boton.left>=layout.tira.left+5 && layout.boton.right<=layout.tira.right-5,JSON.stringify(layout));
+      assert.ok(layout.zoom.every(b=>b.width>=44 && b.height>=44),JSON.stringify(layout.zoom));
+      const visible=await page.evaluate(()=>{
+        const sc=document.querySelector('#canvasScroll'),stage=document.querySelector('#stage');
+        sc.scrollTop=0;const arriba=stage.getBoundingClientRect().top>=sc.getBoundingClientRect().top;
+        sc.scrollTop=sc.scrollHeight;const abajo=stage.getBoundingClientRect().bottom<=sc.getBoundingClientRect().bottom;
+        return {arriba,abajo};
+      });
+      assert.deepEqual(visible,{arriba:true,abajo:true});
+      await page.getByRole('button',{name:'Conectores'}).click();
+      assert.equal(await page.getByRole('button',{name:'Conectar: A → B'}).isVisible(),true);
+      await page.keyboard.press('Escape');
+      if(capas)await page.getByRole('button',{name:'Cerrar panel de capas'}).click();
+    }
   });
 
   await t.test('the selected ribbon tab stays visible when the viewport narrows or the tab changes',async()=>{

@@ -298,16 +298,19 @@ function saneaDeck(bruto) {
         vistos.add(b.id);
         if (conteos.get(original) === 1) idsConectores.set(original, b.id);
       });
-      const pares = new Set();
+      const pares = new Set(); let estiloInvalido = false;
       sl.conectores = (Array.isArray(relaciones) ? relaciones : []).flatMap(c => {
         if (!c || typeof c.desde !== 'string' || typeof c.hasta !== 'string' || c.desde === c.hasta ||
             !idsConectores.has(c.desde) || !idsConectores.has(c.hasta)) return [];
         const desde = idsConectores.get(c.desde), hasta = idsConectores.get(c.hasta), par = JSON.stringify([desde, hasta]);
         if (pares.has(par)) return [];
-        pares.add(par); return [{desde, hasta}];
+        const estilo = estiloConector(c);
+        if (['color', 'grosor', 'flecha'].some(k => Object.hasOwn(c, k) && !Object.hasOwn(estilo, k))) estiloInvalido = true;
+        pares.add(par); return [{desde, hasta, ...estilo}];
       });
       if (!Array.isArray(relaciones) || relaciones.length !== sl.conectores.length)
         avisos.push('la diapositiva ' + (i + 1) + ' tenía conexiones inválidas o ambiguas; se descartaron');
+      if (estiloInvalido) avisos.push('la diapositiva ' + (i + 1) + ' tenía estilos de conexión inválidos; se usaron los valores predeterminados');
       if (!sl.conectores.length) delete sl.conectores;
     }
     prepararZonas(sl, sl.layout);
