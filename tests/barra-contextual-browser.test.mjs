@@ -39,7 +39,11 @@ test('contextual controls follow the selected object and keep the canvas usable'
   await t.test('the first click on unselected text selects it and starts editing',async()=>{
     await reset();
     const editor=page.locator('#stageInner .blk[data-bid="texto"] [data-edit]');
-    await editor.click();await page.keyboard.press('End');await page.keyboard.type(' añadido');
+    await editor.click();
+    assert.equal(await editor.evaluate(el=>{
+      const seleccion=getSelection();return document.activeElement===el && seleccion.isCollapsed && el.contains(seleccion.anchorNode);
+    }),true,'El cursor permanece dentro del texto al abrir la barra contextual');
+    await page.keyboard.type(' añadido');
     await page.evaluate(()=>flushEdicion());
     assert.equal(await page.evaluate(()=>findBlock('texto').block.text),'Hola $x$ añadido');
   });
@@ -131,6 +135,49 @@ test('contextual controls follow the selected object and keep the canvas usable'
     assert.equal(r.b.text,'Alfa beta gamma');
     assert.deepEqual(r.b.formatoTexto,[{inicio:5,fin:12,negrita:true,cursiva:true}]);
     assert.ok(!r.avisos.some(x=>/formato de texto/.test(x)),JSON.stringify(r.avisos));
+  });
+
+  await t.test('formatting shortcuts preserve the selected text, focus and undo history',async()=>{
+    await reset();await page.evaluate(()=>{findBlock('texto').block.text='Alfa beta gamma';snapNow();renderAll();selectBlock('texto');});
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await page.keyboard.press('End');await page.keyboard.type('!');
+    await page.keyboard.press('Home');
+    for(let i=0;i<5;i++) await page.keyboard.press('ArrowRight');
+    for(let i=0;i<4;i++) await page.keyboard.press('Shift+ArrowRight');
+    assert.equal(await page.evaluate(()=>getSelection().toString()),'beta');
+    await page.keyboard.press('Control+b');
+    assert.deepEqual(await page.evaluate(()=>({texto:findBlock('texto').block.text,
+      formato:findBlock('texto').block.formatoTexto,seleccion:getSelection().toString(),foco:document.activeElement?.dataset.ek})),
+      {texto:'Alfa beta gamma!',formato:[{inicio:5,fin:9,negrita:true}],seleccion:'beta',foco:'b:texto'});
+    await page.waitForFunction(()=>document.querySelector('[data-barra-accion="negrita"]')?.getAttribute('aria-pressed')==='true');
+    assert.equal(await barra.getByRole('button',{name:'Negrita'}).getAttribute('aria-pressed'),'true');
+    await page.keyboard.press('Meta+i');
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:5,fin:9,negrita:true,cursiva:true}]);
+    assert.equal(await page.evaluate(()=>getSelection().toString()),'beta');
+    await page.keyboard.press('Control+z');
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:5,fin:9,negrita:true}]);
+    await page.keyboard.press('Control+Shift+z');
+    assert.deepEqual(await page.evaluate(()=>findBlock('texto').block.formatoTexto),[{inicio:5,fin:9,negrita:true,cursiva:true}]);
+  });
+
+  await t.test('formatting shortcuts respect the whole-block action and other keyboard contexts',async()=>{
+    await reset();await page.evaluate(()=>selectBlock('texto'));
+    await page.locator('#stageInner .blk[data-bid="texto"] [data-edit]').click();
+    await page.keyboard.press('End');
+    await page.keyboard.down('Control');await page.keyboard.down('b');await page.keyboard.down('b');
+    await page.keyboard.up('b');await page.keyboard.up('Control');
+    assert.equal(await page.evaluate(()=>!!findBlock('texto').block.negrita),true,'la repetición no debe alternar dos veces');
+    const disposicion=await page.evaluate(()=>S.prefs.barras);
+    await page.keyboard.press('Control+Shift+b');
+    assert.notEqual(await page.evaluate(()=>S.prefs.barras),disposicion,'el atajo de la disposición sigue funcionando');
+    assert.equal(await page.evaluate(()=>!!findBlock('texto').block.negrita),true);
+    await page.keyboard.press('Control+Shift+b');
+    await page.locator('#deckTitleInput').focus();await page.keyboard.press('Control+i');
+    assert.equal(await page.evaluate(()=>!!findBlock('texto').block.cursiva),false,'un campo ajeno no cambia el bloque seleccionado');
+    await reset();await page.evaluate(()=>{curSlide().lienzoLibre=false;renderAll();selectBlock('texto');});
+    await page.locator('#stageInner .blk[data-bid="texto"][data-edit]').click();
+    await page.keyboard.press('End');await page.keyboard.press('Control+i');
+    assert.equal(await page.evaluate(()=>!!findBlock('texto').block.cursiva),true,'también funciona en el acomodo normal');
   });
 
   await t.test('typing and replacement keep formatting attached to the intended text',async()=>{

@@ -18,7 +18,7 @@
   .canvas-foot {gap:4px;flex-wrap:wrap}
   .foot-izq {min-width:0}
   .zoombox {margin-left:auto;gap:0}
-  .zoombox .icon-btn {width:36px;height:40px}
+  .zoombox .icon-btn {width:44px;height:44px}
   .prep-ind {max-width:90px;overflow:hidden;text-overflow:ellipsis}
   .menu,.pop {max-width:calc(100vw - 16px);max-height:calc(100dvh - 24px);overflow:auto}
   .modal {width:calc(100vw - 24px);max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
@@ -30,6 +30,19 @@
   .deck-row {flex-wrap:wrap}
   .deck-row .dname {min-width:0;flex-basis:100%;overflow-wrap:anywhere}
   .insp-body button,.itab,.mo-body button {min-height:44px}
+}
+/* En retrato el pie ocupa su propio espacio: así las herramientas de composición no
+   tapan la diapositiva. La tira se desplaza sin recortar botones ni anillos de foco. */
+@media (max-width:920px) and (orientation:portrait) and (min-height:501px) {
+  .canvas-wrap {--capas-alto:min(200px,24vh)}
+  .canvas-scroll {min-height:0}
+  .canvas-foot {position:relative;inset:auto;bottom:auto;flex:none;padding:var(--e1) var(--e2) var(--e2)}
+  .foot-izq {flex:none;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:6px;scrollbar-width:thin}
+  .foot-izq>* {flex:none}
+  .foot-izq button {min-height:44px}
+  .lienzo-composicion {position:static}
+  .canvas-wrap.capas-abierto .canvas-scroll {margin-bottom:0}
+  .canvas-wrap.capas-abierto .canvas-foot {inset-inline-end:auto;bottom:auto;margin-bottom:var(--capas-alto)}
 }
 @media (max-width:600px) {
   .ed-badge {display:none}

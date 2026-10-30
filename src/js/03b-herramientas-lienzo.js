@@ -27,6 +27,15 @@ function nombreConector(b, slide = null) {
   return iguales.length > 1 ? texto + ' (' + (iguales.indexOf(b) + 1) + ')' : texto;
 }
 
+/* Los estilos son opcionales: sin ellos se conserva la flecha del tema. */
+function estiloConector(c) {
+  const estilo = {};
+  if (typeof c.color === 'string' && /^#[\da-f]{6}$/i.test(c.color)) estilo.color = c.color;
+  if (Number.isInteger(c.grosor) && c.grosor >= 1 && c.grosor <= 8) estilo.grosor = c.grosor;
+  if (['fin', 'ambos', 'ninguna'].includes(c.flecha)) estilo.flecha = c.flecha;
+  return estilo;
+}
+
 /* Intersección con la caja en unidades de diapositiva, no de porcentajes:
    la dirección debe ser correcta tanto en 16:9 como en 4:3. Las formas
    simples sin pie usan su contorno interior y su giro; otros bloques usan su caja. */
@@ -61,22 +70,27 @@ function conectoresVisibles(sl, deck, posiciones = null, giros = null) {
     /* Si se superponen no hay un segmento entre contornos. Se conserva la
        relación y vuelve a verse al separar los objetos. */
     if (inicio + fin >= 1) continue;
+    const estilo = estiloConector(c);
     resultado.push({desde:c.desde, hasta:c.hasta, x1:a.x + dx * inicio, y1:a.y + dy * inicio,
-      x2:b.x - dx * fin, y2:b.y - dy * fin});
+      x2:b.x - dx * fin, y2:b.y - dy * fin, color:estilo.color || temaDe(deck).fg,
+      grosor:estilo.grosor ?? 3, flecha:estilo.flecha || 'fin'});
   }
   return resultado;
 }
 function pintaConectoresLienzo(svg, sl, deck, posiciones = null, giros = null) {
   if (!svg) return;
   const bloques = new Map(zonas(sl).flat().map(b => [b.id, b]));
-  const conexiones = conectoresVisibles(sl, deck, posiciones, giros), color = temaDe(deck).fg;
+  const conexiones = conectoresVisibles(sl, deck, posiciones, giros);
   svg.setAttribute('aria-label', conexiones.map(c => nombreConector(bloques.get(c.desde), sl) + ' hacia ' + nombreConector(bloques.get(c.hasta), sl)).join('; ') || 'Sin conectores visibles');
   svg.replaceChildren(...conexiones.map(c => {
     const dx = c.x2 - c.x1, dy = c.y2 - c.y1, largo = Math.hypot(dx, dy), ux = dx / largo, uy = dy / largo;
-    const punta = Math.min(16, largo / 2), ancho = punta * .42;
+    const punta = Math.min(Math.max(16, c.grosor * 4), largo / 2), ancho = punta * .42;
+    const cabeza = (x, y, vx, vy) => sv('path', {
+      d:`M${x},${y} L${x - punta * vx - ancho * vy},${y - punta * vy + ancho * vx} L${x - punta * vx + ancho * vy},${y - punta * vy - ancho * vx} Z`, fill:c.color});
     return sv('g', {'data-desde':c.desde, 'data-hasta':c.hasta},
-      sv('line', {x1:c.x1, y1:c.y1, x2:c.x2, y2:c.y2, stroke:color, 'stroke-width':3, 'stroke-linecap':'round'}),
-      sv('path', {d:`M${c.x2},${c.y2} L${c.x2 - punta * ux - ancho * uy},${c.y2 - punta * uy + ancho * ux} L${c.x2 - punta * ux + ancho * uy},${c.y2 - punta * uy - ancho * ux} Z`, fill:color}));
+      sv('line', {x1:c.x1, y1:c.y1, x2:c.x2, y2:c.y2, stroke:c.color, 'stroke-width':c.grosor, 'stroke-linecap':'round'}),
+      c.flecha === 'ambos' ? cabeza(c.x1, c.y1, -ux, -uy) : null,
+      c.flecha !== 'ninguna' ? cabeza(c.x2, c.y2, ux, uy) : null);
   }));
 }
 

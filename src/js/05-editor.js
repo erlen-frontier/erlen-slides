@@ -568,6 +568,18 @@ function cierraPanelCapas() {
   abridorPanelCapas = null;
   if (dentro && destino) destino.focus({preventScroll:true});
 }
+function seleccionaCapasVisibles() {
+  const deck = S.deck, sl = curSlide();
+  if (!sl.lienzoLibre || !zonasDe(sl.layout)) return;
+  flushEdicion();
+  if (deck !== S.deck || sl !== curSlide() || !sl.lienzoLibre) return;
+  const visibles = bloquesEnCapas(sl).filter(b => bloqueVisible(b, deck));
+  if (!visibles.length) return;
+  const activo = visibles.find(b => b.id === S.selBlock)?.id || visibles.at(-1).id;
+  selectBlock(activo);
+  const ids = idsSeleccionados(); ids.clear(); visibles.forEach(b => ids.add(b.id));
+  pintaSeleccionBloques(); mountToolbar();
+}
 function openObjetosLienzo(abridor) {
   const panel = $('#panelCapas'), sl = curSlide();
   if (!panel || !sl.lienzoLibre || !zonasDe(sl.layout)) return;
@@ -582,13 +594,16 @@ function iniciaPanelCapas() {
   const wrap = $('.canvas-wrap'); if (!wrap || $('#panelCapas')) return;
   const cerrar = h('button', {type:'button', class:'icon-btn', 'aria-label':'Cerrar panel de capas', title:'Cerrar panel de capas', onclick:cierraPanelCapas}, '✕');
   const lista = h('div', {class:'lienzo-lista capas-lista', role:'list', 'aria-label':'Orden de capas'});
+  const todas = h('input', {type:'checkbox', 'data-panel-todas':'', title:'Seleccionar o desmarcar todas las capas visibles',
+    onchange:e => { if (e.currentTarget.checked) seleccionaCapasVisibles(); else selectBlock(null); }});
   const seleccionar = h('button', {type:'button', class:'btn btn-sm', 'data-panel-seleccionar':'', onclick:() => {
     if (S.selBlock && idsSeleccionados().has(S.selBlock)) enfocaBloqueLibre(S.selBlock);
   }, title:'Enfocar la selección en el lienzo'}, 'Seleccionar marcados');
   const panel = h('aside', {id:'panelCapas', class:'panel-capas', role:'region', 'aria-label':'Capas de la diapositiva', hidden:true},
     h('div', {class:'capas-cab'}, h('div', null, h('strong', null, 'Capas'), h('span', null, 'De delante hacia atrás')), cerrar),
-    h('p', {class:'capas-ayuda'}, 'Selecciona, bloquea o arrastra. Las flechas también cambian el orden.'),
-    h('p', {class:'capas-estado', role:'status', 'aria-live':'polite'}), lista,
+    h('p', {class:'capas-ayuda'}, 'En casillas y nombres, ↑↓ recorren capas; los botones de flecha las ordenan.'),
+    h('div', {class:'capas-seleccion'}, h('label', {class:'capas-todas'}, todas, 'Marcar visibles'),
+      h('p', {class:'capas-estado', role:'status', 'aria-live':'polite'})), lista,
     h('div', {class:'capas-pie'}, seleccionar));
   /* Perder el foco en un editor puede repintar el panel durante el primer
      clic. Mantener el nodo hasta soltar evita que ese clic se pierda. */
@@ -606,7 +621,21 @@ function iniciaPanelCapas() {
     document.addEventListener('pointercancel', suelta, true);
     window.addEventListener('blur', suelta, true);
   });
-  panel.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cierraPanelCapas(); } });
+  panel.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cierraPanelCapas(); return; }
+    if (e.defaultPrevented || e.isComposing || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const paso = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+    const accion = e.target.dataset.capaAccion;
+    if (!paso || (accion !== 'marca' && accion !== 'seleccionar')) return;
+    const controles = Array.from(lista.querySelectorAll('[data-capa-accion="' + accion + '"]:not(:disabled)'));
+    const indice = controles.indexOf(e.target); if (indice < 0) return;
+    e.preventDefault();
+    const destino = controles[indice + paso];
+    if (destino) {
+      destino.focus({preventScroll:true});
+      destino.closest('[data-capa-fila]').scrollIntoView({block:'nearest', inline:'nearest'});
+    }
+  });
   wrap.append(panel);
 }
 function miniaturaCapa(b, nombre) {
@@ -623,6 +652,14 @@ function sincronizaPanelCapas() {
   const panel = $('#panelCapas'); if (!panel || panel.hidden) return;
   const sl = curSlide(), seleccion = idsSeleccionados(), orden = bloquesEnCapas(sl).slice().reverse();
   const disponibles = new Map(orden.map(b => [String(b.id), b]));
+  const visibles = orden.filter(b => bloqueVisible(b, S.deck));
+  const marcadas = visibles.filter(b => seleccion.has(b.id)).length;
+  const todas = panel.querySelector('[data-panel-todas]');
+  if (todas) {
+    todas.disabled = !sl.lienzoLibre || !zonasDe(sl.layout) || !visibles.length;
+    todas.checked = !!visibles.length && marcadas === visibles.length;
+    todas.indeterminate = marcadas > 0 && marcadas < visibles.length;
+  }
   const estado = panel.querySelector('.capas-estado');
   if (estado) estado.textContent = !sl.lienzoLibre || !zonasDe(sl.layout) ? 'Activa el lienzo libre en esta diapositiva.' :
     !orden.length ? 'Esta diapositiva todavía no tiene capas.' : seleccion.size ? seleccion.size + (seleccion.size === 1 ? ' capa seleccionada' : ' capas seleccionadas') : 'Ninguna capa seleccionada';
@@ -670,13 +707,15 @@ function pintaPanelCapas() {
       continue;
     }
     if (existente) existente.remove();
-    const marca = h('input', {type:'checkbox', disabled:oculto, 'aria-label':'Marcar '+referencia, 'data-capa-accion':'marca', onchange:e => {
+    const marca = h('input', {type:'checkbox', disabled:oculto, 'aria-label':'Marcar '+referencia, 'data-capa-accion':'marca',
+      title:'Usa las flechas arriba y abajo para recorrer las capas', onchange:e => {
       if (S.deck !== deck || curSlide() !== sl || findBlock(b.id)?.block !== b) return;
       if (e.target.checked !== idsSeleccionados().has(b.id)) selectBlock(b.id, true);
     }});
     const asa = h('span', {class:'capa-asa', 'data-capa-arrastrar':'', draggable:'true', 'aria-hidden':'true',
       title:'Arrastrar para cambiar el orden'}, '⠿');
-    const elige = h('button', {type:'button', class:'lienzo-lista-nombre', 'data-capa-accion':'seleccionar', disabled:oculto, onclick:e => {
+    const elige = h('button', {type:'button', class:'lienzo-lista-nombre', 'data-capa-accion':'seleccionar', disabled:oculto,
+      title:'Usa las flechas arriba y abajo para recorrer las capas', onclick:e => {
       if (S.deck !== deck || curSlide() !== sl || findBlock(b.id)?.block !== b) return;
       selectBlock(b.id, e.ctrlKey || e.metaKey || e.shiftKey); if (S.selBlock) enfocaBloqueLibre(S.selBlock);
     }}, h('span', {class:'capa-nombre'}, detalle || nombre), h('span', {class:'capa-tipo'}, nombre + (oculto ? ' · oculto en este nivel' : '') + (b.locked ? ' · bloqueado' : '')));
@@ -1035,6 +1074,55 @@ function opcionesOrganizaLienzo() {
   }}));
 }
 
+function abreEstiloConector(deck, slide, conector, nombre, anchor) {
+  if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre || !slide.conectores?.includes(conector)) {
+    toast('La conexión ya no está en esta diapositiva.', 'warn'); return;
+  }
+  if (anchor?.isConnected) anchor.focus();
+  const captura = JSON.stringify(conector), estilo = estiloConector(conector);
+  const color = h('input', {id:uid(), class:'field', type:'color', value:estilo.color || temaDe(deck).fg,
+    disabled:!estilo.color});
+  const tema = h('input', {type:'checkbox', checked:!estilo.color, onchange:e => { color.disabled = e.currentTarget.checked; }});
+  const grosor = h('input', {id:uid(), class:'field', type:'number', min:'1', max:'8', step:'1',
+    value:String(estilo.grosor ?? 3), required:true});
+  const flecha = h('select', {id:uid(), class:'field'},
+    [['fin', 'Flecha en destino'], ['ambos', 'Flechas en ambos extremos'], ['ninguna', 'Sin flechas']]
+      .map(([valor, etiqueta]) => h('option', {value:valor, selected:(estilo.flecha || 'fin') === valor}, etiqueta)));
+  const mensaje = h('p', {class:'hint', role:'status', 'aria-live':'polite'});
+  const fila = (etiqueta, campo) => h('div', {class:'irow'},
+    h('label', {for:campo.id}, etiqueta), h('div', {style:'flex:1.4'}, campo));
+  const form = h('form', {id:uid(), class:'estilo-conector', onsubmit:e => {
+    e.preventDefault();
+    if (typeof flushEdicion === 'function') flushEdicion();
+    if (deck !== S.deck || slide !== curSlide() || !slide.lienzoLibre ||
+        !slide.conectores?.includes(conector) || JSON.stringify(conector) !== captura) {
+      mensaje.textContent = 'La conexión cambió. Cierra este diálogo y vuelve a abrirlo.'; return;
+    }
+    const ancho = Number(grosor.value);
+    if (!Number.isInteger(ancho) || ancho < 1 || ancho > 8) {
+      mensaje.textContent = 'El grosor debe ser un número entero entre 1 y 8.'; grosor.focus(); return;
+    }
+    const siguiente = {...conector};
+    delete siguiente.color; delete siguiente.grosor; delete siguiente.flecha;
+    if (!tema.checked) siguiente.color = color.value;
+    if (ancho !== 3) siguiente.grosor = ancho;
+    if (flecha.value !== 'fin') siguiente.flecha = flecha.value;
+    const cambio = JSON.stringify(siguiente) !== JSON.stringify(conector);
+    if (cambio) {
+      delete conector.color; delete conector.grosor; delete conector.flecha;
+      Object.assign(conector, siguiente);
+    }
+    closeModal();
+    if (cambio) { commit(); toast('Estilo de conexión actualizado', null, {t:'Deshacer', fn:doUndo}); }
+  }}, h('p', null, nombre),
+  h('label', {class:'check'}, tema, 'Usar color del tema'),
+  fila('Color personalizado', color), fila('Grosor (1–8)', grosor), fila('Extremos', flecha), mensaje);
+  openModal({title:'Estilo de conexión', size:'modal-sm', body:form, foot:[
+    h('button', {class:'btn', type:'button', onclick:closeModal}, 'Cancelar'),
+    h('button', {class:'btn btn-pri', type:'submit', form:form.id}, 'Aplicar')
+  ]});
+}
+
 function opcionesConectoresLienzo() {
   const deck = S.deck, slide = curSlide(), ids = [...idsSeleccionados()], hasta = S.selBlock;
   const desde = ids.find(id => id !== hasta), bloques = new Map(zonas(slide).flat().map(b => [b.id, b]));
@@ -1050,6 +1138,7 @@ function opcionesConectoresLienzo() {
   }}];
   for (const c of slide.conectores || []) {
     const nombre = nombreConector(bloques.get(c.desde), slide) + ' → ' + nombreConector(bloques.get(c.hasta), slide);
+    opciones.push({etiqueta:'Editar conexión: ' + nombre, accion:anchor => abreEstiloConector(deck, slide, c, nombre, anchor)});
     opciones.push({etiqueta:'Eliminar conexión: ' + nombre, accion:() => {
       if (eliminaConector(deck, slide, c.desde, c.hasta)) toast('Conexión eliminada', null, {t:'Deshacer', fn:doUndo});
       else toast('La conexión ya no está en esta diapositiva.', 'warn');
@@ -1066,11 +1155,21 @@ function opcionesFormasLienzo() {
 }
 
 function menuOpcionesLienzo(anchor, opciones, clase = '') {
-  const menu = h('div', {class:'menu' + (clase ? ' ' + clase : '')});
+  const menu = h('div', {class:'menu' + (clase ? ' ' + clase : ''), role:'group', tabindex:'-1',
+    'aria-label':anchor.getAttribute('aria-label') || anchor.textContent.trim()});
   for (const o of opciones) menu.append(h('button', {type:'button', disabled:!!o.deshabilitado?.(), onclick:() => {
-    closeMenus(); o.accion();
+    closeMenus(); o.accion(anchor);
   }}, o.etiqueta));
   showMenu(menu, anchor);
+  menu.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const botones = [...menu.querySelectorAll('button:not([disabled])')], i = botones.indexOf(document.activeElement);
+    if ((e.shiftKey && i <= 0) || (!e.shiftKey && i === botones.length - 1)) {
+      closeMenus(); anchor.focus();
+      if (e.shiftKey) e.preventDefault();
+    }
+  });
+  (menu.querySelector('button:not([disabled])') || menu).focus();
 }
 function menuOrganizaLienzo(anchor) { menuOpcionesLienzo(anchor, opcionesOrganizaLienzo()); }
 function menuConectoresLienzo(anchor) { menuOpcionesLienzo(anchor, opcionesConectoresLienzo(), 'menu-conectores'); }
@@ -1153,6 +1252,14 @@ function initCanvasEvents() {
   const pie = $('.canvas-foot .foot-izq');
   iniciaBarraContextual();
   iniciaPanelCapas();
+  /* El navegador puede dejar un botón parcialmente recortado al recibir foco.
+     Desplazar solo la tira mantiene visible también su anillo de foco. */
+  pie?.addEventListener('focusin', e => {
+    if (pie.scrollWidth <= pie.clientWidth) return;
+    const tira = pie.getBoundingClientRect(), control = e.target.getBoundingClientRect();
+    if (control.left < tira.left + 6) pie.scrollLeft += control.left - tira.left - 6;
+    else if (control.right > tira.right - 6) pie.scrollLeft += control.right - tira.right + 6;
+  });
   if (pie && !$('#lienzoLibreBtn')) pie.append(h('button', { id: 'lienzoLibreBtn', type: 'button', class: 'btn btn-sm lienzo-control',
     'aria-pressed': 'false', onclick: alternaLienzoLibre }, 'Lienzo libre'));
   if (pie && !$('#lienzoObjetosBtn')) pie.append(h('button', { id: 'lienzoObjetosBtn', type: 'button', class: 'btn btn-sm',
@@ -1174,7 +1281,9 @@ function initCanvasEvents() {
   /* Arrastrar una imagen dispara el arrastre nativo del navegador, que cancela
      el puntero a media gesto. El lienzo tiene el suyo propio, con sus guías. */
   inner.addEventListener('dragstart', e => e.preventDefault());
+  let primerClicTexto = null;
   inner.addEventListener('mousedown', e => {
+    primerClicTexto = null;
     if (e.target.closest('.sliders')) { e.stopPropagation(); return; }
     /* En mousedown y no en click: al soltar el ratón ya se ha ido el foco del
        texto anterior, y ese guardado vuelve a dibujar el lienzo, de modo que
@@ -1193,6 +1302,8 @@ function initCanvasEvents() {
       return;
     }
     if (blk && blk.dataset.bid && blk.dataset.bid !== S.selBlock) {
+      const campo = e.button === 0 && e.target.closest('[data-edit]');
+      if (campo) primerClicTexto = {campo, x:e.clientX, y:e.clientY};
       const ids = idsSeleccionados();
       if (curSlide().lienzoLibre && ids.size > 1 && ids.has(blk.dataset.bid)) {
         const anteriores = [...ids]; selectBlock(blk.dataset.bid);
@@ -1207,6 +1318,18 @@ function initCanvasEvents() {
       if (n > 1 && S.insCol !== z) { S.insCol = z; if (S.tab === 'insert') renderInspector(); }
     }
   });
+  /* Al aparecer la barra contextual, el lienzo puede moverse entre pulsar y
+     soltar. Si un clic sin arrastre dejó el cursor fuera del editor enfocado,
+     recupera su posición inicial al final del texto sin tocar selecciones. */
+  document.addEventListener('mouseup', e => {
+    const clic = primerClicTexto; primerClicTexto = null;
+    if (!clic || e.button !== 0 || Math.abs(e.clientX - clic.x) > 5 || Math.abs(e.clientY - clic.y) > 5 ||
+        rawEl !== clic.campo || document.activeElement !== clic.campo) return;
+    const seleccion = getSelection();
+    if (!seleccion || !seleccion.isCollapsed || (seleccion.anchorNode && clic.campo.contains(seleccion.anchorNode))) return;
+    const rango = document.createRange(); rango.selectNodeContents(clic.campo); rango.collapse(false);
+    seleccion.removeAllRanges(); seleccion.addRange(rango);
+  }, true);
   inner.addEventListener('click', e => {
     if (ignoraClicLibre) { e.preventDefault(); e.stopPropagation(); ignoraClicLibre = false; return; }
     if (e.target.closest('[data-nueva-z]')) return;
@@ -1270,11 +1393,24 @@ function initCanvasEvents() {
     leaveRaw(el, rel ? rel.dataset.ek : null);
   });
   inner.addEventListener('keydown', e => {
+    if (curSlide().lienzoLibre && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && !e.isComposing && !e.defaultPrevented &&
+        /^a$/i.test(e.key) && e.target.matches('.blk[data-bid]') && e.target.dataset.bid === S.selBlock) {
+      e.preventDefault(); seleccionaCapasVisibles(); enfocaBloqueLibre(S.selBlock); return;
+    }
     const nz = e.target.closest('[data-nueva-z]');
     if (nz && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); nuevoTextoEnZona(nz.dataset.nuevaZ); return; }
     const el = e.target.closest('[data-edit]');
     if (!el) return;
     const ek = el.dataset.ek, p = ekParts(ek);
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && !e.isComposing && !e.defaultPrevented &&
+        /^(b|i)$/i.test(e.key) && rawEl === el) {
+      const ctx = contextoBarra();
+      if (ctx && ctx.b.type === 'text' && ctx.ids.length === 1 && !ctx.b.locked && ek === 'b:' + ctx.b.id) {
+        e.preventDefault();
+        if (!e.repeat) cambiaTextoBarra(ctx, e.key.toLowerCase() === 'b' ? 'negrita' : 'cursiva', v => !v);
+        return;
+      }
+    }
     if (e.key === 'Escape') { rawCancel = true; el.blur(); e.preventDefault(); return; }
     if (e.key === 'Enter' && !e.shiftKey) {
       if (p[2] === 'li') {

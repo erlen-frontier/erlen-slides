@@ -175,10 +175,11 @@ function pintaBarraContextual() {
       onchange:e => cambiaTextoBarra(ctx, 'size', e.currentTarget.value)},
       h('option',{value:'s'},'Pequeño'),h('option',{value:'n'},'Normal'),h('option',{value:'l'},'Grande'));
     g.append(tam);
-    const texto = (simbolo,nombre,accion,campo,valor) => g.append(h('button',{type:'button',title:nombre,'aria-label':nombre,
+    const texto = (simbolo,nombre,accion,campo,valor,atajo) => g.append(h('button',{type:'button',
+      title:nombre + (atajo ? ' · Ctrl/⌘+' + atajo + ' al editar' : ''),'aria-label':nombre,
       'data-barra-accion':accion,'aria-pressed':'false',onclick:() => cambiaTextoBarra(ctx,campo,valor)},simbolo));
-    texto(icono('Bold','N'),'Negrita','negrita','negrita',v=>!v);
-    texto(icono('Italic','C'),'Cursiva','cursiva','cursiva',v=>!v);
+    texto(icono('Bold','N'),'Negrita','negrita','negrita',v=>!v,'B');
+    texto(icono('Italic','C'),'Cursiva','cursiva','cursiva',v=>!v,'I');
     texto(icono('AlignLeft','≡'),'Alinear texto a la izquierda','izquierda','align','left');
     texto(icono('AlignCenter','≡'),'Centrar texto','centro','align','center');
     texto(icono('AlignRight','≡'),'Alinear texto a la derecha','derecha','align','right');

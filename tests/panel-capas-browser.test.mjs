@@ -83,6 +83,45 @@ test('the layers panel stays usable while editing the free canvas', {timeout:180
     assert.equal(await page.evaluate(()=>idsSeleccionados().has('b')),false);
   });
 
+  await t.test('arrow keys navigate visible layers without changing selection or order',async t=>{
+    t.after(()=>page.setViewportSize({width:1440,height:1000}));
+    await reset();
+    await page.evaluate(()=>{findBlock('c').block.nivel='comite';findBlock('a').block.locked=true;S.deck.meta.nivel='congreso';snapNow();renderAll();});
+    if(!(await panel.isVisible()))await abrir();
+    const d=panel.getByRole('checkbox',{name:'Marcar D'});
+    await d.check();await d.focus();
+    const antes=await page.evaluate(()=>({ids:[...idsSeleccionados()],orden:bloquesEnCapas(curSlide()).map(b=>b.id),undo:S.undo.length}));
+    const foco=()=>page.evaluate(()=>({fila:document.activeElement.closest('[data-capa-fila]')?.dataset.capaFila,accion:document.activeElement.dataset.capaAccion}));
+    assert.match(await d.getAttribute('title'),/flechas arriba y abajo/);
+    await page.keyboard.press('Shift+ArrowDown');assert.deepEqual(await foco(),{fila:'d',accion:'marca'});
+    await page.keyboard.press('ArrowDown');
+    assert.deepEqual(await foco(),{fila:'b',accion:'marca'},'se omite C, oculta en este nivel');
+    assert.equal(await page.evaluate(()=>document.activeElement.matches(':focus-visible')),true);
+    await page.keyboard.press('ArrowDown');
+    assert.deepEqual(await foco(),{fila:'a',accion:'marca'},'una capa bloqueada sigue siendo seleccionable');
+    await page.keyboard.press('ArrowDown');assert.deepEqual(await foco(),{fila:'a',accion:'marca'});
+    await page.keyboard.press('ArrowUp');assert.deepEqual(await foco(),{fila:'b',accion:'marca'});
+    assert.deepEqual(await page.evaluate(()=>({ids:[...idsSeleccionados()],orden:bloquesEnCapas(curSlide()).map(b=>b.id),undo:S.undo.length})),antes);
+    await page.keyboard.press('Space');
+    assert.deepEqual((await page.evaluate(()=>[...idsSeleccionados()])).sort(),['b','d']);
+    await panel.locator('[data-capa-fila="a"] [data-capa-accion="seleccionar"]').focus();
+    await page.keyboard.press('ArrowUp');assert.deepEqual(await foco(),{fila:'b',accion:'seleccionar'});
+    await page.keyboard.press('ArrowUp');assert.deepEqual(await foco(),{fila:'d',accion:'seleccionar'});
+    await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(()=>S.selBlock),'d');
+    assert.equal(await page.evaluate(()=>document.activeElement.dataset.bid),'d');
+    const ordenar=panel.getByRole('button',{name:'Retrasar capa D'});await ordenar.focus();
+    await page.keyboard.press('ArrowDown');assert.deepEqual(await foco(),{fila:'d',accion:'atras'});
+    await page.setViewportSize({width:390,height:844});await d.focus();
+    await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowDown');
+    assert.deepEqual(await foco(),{fila:'a',accion:'marca'});
+    const visible=await page.evaluate(()=>{
+      const a=document.activeElement.getBoundingClientRect(),f=document.activeElement.closest('[data-capa-fila]').getBoundingClientRect(),l=document.querySelector('.capas-lista').getBoundingClientRect();
+      return {control:a.top>=l.top-1 && a.bottom<=l.bottom+1,fila:f.top>=l.top-1 && f.bottom<=l.bottom+1};
+    });
+    assert.deepEqual(visible,{control:true,fila:true},'el foco y su fila se desplazan dentro de la lista');
+  });
+
   await t.test('dragging and keyboard controls change the visible stack and undo in one step',async()=>{
     await reset();if(!(await panel.isVisible()))await abrir();
     const antes=await page.evaluate(()=>S.undo.length);
@@ -239,16 +278,24 @@ test('the layers panel stays usable while editing the free canvas', {timeout:180
 
   await t.test('landscape on a short screen leaves complete layer rows usable',async()=>{
     await page.setViewportSize({width:844,height:390});await reset();if(!(await panel.isVisible()))await abrir();
-    for(const size of [{width:844,height:390},{width:740,height:360}]){
+    for(const size of [{width:844,height:390},{width:740,height:360},{width:420,height:360},{width:419,height:360},{width:320,height:360}]){
       await page.setViewportSize(size);
       const r=await page.evaluate(()=>{
+        const rect=s=>{const x=document.querySelector(s).getBoundingClientRect();return {left:x.left,right:x.right,top:x.top,bottom:x.bottom};};
         const lista=document.querySelector('#panelCapas .capas-lista').getBoundingClientRect();
         const fila=document.querySelector('#panelCapas [data-capa-fila]')?.getBoundingClientRect();
-        return {lista:{top:lista.top,bottom:lista.bottom,height:lista.height},fila:fila&&{top:fila.top,bottom:fila.bottom,height:fila.height}};
+        return {lista:{top:lista.top,bottom:lista.bottom,height:lista.height},fila:fila&&{top:fila.top,bottom:fila.bottom,height:fila.height},
+          marcar:rect('.capas-todas'),titulo:rect('.capas-cab strong'),boton:rect('.capas-pie')};
       });
       assert.ok(r.fila && r.lista.height>=r.fila.height+2 && r.fila.bottom<=r.lista.bottom+1,JSON.stringify({size,...r}));
+      const solapan=(a,b)=>a.left<b.right && b.left<a.right && a.top<b.bottom && b.top<a.bottom;
+      assert.ok(!solapan(r.marcar,r.titulo) && !solapan(r.marcar,r.boton),JSON.stringify({size,...r}));
       const marca=panel.getByRole('checkbox',{name:'Marcar D'});if(await marca.isChecked())await marca.uncheck();await marca.check();
       assert.equal(await page.evaluate(()=>idsSeleccionados().has('d')),true);
+      const todas=panel.getByRole('checkbox',{name:'Marcar visibles',exact:true});if(await todas.isChecked())await todas.uncheck();
+      await panel.locator('.capas-todas').click();
+      assert.deepEqual((await page.evaluate(()=>[...idsSeleccionados()])).sort(),['a','b','c','d']);
+      await todas.uncheck();
     }
     await panel.getByRole('button',{name:'Cerrar panel de capas'}).click();
     await page.setViewportSize({width:1440,height:1000});

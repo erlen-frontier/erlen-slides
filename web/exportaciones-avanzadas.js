@@ -134,7 +134,9 @@ window.ERLEN_EXPORTADORES = (() => {
             x: Math.min(c.x1, c.x2) * k, y: Math.min(c.y1, c.y2) * ky,
             w: Math.abs(c.x2 - c.x1) * k, h: Math.abs(c.y2 - c.y1) * ky,
             flipH: c.x2 < c.x1, flipV: c.y2 < c.y1,
-            line: { color: hex(th.fg, th.bg), width: 3 * k * 72, endArrowType: 'triangle' }
+            line: { color: hex(c.color, th.bg), width: c.grosor * k * 72,
+              ...(c.flecha === 'ambos' ? { beginArrowType: 'triangle' } : c.flecha === 'ninguna' ? { beginArrowType: 'none' } : {}),
+              endArrowType: c.flecha === 'ninguna' ? 'none' : 'triangle' }
           });
         }
         for (const el of raiz.querySelectorAll('.blk[data-bid]')) {

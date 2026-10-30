@@ -98,7 +98,7 @@ function aplicaLoteBloques(deck, slide, ids, accion, valor) {
       [...orden, ...nuevas].forEach((b, i) => { b.capaLibre = i; });
       if (slide.conectores) slide.conectores.push(...slide.conectores
         .filter(c => copias.has(c.desde) && copias.has(c.hasta))
-        .map(c => ({desde:copias.get(c.desde).id, hasta:copias.get(c.hasta).id})));
+        .map(c => ({...deepCopy(c), desde:copias.get(c.desde).id, hasta:copias.get(c.hasta).id})));
       const activa = copias.get(S.selBlock) || nuevas.at(-1), seleccion = idsSeleccionados();
       seleccion.clear(); nuevas.forEach(b => seleccion.add(b.id)); S.selBlock = activa?.id || null;
     }

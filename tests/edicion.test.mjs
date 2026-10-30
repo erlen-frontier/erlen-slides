@@ -1,4 +1,128 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {editor} from '../herramientas/test-browser.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {runInContext} from 'node:vm';import {editor} from '../herramientas/test-browser.mjs';
+
+test('Search highlights and replaces the original text after a combining accent',async()=>{const{dom,run,errors}=await editor();try{
+ run("(()=>{const d=blankDeck();d.slides[0].title='Cafe\\u0301 x';loadDeck(d,null,true);wsCerrar();openBuscar('x')})()");
+ const modal=dom.window.document.querySelector('#modalRoot [role=dialog]');
+ assert.equal(modal.querySelector('.bu-tx mark').textContent,'x');
+ modal.querySelector('input[placeholder="Reemplazar por…"]').value='Z';
+ const consulta=modal.querySelector('input[placeholder^="Buscar"]');
+ const aviso=modal.querySelector('.hint[role=status]');
+ const reemplazar=[...modal.querySelectorAll('button')].find(b=>b.textContent==='Reemplazar todo');
+ consulta.dispatchEvent(new dom.window.Event('input',{bubbles:true}));reemplazar.click();
+ await new Promise(resolve=>setTimeout(resolve,200));
+ assert.equal(aviso.hidden,false,'el repintado pendiente no oculta el resultado');
+ assert.equal(aviso.textContent,'1 reemplazo hecho.');
+ assert.equal(run('S.deck.slides[0].title'),'Cafe\u0301 Z');
+ run('doUndo()');assert.equal(run('S.deck.slides[0].title'),'Cafe\u0301 x');
+ run('doRedo()');assert.equal(run('S.deck.slides[0].title'),'Cafe\u0301 Z');
+ consulta.value='inexistente';consulta.dispatchEvent(new dom.window.Event('input',{bubbles:true}));reemplazar.click();
+ assert.equal(aviso.textContent,'No hubo coincidencias.');
+ consulta.value='';consulta.dispatchEvent(new dom.window.Event('input',{bubbles:true}));reemplazar.click();
+ assert.equal(aviso.textContent,'Escribe qué buscar.');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+test('Search replaces composed and combining accents without moving text formatting',async()=>{const{dom,run,errors}=await editor();try{
+ run(`(()=>{const d=blankDeck();d.slides[0].title='Cafe\u0301 CAFÉ 🧪 cafe\u0301';
+  d.slides.push({id:uid(),layout:'content',title:'',blocks:[Object.assign(newBlock('text'),{
+   text:'e\u0301 cafe\u0301 y CAFÉ fin',formatoTexto:[{inicio:3,fin:8,negrita:true},{inicio:11,fin:15,cursiva:true},{inicio:16,fin:19,negrita:true}]})]});
+  loadDeck(d,null,true);wsCerrar();openBuscar('CAFE')})()`);
+ const modal=dom.window.document.querySelector('#modalRoot [role=dialog]');
+ assert.match(modal.querySelector('.foot-note').textContent,/5 coincidencias/);
+ assert.deepEqual([...modal.querySelectorAll('.bu-tx mark')].map(x=>x.textContent),['Cafe\u0301','cafe\u0301']);
+ modal.querySelector('input[placeholder="Reemplazar por…"]').value='X🧪';
+ [...modal.querySelectorAll('button')].find(b=>b.textContent==='Reemplazar todo').click();
+ const lee=()=>JSON.parse(run(`JSON.stringify({title:S.deck.slides[0].title,b:S.deck.slides[1].blocks[0]})`));
+ const cambiado=lee();
+ assert.equal(cambiado.title,'X🧪 X🧪 🧪 X🧪');
+ assert.equal(cambiado.b.text,'e\u0301 X🧪 y X🧪 fin');
+ assert.deepEqual(cambiado.b.formatoTexto,[{inicio:3,fin:6,negrita:true},{inicio:9,fin:12,cursiva:true},{inicio:13,fin:16,negrita:true}]);
+ run('doUndo()');const anterior=lee();
+ assert.equal(anterior.b.text,'e\u0301 cafe\u0301 y CAFÉ fin');
+ assert.deepEqual(anterior.b.formatoTexto,[{inicio:3,fin:8,negrita:true},{inicio:11,fin:15,cursiva:true},{inicio:16,fin:19,negrita:true}]);
+ run('doRedo()');assert.deepEqual(lee(),cambiado);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+test('Search preserves original boundaries when normalization expands characters and emoji',async()=>{const{dom,run,errors}=await editor();try{
+ run("(()=>{const d=blankDeck();d.slides[0].title='가x 가y 🧪z 🧪';loadDeck(d,null,true);wsCerrar();openBuscar('가')})()");
+ let modal=dom.window.document.querySelector('#modalRoot [role=dialog]');
+ assert.match(modal.querySelector('.foot-note').textContent,/2 coincidencias/);
+ assert.equal(modal.querySelector('.bu-tx mark').textContent,'가');
+ modal.querySelector('input[placeholder="Reemplazar por…"]').value='*';
+ [...modal.querySelectorAll('button')].find(b=>b.textContent==='Reemplazar todo').click();
+ assert.equal(run('S.deck.slides[0].title'),'*x *y 🧪z 🧪');
+ run("closeModal();openBuscar('🧪')");modal=dom.window.document.querySelector('#modalRoot [role=dialog]');
+ assert.match(modal.querySelector('.foot-note').textContent,/2 coincidencias/);
+ assert.equal(modal.querySelector('.bu-tx mark').textContent,'🧪');
+ modal.querySelector('input[placeholder="Reemplazar por…"]').value='B';
+ [...modal.querySelectorAll('button')].find(b=>b.textContent==='Reemplazar todo').click();
+ assert.equal(run('S.deck.slides[0].title'),'*x *y Bz B');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+test('Search respects exact mode and a query reduced to no characters is safe',async()=>{const{dom,run,errors}=await editor();try{
+ run("(()=>{const d=blankDeck();d.slides[0].title='Cafe\\u0301 CAFÉ café 🧪';loadDeck(d,null,true);wsCerrar();openBuscar('cafe')})()");
+ const modal=dom.window.document.querySelector('#modalRoot [role=dialog]'),query=modal.querySelector('input[placeholder^="Buscar"]');
+ assert.match(modal.querySelector('.foot-note').textContent,/3 coincidencias/);
+ query.value='CAFÉ';modal.querySelector('input[type=checkbox]').click();
+ assert.match(modal.querySelector('.foot-note').textContent,/1 coincidencia/);
+ assert.equal(modal.querySelector('.bu-tx mark').textContent,'CAFÉ');
+ query.value='\u0301';
+ /* El timeout corta una regresión que bloquearía el bucle de eventos. */
+ runInContext("document.querySelector('#modalRoot input[type=checkbox]').click()",dom.getInternalVMContext(),{timeout:2000});
+ assert.match(modal.querySelector('.foot-note').textContent,/Sin coincidencias/);
+ [...modal.querySelectorAll('button')].find(b=>b.textContent==='Reemplazar todo').click();
+ assert.equal(run('S.deck.slides[0].title'),'Cafe\u0301 CAFÉ café 🧪');
+ modal.querySelector('input[type=checkbox]').click();
+ assert.equal(modal.querySelector('.bu-tx mark').textContent,'\u0301','el modo literal sí encuentra la marca');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+
+test('Search finds locked blocks but replacement leaves them unchanged and explains why',async()=>{const{dom,run,errors}=await editor();try{
+ run(`(()=>{const d=blankDeck();d.slides.push({id:'s',layout:'content',title:'x título',notes:'nota x otra',blocks:[
+  Object.assign(newBlock('text'),{id:'protegido',text:'x x',locked:true,formatoTexto:[{inicio:0,fin:1,negrita:true}]}),
+  Object.assign(newBlock('table'),{id:'tabla',locked:true,caption:'x',rows:[['x','otra'],['x','y']]}),
+  Object.assign(newBlock('text'),{id:'libre',text:'x libre',formatoTexto:[{inicio:0,fin:1,cursiva:true}]})]});
+  loadDeck(d,null,true);wsCerrar();openBuscar('x')})()`);
+ const modal=dom.window.document.querySelector('#modalRoot [role=dialog]');
+ const aviso=modal.querySelector('.hint[role=status]');
+ assert.equal(aviso.hidden,true);
+ assert.equal(modal.querySelector('.foot-note').textContent,'8 coincidencias en 1 diapositiva · 5 en bloques bloqueados');
+ const filas=[...modal.querySelectorAll('.bu-fila')];
+ assert.equal(filas.filter(f=>/bloquead/i.test(f.textContent)).length,4,'los resultados bloqueados se identifican');
+ const antes=JSON.parse(run('JSON.stringify(S.deck.slides[1])'));
+ modal.querySelector('input[placeholder="Reemplazar por…"]').value='largo';
+ const reemplazar=[...modal.querySelectorAll('button')].find(b=>b.textContent==='Reemplazar todo');reemplazar.click();
+ const despues=JSON.parse(run('JSON.stringify(S.deck.slides[1])'));
+ assert.equal(despues.title,'largo título');assert.equal(despues.notes,'nota largo otra');
+ assert.deepEqual(despues.blocks.slice(0,2),antes.blocks.slice(0,2));
+ assert.equal(despues.blocks[2].text,'largo libre');
+ assert.deepEqual(despues.blocks[2].formatoTexto,[{inicio:0,fin:5,cursiva:true}]);
+ assert.match(dom.window.document.querySelector('#toasts .toast:last-child').textContent,/3 reemplazos.*5.*bloquead/);
+ assert.match(modal.querySelector('.foot-note').textContent,/5 coincidencias.*5.*bloquead/);
+ assert.equal(aviso.hidden,false);
+ assert.match(aviso.textContent,/3 reemplazos hechos; 5 coincidencias en bloques bloqueados no se modificaron/);
+ const pasos=run('S.undo.length');reemplazar.click();
+ assert.equal(run('S.undo.length'),pasos,'no se crea historia si todos los resultados están bloqueados');
+ assert.equal(aviso.hidden,false);
+ assert.match(aviso.textContent,/No se hizo ningún reemplazo: 5 coincidencias en bloques bloqueados/);
+ modal.querySelector('input[type=checkbox]').click();
+ assert.equal(aviso.hidden,true,'al cambiar la opción de búsqueda se limpia el aviso anterior');
+ reemplazar.click();assert.equal(aviso.hidden,false);
+ const consulta=modal.querySelector('input[placeholder^="Buscar"]');
+ consulta.value='y';consulta.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+ await new Promise(resolve=>setTimeout(resolve,200));
+ assert.equal(aviso.hidden,true,'al cambiar la consulta se limpia el aviso anterior');
+ run('doUndo()');assert.deepEqual(JSON.parse(run('JSON.stringify(S.deck.slides[1])')),antes);
+ consulta.value='otra';consulta.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+ await new Promise(resolve=>setTimeout(resolve,200));reemplazar.click();
+ assert.equal(aviso.textContent,'1 reemplazo hecho; 1 coincidencia en bloques bloqueados no se modificó.');
+ assert.equal(run('S.deck.slides[1].notes'),'nota x largo');
+ assert.equal(run('S.deck.slides[1].blocks[1].rows[0][1]'),'otra');
+ run('doUndo()');assert.deepEqual(JSON.parse(run('JSON.stringify(S.deck.slides[1])')),antes);
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
 
 /* Escribir es lo primero que se intenta en una diapositiva: cada zona vacía
    tiene que ofrecer dónde hacerlo, en cualquier diseño. */

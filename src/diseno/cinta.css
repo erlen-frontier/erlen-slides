@@ -27,25 +27,26 @@
 .erlen-cinta .erlen-cinta-plegar{position:relative;flex:none;align-self:center;width:32px;min-height:28px;border-radius:var(--erlen-radio-capsula);color:var(--erlen-tinta-suave);font-size:var(--erlen-texto-sm)}
 .erlen-cinta .erlen-cinta-plegar:hover{background:var(--erlen-vidrio-tinte);color:var(--erlen-verde)}
 
-/* Panel: grupos en fila con el rótulo debajo; desplazamiento horizontal si no caben (nunca desborda la página). */
+/* Panel: grupos separados en fila; desplazamiento horizontal si no caben (nunca desborda la página). */
 .erlen-cinta-panel[hidden]{display:none}
-.erlen-cinta-fila{display:flex;align-items:stretch;padding:var(--erlen-esp-2) var(--erlen-esp-2) var(--erlen-esp-1);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.erlen-cinta-fila{display:flex;align-items:stretch;padding:var(--erlen-esp-1) var(--erlen-esp-2);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 .erlen-cinta-grupo{flex:none;display:flex;flex-direction:column;align-items:center;gap:var(--erlen-esp-1);padding:0 var(--erlen-esp-2);border-right:1px solid var(--erlen-vidrio-contorno)}
 .erlen-cinta-grupo:last-child{border-right:0}
 .erlen-cinta-grupo[hidden],.erlen-cinta-columna[hidden]{display:none}
-.erlen-cinta-controles{flex:1;display:flex;align-items:flex-start;gap:var(--erlen-esp-1)}
-.erlen-cinta-columna{display:flex;flex-direction:column;gap:2px}
-.erlen-cinta-rotulo{font:500 var(--erlen-texto-xs)/1.2 var(--erlen-font-ui);color:var(--erlen-tinta-suave);white-space:nowrap}
+.erlen-cinta-controles{flex:1;display:flex;align-items:flex-start;gap:var(--erlen-esp-1);min-height:74px}
+.erlen-cinta-columna{display:flex;flex-direction:column;gap:1px}
+/* Cada grupo conserva su nombre accesible en aria-label; el rótulo no ocupa otra fila. */
+.erlen-cinta-rotulo{display:none}
 
 /* Botones: grande (icono arriba, texto debajo) y pequeño (icono y texto en línea, en columnas de tres). */
 .erlen-cinta .erlen-cinta-boton{display:inline-flex;align-items:center;gap:var(--erlen-esp-2);border-radius:var(--erlen-radio-campo);color:var(--erlen-tinta);transition:background-color var(--erlen-dur-micro) var(--erlen-ease),border-color var(--erlen-dur-micro) var(--erlen-ease),box-shadow var(--erlen-dur-micro) var(--erlen-ease)}
 .erlen-cinta .erlen-cinta-boton:hover:not(:disabled){background:var(--erlen-vidrio-reflejo),var(--erlen-superficie);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-vidrio-relieve)}
 .erlen-cinta .erlen-cinta-boton:active:not(:disabled){background:var(--erlen-verde-suave);box-shadow:none}
 .erlen-cinta .erlen-cinta-boton[hidden]{display:none}
-.erlen-cinta .erlen-cinta-boton[data-tipo=grande]{flex-direction:column;justify-content:flex-start;gap:var(--erlen-esp-1);min-width:60px;max-width:88px;min-height:72px;padding:var(--erlen-esp-2) var(--erlen-esp-1) var(--erlen-esp-1);text-align:center}
-.erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-icono{width:28px;height:28px;font-size:22px;color:var(--erlen-verde)}
+.erlen-cinta .erlen-cinta-boton[data-tipo=grande]{flex-direction:column;justify-content:flex-start;gap:var(--erlen-esp-1);min-width:60px;max-width:88px;min-height:70px;padding:var(--erlen-esp-1);text-align:center}
+.erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-icono{width:24px;height:24px;font-size:20px;color:var(--erlen-verde)}
 .erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-texto{font-size:var(--erlen-texto-xs);line-height:1.2;white-space:normal}
-.erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]){min-height:28px;padding:0 var(--erlen-esp-2);font-size:var(--erlen-texto-xs);white-space:nowrap;justify-content:flex-start}
+.erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]){min-height:24px;padding:0 var(--erlen-esp-2);font-size:var(--erlen-texto-xs);white-space:nowrap;justify-content:flex-start}
 .erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]) .erlen-cinta-icono{width:18px;height:18px;font-size:15px;color:var(--erlen-tinta-suave)}
 .erlen-cinta .erlen-cinta-boton:hover:not(:disabled) .erlen-cinta-icono{color:var(--erlen-verde)}
 .erlen-cinta .erlen-cinta-boton[aria-pressed=true]{background:var(--erlen-verde-suave);border-color:color-mix(in srgb,var(--erlen-verde) 35%,transparent);color:var(--erlen-verde);box-shadow:inset 0 1px 2px var(--erlen-vidrio-contorno)}
@@ -69,7 +70,6 @@
 
 /* Pantallas estrechas y táctiles: botones grandes más compactos y zonas de toque de 44 px. */
 @media (max-width:920px){
- .erlen-cinta .erlen-cinta-boton[data-tipo=grande]{min-height:64px;min-width:56px}
  .erlen-cinta-fila{padding-inline:var(--erlen-esp-1)}
 }
 @media (max-width:920px),(any-pointer:coarse){
@@ -77,8 +77,11 @@
     replican la especificidad de las reglas compactas de arriba para poder superarlas. */
  .erlen-cinta .erlen-cinta-boton{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
  .erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]){min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
- .erlen-cinta .erlen-cinta-boton[data-tipo=grande]{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
+ .erlen-cinta .erlen-cinta-boton[data-tipo=grande]{flex-direction:row;justify-content:flex-start;gap:var(--erlen-esp-2);max-width:none;min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control);padding:0 var(--erlen-esp-2);text-align:left}
+ .erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-icono{width:20px;height:20px;font-size:18px}
+ .erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-texto{white-space:nowrap}
  .erlen-cinta .erlen-cinta-pestana,.erlen-cinta .erlen-cinta-plegar,.erlen-cinta .erlen-cinta-archivo{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
+ .erlen-cinta-controles{min-height:var(--erlen-alto-control)}
  .erlen-cinta-columna{flex-direction:row}
  .erlen-cinta-menu .erlen-cinta-opcion{min-height:var(--erlen-alto-control)}
 }

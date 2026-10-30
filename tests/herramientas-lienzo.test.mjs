@@ -219,6 +219,22 @@ test('project import remaps unambiguous connector IDs and rejects ambiguous link
   assert.deepEqual(errors,[]);
 });
 
+test('project import keeps valid connector styles and reports invalid ones without discarding the connection', async t => {
+  const {run,errors} = await prepara(t);
+  run(`window.__original=deepCopy(S.deck);
+    __original.slides[1].conectores=[
+      {desde:'a',hasta:'b',color:'#b12565',grosor:7,flecha:'ambos'},
+      {desde:'a',hasta:'c',color:'url(https://example.invalid)',grosor:9,flecha:'otra'},
+      {desde:'b',hasta:'c',color:'#1155aa',grosor:0,flecha:'ninguna'}];`);
+  const importado = valor(run,'saneaDeck(__original)');
+  assert.deepEqual(importado.deck.slides[1].conectores,[
+    {desde:'a',hasta:'b',color:'#b12565',grosor:7,flecha:'ambos'},
+    {desde:'a',hasta:'c'},
+    {desde:'b',hasta:'c',color:'#1155aa',flecha:'ninguna'}]);
+  assert.match(importado.avisos.join(' '),/estilos de conexión inválidos/i);
+  assert.deepEqual(errors,[]);
+});
+
 test('reopening a section keeps the complete source of a connected, temporarily stored chart', async t => {
   const {run,errors} = await prepara(t);
   run(`findBlock('c').block.fuente={nombre:'muestra-'.repeat(18)+'.csv',cuando:'2026-10-28',n:1,huella:'1234'};

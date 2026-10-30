@@ -87,6 +87,98 @@ test('Slides upgrades in Chromium', {timeout: 120000}, async t => {
     assert.ok(forma(r.clasica.math,'E=mc²'),'el clásico debe conservar la aproximación Unicode');
   });
 
+  await t.test('Both PowerPoint writers preserve connector styles, direction and legacy defaults', async () => {
+    // Las cajas son de 10 × 10 %, centradas en las esquinas de un rectángulo.
+    // Sus intersecciones se calculan aquí independientemente del exportador.
+    const diagonal = 0.5 / 11;
+    const casos = [
+      {conector:{desde:'a',hasta:'b'}, colorTema:true, grosor:3, flecha:'fin', puntos:[.20,.15,.65,.15]},
+      {conector:{desde:'b',hasta:'a',color:'#db1234',grosor:2,flecha:'fin'}, puntos:[.65,.15,.20,.15]},
+      {conector:{desde:'a',hasta:'c',color:'#1678c9',grosor:5,flecha:'fin'}, puntos:[.20,.15+diagonal,.65,.65-diagonal]},
+      {conector:{desde:'b',hasta:'d',color:'#02a347',grosor:8,flecha:'fin'}, puntos:[.65,.15+diagonal,.20,.65-diagonal]},
+      {conector:{desde:'d',hasta:'b',color:'#a43fbc',grosor:1,flecha:'ambos'}, puntos:[.20,.65-diagonal,.65,.15+diagonal]},
+      {conector:{desde:'c',hasta:'a',color:'#f08713',grosor:4,flecha:'fin'}, puntos:[.65,.65-diagonal,.20,.15+diagonal]},
+      {conector:{desde:'c',hasta:'b',color:'#2b7990',grosor:6,flecha:'ambos'}, puntos:[.70,.60,.70,.20]},
+      {conector:{desde:'b',hasta:'c',color:'#7c4138',grosor:7,flecha:'ninguna'}, puntos:[.70,.20,.70,.60]},
+      {conector:{desde:'c',hasta:'d',color:'#1a716f',grosor:2,flecha:'ninguna'}, puntos:[.65,.65,.20,.65]}
+    ];
+    for (const [aspect, tema, colorTema, W] of [['169','metropolis','23373B',1280], ['43','nocturno','E9EDF2',1024]]) {
+      const r = await page.evaluate(async ({aspect, tema, conectores}) => {
+        const d = blankDeck(); d.meta.aspect = aspect; d.meta.theme = tema;
+        const creaSlide = (i, conexiones) => {
+          const blocks = [['a',10,10],['b',65,10],['c',65,60],['d',10,60]].map(([id,x,y]) => {
+            const b = newBlock('text'); Object.assign(b, {id:id+i, text:id.toUpperCase(), posLibre:{x,y,w:10,h:10}}); return b;
+          });
+          d.slides.push({id:'conectores'+i, layout:'blanco', title:'', lienzoLibre:true, blocks,
+            conectores:conexiones.map(c => ({...c, desde:c.desde+i, hasta:c.hasta+i}))});
+        };
+        conectores.forEach((c, i) => creaSlide(i, [c]));
+        creaSlide('grupo', [conectores[0], conectores[1], conectores[4], conectores[8]]);
+        wsNueva(d); S.cur = 1; renderAll();
+        const original = JSON.stringify(S.deck), ext = await extensionSlides('exportador');
+        const avanzada = await ext.creaPPTX(S.deck);
+        const descargar = window.downloadFile; let clasica;
+        window.downloadFile = async (nombre, blob) => { if (nombre.endsWith('.pptx')) clasica = blob; return true; };
+        try { await exportPPTX(); } finally { window.downloadFile = descargar; closeModal(); }
+        if (!clasica) throw new Error('No se generó el PowerPoint clásico');
+        const inspecciona = async blob => {
+          const zip = await window.JSZip.loadAsync(blob);
+          const parsea = async nombre => {
+            const doc = new DOMParser().parseFromString(await zip.file(nombre).async('string'), 'application/xml');
+            if (doc.querySelector('parsererror')) throw new Error('XML inválido: '+nombre);
+            return doc;
+          };
+          const tam = (await parsea('ppt/presentation.xml')).getElementsByTagName('p:sldSz')[0];
+          const lineasSlide = async (n, cantidad) => {
+            const doc = await parsea('ppt/slides/slide'+n+'.xml');
+            const tree = doc.getElementsByTagName('p:spTree')[0];
+            const formas = [...tree.children];
+            const line = formas.filter(sp => sp.tagName === 'p:sp' && sp.getElementsByTagName('a:prstGeom')[0]?.getAttribute('prst') === 'line');
+            if (line.length !== cantidad) throw new Error('Se esperaban '+cantidad+' líneas editables en la diapositiva '+n+', hay '+line.length);
+            return line.map(sp => {
+              const xfrm = sp.getElementsByTagName('a:xfrm')[0], off = xfrm.getElementsByTagName('a:off')[0],
+                size = xfrm.getElementsByTagName('a:ext')[0], ln = sp.getElementsByTagName('a:ln')[0];
+              return {x:+off.getAttribute('x'), y:+off.getAttribute('y'), w:+size.getAttribute('cx'), h:+size.getAttribute('cy'),
+                flipH:xfrm.getAttribute('flipH') === '1', flipV:xfrm.getAttribute('flipV') === '1', grosor:+ln.getAttribute('w'),
+                color:ln.getElementsByTagName('a:srgbClr')[0]?.getAttribute('val'),
+                inicio:ln.getElementsByTagName('a:headEnd')[0]?.getAttribute('type') || 'none',
+                fin:ln.getElementsByTagName('a:tailEnd')[0]?.getAttribute('type') || 'none',
+                antesDeBloques:formas.indexOf(sp) < formas.findIndex(el => el.getElementsByTagName('a:t').length > 0)};
+            });
+          };
+          const lineas = [];
+          for (let i = 0; i < conectores.length; i++) lineas.push((await lineasSlide(i+2, 1))[0]);
+          const grupo = await lineasSlide(conectores.length+2, 4);
+          return {cx:+tam.getAttribute('cx'), cy:+tam.getAttribute('cy'), lineas, grupo, bytes:[...new Uint8Array(await blob.arrayBuffer())]};
+        };
+        return {avanzada:await inspecciona(avanzada.blob), clasica:await inspecciona(clasica), intacto:original === JSON.stringify(S.deck)};
+      }, {aspect, tema, conectores:casos.map(c=>c.conector)});
+      assert.equal(r.intacto, true, aspect+': la exportación modificó el proyecto');
+      for (const nombre of ['avanzada','clasica']) {
+        const salida = r[nombre];
+        writeFileSync(artifacts+'conectores-'+aspect+'-'+nombre+'.pptx', Buffer.from(salida.bytes));
+        const verifica = (caso, l, grupo = '') => {
+          const c = caso.conector, etiqueta = `${aspect} ${nombre} ${grupo} ${c.desde}→${c.hasta}`;
+          assert.equal(l.color, caso.colorTema ? colorTema : c.color.slice(1).toUpperCase(), etiqueta+' color');
+          assert.ok(Math.abs(l.grosor - Math.round((caso.grosor ?? c.grosor) * salida.cx / W)) <= 1, etiqueta+' grosor');
+          const flecha = caso.flecha ?? c.flecha;
+          assert.equal(l.inicio, flecha === 'ambos' ? 'triangle' : 'none', etiqueta+' inicio');
+          assert.equal(l.fin, flecha === 'ninguna' ? 'none' : 'triangle', etiqueta+' destino');
+          assert.equal(l.antesDeBloques, true, etiqueta+' debe estar detrás de los bloques');
+          const [x1,y1,x2,y2] = caso.puntos;
+          assert.equal(l.flipH, x2 < x1, etiqueta+' reflexión horizontal');
+          assert.equal(l.flipV, y2 < y1, etiqueta+' reflexión vertical');
+          const inicio = [l.x + (l.flipH ? l.w : 0), l.y + (l.flipV ? l.h : 0)];
+          const fin = [l.x + (l.flipH ? 0 : l.w), l.y + (l.flipV ? 0 : l.h)];
+          [inicio[0]-x1*salida.cx, inicio[1]-y1*salida.cy, fin[0]-x2*salida.cx, fin[1]-y2*salida.cy]
+            .forEach(diferencia => assert.ok(Math.abs(diferencia) <= 2, etiqueta+' coordenada: '+diferencia));
+        };
+        casos.forEach((caso, i) => verifica(caso, salida.lineas[i]));
+        [0,1,4,8].forEach((i, j) => verifica(casos[i], salida.grupo[j], 'grupo'));
+      }
+    }
+  });
+
   await t.test('Markdown preview, one shared parser, embedded figures and remote rejection', async () => {
     await page.evaluate(() => openMarkdown());
     await page.getByRole('textbox', {name: 'Guion Markdown'}).fill('# Charla ilustrativa\n\n## Evidencia\n\n- Objetivo\n- Medición');

@@ -117,9 +117,16 @@ function renderFilmstrip() {
         e.preventDefault();
         item.click();
         const actual = $('#fsList .fs-item[aria-current="true"]'); if (actual) actual.focus();
-      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        const todos = $$('#fsList .fs-item'), k = todos.indexOf(item) + (e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : -1);
-        if (todos[k]) { e.preventDefault(); e.stopPropagation(); todos[k].focus(); }
+      } else if (['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) {
+        /* La tira conserva las flechas incluso en sus extremos: no deben mover
+           ni cambiar el tamaño de un bloque seleccionado en el lienzo. */
+        e.stopPropagation();
+        if (e.defaultPrevented || e.isComposing || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+        e.preventDefault();
+        const todos = $$('#fsList .fs-item');
+        const k = e.key === 'Home' ? 0 : e.key === 'End' ? todos.length - 1 :
+          todos.indexOf(item) + (e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : -1);
+        if (todos[k]) todos[k].focus();
       }
     });
     item.addEventListener('dragstart', e => { dragFrom = i; e.dataTransfer.effectAllowed = 'move'; });

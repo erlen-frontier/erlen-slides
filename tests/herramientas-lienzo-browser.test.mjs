@@ -31,6 +31,126 @@ test('free canvas tools support layers, snapping and moving several blocks in Ch
   const blk=id=>page.locator('#stageInner .blk[data-bid="'+id+'"]');
   const pos=id=>page.evaluate(id=>({...findBlock(id).block.posLibre}),id);
 
+  await t.test('slide thumbnail navigation preserves canvas objects and skips collapsed sections',async t=>{
+    const p=await browser.newPage({viewport:{width:1280,height:720}});t.after(()=>p.close());
+    await p.goto('http://127.0.0.1:'+port+'/');
+    await p.evaluate(()=>{
+      const d=blankDeck(),s={id:'activa',layout:'blanco',title:'Ejemplo ilustrativo',lienzoLibre:true,blocks:[]};
+      const b=newBlock('text');Object.assign(b,{id:'texto',text:'Objeto ilustrativo',posLibre:{x:20,y:25,w:35,h:20}});s.blocks.push(b);
+      d.slides.push(s,{id:'sec-a',layout:'section',title:'Sección plegada'},
+        {id:'oculta-a',layout:'content',title:'Oculta A',blocks:[]},{id:'oculta-b',layout:'content',title:'Oculta B',blocks:[]},
+        {id:'sec-b',layout:'section',title:'Sección visible'});
+      for(let i=6;i<=10;i++)d.slides.push({id:'s'+i,layout:'content',title:'Ejemplo '+i,blocks:[]});
+      wsNueva(d);S.cur=1;S.plegadas=new Set(['sec-a']);S.sel=new Set([0,1]);snapNow();renderAll();selectBlock('texto');
+    });
+    const item=i=>p.locator('#fsList .fs-item[data-i="'+i+'"]');
+    const foco=()=>p.evaluate(()=>document.activeElement.dataset.i);
+    const estado=()=>p.evaluate(()=>({deck:JSON.stringify(S.deck),cur:S.cur,sel:[...S.sel],bloque:S.selBlock,undo:S.undo.length}));
+    const antes=await estado();
+    assert.deepEqual(await p.locator('#fsList .fs-item').evaluateAll(es=>es.map(e=>+e.dataset.i)),[0,1,2,5,6,7,8,9,10]);
+    await item(0).focus();await p.keyboard.press('ArrowUp');
+    await p.keyboard.press('ArrowLeft');
+    assert.equal(await foco(),'0');assert.deepEqual(await estado(),antes,'la flecha en el límite no mueve el objeto del lienzo');
+    await item(1).focus();await p.keyboard.press('Shift+ArrowDown');
+    await p.keyboard.press('Control+ArrowDown');
+    assert.equal(await foco(),'1');assert.deepEqual(await estado(),antes,'una flecha modificada no cambia el foco ni el tamaño');
+    await p.keyboard.press('End');assert.equal(await foco(),'10');
+    await p.keyboard.press('ArrowDown');await p.keyboard.press('ArrowRight');assert.equal(await foco(),'10');assert.deepEqual(await estado(),antes);
+    await p.keyboard.press('ArrowUp');assert.equal(await foco(),'9');
+    await p.keyboard.press('Home');assert.equal(await foco(),'0');
+    await p.keyboard.press('ArrowRight');await p.keyboard.press('ArrowDown');assert.equal(await foco(),'2');
+    await p.keyboard.press('ArrowDown');assert.equal(await foco(),'5','las diapositivas de la sección plegada no reciben foco');
+    assert.deepEqual(await estado(),antes,'recorrer miniaturas no cambia selección ni historial');
+    await p.keyboard.press('Enter');assert.equal(await p.evaluate(()=>S.cur),5);
+    assert.equal(await foco(),'5');assert.deepEqual(await p.evaluate(()=>[...S.sel]),[]);
+    assert.equal(await p.evaluate(()=>S.selBlock),null);
+    await item(6).focus();await p.keyboard.press('Space');
+    assert.equal(await p.evaluate(()=>S.cur),6);assert.equal(await foco(),'6');
+
+    await item(6).evaluate(el=>{window.__miniaturaAntes=el;});
+    await p.setViewportSize({width:390,height:844});
+    await p.getByRole('button',{name:'Abrir la navegación'}).click();
+    await p.waitForFunction(()=>!window.__miniaturaAntes.isConnected);
+    await item(6).focus();await p.keyboard.press('End');assert.equal(await foco(),'10');
+    const visible=await p.evaluate(()=>{
+      const item=document.activeElement.getBoundingClientRect(),list=document.querySelector('#fsList').getBoundingClientRect();
+      return item.top>=list.top-1 && item.bottom<=list.bottom+1;
+    });
+    assert.equal(visible,true,'la miniatura enfocada queda visible dentro de la tira');
+    await p.keyboard.press('Home');assert.equal(await foco(),'0');
+    assert.equal(await p.evaluate(()=>S.cur),6,'el foco no abre otra diapositiva');
+  });
+
+  await t.test('marks all visible layers without selecting hidden ones or bypassing locks',async t=>{
+    t.after(async()=>page.evaluate(()=>{
+      if(!$('#panelCapas').hidden)cierraPanelCapas();
+      findBlock('a').block.text='A';delete findBlock('a').block.nivel;delete findBlock('b').block.nivel;
+      delete findBlock('c').block.nivel;findBlock('b').block.locked=false;snapNow();renderAll();selectBlock(null);
+    }));
+    await page.evaluate(()=>{
+      findBlock('c').block.nivel='comite';findBlock('b').block.locked=true;S.deck.meta.nivel='congreso';
+      snapNow();renderAll();selectBlock('a');
+    });
+    const a0=await pos('a'), b0=await pos('b');
+    await blk('a').locator('[data-edit]').click();await page.keyboard.press('End');await page.keyboard.type(' texto');
+    await page.locator('#lienzoObjetosBtn').click();
+    assert.equal(await page.evaluate(()=>findBlock('a').block.text),'A texto','no se pierde la edición pendiente');
+    const todas=page.getByRole('checkbox',{name:'Marcar visibles',exact:true});
+    const undo=await page.evaluate(()=>S.undo.length);
+    assert.equal(await todas.isChecked(),false);
+    assert.equal(await todas.evaluate(el=>el.indeterminate),true);
+    await todas.check();
+    assert.deepEqual((await page.evaluate(()=>[...idsSeleccionados()])).sort(),['a','b']);
+    assert.equal(await page.getByRole('checkbox',{name:'Marcar A texto'}).isChecked(),true);
+    assert.equal(await page.getByRole('checkbox',{name:'Marcar B'}).isChecked(),true);
+    assert.equal(await page.getByRole('checkbox',{name:'Marcar C'}).isDisabled(),true);
+    assert.equal(await page.locator('#panelCapas [role="status"]').textContent(),'2 capas seleccionadas');
+    assert.equal(await todas.evaluate(el=>el===document.activeElement),true);
+    assert.equal(await page.evaluate(()=>S.undo.length),undo,'marcar no modifica el historial');
+    await page.getByRole('button',{name:'Seleccionar marcados'}).click();
+    assert.match(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),/Desbloquea la selección/);
+    await page.keyboard.press('ArrowRight');
+    assert.deepEqual(await pos('a'),a0);assert.deepEqual(await pos('b'),b0);
+    await todas.uncheck();
+    assert.deepEqual(await page.evaluate(()=>[...idsSeleccionados()]),[]);
+    await page.evaluate(()=>{findBlock('a').block.nivel='comite';findBlock('b').block.nivel='comite';renderAll();});
+    assert.equal(await todas.isDisabled(),true,'no se pueden marcar capas que no son visibles');
+  });
+
+  await t.test('Ctrl+A selects visible objects only with block focus and still selects editable text',async t=>{
+    t.after(async()=>page.evaluate(()=>{
+      findBlock('a').block.text='A';delete findBlock('c').block.nivel;snapNow();renderAll();selectBlock(null);
+    }));
+    await page.evaluate(()=>{
+      findBlock('a').block.text='Alfa detalle';findBlock('c').block.nivel='comite';S.deck.meta.nivel='congreso';
+      snapNow();renderAll();selectBlock('a');enfocaBloqueLibre('a');
+    });
+    const undo=await page.evaluate(()=>S.undo.length);
+    await page.keyboard.press('Control+a');
+    assert.deepEqual((await page.evaluate(()=>[...idsSeleccionados()])).sort(),['a','b']);
+    assert.equal(await page.evaluate(()=>document.activeElement.dataset.bid),'a');
+    assert.match(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),/2 bloques seleccionados/);
+    assert.equal(await page.locator('#stageInner .grupo-asa').count(),4);
+    assert.equal(await page.evaluate(()=>S.undo.length),undo);
+    const a0=await pos('a'),b0=await pos('b');
+    await page.keyboard.press('ArrowRight');
+    assert.equal((await pos('a')).x,a0.x+1);assert.equal((await pos('b')).x,b0.x+1);
+    await page.keyboard.press('Control+z');
+    assert.deepEqual(await pos('a'),a0);assert.deepEqual(await pos('b'),b0);
+    await page.evaluate(()=>{selectBlock('a');enfocaBloqueLibre('a');});
+    await page.keyboard.press('Meta+a');
+    assert.deepEqual((await page.evaluate(()=>[...idsSeleccionados()])).sort(),['a','b']);
+    await page.evaluate(()=>{selectBlock('a');});
+    await blk('a').locator('[data-edit]').click();
+    await page.keyboard.press('Control+a');
+    assert.equal(await page.evaluate(()=>getSelection().toString()),'Alfa detalle');
+    assert.deepEqual(await page.evaluate(()=>[...idsSeleccionados()]),['a']);
+    await page.locator('#deckTitleInput').focus();await page.keyboard.press('Control+a');
+    assert.equal(await page.locator('#deckTitleInput').evaluate(el=>el.selectionEnd-el.selectionStart),
+      (await page.locator('#deckTitleInput').inputValue()).length);
+    assert.deepEqual(await page.evaluate(()=>[...idsSeleccionados()]),['a']);
+  });
+
   await t.test('reorders layers from the accessible list and keeps the same order when presenting', async()=>{
     await page.locator('#lienzoObjetosBtn').click();
     await page.getByRole('button',{name:'Adelantar capa A'}).click();
@@ -199,5 +319,18 @@ test('free canvas tools support layers, snapping and moving several blocks in Ch
   await page.locator('#lienzoObjetosBtn').click();
   await page.screenshot({path:fileURLToPath(new URL('../.local/herramientas-capas-movil.png',import.meta.url))});
   assert.equal(await page.getByRole('checkbox',{name:'Marcar A'}).isVisible(),true);
+  const todas=page.getByRole('checkbox',{name:'Marcar visibles',exact:true});
+  await todas.check();
+  assert.deepEqual((await page.evaluate(()=>[...idsSeleccionados()])).sort(),['a','b','c','figura']);
+  const seleccionMovil=await page.evaluate(()=>{
+    const r=e=>{const x=e.getBoundingClientRect();return {left:x.left,right:x.right,top:x.top,bottom:x.bottom};};
+    return {etiqueta:r(document.querySelector('.capas-todas')),estado:r(document.querySelector('.capas-estado')),ancho:innerWidth};
+  });
+  assert.ok(seleccionMovil.etiqueta.left>=0 && seleccionMovil.etiqueta.right<seleccionMovil.estado.left &&
+    seleccionMovil.estado.right<=seleccionMovil.ancho,JSON.stringify(seleccionMovil));
+  await page.setViewportSize({width:667,height:375});
+  assert.equal(await todas.isVisible(),true);
+  const listaHorizontal=await page.locator('#panelCapas .capas-lista').boundingBox();
+  assert.ok(listaHorizontal.height>=45,JSON.stringify(listaHorizontal));
   assert.deepEqual(errores,[]);
 });

@@ -163,10 +163,11 @@ async function formasSlide(raiz, sl, deck, idx, ctx) {
   /* Las relaciones comparten el filtro y las coordenadas del lienzo, pero en
      PowerPoint son líneas independientes, colocadas detrás de los bloques. */
   if (Array.isArray(sl.conectores) && sl.conectores.length) {
-    const escY = 7.5 * EMU_PULG / slideDims(deck)[1], color = hex6(temaDe(deck).fg, ctx.fondo);
+    const escY = 7.5 * EMU_PULG / slideDims(deck)[1];
     for (const c of conectoresVisibles(sl, deck)) {
       F.push(xmlConector(id(), Math.round(c.x1 * esc), Math.round(c.y1 * escY),
-        Math.round(c.x2 * esc), Math.round(c.y2 * escY), color, Math.round(3 * esc)));
+        Math.round(c.x2 * esc), Math.round(c.y2 * escY), hex6(c.color, ctx.fondo),
+        Math.round(c.grosor * esc), c.flecha));
     }
   }
 
