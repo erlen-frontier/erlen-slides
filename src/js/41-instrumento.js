@@ -21,6 +21,9 @@ const TECNICAS = [
   { id: 'uvvis', n: 'UV-Vis',
     x: 'Longitud de onda (nm)', y: 'Absorbancia (u. a.)', kind: 'linea',
     prueba: (x0, x1) => x0 >= 180 && x1 <= 1400 && x1 - x0 > 120 },
+  { id: 'uvvis-dr', n: 'UV-Vis · reflectancia difusa',
+    x: 'Longitud de onda (nm)', y: 'Reflectancia (%)', kind: 'linea',
+    prueba: () => false },   /* se reconoce por el nombre («reflectancia», «DRS»): el contenido no basta */
   { id: 'raman', n: 'Raman',
     x: 'Desplazamiento Raman (cm⁻¹)', y: 'Intensidad (u. a.)', kind: 'linea',
     prueba: (x0, x1) => x0 >= 0 && x0 < 300 && x1 > 900 && x1 <= 4000 },
@@ -39,6 +42,7 @@ function tecnicaPorNombre(nombre) {
   if (/xrd|drx|difract/.test(n)) return 'xrd';
   if (/ftir|irtf|infrarro/.test(n)) return 'ftir';
   if (/raman/.test(n)) return 'raman';
+  if (/reflect|(^|[^a-z])drs([^a-z]|$)/.test(n)) return 'uvvis-dr';
   if (/uv[-_ ]?vis|absorb/.test(n)) return 'uvvis';
   if (/(^|[^a-z])pl([^a-z]|$)|fotolum|photolum/.test(n)) return 'pl';
   if (/tga|termograv/.test(n)) return 'tga';
