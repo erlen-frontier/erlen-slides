@@ -123,7 +123,7 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 ```
 
 - Se usa la misma lectura que al soltar un archivo en el editor: detecta separador (tabulador, `;`, `,` o espacios), coma decimal y encabezados.
-- Reconoce la técnica por el nombre y el intervalo de los datos (XRD, FTIR, UV-Vis, TGA, Raman, voltamperometría, fotoluminiscencia) y rotula los ejes con sus unidades; el FTIR sale con el eje invertido. `tecnica` la fuerza si se equivoca.
+- Reconoce la técnica por el nombre y el intervalo de los datos (XRD, FTIR, UV-Vis, UV-Vis de reflectancia difusa si el nombre dice «reflectancia» o «DRS», TGA, Raman, voltamperometría, fotoluminiscencia) y rotula los ejes con sus unidades; el FTIR sale con el eje invertido. `tecnica` la fuerza si se equivoca.
 - `columnas` elige cuáles usar (`[1, 3]`: x y la tercera columna, contando desde 1).
 - Por encima de 1500 puntos (`max_puntos`) se submuestrea con el mínimo y el máximo de cada intervalo: **cada pico conserva su posición y su intensidad exactas**. La respuesta dice cuántas filas tenía el archivo y cuántas se guardaron.
 - La gráfica registra su procedencia (archivo, fecha, filas y huella SHA-256), igual que en el editor. Si después alguien cambia los datos a mano, la procedencia se retira y se avisa: no se atribuye al archivo lo que ya no viene de él.

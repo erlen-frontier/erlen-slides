@@ -202,6 +202,11 @@ function pintaBarraContextual() {
     if (b.figura) btn(g,icono('Pencil','✎'),'Editar capas de la figura','figura',() => openFiguraCapas(b));
     else if (b.cientifico) btn(g,icono('FlaskConical','✎'),'Editar fuente de la figura','fuente',() => cienciaReabrir(b));
   }
+  /* Una gráfica sola: acceso al análisis de su serie (σ). Con el bloque bloqueado se ve, pero no se usa. */
+  if (!varias && b.type === 'chart') {
+    const gc = grupo();
+    btn(gc,icono('Sigma','σ'),'Analizar la serie','analizar',() => openAnalisis(b),{disabled:bloqueada});
+  }
   const g = grupo(), sufijo = varias ? 'selección' : 'bloque';
   btn(g,icono('CopyPlus','⧉'),'Duplicar '+sufijo,'duplicar',duplicarSeleccionActiva,{disabled:bloqueada});
   if (ctx.slide.lienzoLibre) {

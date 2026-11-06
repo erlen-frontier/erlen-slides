@@ -122,6 +122,17 @@ function saneaBloque(b, avisos, deck) {
   }
   if (b.type === 'chart') {
     b.capas = !!b.capas;
+    /* Ajustes del análisis (σ): solo lo que el análisis entiende; el resto se descarta. */
+    if (b.analisis != null && !['lineal', 'pico', 'scherrer', 'tauc'].includes(b.analisis)) delete b.analisis;
+    if (b.analisisOpc && typeof b.analisisOpc === 'object') {
+      const o = b.analisisOpc, num = v => (typeof v === 'number' && isFinite(v) ? v : undefined), opc = {};
+      if (o.serie != null && isFinite(+o.serie)) opc.serie = Math.max(0, Math.floor(+o.serie));
+      if (o.fuente === 'abs' || o.fuente === 'dr') opc.fuente = o.fuente;
+      if (typeof o.directa === 'boolean') opc.directa = o.directa;
+      if (typeof o.nmAeV === 'boolean') opc.nmAeV = o.nmAeV;
+      ['desde', 'hasta', 'K', 'lambda'].forEach(k => { const v = num(o[k]); if (v !== undefined) opc[k] = v; });
+      b.analisisOpc = opc;
+    } else delete b.analisisOpc;
     if (b.destaca && typeof b.destaca === 'object' && isFinite(+b.destaca.serie) && isFinite(+b.destaca.i))
       b.destaca = { serie: Math.max(0, Math.floor(+b.destaca.serie)), i: Math.max(0, Math.floor(+b.destaca.i)), txt: String(b.destaca.txt || '').slice(0, 80) };
     else delete b.destaca;

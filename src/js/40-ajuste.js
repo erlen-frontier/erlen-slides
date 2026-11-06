@@ -64,143 +64,449 @@ function fwhm(pts) {
   return { centro: p[iMax][0], alto, fwhm: Math.abs(xd - xi), izq: xi, der: xd, base };
 }
 
-/* Scherrer: tamaño de cristalita a partir de la anchura del pico.
-   beta y theta en grados; devuelve nm con K = 0.9 y Cu Kα por omisión. */
-function scherrer(fwhmGrados, dosThetaGrados, K, lambdaNm) {
-  const k = K || 0.9, lam = lambdaNm || 0.15406;
-  const beta = fwhmGrados * Math.PI / 180;
-  const th = (dosThetaGrados / 2) * Math.PI / 180;
-  const cos = Math.cos(th);
-  if (!beta || !cos) return null;
-  return { nm: k * lam / (beta * cos), K: k, lambda: lam, theta: dosThetaGrados / 2 };
+/* ---------- constantes y transformaciones ---------- */
+/* hc en eV·nm: un fotón de λ nm tiene E = 1239.84 / λ eV. */
+const HC_EV_NM = 1239.84;
+function nmAeV(nm) { return nm > 0 ? HC_EV_NM / nm : null; }
+
+/* Kubelka–Munk: de reflectancia difusa R (en %) a F(R) = (1 − R)² / 2R,
+   proporcional a α/S. Solo tiene sentido con 0 < R < 100 %; fuera, null. */
+function kubelkaMunk(pct) {
+  const R = pct / 100;
+  return R > 0 && R < 1 ? (1 - R) * (1 - R) / (2 * R) : null;
 }
 
-/* Tauc: (αhν)^n frente a hν; el corte de la recta con el eje da Eg. */
-function tauc(pts, directa) {
+/* Mínimo y máximo de una lista. No se usa Math.min(...lista): con miles de
+   puntos el argumento se desborda. */
+function extremos(v) {
+  let lo = Infinity, hi = -Infinity;
+  for (const x of v) { if (x < lo) lo = x; if (x > hi) hi = x; }
+  return { lo, hi };
+}
+
+/* ¿El eje x parece longitud de onda en nm y no energía en eV? Los eV de un
+   espectro quedan entre 0 y unos 10; los nm del UV-Vis, entre cientos y miles. */
+function pareceNanometros(xs) {
+  const v = xs.filter(isFinite);
+  if (v.length < 3) return false;
+  const { lo, hi } = extremos(v);
+  return lo >= 100 && hi <= 3000;
+}
+
+/* Scherrer: tamaño de cristalita a partir de la anchura del pico.
+   fwhmGrados es la FWHM en 2θ (°) y dosThetaGrados la posición 2θ del pico (°).
+   Devuelve nm, o null si algún dato no es válido: un K o una λ de cero no son
+   «el valor por omisión», son un error. */
+function scherrer(fwhmGrados, dosThetaGrados, K = 0.9, lambdaNm = 0.15406) {
+  if (!(K > 0) || !(lambdaNm > 0) || !(fwhmGrados > 0)) return null;
+  const beta = fwhmGrados * Math.PI / 180;
+  const theta = dosThetaGrados / 2 * Math.PI / 180;
+  const cos = Math.cos(theta);
+  if (!(cos > 0)) return null;
+  return { nm: K * lambdaNm / (beta * cos), K, lambda: lambdaNm, theta: dosThetaGrados / 2 };
+}
+
+/* Tauc: (αhν)^n frente a hν; el corte de la recta con el eje da Eg.
+   pts = [[hν (eV), absorbancia o α; o F(R) si la fuente es reflectancia], …].
+   Sin «ventana» se elige, entre los tramos de 25 % de los puntos (al menos 4),
+   el de mayor R² con pendiente positiva. Con «ventana» = {desde, hasta} (eV)
+   se ajusta todo ese intervalo.
+   El error de Eg sale de la covarianza de la recta:
+   σ(Eg) = (s/|m|)·√(1/n + (Eg − x̄)²/Sxx). Sumar los errores relativos de la
+   pendiente y de la ordenada como si fueran independientes lo sobreestima mucho,
+   porque la ordenada se extrapola lejos de los datos. */
+function tauc(pts, directa, ventana) {
   const n = directa === false ? 0.5 : 2;
-  const t = pts.map(([hv, a]) => [hv, Math.pow(a * hv, n)]).filter(p => isFinite(p[1]));
+  /* Una absorción negativa es ruido: se trata como cero, sin elevarla al
+     cuadrado, que la volvería positiva. Se ordena por energía antes de
+     elegir el tramo, para que «tramo» signifique intervalo de energía. */
+  const t = pts
+    .filter(p => isFinite(p[0]))
+    .map(([hv, a]) => [hv, Math.pow(Math.max(a * hv, 0), n)])
+    .filter(p => isFinite(p[1]))
+    .sort((p, q) => p[0] - q[0]);
   if (t.length < 5) return null;
-  /* Se ajusta el tramo más recto: el de mayor pendiente sostenida. */
-  const ven = Math.max(4, Math.round(t.length * 0.25));
-  let mejor = null;
-  for (let i = 0; i + ven <= t.length; i++) {
-    const f = linFitSE(t.slice(i, i + ven));
-    if (f && f.m > 0 && (!mejor || f.r2 > mejor.f.r2)) mejor = { f, i };
+  let seg, f, auto = false;
+  if (ventana && Number.isFinite(ventana.desde) && Number.isFinite(ventana.hasta)) {
+    const lo = Math.min(ventana.desde, ventana.hasta), hi = Math.max(ventana.desde, ventana.hasta);
+    seg = t.filter(p => p[0] >= lo && p[0] <= hi);
+    if (seg.length < 4) return null;
+    f = linFitSE(seg);
+  } else {
+    const ven = Math.max(4, Math.round(t.length * 0.25));
+    let mejor = null;
+    for (let i = 0; i + ven <= t.length; i++) {
+      const g = linFitSE(t.slice(i, i + ven));
+      if (g && g.m > 0 && (!mejor || g.r2 > mejor.f.r2)) mejor = { f: g, i };
+    }
+    if (!mejor) return null;
+    seg = t.slice(mejor.i, mejor.i + ven); f = mejor.f; auto = true;
   }
-  if (!mejor) return null;
-  const eg = -mejor.f.b / mejor.f.m;
-  const sEg = mejor.f.sm && mejor.f.sb
-    ? Math.abs(eg) * Math.sqrt(Math.pow(mejor.f.sb / mejor.f.b, 2) + Math.pow(mejor.f.sm / mejor.f.m, 2)) : null;
-  return { eg, sEg, r2: mejor.f.r2, n, puntos: ven };
+  if (!f || !(f.m > 0)) return null;
+  const eg = -f.b / f.m;
+  const k = seg.length;
+  let sEg = null;
+  if (f.s != null) {
+    const xbar = seg.reduce((s, p) => s + p[0], 0) / k;
+    const sxx = seg.reduce((s, p) => s + (p[0] - xbar) * (p[0] - xbar), 0);
+    if (sxx > 0) sEg = f.s / f.m * Math.sqrt(1 / k + (eg - xbar) * (eg - xbar) / sxx);
+  }
+  return { eg, sEg, r2: f.r2, n: k, desde: seg[0][0], hasta: seg[k - 1][0], auto, seg, t, f };
+}
+
+/* ---------- gráficas pequeñas en SVG, sin dependencias ---------- */
+/* Marcas «redondas» de un eje entre dos valores (pasos de 1, 2, 2.5, 5 × 10ⁿ). */
+function marcasEje(lo, hi, k) {
+  if (!(hi > lo)) return [lo];
+  const bruto = (hi - lo) / k, mag = Math.pow(10, Math.floor(Math.log10(bruto)));
+  const paso = [1, 2, 2.5, 5, 10].map(f => f * mag).find(p => p >= bruto) || 10 * mag;
+  const out = [];
+  for (let v = Math.ceil(lo / paso) * paso; v <= hi + paso / 1e6; v += paso) out.push(+v.toFixed(10));
+  return out;
+}
+
+/* Gráfica de Tauc: los puntos transformados (oscuros, los del tramo), el ajuste
+   (sólido en el tramo, discontinuo al extrapolarlo hasta el eje) y el corte, Eg. */
+function graficaTauc(r, etiquetaY) {
+  const W = 330, H = 196, L = 50, R = 12, T = 14, B = 34;
+  const ex = extremos(r.t.map(p => p[0]).concat([r.eg])), ey = extremos(r.t.map(p => p[1]));
+  const x0 = ex.lo, x1 = ex.hi, y1 = (ey.hi > 0 ? ey.hi : 1) * 1.08;
+  const sx = v => L + (v - x0) / ((x1 - x0) || 1) * (W - L - R);
+  const sy = v => H - B - v / y1 * (H - B - T);
+  const svg = sv('svg', { class: 'an-plot', viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img',
+    'aria-label': 'Gráfica de Tauc. Banda prohibida ' + conError(r.eg, r.sEg) + ' eV' });
+  svg.append(sv('line', { x1: L, y1: T, x2: L, y2: H - B, class: 'an-eje' }),
+    sv('line', { x1: L, y1: H - B, x2: W - R, y2: H - B, class: 'an-eje' }));
+  marcasEje(x0, x1, 4).forEach(v => svg.append(
+    sv('line', { x1: sx(v), y1: H - B, x2: sx(v), y2: H - B + 4, class: 'an-eje' }),
+    sv('text', { x: sx(v).toFixed(1), y: H - B + 15, 'text-anchor': 'middle' }, sigFig(v, 3))));
+  marcasEje(0, y1, 3).forEach(v => svg.append(
+    sv('text', { x: L - 6, y: (sy(v) + 3).toFixed(1), 'text-anchor': 'end' }, sigFig(v, 2))));
+  const dentro = new Set(r.seg);
+  r.t.forEach(p => {
+    const en = dentro.has(p);
+    svg.append(sv('circle', { cx: sx(p[0]).toFixed(1), cy: sy(p[1]).toFixed(1), r: en ? 2.4 : 1.3, class: en ? 'an-pto an-pto-on' : 'an-pto' }));
+  });
+  const y = x => r.f.m * x + r.f.b;
+  if (r.eg < r.desde) svg.append(sv('line', { x1: sx(r.eg).toFixed(1), y1: sy(0).toFixed(1), x2: sx(r.desde).toFixed(1), y2: sy(y(r.desde)).toFixed(1), class: 'an-tramo-x' }));
+  svg.append(sv('line', { x1: sx(r.desde).toFixed(1), y1: sy(y(r.desde)).toFixed(1), x2: sx(r.hasta).toFixed(1), y2: sy(y(r.hasta)).toFixed(1), class: 'an-tramo' }));
+  svg.append(sv('circle', { cx: sx(r.eg).toFixed(1), cy: sy(0).toFixed(1), r: 3.5, class: 'an-eg' }));
+  svg.append(sv('text', { x: L + 6, y: T + 11 }, etiquetaY),
+    sv('text', { x: L + 6, y: T + 25, class: 'an-eg-t' }, 'Eg = ' + conError(r.eg, r.sEg) + ' eV'));
+  svg.append(sv('text', { x: ((L + W - R) / 2).toFixed(1), y: H - 4, 'text-anchor': 'middle' }, 'hν (eV)'));
+  return svg;
+}
+
+/* Pico y anchura: los datos, la línea a media altura entre la base y el máximo,
+   y los dos cruces donde se mide la FWHM. */
+function graficaPico(pts, w) {
+  const W = 330, H = 170, L = 50, R = 12, T = 14, B = 30;
+  const p = pts.slice().sort((a, b) => a[0] - b[0]);
+  const ex = extremos(p.map(q => q[0])), ey = extremos(p.map(q => q[1]));
+  const sx = v => L + (v - ex.lo) / ((ex.hi - ex.lo) || 1) * (W - L - R);
+  const sy = v => H - B - (v - ey.lo) / ((ey.hi - ey.lo) || 1) * (H - B - T);
+  const svg = sv('svg', { class: 'an-plot', viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img',
+    'aria-label': 'Pico centrado en ' + sigFig(w.centro, 5) + '°, FWHM ' + sigFig(w.fwhm, 4) + '°' });
+  svg.append(sv('line', { x1: L, y1: T, x2: L, y2: H - B, class: 'an-eje' }),
+    sv('line', { x1: L, y1: H - B, x2: W - R, y2: H - B, class: 'an-eje' }));
+  marcasEje(ex.lo, ex.hi, 4).forEach(v => svg.append(
+    sv('line', { x1: sx(v).toFixed(1), y1: H - B, x2: sx(v).toFixed(1), y2: H - B + 4, class: 'an-eje' }),
+    sv('text', { x: sx(v).toFixed(1), y: H - B + 15, 'text-anchor': 'middle' }, sigFig(v, 4))));
+  marcasEje(ey.lo, ey.hi, 3).forEach(v => svg.append(
+    sv('text', { x: L - 6, y: (sy(v) + 3).toFixed(1), 'text-anchor': 'end' }, sigFig(v, 3))));
+  svg.append(sv('polyline', { points: p.map(q => sx(q[0]).toFixed(1) + ',' + sy(q[1]).toFixed(1)).join(' '), class: 'an-curva' }));
+  const ym = sy(w.base + w.alto / 2).toFixed(1);
+  svg.append(sv('line', { x1: sx(w.izq).toFixed(1), y1: ym, x2: sx(w.der).toFixed(1), y2: ym, class: 'an-tramo-x' }));
+  [w.izq, w.der].forEach(x => svg.append(sv('line', { x1: sx(x).toFixed(1), y1: ym, x2: sx(x).toFixed(1), y2: H - B, class: 'an-tramo-x' })));
+  /* La etiqueta va junto a un cruce, fuera del pico; si el pico está al borde, al otro lado. */
+  const aDer = sx(w.der) < W - 90;
+  svg.append(sv('text', { x: (aDer ? sx(w.der) + 6 : sx(w.izq) - 6).toFixed(1), y: (+ym - 4).toFixed(1),
+    'text-anchor': aDer ? 'start' : 'end', class: 'an-eg-t' }, 'FWHM ' + sigFig(w.fwhm, 4) + '°'));
+  return svg;
 }
 
 /* ---------- panel de análisis del bloque de gráfica ---------- */
-function analisisDe(b) {
+const MODOS_ANALISIS = [
+  { id: 'lineal', n: 'Ajuste lineal' },
+  { id: 'pico', n: 'Pico y anchura' },
+  { id: 'scherrer', n: 'Scherrer' },
+  { id: 'tauc', n: 'Tauc' }
+];
+/* Longitudes de onda de los ánodos más habituales, en nm. */
+const RADIACIONES_AN = [[0.15406, 'Cu Kα · 0.15406 nm'], [0.07107, 'Mo Kα · 0.07107 nm'], [0.17902, 'Co Kα · 0.17902 nm']];
+
+/* Modo al abrir: el último usado; si no hay, el que pide la técnica del archivo. */
+function modoInicialAnalisis(b) {
+  if (b.analisis) return b.analisis;
+  if (b.tecnica === 'xrd') return 'pico';
+  if (b.tecnica === 'uvvis' || b.tecnica === 'uvvis-dr') return 'tauc';
+  return 'lineal';
+}
+
+/* Ajustes del análisis con sus valores por omisión. Se guardan en la gráfica
+   como analisisOpc, un objeto opcional: versiones anteriores lo ignoran. */
+function opcionesAnalisis(b) {
+  const o = b.analisisOpc || {};
+  const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);
+  return {
+    serie: Math.max(0, Math.floor(num(o.serie, 0))),
+    fuente: o.fuente === 'dr' || o.fuente === 'abs' ? o.fuente : (b.tecnica === 'uvvis-dr' ? 'dr' : 'abs'),
+    directa: typeof o.directa === 'boolean' ? o.directa : true,
+    nmAeV: o.nmAeV === true,
+    desde: num(o.desde, null),
+    hasta: num(o.hasta, null),
+    K: num(o.K, 0.9),
+    lambda: num(o.lambda, 0.15406)
+  };
+}
+
+/* Serie elegida, con sus puntos numéricos. Null si tiene menos de tres. */
+function analisisDe(b, idx) {
   const series = chartSeries(b);
   if (!series.length) return null;
-  const s = series[0];
+  const k = Math.min(Math.max(0, Math.floor(+idx || 0)), series.length - 1);
+  const s = series[k];
   const pts = (s.pts || []).filter(p => isFinite(p[0]) && isFinite(p[1]));
-  if (pts.length < 3) return null;
-  return { pts, nombre: s.name || 'serie' };
+  return pts.length < 3 ? null : { pts, nombre: s.name || 'serie', k };
+}
+
+/* Puntos de Tauc: energía en eV y la magnitud a transformar (absorbancia o F(R)).
+   Cuenta los que quedan fuera de su dominio, para decirlo en pantalla. */
+function puntosTauc(a, opc) {
+  const conv = opc.nmAeV && pareceNanometros(a.pts.map(p => p[0]));
+  const pts = [];
+  let excl = 0;
+  for (const [x, y] of a.pts) {
+    const hv = conv ? nmAeV(x) : x;
+    const v = opc.fuente === 'dr' ? kubelkaMunk(y) : y;
+    if (hv == null || v == null || !isFinite(hv) || !isFinite(v)) { excl++; continue; }
+    pts.push([hv, v]);
+  }
+  return { pts, excl, convertido: conv };
+}
+
+function filaAnalisis(et, val, nota) {
+  return h('div', { class: 'an-fila' },
+    h('span', { class: 'an-et' }, et), h('b', { class: 'an-val' }, val),
+    nota ? h('span', { class: 'an-nota' }, nota) : null);
+}
+
+/* Botones de elección exclusiva con el aspecto de los selectores del modal. */
+function segmentoAn(opciones, actual, alCambiar) {
+  let vigente = actual;
+  const cont = h('div', { class: 'seg', style: 'margin-bottom:10px' });
+  const pinta = () => $$('button', cont).forEach(x => x.classList.toggle('on', x.dataset.v === String(vigente)));
+  opciones.forEach(([v, n]) => cont.append(h('button', { 'data-v': String(v), onclick: () => { vigente = v; pinta(); alCambiar(v); } }, n)));
+  pinta();
+  return cont;
 }
 
 function openAnalisis(b) {
+  let opc = opcionesAnalisis(b);
+  let sucio = false;
+  /* Los cambios viven en la gráfica y se guardan con un único paso de deshacer
+     al cerrar el diálogo, no uno por cada pulsación. */
+  const cambia = cambios => { b.analisisOpc = Object.assign({}, b.analisisOpc, cambios); opc = opcionesAnalisis(b); sucio = true; };
+  const ctx = { b, opc: () => opcionesAnalisis(b), cambia, guardado: () => { sucio = false; } };
+  const series = chartSeries(b);
   const cuerpo = h('div');
-  const a = analisisDe(b);
-  if (!a) {
+  const conDatos = s => (s.pts || []).filter(p => isFinite(p[0]) && isFinite(p[1])).length >= 3;
+  if (!series.some(conDatos)) {
     cuerpo.append(h('p', { class: 'hint' }, 'Hacen falta al menos tres puntos con números para analizar la serie.'));
     openModal({ title: 'Análisis', size: 'modal-sm', body: cuerpo, foot: [h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Cerrar')] });
     return;
   }
+  let a = analisisDe(b, opc.serie);
+  const info = h('p', { class: 'hint', style: 'margin-top:0' });
+  const pintaInfo = () => {
+    info.textContent = a ? 'Serie analizada: ' + a.nombre + ' · ' + a.pts.length + ' puntos.'
+      : 'Esta serie no tiene al menos tres puntos con números. Elige otra.';
+  };
+  pintaInfo();
+  cuerpo.append(info);
+  if (series.length > 1) {
+    cuerpo.append(h('div', { class: 'an-campo' }, h('label', null, 'Serie ',
+      h('select', { class: 'field', onchange: e => { cambia({ serie: +e.target.value }); a = analisisDe(b, opc.serie); pintaInfo(); dibuja(); } },
+        series.map((s, i) => h('option', { value: String(i), selected: i === (a ? a.k : opc.serie) ? true : null },
+          (s.name || 'serie ' + (i + 1)) + ' · ' + (s.pts || []).length + ' puntos'))))));
+  }
+
+  let modo = modoInicialAnalisis(b);
   const seg = h('div', { class: 'seg seg-4 seg-wrap', style: 'margin-bottom:14px' });
   const panel = h('div');
-  const MODOS = [
-    { id: 'lineal', n: 'Ajuste lineal' },
-    { id: 'pico', n: 'Pico y anchura' },
-    { id: 'scherrer', n: 'Scherrer' },
-    { id: 'tauc', n: 'Tauc' }
-  ];
-  let modo = b.analisis || 'lineal';
-  const fila = (et, val, nota) => h('div', { class: 'an-fila' },
-    h('span', { class: 'an-et' }, et), h('b', { class: 'an-val' }, val),
-    nota ? h('span', { class: 'an-nota' }, nota) : null);
-
   const dibuja = () => {
     panel.innerHTML = '';
-    if (modo === 'lineal') {
-      const f = linFitSE(a.pts);
-      if (!f) { panel.append(h('p', { class: 'hint' }, 'No se pudo ajustar.')); return; }
-      panel.append(fila('Pendiente', conError(f.m, f.sm), f.sm ? 'error estándar del ajuste' : 'con 3 puntos o más se calcula el error'));
-      panel.append(fila('Ordenada al origen', conError(f.b, f.sb)));
-      panel.append(fila('R²', f.r2.toFixed(5)));
-      panel.append(fila('Puntos', String(f.n)));
-      if (f.s != null) panel.append(fila('Desviación residual', sigFig(f.s, 3)));
-      const ld = limiteDeteccion(f);
-      if (ld) {
-        panel.append(h('div', { class: 'an-sep' }, 'Si es una curva de calibración'));
-        panel.append(fila('Límite de detección', sigFig(ld.ld, 3), '3.3 σ/m, criterio ICH'));
-        panel.append(fila('Límite de cuantificación', sigFig(ld.lc, 3), '10 σ/m'));
-      }
-      panel.append(residualesSVG(a.pts, f));
-      panel.append(h('p', { class: 'hint' }, 'Si los residuales dibujan una curva en vez de una nube, la relación no es lineal en todo el intervalo.'));
-      panel.append(h('button', { class: 'btn btn-sm', onclick: () => {
-        b.title = (b.title ? b.title + ' · ' : '') + 'm = ' + conError(f.m, f.sm) + ', R² = ' + f.r2.toFixed(4);
-        commit(); closeModal(); toast('Resultado puesto en el título de la gráfica');
-      } }, 'Poner el resultado en el título'));
-    } else if (modo === 'pico') {
-      const w = fwhm(a.pts);
-      if (!w) { panel.append(h('p', { class: 'hint' }, 'No se encontró un pico con dos cruces por la media altura. Recorta los datos al pico.')); return; }
-      panel.append(fila('Centro del pico', sigFig(w.centro, 5)));
-      panel.append(fila('Altura', sigFig(w.alto, 4), 'sobre la línea base'));
-      panel.append(fila('FWHM', sigFig(w.fwhm, 4), 'anchura a media altura, medida sobre los datos'));
-      panel.append(fila('Cruces', sigFig(w.izq, 5) + '  y  ' + sigFig(w.der, 5)));
-      panel.append(h('p', { class: 'hint' }, 'Medida directa por interpolación, sin suponer que el pico es gaussiano. Si el fondo no es plano, réstalo antes.'));
-    } else if (modo === 'scherrer') {
-      const w = fwhm(a.pts);
-      const cajaK = h('input', { class: 'field', type: 'number', step: '0.01', value: b.scherrerK || 0.9, style: 'width:90px' });
-      const cajaL = h('input', { class: 'field', type: 'number', step: '0.00001', value: b.lambda || 0.15406, style: 'width:110px' });
-      const salida = h('div');
-      const calcula = () => {
-        salida.innerHTML = '';
-        if (!w) { salida.append(h('p', { class: 'hint' }, 'Primero hay que poder medir la anchura: recorta los datos a un solo pico.')); return; }
-        const r = scherrer(w.fwhm, w.centro, +cajaK.value, +cajaL.value);
-        if (!r) { salida.append(h('p', { class: 'hint' }, 'Datos insuficientes.')); return; }
-        salida.append(fila('FWHM medida', sigFig(w.fwhm, 4) + '°'));
-        salida.append(fila('2θ del pico', sigFig(w.centro, 5) + '°'));
-        salida.append(fila('Tamaño de cristalita', sigFig(r.nm, 3) + ' nm', 'D = Kλ / (β cos θ)'));
-        salida.append(h('p', { class: 'hint' }, 'La anchura instrumental no está descontada: el valor es un límite inferior del tamaño real.'));
-      };
-      cajaK.addEventListener('input', calcula); cajaL.addEventListener('input', calcula);
-      panel.append(h('div', { class: 'irow' }, h('label', null, 'K (factor de forma)'), cajaK));
-      panel.append(h('div', { class: 'irow' }, h('label', null, 'λ (nm)'), cajaL));
-      panel.append(h('p', { class: 'hint', style: 'margin-top:0' }, 'Cu Kα = 0.15406 nm · Mo Kα = 0.07107 nm · Co Kα = 0.17902 nm'));
-      panel.append(salida);
-      calcula();
-    } else {
-      const segT = h('div', { class: 'seg', style: 'margin-bottom:10px' });
-      let directa = b.taucDirecta !== false;
-      const salida = h('div');
-      const calcula = () => {
-        salida.innerHTML = '';
-        const r = tauc(a.pts, directa);
-        if (!r) { salida.append(h('p', { class: 'hint' }, 'No se pudo ajustar. La serie debe ser energía (eV) frente a absorbancia o α.')); return; }
-        salida.append(fila('Banda prohibida', (r.sEg ? conError(r.eg, r.sEg) : sigFig(r.eg, 4)) + ' eV'));
-        salida.append(fila('R² del tramo recto', r.r2.toFixed(4)));
-        salida.append(fila('Transición', directa ? 'directa · (αhν)²' : 'indirecta · (αhν)^½'));
-        salida.append(h('p', { class: 'hint' }, 'El eje x tiene que ser energía en eV. Si tienes longitud de onda, conviértela con E = 1239.8/λ(nm).'));
-      };
-      [['directa', true], ['indirecta', false]].forEach(([n, v]) =>
-        segT.append(h('button', { class: directa === v ? 'on' : '', onclick: e => { directa = v; $$('button', segT).forEach(x => x.classList.remove('on')); e.target.classList.add('on'); calcula(); } }, n)));
-      panel.append(h('div', { class: 'irow' }, h('label', null, 'Tipo de transición')), segT, salida);
-      calcula();
-    }
+    if (!a) { panel.append(h('p', { class: 'hint' }, 'Elige una serie con al menos tres puntos.')); return; }
+    panel.append(modo === 'lineal' ? panelLineal(a, ctx) : modo === 'pico' ? panelPico(a)
+      : modo === 'scherrer' ? panelScherrer(a, ctx) : panelTauc(a, ctx));
   };
-  MODOS.forEach(m => seg.append(h('button', { class: modo === m.id ? 'on' : '',
-    onclick: e => { modo = m.id; b.analisis = m.id; $$('button', seg).forEach(x => x.classList.remove('on')); e.target.classList.add('on'); dibuja(); } }, m.n)));
-  cuerpo.append(h('p', { class: 'hint', style: 'margin-top:0' }, 'Serie analizada: ' + a.nombre + ' · ' + a.pts.length + ' puntos.'), seg, panel);
+  MODOS_ANALISIS.forEach(m => seg.append(h('button', { class: modo === m.id ? 'on' : '',
+    onclick: e => { modo = m.id; b.analisis = m.id; sucio = true; $$('button', seg).forEach(x => x.classList.remove('on')); e.currentTarget.classList.add('on'); dibuja(); } }, m.n)));
+  cuerpo.append(seg, panel);
   dibuja();
   openModal({ title: 'Análisis de la serie', size: 'modal-sm', body: cuerpo,
+    onclose: () => { if (sucio) commit(); },
     foot: [h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Listo')] });
+}
+
+function panelLineal(a, ctx) {
+  const cont = h('div');
+  const f = linFitSE(a.pts);
+  if (!f) { cont.append(h('p', { class: 'hint' }, 'No se pudo ajustar.')); return cont; }
+  cont.append(filaAnalisis('Pendiente', conError(f.m, f.sm), f.sm ? 'error estándar del ajuste' : 'con 3 puntos o más se calcula el error'));
+  cont.append(filaAnalisis('Ordenada al origen', conError(f.b, f.sb)));
+  cont.append(filaAnalisis('R²', f.r2.toFixed(5)));
+  cont.append(filaAnalisis('Puntos', String(f.n)));
+  if (f.s != null) cont.append(filaAnalisis('Desviación residual', sigFig(f.s, 3)));
+  const ld = limiteDeteccion(f);
+  if (ld) {
+    cont.append(h('div', { class: 'an-sep' }, 'Si es una curva de calibración'));
+    cont.append(filaAnalisis('Límite de detección', sigFig(ld.ld, 3), '3.3 σ/m, criterio ICH'));
+    cont.append(filaAnalisis('Límite de cuantificación', sigFig(ld.lc, 3), '10 σ/m'));
+  }
+  cont.append(residualesSVG(a.pts, f));
+  cont.append(h('p', { class: 'hint' }, 'Si los residuales dibujan una curva en vez de una nube, la relación no es lineal en todo el intervalo.'));
+  cont.append(h('button', { class: 'btn btn-sm', onclick: () => {
+    ctx.b.title = (ctx.b.title ? ctx.b.title + ' · ' : '') + 'm = ' + conError(f.m, f.sm) + ', R² = ' + f.r2.toFixed(4);
+    commit(); ctx.guardado(); closeModal(); toast('Resultado puesto en el título de la gráfica');
+  } }, 'Poner el resultado en el título'));
+  return cont;
+}
+
+function panelPico(a) {
+  const cont = h('div');
+  const w = fwhm(a.pts);
+  if (!w) { cont.append(h('p', { class: 'hint' }, 'No se encontró un pico con dos cruces por la media altura. Recorta los datos al pico.')); return cont; }
+  cont.append(filaAnalisis('Centro del pico', sigFig(w.centro, 5)));
+  cont.append(filaAnalisis('Altura', sigFig(w.alto, 4), 'sobre la línea base'));
+  cont.append(filaAnalisis('FWHM', sigFig(w.fwhm, 4), 'anchura a media altura, medida sobre los datos'));
+  cont.append(filaAnalisis('Cruces', sigFig(w.izq, 5) + '  y  ' + sigFig(w.der, 5)));
+  cont.append(graficaPico(a.pts, w));
+  cont.append(h('p', { class: 'hint' }, 'Medida directa por interpolación, sin suponer que el pico es gaussiano. Si el fondo no es plano, réstalo antes.'));
+  return cont;
+}
+
+function panelScherrer(a, ctx) {
+  const cont = h('div');
+  const w = fwhm(a.pts);
+  const o0 = ctx.opc();
+  const pre = RADIACIONES_AN.find(([v]) => Math.abs(v - o0.lambda) < 1e-9);
+  const sel = h('select', { class: 'field', 'aria-label': 'Radiación del tubo', style: 'width:auto' },
+    RADIACIONES_AN.map(([v, n]) => h('option', { value: String(v), selected: pre && pre[0] === v ? true : null }, n)),
+    h('option', { value: 'otra', selected: pre ? null : true }, 'Otra longitud de onda'));
+  const cajaK = h('input', { class: 'field', type: 'number', step: '0.01', value: o0.K, 'aria-label': 'Factor de forma K', style: 'width:110px' });
+  const cajaL = h('input', { class: 'field', type: 'number', step: '0.00001', value: o0.lambda, 'aria-label': 'Longitud de onda en nm', style: 'width:110px' });
+  const grafico = h('div');
+  const salida = h('div');
+  const calcula = () => {
+    grafico.innerHTML = ''; salida.innerHTML = '';
+    if (!w) { salida.append(h('p', { class: 'hint' }, 'Primero hay que poder medir la anchura: recorta los datos a un solo pico.')); return; }
+    grafico.append(graficaPico(a.pts, w));
+    const r = scherrer(w.fwhm, w.centro, +cajaK.value, +cajaL.value);
+    if (!r) { salida.append(h('p', { class: 'hint' }, 'K y λ tienen que ser números positivos.')); return; }
+    salida.append(filaAnalisis('FWHM medida', sigFig(w.fwhm, 4) + '°'));
+    salida.append(filaAnalisis('2θ del pico', sigFig(w.centro, 5) + '°'));
+    salida.append(filaAnalisis('Tamaño de cristalita', sigFig(r.nm, 3) + ' nm', 'D = Kλ / (β cos θ)'));
+    salida.append(h('p', { class: 'hint' }, 'La anchura instrumental no está descontada: el valor es un límite inferior del tamaño real.'));
+  };
+  sel.addEventListener('change', () => {
+    if (sel.value === 'otra') return;
+    cajaL.value = sel.value;
+    ctx.cambia({ lambda: +sel.value }); calcula();
+  });
+  cajaL.addEventListener('input', () => {
+    const l = parseFloat(cajaL.value);
+    ctx.cambia({ lambda: isFinite(l) ? l : null });
+    const p = RADIACIONES_AN.find(([v]) => isFinite(l) && Math.abs(v - l) < 1e-9);
+    sel.value = p ? String(p[0]) : 'otra';
+    calcula();
+  });
+  cajaK.addEventListener('input', () => {
+    const k = parseFloat(cajaK.value);
+    ctx.cambia({ K: isFinite(k) ? k : null }); calcula();
+  });
+  cont.append(h('div', { class: 'irow' }, h('label', null, 'K (factor de forma)'), cajaK),
+    h('div', { class: 'irow' }, h('label', null, 'Radiación'), sel),
+    h('div', { class: 'irow' }, h('label', null, 'λ (nm)'), cajaL),
+    grafico, salida);
+  calcula();
+  return cont;
+}
+
+function panelTauc(a, ctx) {
+  const cont = h('div');
+  const avisos = h('div');
+  const grafico = h('div');
+  const salida = h('div');
+  const cajaD = h('input', { class: 'field', type: 'number', step: '0.01', 'aria-label': 'Inicio del tramo (eV)', style: 'width:100px' });
+  const cajaH = h('input', { class: 'field', type: 'number', step: '0.01', 'aria-label': 'Fin del tramo (eV)', style: 'width:100px' });
+  /* El automático depende solo de los datos y de la transformación: se guarda
+     mientras no cambien, para que escribir en las cajas no lo recalcule. */
+  let claveAuto = null, autoRes = null;
+  const automatico = (pts, opc) => {
+    const clave = opc.fuente + '|' + opc.nmAeV + '|' + opc.directa;
+    if (clave !== claveAuto) { claveAuto = clave; autoRes = tauc(pts, opc.directa, null); }
+    return autoRes;
+  };
+  const recalcula = () => {
+    const opc = ctx.opc();
+    const datos = puntosTauc(a, opc);
+    const auto = automatico(datos.pts, opc);
+    /* Con un extremo fijado y el otro no, el que falta sale del automático. */
+    const ambos = opc.desde != null && opc.hasta != null;
+    let ventana = ambos ? { desde: opc.desde, hasta: opc.hasta } : null;
+    if (!ambos && (opc.desde != null || opc.hasta != null) && auto) {
+      ventana = { desde: opc.desde != null ? opc.desde : auto.desde, hasta: opc.hasta != null ? opc.hasta : auto.hasta };
+    }
+    const r = ventana ? tauc(datos.pts, opc.directa, ventana) : auto;
+    if (document.activeElement !== cajaD) cajaD.value = opc.desde != null ? opc.desde : (r ? +r.desde.toFixed(3) : '');
+    if (document.activeElement !== cajaH) cajaH.value = opc.hasta != null ? opc.hasta : (r ? +r.hasta.toFixed(3) : '');
+    avisos.innerHTML = '';
+    const xs = a.pts.map(p => p[0]);
+    if (datos.convertido) {
+      avisos.append(h('div', { class: 'an-aviso' }, 'Eje convertido de nm a eV con E = 1239.84 / λ. ',
+        h('button', { class: 'btn btn-sm', onclick: () => { ctx.cambia({ nmAeV: false, desde: null, hasta: null }); recalcula(); } }, 'Usar nm')));
+    } else if (pareceNanometros(xs)) {
+      avisos.append(h('div', { class: 'an-aviso' }, 'El eje x parece estar en nanómetros, y Tauc necesita energía en eV. ',
+        h('button', { class: 'btn btn-sm', onclick: () => { ctx.cambia({ nmAeV: true, desde: null, hasta: null }); recalcula(); } }, 'Convertir a eV (E = 1239.84 / λ)')));
+    }
+    if (opc.fuente === 'dr' && extremos(a.pts.map(p => p[1])).hi <= 1) {
+      avisos.append(h('div', { class: 'an-aviso' }, 'Los valores de reflectancia parecen fracciones (0–1). Este modo espera porcentajes (0–100 %).'));
+    }
+    grafico.innerHTML = ''; salida.innerHTML = '';
+    if (!r) {
+      salida.append(h('p', { class: 'hint' }, 'No hay un tramo recto con pendiente positiva. Prueba otra fuente o transición, o un intervalo distinto.'));
+      return;
+    }
+    salida.append(filaAnalisis('Banda prohibida', (r.sEg ? conError(r.eg, r.sEg) : sigFig(r.eg, 4)) + ' eV'));
+    salida.append(filaAnalisis('R² del tramo', r.r2.toFixed(4)));
+    salida.append(filaAnalisis('Tramo', sigFig(r.desde, 3) + ' – ' + sigFig(r.hasta, 3) + ' eV', r.auto ? 'automático (mejor R²)' : 'fijado a mano'));
+    salida.append(filaAnalisis('Puntos en el tramo', String(r.n)));
+    salida.append(h('p', { class: 'hint' }, 'El ± es solo el error estadístico de la recta. No recoge la elección del tramo ni el modelo de Tauc: prueba varios tramos antes de dar el valor.'));
+    if (datos.excl) salida.append(h('p', { class: 'hint' }, 'Se excluyen ' + datos.excl + ' puntos sin valor válido en esta transformación.'));
+    const etiqueta = '(' + (opc.fuente === 'dr' ? 'F(R)·hν' : 'αhν') + ')' + (opc.directa ? '²' : '^½');
+    grafico.append(graficaTauc(r, etiqueta));
+    grafico.append(h('p', { class: 'hint' }, 'Puntos oscuros: el tramo ajustado. Línea sólida: el ajuste; discontinua: su extrapolación hasta el eje.'));
+  };
+  const onVentana = () => {
+    const d = parseFloat(cajaD.value), hh = parseFloat(cajaH.value);
+    ctx.cambia({ desde: isFinite(d) ? d : null, hasta: isFinite(hh) ? hh : null });
+    recalcula();
+  };
+  cajaD.addEventListener('input', onVentana);
+  cajaH.addEventListener('input', onVentana);
+  cont.append(h('div', { class: 'an-sep' }, 'Fuente de los datos'),
+    segmentoAn([['abs', 'Absorbancia o α'], ['dr', 'Reflectancia difusa (%)']], ctx.opc().fuente, v => { ctx.cambia({ fuente: v }); recalcula(); }),
+    avisos,
+    h('div', { class: 'an-sep' }, 'Transición'),
+    segmentoAn([[true, h('span', null, 'Directa · (αhν)', h('sup', null, '2'))], [false, h('span', null, 'Indirecta · (αhν)', h('sup', null, '½'))]], ctx.opc().directa, v => { ctx.cambia({ directa: v }); recalcula(); }),
+    h('div', { class: 'an-sep' }, 'Tramo de ajuste (eV)'),
+    h('div', { class: 'an-campo' },
+      h('label', null, 'Desde ', cajaD), h('label', null, 'hasta ', cajaH),
+      h('button', { class: 'btn btn-sm', onclick: () => { ctx.cambia({ desde: null, hasta: null }); recalcula(); } }, 'Automático')),
+    salida, grafico);
+  recalcula();
+  return cont;
 }
 
 /* Gráfica pequeña de residuales, en SVG y sin dependencias. */
