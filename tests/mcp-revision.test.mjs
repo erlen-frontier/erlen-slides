@@ -175,11 +175,11 @@ test('MCP revision: en revisar_presentacion, robusta y sin avisos de más en los
     assert.deepEqual([...new Set(solo.hallazgos.map(h => h.categoria))], ['unidades']);
     assert.ok(solo.reglas.includes('figuras-referencias'));
 
-    /* Los doce ejemplos: el único aviso es real (tres diapositivas de
+    /* Los trece ejemplos: el único aviso es real (tres diapositivas de
        contenido sin notas cuando las demás las tienen). */
     const ej = (await c.llama('listar_ejemplos', {})).datos;
     const ejemplos = ej.ejemplos || ej;
-    assert.equal(ejemplos.length, 12);
+    assert.equal(ejemplos.length, 13);
     for (const {id} of ejemplos) {
       await c.llama('crear_presentacion', {archivo: 'ej', desde_ejemplo: id, sobrescribir: true});
       const hs = (await c.llama('revisar_convenciones', {archivo: 'ej'})).datos.hallazgos;

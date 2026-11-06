@@ -101,7 +101,7 @@ function wsDuplicar(n) {
   if (!lsSet(LS_DECKS, store)) throw new Error('no hay espacio en este navegador. Descarga un respaldo antes de continuar.');
   toast('Copia creada: «' + nombre + '».');
 }
-/* Los doce ejemplos (87-ejemplos.js), con su disciplina y una fórmula o idea como arte. */
+/* Los trece ejemplos (87-ejemplos.js), con su disciplina y una fórmula o idea como arte. */
 const WS_ARTE = {
   calibracion: ['Química analítica', 'A = εlc'],
   cinetica: ['Cinética', 'c(t) = c₀e⁻ᵏᵗ'],

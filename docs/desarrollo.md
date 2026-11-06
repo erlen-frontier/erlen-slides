@@ -23,7 +23,7 @@ Node.js >= 22. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `n
 - `src/js/85-flujos.js`: cargador local y entradas de las herramientas opcionales. `web/flujos-editor.js` contiene sus interfaces y `web/exportaciones-avanzadas.js`, los adaptadores PptxGenJS/Reveal.js. El build copia bibliotecas, chunks Mermaid y licencias a `public/`, con versiones y SHA-256 en `libre/manifest.json`. El runtime de funciones del HTML se ensambla desde el mismo motor del editor. Terser compacta módulos propios del lienzo, editor, barra contextual, diálogos, revisión, cinta, accesibilidad y flujos sin renombrar los símbolos que usa MCP.
 - `src/js/45-estructura.js`, `src/js/45b-estructura-dibujo.js` y `src/js/46-estructura-edit.js`: las estructuras químicas, partidas en modelo, motor y lienzo (ver «Editores de figura»).
 - `src/js/47-lab-catalogo.js`, `src/js/47b-lab.js` y `src/js/48-lab-edit.js`: el montaje de laboratorio, partido en catálogo, motor y editor (ver «Editores de figura»).
-- `src/js/87-ejemplos.js`: doce ejemplos científicos construidos con los bloques reales.
+- `src/js/87-ejemplos.js`: trece ejemplos científicos construidos con los bloques reales.
 - `src/diseno/inicio.mjs`, `src/diseno/marco.mjs` y `src/diseno/cinta.js`: componentes locales de inicio, marco y cinta. `src/js/56-cinta.js` configura las acciones del editor.
 - `src/js/88-workspace.js`: monta el inicio con la biblioteca, los ejemplos, las plantillas personales y los recursos locales. Sus rutas visibles son `#inicio`, `#inicio/biblioteca`, `#inicio/plantillas`, `#inicio/herramientas` y `#inicio/servicio`; `#presentaciones` abre el editor y `?plantilla=<id>` permite abrir un ejemplo.
 - `src/js/88b-recuperacion.js`: historial en IndexedDB, separado del autoguardado.

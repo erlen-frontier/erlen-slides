@@ -77,7 +77,7 @@ La ruta completa de Node la da `node -p process.execPath`. En Windows usa rutas 
 | Herramienta | Para qué |
 |---|---|
 | `guia_formato` | Diseños de diapositiva, temas, tipos de bloque con sus propiedades y convenciones (TeX, mhchem, datos). |
-| `listar_presentaciones`, `listar_ejemplos` | Los proyectos de la carpeta, del más reciente al más antiguo, y los doce ejemplos editables. |
+| `listar_presentaciones`, `listar_ejemplos` | Los proyectos de la carpeta, del más reciente al más antiguo, y los trece ejemplos editables. |
 | `crear_presentacion` | Proyecto nuevo con portada y, si se quiere, todas sus diapositivas en una sola llamada; o copia de un ejemplo. |
 | `ver_presentacion` | Esquema con el id de cada bloque; una diapositiva completa; o el proyecto entero. Las imágenes incrustadas se resumen en su tipo y tamaño. |
 | `editar_metadatos` | Título, autores, institución, fecha, tema, aspecto, acento, tipografía. |

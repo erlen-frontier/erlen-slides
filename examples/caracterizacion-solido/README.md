@@ -1,0 +1,28 @@
+# Caracterización de un sólido
+
+Tamaño de cristalita por DRX y banda prohibida por reflectancia, con datos sintéticos.
+
+**Caso didáctico, datos ilustrativos.** No se ha realizado un experimento para este ejemplo. Los modelos analíticos, cuando existen, aparecen junto a la gráfica.
+
+## Uso real
+
+¿Qué tamaño de cristalita y qué banda prohibida tiene la muestra, y con qué incertidumbre?
+
+1. Inicia Tabula y abre «Ejemplos editables → Caracterización de un sólido», o importa [proyecto.json](proyecto.json).
+2. Recorre las seis diapositivas: pregunta, estrategia, evidencia, límites y comprobaciones.
+3. Sustituye mediciones y metadatos por los de tu investigación; revisa unidades, controles e incertidumbre.
+4. Edita los bloques desde el panel derecho. Las tablas, ecuaciones y datos de las gráficas siguen siendo editables.
+5. Guarda el proyecto JSON; ensaya con Presentar y descarga PDF o PowerPoint para compartir.
+
+## Antes de presentar
+
+- Anchura instrumental medida con un patrón de referencia
+- Reflectancia en porcentaje y blanco de referencia declarados
+- Tramo de Tauc justificado y comparado con los tramos vecinos
+
+## Archivos
+
+- [Proyecto editable](proyecto.json): formato Erlen v1.
+- [Fuente Beamer](presentacion.tex): generado por el exportador; requiere una instalación de LaTeX. Su compilación no forma parte de la validación de esta versión.
+
+Licencia de los ejemplos: AGPL-3.0-only. No hay referencias bibliográficas inventadas.
