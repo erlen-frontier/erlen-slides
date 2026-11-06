@@ -10,7 +10,11 @@
 - **Fase 1 — hecha** (`fd38397`, `abf9d59`, `f0810df`). Los 12 ejemplos pasan la revisión sin avisos; los avisos no tapan los controles inferiores; la revisión selecciona el bloque que señala.
 - **Fase 2.2 — hecha** (`bc962ca`). Análisis de la serie desde el botón σ de la barra contextual de una gráfica, y como acción del asistente.
 - **Pendiente de decisión:** 2.1 (cinta), 2.3 (botón AGPLv3), 4.1 (miniaturas del inicio) y el texto de autor de los ejemplos.
-- **Pendiente sin decisión:** fase 3 (caracterización) y 4.2 (guía de primer uso).
+- **Hecho sin decisión:**
+  - 3.1, ejemplo de caracterización con datos sintéticos (`f19e508`): 13 ejemplos en total.
+  - 3.2 a 3.4, sensibilidad del tramo de Tauc, anchura instrumental en Scherrer y sugerencias de calidad sobre análisis (`3e16bcd`).
+  - 4.2, guía de primer uso al abrir un ejemplo (`6b1dfe7`).
+- **Pendiente sin decisión:** ninguno. Lo que queda depende de tus decisiones de arriba.
 
 ## Reglas para quien ejecute el plan
 
