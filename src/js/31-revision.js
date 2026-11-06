@@ -91,7 +91,7 @@ function tituloGenerico(t) {
 function revisaMazo() {
   const deck = S.deck, m = deck.meta;
   const fallos = [];
-  const add = (grado, i, qué, cómo) => fallos.push({ grado, i, qué, cómo });
+  const add = (grado, i, qué, cómo, bloque) => fallos.push({ grado, i, qué, cómo, bloque: bloque || null });
   const wb = $('#workbench');
   const antes = wb.innerHTML;
   wb.innerHTML = '';
@@ -148,17 +148,18 @@ function revisaMazo() {
       const clave = c + '|' + fondo;
       if (vistos.has(clave)) return;
       vistos.add(clave);
+      const bid = el.closest('.blk[data-bid]')?.dataset.bid || null;
       const r = contraste(hex6(c, fondo), hex6(fondo));
-      if (r < 3) add('error', i, 'Texto con poco contraste (' + r.toFixed(1) + ':1)', 'Por debajo de 3:1 no se lee en un proyector con luz de sala. Cambia el color o el tema.');
-      else if (r < 4.5) add('sugerencia', i, 'Contraste justo (' + r.toFixed(1) + ':1)', 'Sube a 4.5:1 si la sala tiene luz.');
+      if (r < 3) add('error', i, 'Texto con poco contraste (' + r.toFixed(1) + ':1)', 'Por debajo de 3:1 no se lee en un proyector con luz de sala. Cambia el color o el tema.', bid);
+      else if (r < 4.5) add('sugerencia', i, 'Contraste justo (' + r.toFixed(1) + ':1)', 'Sube a 4.5:1 si la sala tiene luz.', bid);
     });
     /* figuras */
     bloques.forEach(b => {
       if (['image', 'chart', 'func', 'smart', 'video'].indexOf(b.type) >= 0 && !(b.caption || '').trim())
-        add('sugerencia', i, 'Figura sin pie', 'Un pie de una línea dice qué hay que mirar; además numera la figura.');
-      if (b.type === 'image' && !b.src) add('error', i, 'Hay un bloque de figura sin imagen', 'Elige una imagen o quita el bloque.');
+        add('sugerencia', i, 'Figura sin pie', 'Un pie de una línea dice qué hay que mirar; además numera la figura.', b.id);
+      if (b.type === 'image' && !b.src) add('error', i, 'Hay un bloque de figura sin imagen', 'Elige una imagen o quita el bloque.', b.id);
       if (b.type === 'image' && b.src && !(b.alt || '').trim() && !(b.caption || '').trim())
-        add('sugerencia', i, 'Imagen sin texto alterno ni pie', 'Sirve para lectores de pantalla y para el PowerPoint.');
+        add('sugerencia', i, 'Imagen sin texto alterno ni pie', 'Sirve para lectores de pantalla y para el PowerPoint.', b.id);
     });
     Array.from(raiz.querySelectorAll('.b-image img')).forEach(im => {
       if (/^data:image\/svg|\.svg(\?|$)/i.test(im.src || '')) return;   /* el vector no pierde nitidez */
@@ -228,7 +229,14 @@ function openRevision() {
       if (!lista.length) return;
       cuerpo.append(h('span', { class: 'sublabel', style: 'margin:16px 0 6px' }, GRADO[g][0]));
       lista.forEach(f => cuerpo.append(h('button', { class: 'rv-fila g-' + g,
-        onclick: () => { closeModal(); S.cur = clamp(f.i, 0, S.deck.slides.length - 1); S.selBlock = null; renderAll(); } },
+        onclick: () => {
+          closeModal();
+          S.cur = clamp(f.i, 0, S.deck.slides.length - 1);
+          /* Si el aviso señala un bloque que sigue en la diapositiva, se selecciona; si no, solo se va a la diapositiva. */
+          const bloquesDe = zonas(S.deck.slides[S.cur]).flat();
+          S.selBlock = f.bloque && bloquesDe.some(x => x.id === f.bloque) ? f.bloque : null;
+          renderAll();
+        } },
         h('span', { class: 'rv-i' }, String(f.i + 1)),
         h('span', { class: 'rv-tx' }, h('b', null, f.qué), h('span', null, f.cómo)))));
     });
