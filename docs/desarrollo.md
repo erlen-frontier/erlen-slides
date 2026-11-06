@@ -59,6 +59,10 @@ Para el PowerPoint, «inspeccionar» significa abrirlo con algo que no sea la pr
 
 Los tests JSDOM no verifican medidas reales ni rasterización. La estructura actual concatena módulos: es una base funcional heredada, no una promesa de arquitectura modular aislada.
 
+## Avisos de dependencias
+
+`npm audit` no reporta vulnerabilidades críticas. Quedan dos avisos altos de `image-size` (bucles infinitos al analizar imágenes JXL, HEIF e ICNS), dentro de `pptxgenjs` 4.0.1. Riesgo aceptado: pptxgenjs declara `"browser": {"image-size": false}`, ese código no aparece en el bundle que sirve la app (`public/libre/`) y el MCP no carga pptxgenjs en Node. La corrección que propone npm (`npm audit fix --force`) instala pptxgenjs 4.0.0, un retroceso, así que no se aplica. Revisar cuando salga una versión de pptxgenjs que actualice `image-size`.
+
 ## Editores de figura
 
 Varios editores del programa —el montaje de laboratorio, las estructuras químicas, los diagramas— no son código de una charla: dibujan una figura. Los que ya están separados lo están en tres piezas con una frontera declarada, y sirven de patrón para los demás:
