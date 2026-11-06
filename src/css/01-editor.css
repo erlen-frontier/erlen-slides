@@ -1717,3 +1717,9 @@ details.zot-arch > div{margin-top:var(--e2)}
 .catalogo-datos h3{margin:var(--e2) 0}.catalogo-datos p{margin:var(--e2) 0}
 .catalogo-creditos{white-space:pre-wrap;overflow-wrap:anywhere;max-height:55vh;overflow:auto}
 @media (max-width:600px){.catalogo-filtros,.catalogo-columnas,.catalogo-piezas{grid-template-columns:minmax(0,1fr)}.catalogo-piezas{max-height:180px}}
+
+/* guía de un ejemplo recién abierto: franja descartable encima del lienzo */
+.guia-ejemplo{display:flex;align-items:center;flex-wrap:wrap;gap:var(--e2) var(--e3);padding:var(--e2) var(--e3);background:var(--panel);border-bottom:1px solid var(--line);font-size:var(--t1);color:var(--mut)}
+.guia-texto{flex:1 1 240px;min-width:0}
+.guia-acciones{display:flex;flex-wrap:wrap;gap:var(--e2)}
+.guia-cerrar{margin-left:auto}

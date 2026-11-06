@@ -6,11 +6,11 @@ import {existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
-/* Los doce ejemplos incluidos deben salir de la revisión sin ningún aviso.
+/* Los trece ejemplos incluidos deben salir de la revisión sin ningún aviso.
    El desborde (el contenido que no cabe) solo se mide con geometría real, así que
    la prueba corre en Chromium. Los datos de los ejemplos son ilustrativos. */
 
-test('los doce ejemplos pasan la revisión sin avisos en Chromium', {timeout: 240000}, async t => {
+test('los trece ejemplos pasan la revisión sin avisos en Chromium', {timeout: 240000}, async t => {
   const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
   if (!existsSync(bin)) { t.skip('Set ERLEN_CHROMIUM to run browser validation.'); return; }
   const port = Number(process.env.ERLEN_EJEMPLOS_PORT || 4398);
@@ -28,7 +28,7 @@ test('los doce ejemplos pasan la revisión sin avisos en Chromium', {timeout: 24
     S.deck = e.build();
     return {id: e.id, avisos: revisaMazo().fallos.map(f => f.grado + ' · diapositiva ' + (f.i + 1) + ' · ' + f.qué)};
   }));
-  assert.equal(hallazgos.length, 12, 'son doce ejemplos');
+  assert.equal(hallazgos.length, 13, 'son trece ejemplos');
   for (const h of hallazgos)
     assert.deepEqual(h.avisos, [], h.id + ' tiene avisos de revisión');
   assert.deepEqual(errors, [], 'sin errores de página');

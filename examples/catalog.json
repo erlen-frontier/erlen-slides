@@ -94,5 +94,13 @@
     "file": "datos-abiertos/proyecto.json",
     "slides": 6,
     "data": "illustrative"
+  },
+  {
+    "id": "caracterizacion-solido",
+    "title": "Caracterización de un sólido",
+    "description": "Tamaño de cristalita por DRX y banda prohibida por reflectancia, con datos sintéticos.",
+    "file": "caracterizacion-solido/proyecto.json",
+    "slides": 6,
+    "data": "illustrative"
   }
 ]

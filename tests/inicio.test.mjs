@@ -76,7 +76,7 @@ test('Local hash routes follow navigation in both directions and accept historic
  await aHash(w,'#inicio/plantillas');
  assert.equal(run('INICIO.vista'),'ejemplos');
  const titulos=[...raiz(d).querySelectorAll('.erlen-inicio-ejemplo h2')].map(h=>h.textContent);
- assert.equal(titulos.length,12,'Los doce ejemplos editables');
+ assert.equal(titulos.length,13,'Los trece ejemplos editables');
  await aHash(w,'#presentaciones');
  assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('.erlen-marco').hasAttribute('inert'));
  await aHash(w,'#inicio/servicio');

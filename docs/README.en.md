@@ -10,6 +10,6 @@ The standalone offline HTML supports core editing. The optional RDKit/Kekule/3Dm
 
 To move a presentation between browsers or origins, export and import its JSON project. Tabula does not support app-to-app copy exchange or conversion of other tools' specific reports. The general [MCP server](mcp.md) remains available for external assistants.
 
-Twelve [worked examples](../examples/README.md) provide 72 editable slides, JSON projects and Beamer sources. All numerical data are illustrative, not observations or reported scientific discoveries. Beamer compilation and pixel-identical rendering in every PowerPoint version are not certified.
+Thirteen [worked examples](../examples/README.md) provide 78 editable slides, JSON projects and Beamer sources. All numerical data are illustrative, not observations or reported scientific discoveries. Beamer compilation and pixel-identical rendering in every PowerPoint version are not certified.
 
 License: **AGPL-3.0-only**, with separately licensed third-party components. See [notices](../THIRD_PARTY_NOTICES.md). Citation metadata are in [CITATION.cff](../CITATION.cff). A Zenodo DOI will be added only after a confirmed deposit.

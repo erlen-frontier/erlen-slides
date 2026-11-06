@@ -131,6 +131,7 @@ function saneaBloque(b, avisos, deck) {
       if (typeof o.directa === 'boolean') opc.directa = o.directa;
       if (typeof o.nmAeV === 'boolean') opc.nmAeV = o.nmAeV;
       ['desde', 'hasta', 'K', 'lambda'].forEach(k => { const v = num(o[k]); if (v !== undefined) opc[k] = v; });
+      const bi = num(o.betaInst); if (bi !== undefined && bi >= 0) opc.betaInst = bi;
       b.analisisOpc = opc;
     } else delete b.analisisOpc;
     if (b.destaca && typeof b.destaca === 'object' && isFinite(+b.destaca.serie) && isFinite(+b.destaca.i))

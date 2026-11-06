@@ -30,6 +30,7 @@ function openPlantillas() {
       const est = estiloPorOmision();
       if (est) Object.assign(d.meta, est);
       if (!loadDeck(d, null)) return;
+      if (EJEMPLOS.some(e => e.id === p.id)) muestraGuiaEjemplo();
       if (p.id === 'blanco' && typeof marcaArchivoNuevo === 'function') marcaArchivoNuevo();
       toast('Presentación nueva: ' + p.n);
     } },

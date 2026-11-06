@@ -45,7 +45,7 @@ El build también genera `public/erlen-slides-offline.html` para la edición bá
 
 En [Releases](https://github.com/erlen-frontier/erlen-slides/releases) está disponible la versión histórica 0.1.0; no contiene necesariamente las funciones descritas para el código actual. Todavía no hay un paquete 0.3.0 publicado allí.
 
-## Doce ejemplos completos
+## Trece ejemplos completos
 
 Cada ejemplo contiene **seis diapositivas**, notas, archivo JSON editable, fuente Beamer y una guía de adaptación. Son casos de trabajo científico con **datos explícitamente ilustrativos**, no experimentos realizados ni publicaciones inventadas.
 
@@ -63,6 +63,7 @@ Cada ejemplo contiene **seis diapositivas**, notas, archivo JSON editable, fuent
 | [Congreso](examples/congreso/) | Una figura y un mensaje central |
 | [Derivación](examples/derivacion/) | Pasos matemáticos e hipótesis |
 | [Datos abiertos](examples/datos-abiertos/) | Archivos, diccionario y cita |
+| [Caracterización de un sólido](examples/caracterizacion-solido/) | Tamaño de cristalita y banda prohibida, con su incertidumbre |
 
 ![Ecuaciones y reacciones en el editor](docs/images/quimica.png)
 

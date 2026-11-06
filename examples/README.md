@@ -4,7 +4,7 @@ Abre **Ejemplos editables** en Tabula o importa un `proyecto.json`. Cada carpeta
 
 Todos los datos son ilustrativos. Los ejemplos describen situaciones reales de trabajo científico; no representan experimentos realizados ni contienen citas inventadas.
 
-El [catálogo legible por máquina](catalog.json) enumera los doce casos. Puedes regenerar proyectos y fuentes con `npm run build && npm run examples`.
+El [catálogo legible por máquina](catalog.json) enumera los trece casos. Puedes regenerar proyectos y fuentes con `npm run build && npm run examples`.
 
 - [Calibración UV–Vis](calibracion/)
 - [Cinética de primer orden](cinetica/)
