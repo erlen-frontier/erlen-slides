@@ -4,6 +4,14 @@
 
 **Base:** rama de trabajo actual, commit `b3eb895`. Suite completa en verde (563/563 con Chromium) y `npm run accesibilidad` sin violaciones serias. Los hallazgos de abajo se comprobaron en Chromium el 2026-11-06 con `?plantilla=calibracion`, a 1440×900 y 390×844.
 
+## Estado
+
+- **Fase 0 — hecha** (`fde317f`). Quedan 2 altas de `image-size` dentro de pptxgenjs: riesgo aceptado y documentado en `docs/desarrollo.md`, pendiente de confirmación.
+- **Fase 1 — hecha** (`fd38397`, `abf9d59`, `f0810df`). Los 12 ejemplos pasan la revisión sin avisos; los avisos no tapan los controles inferiores; la revisión selecciona el bloque que señala.
+- **Fase 2.2 — hecha** (`bc962ca`). Análisis de la serie desde el botón σ de la barra contextual de una gráfica, y como acción del asistente.
+- **Pendiente de decisión:** 2.1 (cinta), 2.3 (botón AGPLv3), 4.1 (miniaturas del inicio) y el texto de autor de los ejemplos.
+- **Pendiente sin decisión:** fase 3 (caracterización) y 4.2 (guía de primer uso).
+
 ## Reglas para quien ejecute el plan
 
 - Leer antes `AGENTS.md`, `docs/desarrollo.md` y `src/js/_orden.txt`. Todos los módulos de `src/js/` comparten un ámbito: antes de crear una función o constante global, buscar que el nombre no exista (`grep -rn "function nombre\|const nombre" src/js`).
