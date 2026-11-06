@@ -8,9 +8,9 @@ test('Slides boots independently; all navigation and resource actions resolve',a
  run('wsNueva()');assert.equal(inicio().hidden,true);assert.equal(dom.window.location.hash,'#presentaciones');assert.equal(run('S.deck.slides[0].blocks.length'),0);
  run('openDecks()');run('closeModal()');run('openEdicion()');assert.match(dom.window.document.querySelector('#modalRoot').textContent,/AGPLv3/);assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
-test('Twelve examples validate and render all 72 slides, with editable blocks and Beamer output',async()=>{const {dom,errors,run}=await editor();try{
- assert.equal(run('EJEMPLOS.length'),12);
- for(let i=0;i<12;i++){
+test('Thirteen examples validate and render all 78 slides, with editable blocks and Beamer output',async()=>{const {dom,errors,run}=await editor();try{
+ assert.equal(run('EJEMPLOS.length'),13);
+ for(let i=0;i<13;i++){
   run(`window.__deck=EJEMPLOS[${i}].build()`);const clean=run('saneaDeck(__deck)');assert.ok(clean.deck,JSON.stringify(clean));
   assert.equal(clean.deck.slides.length,6);assert.match(clean.deck.meta.subtitle,/ilustrativos/);
   for(let j=0;j<6;j++){run(`window.__slide=renderSlide(__deck,${j},'export')`);const node=dom.window.__slide;assert.ok(node);assert.equal(node.querySelectorAll('.katex-error').length,0,'KaTeX '+i+'/'+j);}
