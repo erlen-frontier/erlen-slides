@@ -22,6 +22,10 @@ function calidadCientifica(deck) {
       if ((b.ylabel || '').trim() && !/[([\[{]/.test(b.ylabel)) add('sugerencia', i, 'El eje vertical no muestra una unidad', 'Añádela si aplica, por ejemplo «Señal (V)».', b.id);
       if (!(b.caption || '').trim()) add('sugerencia', i, 'La gráfica no tiene pie', 'Resume qué representa y qué debe mirar la audiencia.', b.id);
       if (!b.fuente) add('sugerencia', i, 'La gráfica no declara procedencia', 'Añade archivo, fecha, huella o instrumento en Figura viva.', b.id);
+      /* Un análisis guardado con la gráfica: el pie tiene que decir qué supone el número. */
+      const pie = (b.caption || '') + ' ' + (b.title || '');
+      if (b.analisis === 'tauc' && !/directa|indirecta/i.test(pie)) add('sugerencia', i, 'La banda prohibida no declara la transición', 'Escribe en el pie si la transición es directa o indirecta y qué tramo de energía se ajustó.', b.id);
+      if (b.analisis === 'scherrer' && !/Cu|Mo|Co|λ|nm/.test(pie)) add('sugerencia', i, 'El tamaño de cristalita no declara la radiación', 'Indica en el pie el ánodo (p. ej. Cu Kα) y si la anchura instrumental se descontó.', b.id);
       if (b.logX && puntos.some(p => !isFinite(p[0]) || p[0] <= 0)) add('error', i, 'La escala logarítmica de x contiene valores no positivos', 'Corrige los datos o usa una escala lineal.', b.id);
       if (b.logY && puntos.some(p => !isFinite(p[1]) || p[1] <= 0)) add('error', i, 'La escala logarítmica de y contiene valores no positivos', 'Corrige los datos o usa una escala lineal.', b.id);
       const errores = puntos.filter(p => p.length > 2 && p[2] != null);

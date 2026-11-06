@@ -95,15 +95,17 @@ function pareceNanometros(xs) {
 
 /* Scherrer: tamaño de cristalita a partir de la anchura del pico.
    fwhmGrados es la FWHM en 2θ (°) y dosThetaGrados la posición 2θ del pico (°).
-   Devuelve nm, o null si algún dato no es válido: un K o una λ de cero no son
-   «el valor por omisión», son un error. */
-function scherrer(fwhmGrados, dosThetaGrados, K = 0.9, lambdaNm = 0.15406) {
-  if (!(K > 0) || !(lambdaNm > 0) || !(fwhmGrados > 0)) return null;
-  const beta = fwhmGrados * Math.PI / 180;
+   betaInstGrados, si se da, es la anchura instrumental: con perfiles gaussianos,
+   β_muestra² = β_obs² − β_inst². Devuelve nm, o null si algún dato no es válido:
+   un K o una λ de cero no son «el valor por omisión», son un error. */
+function scherrer(fwhmGrados, dosThetaGrados, K = 0.9, lambdaNm = 0.15406, betaInstGrados = 0) {
+  if (!(K > 0) || !(lambdaNm > 0) || !(fwhmGrados > 0) || !(betaInstGrados >= 0) || betaInstGrados >= fwhmGrados) return null;
+  const betaDeg = betaInstGrados > 0 ? Math.sqrt(fwhmGrados * fwhmGrados - betaInstGrados * betaInstGrados) : fwhmGrados;
+  const beta = betaDeg * Math.PI / 180;
   const theta = dosThetaGrados / 2 * Math.PI / 180;
   const cos = Math.cos(theta);
   if (!(cos > 0)) return null;
-  return { nm: K * lambdaNm / (beta * cos), K, lambda: lambdaNm, theta: dosThetaGrados / 2 };
+  return { nm: K * lambdaNm / (beta * cos), K, lambda: lambdaNm, theta: dosThetaGrados / 2, betaDeg, descontada: betaInstGrados > 0 };
 }
 
 /* Tauc: (αhν)^n frente a hν; el corte de la recta con el eje da Eg.
@@ -152,6 +154,18 @@ function tauc(pts, directa, ventana) {
     if (sxx > 0) sEg = f.s / f.m * Math.sqrt(1 / k + (eg - xbar) * (eg - xbar) / sxx);
   }
   return { eg, sEg, r2: f.r2, n: k, desde: seg[0][0], hasta: seg[k - 1][0], auto, seg, t, f };
+}
+
+/* Sensibilidad al tramo: el Eg con las ventanas vecinas, con inicio y fin desplazados
+   ±frac del ancho de la ventana. Devuelve el mínimo y el máximo, o null si no hay dos. */
+function sensibilidadTramo(pts, directa, r, frac = 0.1) {
+  if (!r) return null;
+  const d = (r.hasta - r.desde) * frac, egs = [];
+  for (const dd of [-d, 0, d]) for (const dh of [-d, 0, d]) {
+    const q = tauc(pts, directa, { desde: r.desde + dd, hasta: r.hasta + dh });
+    if (q && Number.isFinite(q.eg)) egs.push(q.eg);
+  }
+  return egs.length > 1 ? { min: Math.min(...egs), max: Math.max(...egs), n: egs.length } : null;
 }
 
 /* ---------- gráficas pequeñas en SVG, sin dependencias ---------- */
@@ -256,7 +270,8 @@ function opcionesAnalisis(b) {
     desde: num(o.desde, null),
     hasta: num(o.hasta, null),
     K: num(o.K, 0.9),
-    lambda: num(o.lambda, 0.15406)
+    lambda: num(o.lambda, 0.15406),
+    betaInst: num(o.betaInst, null)
   };
 }
 
@@ -396,18 +411,25 @@ function panelScherrer(a, ctx) {
     h('option', { value: 'otra', selected: pre ? null : true }, 'Otra longitud de onda'));
   const cajaK = h('input', { class: 'field', type: 'number', step: '0.01', value: o0.K, 'aria-label': 'Factor de forma K', style: 'width:110px' });
   const cajaL = h('input', { class: 'field', type: 'number', step: '0.00001', value: o0.lambda, 'aria-label': 'Longitud de onda en nm', style: 'width:110px' });
+  const cajaB = h('input', { class: 'field', type: 'number', step: '0.001', min: '0', value: o0.betaInst, placeholder: '0', 'aria-label': 'Anchura instrumental en grados', style: 'width:110px' });
   const grafico = h('div');
   const salida = h('div');
   const calcula = () => {
     grafico.innerHTML = ''; salida.innerHTML = '';
     if (!w) { salida.append(h('p', { class: 'hint' }, 'Primero hay que poder medir la anchura: recorta los datos a un solo pico.')); return; }
     grafico.append(graficaPico(a.pts, w));
-    const r = scherrer(w.fwhm, w.centro, +cajaK.value, +cajaL.value);
+    const bi = cajaB.value.trim() === '' ? 0 : +cajaB.value;
+    if (!(bi >= 0)) { salida.append(h('p', { class: 'hint' }, 'La anchura instrumental no puede ser negativa.')); return; }
+    if (bi >= w.fwhm) { salida.append(h('p', { class: 'hint' }, 'La anchura instrumental tiene que ser menor que la del pico medido (' + sigFig(w.fwhm, 4) + '°).')); return; }
+    const r = scherrer(w.fwhm, w.centro, +cajaK.value, +cajaL.value, bi);
     if (!r) { salida.append(h('p', { class: 'hint' }, 'K y λ tienen que ser números positivos.')); return; }
     salida.append(filaAnalisis('FWHM medida', sigFig(w.fwhm, 4) + '°'));
+    if (r.descontada) salida.append(filaAnalisis('FWHM de la muestra', sigFig(r.betaDeg, 4) + '°', 'β² = β_obs² − β_inst²'));
     salida.append(filaAnalisis('2θ del pico', sigFig(w.centro, 5) + '°'));
     salida.append(filaAnalisis('Tamaño de cristalita', sigFig(r.nm, 3) + ' nm', 'D = Kλ / (β cos θ)'));
-    salida.append(h('p', { class: 'hint' }, 'La anchura instrumental no está descontada: el valor es un límite inferior del tamaño real.'));
+    salida.append(h('p', { class: 'hint' }, r.descontada
+      ? 'Anchura instrumental descontada suponiendo perfiles gaussianos. Mídela con un patrón de referencia.'
+      : 'La anchura instrumental no está descontada: el valor es un límite inferior del tamaño real.'));
   };
   sel.addEventListener('change', () => {
     if (sel.value === 'otra') return;
@@ -425,9 +447,14 @@ function panelScherrer(a, ctx) {
     const k = parseFloat(cajaK.value);
     ctx.cambia({ K: isFinite(k) ? k : null }); calcula();
   });
+  cajaB.addEventListener('input', () => {
+    const v = parseFloat(cajaB.value);
+    ctx.cambia({ betaInst: isFinite(v) ? v : null }); calcula();
+  });
   cont.append(h('div', { class: 'irow' }, h('label', null, 'K (factor de forma)'), cajaK),
     h('div', { class: 'irow' }, h('label', null, 'Radiación'), sel),
     h('div', { class: 'irow' }, h('label', null, 'λ (nm)'), cajaL),
+    h('div', { class: 'irow' }, h('label', null, 'Anchura instrumental (°, opcional)'), cajaB),
     grafico, salida);
   calcula();
   return cont;
@@ -482,6 +509,8 @@ function panelTauc(a, ctx) {
     salida.append(filaAnalisis('R² del tramo', r.r2.toFixed(4)));
     salida.append(filaAnalisis('Tramo', sigFig(r.desde, 3) + ' – ' + sigFig(r.hasta, 3) + ' eV', r.auto ? 'automático (mejor R²)' : 'fijado a mano'));
     salida.append(filaAnalisis('Puntos en el tramo', String(r.n)));
+    const vec = sensibilidadTramo(datos.pts, opc.directa, r);
+    if (vec) salida.append(filaAnalisis('Eg con tramos vecinos', sigFig(vec.min, 4) + ' – ' + sigFig(vec.max, 4) + ' eV', 'inicio y fin ±10 % del ancho'));
     salida.append(h('p', { class: 'hint' }, 'El ± es solo el error estadístico de la recta. No recoge la elección del tramo ni el modelo de Tauc: prueba varios tramos antes de dar el valor.'));
     if (datos.excl) salida.append(h('p', { class: 'hint' }, 'Se excluyen ' + datos.excl + ' puntos sin valor válido en esta transformación.'));
     const etiqueta = '(' + (opc.fuente === 'dr' ? 'F(R)·hν' : 'αhν') + ')' + (opc.directa ? '²' : '^½');
