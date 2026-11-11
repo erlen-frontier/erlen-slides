@@ -12,4 +12,12 @@ To move a presentation between browsers or origins, export and import its JSON p
 
 Thirteen [worked examples](../examples/README.md) provide 78 editable slides, JSON projects and Beamer sources. All numerical data are illustrative, not observations or reported scientific discoveries. Beamer compilation and pixel-identical rendering in every PowerPoint version are not certified.
 
+## Development and verification
+
+This repository works without CI or guaranteed code review. Builds and available checks run locally when the environment permits; releases are published manually. Record the commands actually run, their results and anything left unverified. Skipped checks are not passed checks, and historical results do not validate the current source. The lack of CI is part of the workflow, not a requirement to add automation. Tabula is independent and does not automatically synchronize with Erlen Suite.
+
+See the [local agent rules](../AGENTS.md), [development guide](desarrollo.md), [historical validation record](validacion.md) and [contribution guide](../CONTRIBUTING.md). JSDOM simulates geometry and is not real-browser visual validation. Inspect exported files before using them for scientific communication.
+
+## License and citation
+
 License: **AGPL-3.0-only**, with separately licensed third-party components. See [notices](../THIRD_PARTY_NOTICES.md). Citation metadata are in [CITATION.cff](../CITATION.cff). A Zenodo DOI will be added only after a confirmed deposit.
