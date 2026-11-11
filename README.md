@@ -75,7 +75,9 @@ Tabula conserva las claves de almacenamiento de Erlen Slides para que las biblio
 
 ## Desarrollo y validación
 
-Lee [Arquitectura](docs/desarrollo.md), [Validación](docs/validacion.md) y [Contribuciones](CONTRIBUTING.md). Las capturas proceden de Chromium; las pruebas de integración con JSDOM simulan geometría y no sustituyen la inspección visual. Las exportaciones deben revisarse antes de enviar un trabajo científico.
+Lee [Arquitectura](docs/desarrollo.md), [Registro histórico de validación](docs/validacion.md), [Contribuciones](CONTRIBUTING.md) y las [reglas locales para agentes](AGENTS.md). Este repositorio trabaja sin CI y sin revisión de código garantizada. Las comprobaciones se realizan localmente cuando el entorno lo permite; cada cambio debe indicar qué se ejecutó, con qué resultado y qué quedó sin verificar. Los resultados históricos no validan automáticamente el código actual.
+
+Las capturas documentadas proceden de Chromium; las pruebas de integración con JSDOM simulan geometría y no sustituyen la inspección visual. Las exportaciones deben revisarse antes de enviar un trabajo científico.
 
 ## Escritorio en Linux
 
@@ -93,4 +95,4 @@ La interfaz contiene un enlace visible al código fuente. Si modificas y desplie
 
 ## Código y verificación
 
-Tabula parte de la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`. Es una distribución independiente: la compilación y las pruebas se ejecutan localmente. El repositorio conserva workflows históricos: comprueba la configuración de Actions antes de publicar una etiqueta.
+Tabula parte de la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`. Es una distribución independiente, sin sincronización automática con Erlen Suite. No utiliza CI ni publicación automática mediante GitHub Actions; la compilación, las pruebas disponibles y la preparación de versiones se realizan localmente, y la publicación es manual. La ausencia de CI forma parte del flujo de trabajo y no implica añadirlo como requisito.

@@ -1,33 +1,33 @@
-# Working on Erlen Slides
+# Trabajar en Tabula
 
-This is the standalone scientific presentation editor, licensed AGPL-3.0-only. Read README.md and docs/desarrollo.md before editing. Preserve a complete local editor without subscriptions.
+Tabula es el editor independiente de presentaciones científicas, derivado de Erlen Slides y publicado bajo AGPL-3.0-only. Lee README.md y docs/desarrollo.md antes de editar. Conserva un editor local completo, sin suscripciones obligatorias.
 
-Do not bring production credentials, cloud configuration, private research, other suite editors or unrelated operational documents into this public repository. Keep original and third-party license notices.
+## Alcance y contratos
 
-Preserve JSON v1 compatibility, blank new slides, explicit save failures, and immutable scientific source data. Examples must label illustrative data and must not invent research claims or citations. Read src/js/_orden.txt before changing module dependencies.
+- No incorpores credenciales de producción, configuración de nube, investigación privada, otros editores de la suite ni documentos operativos ajenos a este repositorio público. Conserva las licencias y atribuciones originales y de terceros.
+- Preserva la compatibilidad JSON v1, las claves de almacenamiento existentes, las diapositivas nuevas en blanco, los errores de guardado explícitos y los datos científicos fuente inmutables.
+- Los ejemplos deben identificar los datos ilustrativos y no inventar resultados de investigación ni citas.
+- Lee src/js/_orden.txt antes de cambiar dependencias entre módulos. Respeta la arquitectura y las convenciones existentes; evita reestructuraciones ajenas a la tarea.
+- El servidor MCP vive en mcp/ y se documenta en docs/mcp.md. mcp/operaciones.js se evalúa dentro de la aplicación construida y llama a sus funciones: los cambios de bloques, diseños y exportaciones pueden afectarlo. Incluye tests/mcp.test.mjs entre las comprobaciones locales pertinentes cuando sea posible.
 
-The MCP server for AI assistants lives in mcp/ (docs/mcp.md): mcp/operaciones.js is evaluated inside the built app and calls its functions, so block, layout and export changes can affect it; run tests/mcp.test.mjs after them.
+## Flujo de trabajo y comprobaciones
 
-Run npm run build and relevant tests. When examples change, regenerate with npm run examples. Inspect rendered results for visual changes. JSDOM geometry is simulated; do not report it as browser validation.
+Este repositorio trabaja sin CI y sin revisión de código garantizada. No presupongas checks automáticos, aprobaciones técnicas ni validación de cada cambio. La ausencia de CI es una condición de trabajo, no un pendiente ni un requisito para avanzar.
 
-The current Erlen policy retires GitHub Actions and automatic synchronization with Erlen Suite. Run builds and tests locally. Historical workflows remain in this repository; verify the repository's Actions settings before pushing a tag or publishing a release.
+La compilación y las pruebas se realizan localmente cuando el entorno lo permite. Ejecuta npm run build y las pruebas pertinentes cuando estén disponibles. Si cambias ejemplos, regenera con npm run examples cuando sea posible. Para cambios visuales, inspecciona el resultado renderizado; para exportadores, comprueba los archivos producidos.
 
-<!-- erlen-convencion-agentes:inicio v2 (bloque común; fuente: erlen-suite/docs/convencion.md; se actualiza en todos los repos a la vez) -->
+Registra los comandos realmente ejecutados, sus resultados y su alcance. Si una comprobación no se ejecutó, indica el motivo y la incertidumbre pendiente. No presentes pruebas omitidas como aprobadas ni resultados históricos como validación del código actual. JSDOM simula la geometría: no lo describas como validación en un navegador real.
+
+Tabula no depende de sincronización automática con Erlen Suite. No presupongas propagación de diseño, módulos compartidos ni fusiones coordinadas entre repositorios. Las atribuciones de los componentes derivados se conservan. No añadas CI, sincronización ni cambios en .github/ salvo petición explícita.
+
 ## Trabajo con varios agentes
 
-Este repositorio lo trabajan varios agentes (Claude, Codex, Amp, Mimo, Antigravity, Oh my Pi, Vibe) y modelos. Estas reglas son comunes a todos los repos de Erlen y prevalecen sobre costumbres de cada herramienta o instrucciones locales anteriores.
+Estas reglas son locales a Tabula; no constituyen un bloque sincronizado con otros repositorios.
 
-- **Nunca en `main`.** Trabaja en una rama `<agente>/<tarea-corta>` en minúsculas y con guiones (por ejemplo `codex/fix-export-csv`). Solo los bots usan otros prefijos: `diseno/` (paquete de diseño) y `sync/` (sincronización de la suite). `main` está protegida: todo entra por pull request y se fusiona con *squash*; la rama se borra al fusionar.
-- **Una carpeta por agente y tarea.** Usa tu propio clon o worktree; no edites la carpeta de trabajo de otro agente ni la de Jorge.
-- **No fusiones ni apruebes.** Abre el PR y detente; Jorge revisa y fusiona. Si otro PR abierto toca los mismos archivos, dilo en tu PR en lugar de pisarlo.
-- **Cambios que cruzan repos.** Si tu cambio afecta a otra app o a la suite (paquete de diseño, módulos compartidos `suite-*.mjs`/`mey.mjs`, formatos de intercambio, avisos a la suite), usa **el mismo nombre de rama en cada repo afectado** y enlaza todos los PRs en la sección *Cross-repo*. Se fusionan juntos: primero `erlen-suite`, después las apps. No copies módulos compartidos a mano: vienen de `erlen-suite` por `diseno-propagar`.
-- **CI intocable sin permiso.** No modifiques `.github/` salvo petición explícita en la tarea.
-- **Commits y títulos de PR** en inglés con Conventional Commits (`feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`; ámbito opcional en minúsculas), sin tildes ni eñes en el título. El título del PR se convierte en el commit de `main` y lo valida el check `convencion`. Identifica agente y modelo con trailers (`Co-Authored-By` es opcional):
-  ```
-  Agent: codex
-  Agent-Model: <modelo exacto>
-  ```
-- **Antes del PR** ejecuta las pruebas del repo y copia el resultado real en la descripción (sección *Testing* de la plantilla). No afirmes pruebas que no ejecutaste.
-- **Nada sensible:** ni secretos, tokens, datos personales, contratos ni expedientes. Si encuentras uno, detente y avisa.
-- Los repos `empresa-*`, `erlen-legal-mexico` y `erlen-burocracy` están fuera del alcance de los agentes.
-<!-- erlen-convencion-agentes:fin -->
+- Trabaja por defecto en una rama <agente>/<tarea-corta>, en minúsculas y con guiones. No escribas directamente en main salvo autorización explícita del propietario para la operación concreta. No presupongas la configuración de protección de ramas.
+- Usa tu propio clon o worktree por agente y tarea; no edites la carpeta de trabajo de otro agente ni la de Jorge.
+- No apruebes ni fusiones pull requests salvo autorización explícita. Cuando abras un PR, documenta los cambios y las comprobaciones reales, sin afirmar que Jorge u otra persona revisará el código. Si otro PR toca los mismos archivos, comunica el posible conflicto.
+- Limita cada cambio al alcance solicitado. No alteres otros repositorios ni restaures integraciones retiradas sin una petición específica.
+- Escribe commits y títulos de PR en inglés con Conventional Commits, sin tildes ni eñes en el título. Esta convención es documental: no presupone un check automático. Identifica el agente y, si se conoce, el modelo mediante trailers Agent y Agent-Model; no inventes el identificador del modelo. Co-Authored-By es opcional.
+- No incorpores secretos, tokens, datos personales, contratos ni expedientes. Si encuentras contenido sensible, detente y avisa sin reproducirlo.
+- Los repositorios empresa-*, erlen-legal-mexico y erlen-burocracy quedan fuera del alcance de este trabajo.
