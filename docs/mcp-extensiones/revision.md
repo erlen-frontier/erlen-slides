@@ -1,6 +1,6 @@
 # Extensión: revisión de rigor
 
-Reglas que miran lo que un comité señala y la revisión de la app no mira: unidades, cifras, notación, siglas, notas del orador y referencias a figuras. Salen en `adicional` de `revisar_presentacion`; `revisar_convenciones` las pasa solas, sin dibujar las diapositivas (unos 200 ms para 40 diapositivas, frente a varios segundos de la revisión completa), para iterar mientras se escribe.
+Reglas adicionales para revisar unidades, cifras, notación, siglas, notas del orador y referencias a figuras. Salen en `adicional` de `revisar_presentacion`; `revisar_convenciones` las pasa solas, sin dibujar las diapositivas, para iterar mientras se escribe. El tiempo de ejecución depende del proyecto y del entorno; esta guía no fija una expectativa de rendimiento.
 
 Cada hallazgo lleva `regla` (nombre estable), `categoria`, `grado` (`aviso` o `sugerencia`), `diapositiva` (desde 1), `problema`, `arreglo` y, cuando se sabe, `bloque`.
 
@@ -44,4 +44,4 @@ Una regla que falla no tumba la revisión: se anota como hallazgo con «La regla
 
 - `mcp/extensiones/revision.pagina.js`: las reglas, registradas con `ERLEN_MCP.registraRevision`, y la operación `revisionConvenciones`. Reutiliza `zonasDe`, `textosCitables`, `esFormula`, `SIMBOLOS` y `TIPOS_FIGURA` de la app.
 - `mcp/extensiones/revision.mjs`: la herramienta `revisar_convenciones` y la convención `revision` de `guia_formato`, para que el asistente escriba bien desde el principio.
-- `tests/mcp-revision.test.mjs`: un caso que avisa y otro que no para cada regla, la integración con `revisar_presentacion`, los trece ejemplos (su único hallazgo, real, es `orador-sin-notas`) y una charla de 40 diapositivas.
+- `tests/mcp-revision.test.mjs`: la guía registraba casos que avisan y que no para cada regla, integración con `revisar_presentacion`, trece ejemplos y una charla de 40 diapositivas. El hallazgo descrito entonces para los ejemplos era `orador-sin-notas`; este antecedente no certifica el resultado de los ejemplos actuales. Consulta el archivo de pruebas para conocer su cobertura vigente y declara su ejecución y resultado por separado. Esta corrección documental no ejecuta esas pruebas.

@@ -1,6 +1,6 @@
 # Extensión: abrir en el editor
 
-`abrir_en_editor {archivo}` enseña un proyecto de la carpeta de trabajo en el editor de Erlen Slides, en el navegador del usuario, para que lo vea y lo siga editando a mano.
+`abrir_en_editor {archivo}` enseña un proyecto de la carpeta de trabajo en el editor de Tabula, en el navegador del usuario, para que lo vea y lo siga editando a mano.
 
 ```json
 {"archivo": "hdl.json", "url": "http://127.0.0.1:8130/?abrir=Qm9…", "navegador": "abierto",

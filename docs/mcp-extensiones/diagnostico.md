@@ -1,12 +1,12 @@
 # Extensión: diagnóstico
 
-`diagnostico` revisa la instalación del servidor y, para cada problema, da el comando que lo arregla. No cambia nada. Sirve cuando algo falla de forma rara o cuando el usuario pregunta si todo está bien instalado: «ejecuta el diagnóstico de Erlen Slides».
+`diagnostico` revisa la instalación del servidor y ofrece comandos o instrucciones para los problemas detectados. No cambia la instalación ni los proyectos; las indicaciones no garantizan resolver cualquier fallo del entorno. Sirve como primera comprobación cuando algo falla o cuando el usuario pregunta por la instalación: «ejecuta el diagnóstico de Tabula».
 
 | Parte de la respuesta | Qué dice |
 |---|---|
-| `estado`, `problemas` | `bien` o `con_problemas`; cada problema con su `arreglo` (un comando o una instrucción que se puede dar tal cual). |
+| `estado`, `problemas` | `bien` o `con_problemas`; cada problema con su `arreglo` (un comando o una instrucción propuesta para atenderlo). |
 | `node` | Versión y ejecutable de Node que corre el servidor; si es anterior a 22. |
-| `aplicacion` | Versión de Erlen Slides, carpeta del código, ruta de `mcp/servidor.mjs`, si `npm ci` se hizo y si `public/index.html` existe y es posterior a todo `src/` (si no, el servidor usa una versión vieja: `npm run build`). |
+| `aplicacion` | Versión de Tabula, carpeta del código, ruta de `mcp/servidor.mjs`, si `npm ci` se hizo y si `public/index.html` existe y es posterior a todo `src/` (si no, el servidor usa una versión vieja: `npm run build`). |
 | `carpeta_trabajo` | Ruta y de dónde sale (`ERLEN_SLIDES_DIR` o la de por omisión), si existe y se puede escribir, cuántas presentaciones hay y cuánto ocupa `.historial/`. No la crea. |
 | `navegador` | El Chromium o Chrome que usaría la vista previa, buscado con los mismos candidatos y en el mismo orden que `mcp/navegador.mjs`, sin arrancarlo. Con `probar_navegador: true` lo arranca de verdad y da su versión. |
 | `rdkit` | Si `@rdkit/rdkit` carga (estructuras desde SMILES o MOL) y su versión. |

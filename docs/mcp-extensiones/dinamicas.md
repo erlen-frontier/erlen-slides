@@ -44,4 +44,4 @@ Todos opcionales y compatibles con el formato JSON v1: un proyecto antiguo se ab
 
 - Los modelos y sus valores iniciales son ilustrativos y no sustituyen a un ajuste de datos; cada `nota` dice los supuestos (p. ej. ΔH° constante en Van 't Hoff, el ensanchamiento instrumental ya restado en Scherrer).
 - La comprobación es numérica: detecta dónde la curva no da un número y dónde salta, no si el modelo es el adecuado para los datos.
-- El `.tex` generado usa pgfplots con `unbounded coords=jump` para los cortes; en este repositorio se inspecciona el código, no se compila.
+- El `.tex` generado usa pgfplots con `unbounded coords=jump` para los cortes. Inspeccionar ese código no equivale a compilarlo ni a comprobar el PDF resultante. Si se valida la salida con una distribución LaTeX local, registra el comando y el resultado; si no se compila, declara esa limitación. Esta corrección documental no ejecuta ninguna de esas comprobaciones.
