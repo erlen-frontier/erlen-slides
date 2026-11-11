@@ -1,5 +1,7 @@
 # Tauri and Rust Desktop Implementation Plan
 
+> Historical plan dated 28 October 2026. Preserved as design and implementation background, not as a current backlog or evidence of implementation or validation of the current code. Before resuming a task, check it against the code, subsequent decisions and [AGENTS.md](../../../AGENTS.md); its current rules take precedence over this plan's original instructions. Run checks locally when the environment permits and report results and omissions; do not assume CI or guaranteed code review. This documentation edit performs no implementation tasks, approves no product decisions and certifies no new results.
+
 **Goal:** Deliver a Linux-first Tauri application that preserves the current Slides editor and begins moving project file operations into a tested Rust core.
 
 **Architecture:** Bundle the existing static frontend in Tauri and keep the web build intact. A portable Rust library validates project JSON and writes selected files atomically; a narrowly scoped Tauri command opens a native dialog and calls the library. A second command closes the presenter window. The browser fallback retains its existing download behavior.
