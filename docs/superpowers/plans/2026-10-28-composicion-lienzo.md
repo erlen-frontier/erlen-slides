@@ -1,5 +1,7 @@
 # Free Canvas Composition Implementation Plan
 
+> Historical plan — 2026-10-28. Retained as a design and implementation record, not an active task list or current workflow policy. Follow [AGENTS.md](../../../AGENTS.md) and the [development guide](../../desarrollo.md) for current work: no CI or guaranteed code review, local checks when available, and explicit reporting of unverified work. References below to independent review, specific agent tools, shared design synchronization, coordinators or PR handling describe the original plan and do not override current rules or authorize new actions. Original tasks and checkbox states are preserved; they do not establish the current implementation or validation status. Reassess any unfinished item against the current source before proposing work; do not rerun or mark tasks complete solely because this plan exists.
+
 > **For agentic workers:** Use superpowers:executing-plans to implement and verify each task. Steps use checkbox syntax.
 
 **Goal:** Select, resize and arrange multiple free-canvas blocks and insert editable basic shapes directly on a slide.
