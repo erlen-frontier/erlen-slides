@@ -1,5 +1,7 @@
 # Proyectos de escritorio
 
+> Especificación histórica del 28 de octubre de 2026. Sus decisiones, cifras, referencias a Suite y criterios de verificación describen el diseño original, no una lista vigente de pendientes ni una garantía de implementación o validación actual. Contrasta cualquier trabajo con el código, las decisiones posteriores, la documentación vigente y [AGENTS.md](../../../AGENTS.md), cuyas reglas prevalecen. Las comprobaciones son locales cuando el entorno lo permite y se declaran resultados y omisiones, sin presuponer CI ni revisión garantizada. Esta edición conserva los requisitos originales; no ejecuta tareas, aprueba decisiones nuevas ni certifica resultados.
+
 ## Objetivo
 
 En Linux, abrir un JSON de Tabula y volver a guardar en ese mismo archivo con Ctrl+S, o elegir otro destino con Guardar como. La biblioteca, el autoguardado y la recuperación existentes continúan disponibles. El formato JSON v1 y los datos científicos se conservan.

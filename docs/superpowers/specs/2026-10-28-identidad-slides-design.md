@@ -1,5 +1,7 @@
 # Tabula identity and slide editing
 
+> Historical specification dated 28 October 2026. Its decisions, figures, Suite references and verification criteria describe the original design, not a current backlog or a guarantee of current implementation or validation. Check any work against the code, subsequent decisions, current documentation and [AGENTS.md](../../../AGENTS.md), whose rules take precedence. Run checks locally when the environment permits and report results and omissions; do not assume CI or guaranteed review. This edit preserves the original requirements; it performs no implementation tasks, approves no new decisions and certifies no results.
+
 ## Intent
 
 Give the Linux-first presentation app the name Tabula and an independent visual identity, remove Mey from its interface and improve creation and editing of slides. Preserve the existing project format and storage identities.

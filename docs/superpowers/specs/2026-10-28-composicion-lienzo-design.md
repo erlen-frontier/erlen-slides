@@ -1,5 +1,7 @@
 # Composición directa en el lienzo
 
+> Especificación histórica del 28 de octubre de 2026. Sus decisiones, cifras, referencias a Suite y criterios de verificación describen el diseño original, no una lista vigente de pendientes ni una garantía de implementación o validación actual. Contrasta cualquier trabajo con el código, las decisiones posteriores, la documentación vigente y [AGENTS.md](../../../AGENTS.md), cuyas reglas prevalecen. Las comprobaciones son locales cuando el entorno lo permite y se declaran resultados y omisiones, sin presuponer CI ni revisión garantizada. Esta edición conserva los requisitos originales; no ejecuta tareas, aprueba decisiones nuevas ni certifica resultados.
+
 Tabula debe permitir seleccionar visualmente bloques de una diapositiva libre, transformar una selección de forma proporcional y ordenar sus posiciones sin alterar sus contenidos. Esta mejora continúa el PR #60; no modifica la IA.
 
 - Un arrastre desde un área vacía dibuja un recuadro y selecciona los bloques visibles que intersecta. Mayús añade a la selección; Escape cancela. Los clics y la edición de texto conservan su comportamiento.

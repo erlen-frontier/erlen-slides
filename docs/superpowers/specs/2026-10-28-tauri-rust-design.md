@@ -1,5 +1,7 @@
 # Erlen Slides: first Rust and Tauri desktop stage
 
+> Historical specification dated 28 October 2026. Its decisions, figures, Suite references and verification criteria describe the original design, not a current backlog or a guarantee of current implementation or validation. Check any work against the code, subsequent decisions, current documentation and [AGENTS.md](../../../AGENTS.md), whose rules take precedence. Run checks locally when the environment permits and report results and omissions; do not assume CI or guaranteed review. This edit preserves the original requirements; it performs no implementation tasks, approves no new decisions and certifies no results.
+
 ## Intent
 
 Create a Linux-first desktop application from the current Slides editor. Preserve its scientific tools, local-first operation, JSON v1 projects and web distribution while establishing a real Rust core that can take over more work incrementally.

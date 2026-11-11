@@ -1,5 +1,7 @@
 # Transformación precisa en el lienzo de Tabula
 
+> Especificación histórica del 28 de octubre de 2026. Sus decisiones, cifras, referencias a Suite y criterios de verificación describen el diseño original, no una lista vigente de pendientes ni una garantía de implementación o validación actual. Contrasta cualquier trabajo con el código, las decisiones posteriores, la documentación vigente y [AGENTS.md](../../../AGENTS.md), cuyas reglas prevalecen. Las comprobaciones son locales cuando el entorno lo permite y se declaran resultados y omisiones, sin presuponer CI ni revisión garantizada. Esta edición conserva los requisitos originales; no ejecuta tareas, aprueba decisiones nuevas ni certifica resultados.
+
 ## Objetivo
 
 Permitir que quienes componen diapositivas ajusten la posición y el tamaño con precisión, mantengan proporciones y giren o volteen figuras sin alterar sus archivos ni sus fuentes científicas. Los proyectos siguen siendo compatibles con JSON v1 y la aplicación funciona localmente en Linux.
