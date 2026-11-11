@@ -2,7 +2,11 @@
 
 Tabula incluye un servidor [MCP](https://modelcontextprotocol.io) (Model Context Protocol). Con él, un asistente de IA —Claude Desktop, Claude Code u otro cliente MCP— puede crear, editar, revisar y exportar presentaciones con **el mismo motor que el editor**: los bloques se construyen con `newBlock`, los proyectos se validan con `saneaDeck`, la revisión es la del panel de calidad científica y el `.tex` sale de `toBeamer`. El resultado es un proyecto JSON v1 normal, que después se abre en el editor para seguir a mano.
 
-El servidor corre en tu máquina, por stdio. No abre puertos a la red (la vista previa y `abrir_en_editor` escuchan solo en `127.0.0.1`), no envía nada a Internet y solo lee y escribe dentro de su carpeta de trabajo.
+El servidor corre en tu máquina, por stdio. La vista previa y `abrir_en_editor` escuchan solo en `127.0.0.1`, sin exponerse a otras máquinas; los archivos de proyecto, datos y exportaciones se leen y escriben dentro de su carpeta de trabajo.
+
+El funcionamiento es local por defecto. La consulta `completar_por_doi` de la [extensión bibliográfica](mcp-extensiones/bibliografia.md) puede enviar un DOI a Crossref para recuperar metadatos, pero está desactivada salvo que habilites `ERLEN_SLIDES_RED=1` en el servidor. Si configuras `ERLEN_SLIDES_CORREO`, ese correo también se incluye en la identificación de la petición.
+
+La ejecución local del servidor MCP no garantiza que el cliente de IA funcione sin conexión ni que mantenga los datos en tu equipo. El cliente puede enviar al proveedor de IA los mensajes y los resultados de las herramientas que use; revisa su configuración y política de privacidad antes de trabajar con información sensible.
 
 ## Instalar
 

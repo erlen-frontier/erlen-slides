@@ -18,3 +18,4 @@ El [catálogo legible por máquina](catalog.json) enumera los trece casos. Puede
 - [Congreso](congreso/)
 - [Derivación](derivacion/)
 - [Datos abiertos](datos-abiertos/)
+- [Caracterización de un sólido](caracterizacion-solido/)
