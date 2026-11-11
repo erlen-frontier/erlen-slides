@@ -1,6 +1,6 @@
-# Notas de la versión 0.3.0
+# Notas históricas de Erlen Slides 0.3.0 — integración DoE retirada
 
-> Nota histórica: el intercambio y la importación de informes DoE descritos aquí se retiraron posteriormente de Tabula independiente. Los proyectos ya convertidos conservan su procedencia.
+> Estas notas corresponden a la etapa de Erlen Slides con integración DoE, no a las funciones de la distribución independiente actual de Tabula, aunque esta también declare la versión 0.3.0. El intercambio y la importación de informes DoE descritos aquí se retiraron posteriormente; los proyectos ya convertidos conservan su procedencia. Las rutas, archivos, pruebas y pendientes siguientes son antecedentes históricos, no instrucciones de integración ni una lista de trabajo vigente. Sus resultados no validan el código actual ni confirman que exista un paquete o depósito publicado. Consulta el [README actual](../README.md), el [manual](uso.md), el [registro histórico](validacion.md) y el [proceso de publicación](publicacion.md).
 
 Slides recibe su primera copia de otra app de la suite: el informe de un análisis de **Erlen DoE**, que se abre como presentación nueva para contarlo en una reunión de grupo. El contrato que fija qué viaja es `docs/intercambio-doe.md` del portal (tipo `informe-v1`); cómo viaja, `web/exchange-v2.mjs`, que aquí se copia literalmente.
 
@@ -22,12 +22,12 @@ Fuera de la suite, DoE descarga la copia como archivo; **Importar proyecto** la 
 
 La exportación a Beamer escribía `\textbackslash{}\$` para un «$» escrito como signo (`\$`), así que el PDF mostraba una barra que la pantalla no enseñaba. Ahora sale `\$`, como en pantalla.
 
-## Comprobado
+## Comprobaciones registradas entonces
 
 - 99 pruebas, todas pasan; siete nuevas en `tests/intercambio.test.mjs`: copia literal del transporte, conversión, rechazos de contenido, `#copy=` con vista previa y creación, cancelar, copias de otro tipo, destino, dañadas o ausentes, y el archivo descargado.
 - Construcción: 95 módulos, 3011 KiB (el límite del HTML único es 3 MiB).
 - Chromium 141 real, 1400 × 900: dos informes convertidos (uno como el de DoE y otro hecho para desbordar: títulos de tres líneas, treinta párrafos cortos, viñetas largas, un párrafo de 400 palabras, una frase de 300 palabras sin puntos y tablas de 12 y 3 columnas con celdas largas) dan 44 diapositivas de contenido y ninguna tiene contenido fuera del cuerpo, ni por abajo ni por el lado.
 
-## Pendiente
+## Limitaciones registradas entonces
 
-No se ha probado con una copia enviada por la versión publicada de DoE en el portal desplegado: DoE se conecta en paralelo. La exportación a PowerPoint de una presentación nacida de un informe no se ha abierto con un lector independiente.
+No se había probado con una copia enviada por la versión publicada de DoE en el portal desplegado: DoE se conectaba en paralelo. La exportación a PowerPoint de una presentación nacida de un informe no se había abierto con un lector independiente. Estas limitaciones se conservan como registro; no autorizan restaurar la integración retirada ni implican tareas pendientes de Tabula actual.
