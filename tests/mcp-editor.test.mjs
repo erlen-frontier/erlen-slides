@@ -1,15 +1,15 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 /* abrir_en_editor (mcp/extensiones/editor.mjs): el servidor local que sirve la
    app y entrega un proyecto con una clave de un solo uso. Sin navegador
-   (ERLEN_SLIDES_SIN_NAVEGADOR=1) y en un puerto libre (ERLEN_SLIDES_PUERTO=0);
+   (TABULA_SIN_NAVEGADOR=1) y en un puerto libre (TABULA_PUERTO=0);
    las peticiones las hace el fetch de Node, como las haría la página. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import {conServidor} from './_mcp-cliente.mjs';
 
-process.env.ERLEN_SLIDES_SIN_NAVEGADOR = '1';
-process.env.ERLEN_SLIDES_PUERTO = '0';
+process.env.TABULA_SIN_NAVEGADOR = '1';
+process.env.TABULA_PUERTO = '0';
 
 /* Petición cruda, sin normalizar la ruta ni el Host como haría fetch. */
 const cruda = (puerto, ruta, host = '127.0.0.1:' + puerto) => new Promise((ok, mal) => {
@@ -25,7 +25,7 @@ test('MCP: abrir_en_editor serves the app and hands out the project once, only w
     const {url, navegador, nota, archivo, caduca} = r.datos;
     assert.equal(archivo, 'hdl.json');
     assert.match(url, /^http:\/\/127\.0\.0\.1:\d+\/\?abrir=[A-Za-z0-9_-]{32}$/);
-    assert.match(navegador, /ERLEN_SLIDES_SIN_NAVEGADOR/);
+    assert.match(navegador, /TABULA_SIN_NAVEGADOR/);
     assert.match(nota, /Exportar → Proyecto \(\.json\)/);
     assert.ok(Date.parse(caduca) > Date.now());
     const base = new URL(url), puerto = Number(base.port), clave = base.searchParams.get('abrir');
@@ -47,7 +47,7 @@ test('MCP: abrir_en_editor serves the app and hands out the project once, only w
     assert.equal(p.status, 200);
     assert.equal(p.headers.get('cache-control'), 'no-store');
     const datos = await p.json();
-    assert.equal(datos.formato, 'erlen-mcp-abrir-v1');
+    assert.equal(datos.formato, 'tabula-mcp-abrir-v1');
     assert.equal(datos.archivo, 'hdl.json');
     assert.equal(datos.deck.meta.title, 'Síntesis de HDL');
     assert.equal(datos.deck.slides[1].title, 'El pH 10 da la fase más pura');
@@ -73,7 +73,7 @@ test('MCP: abrir_en_editor serves the app and hands out the project once, only w
 });
 
 test('MCP: abrir_en_editor keys expire', {timeout: 120000}, async () => {
-  process.env.ERLEN_SLIDES_CADUCIDAD = '1';
+  process.env.TABULA_CADUCIDAD = '1';
   try {
     await conServidor(async c => {
       await c.llama('crear_presentacion', {archivo: 'p'});
@@ -81,5 +81,5 @@ test('MCP: abrir_en_editor keys expire', {timeout: 120000}, async () => {
       await new Promise(r => setTimeout(r, 1300));
       assert.equal((await fetch(new URL('mcp/abrir/' + new URL(url).searchParams.get('abrir'), url))).status, 404);
     });
-  } finally { delete process.env.ERLEN_SLIDES_CADUCIDAD; }
+  } finally { delete process.env.TABULA_CADUCIDAD; }
 });

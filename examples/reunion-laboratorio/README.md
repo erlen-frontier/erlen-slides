@@ -22,7 +22,7 @@ Avances, controles, obstáculos y la siguiente decisión.
 
 ## Archivos
 
-- [Proyecto editable](proyecto.json): formato Erlen v1.
+- [Proyecto editable](proyecto.json): proyecto JSON v1 de Tabula.
 - [Fuente Beamer](presentacion.tex): generado por el exportador; requiere una instalación de LaTeX. Su compilación no forma parte de la validación de esta versión.
 
 Licencia de los ejemplos: AGPL-3.0-only. No hay referencias bibliográficas inventadas.

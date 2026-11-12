@@ -13,7 +13,7 @@
    porque hay sitios (el artefacto publicado en claude.ai, por ejemplo) donde la
    política de seguridad de la página bloquea toda conexión a otro dominio. */
 
-const LS_ZOTERO = 'erlen-slides.zotero';
+const LS_ZOTERO = 'tabula.zotero';
 const ZOT_WEB = 'https://api.zotero.org';
 const ZOT_LOCAL = 'http://127.0.0.1:23119/api';
 const ZOT_CLAVES_URL = 'https://www.zotero.org/settings/keys';
@@ -59,7 +59,7 @@ function zotMsgRed(c) {
       '«Allow other applications on this computer to communicate with Zotero».';
   }
   return 'No se pudo llegar a api.zotero.org.' + (zotEnCaja()
-    ? ' Estás viendo Tabula dentro de claude.ai, y esa página bloquea las conexiones a otros sitios. ' +
+    ? ' Estás viendo Lámina dentro de claude.ai, y esa página bloquea las conexiones a otros sitios. ' +
       'Descarga el archivo de la app (o ábrela desde el sitio publicado) y la conexión funciona; ' +
       'mientras tanto puedes traer tus referencias por archivo, aquí abajo.'
     : ' Revisa tu conexión, o trae las referencias por archivo aquí abajo.');

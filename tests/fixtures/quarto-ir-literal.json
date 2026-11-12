@@ -1,0 +1,1 @@
+{"titulo":"Charla","subtitulo":"","autor":"Autora A","fecha":"","opciones":{"theme":"simple","transition":"none","slideNumber":true,"incremental":false},"diapositivas":[{"titulo":"Evidencia","seccion":false,"columnas":[{"ancho":100,"bloques":[{"tipo":"texto","text":"Resultado"},{"tipo":"codigo","lang":"python","text":"print(1)","step":true}]}],"notas":""}],"recursos":[]}

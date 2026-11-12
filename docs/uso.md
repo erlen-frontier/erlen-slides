@@ -1,4 +1,4 @@
-# Usar Tabula
+# Usar Lámina
 
 Con **Ctrl+K** busca herramientas o texto de las diapositivas. Los resultados indican la sección donde vive cada acción y se pueden recorrer con las flechas y ejecutar con Enter.
 
@@ -54,11 +54,11 @@ Al enviar una petición se comparte con el proveedor un resumen acotado de la pr
 
 **Archivo → Importar presentación** acepta JSON, PowerPoint `.pptx` y Markdown `.md`. En la versión web también se accede desde **Inicio → Importar proyecto**. Elige el archivo, revisa la vista previa y pulsa **Abrir copia editable**. Cancelar deja intacta la presentación abierta. Se crea un nombre libre en tu biblioteca; un fallo de almacenamiento impide abrir la copia y avisa.
 
-El PowerPoint se lee localmente, sin subirlo. Textos, imágenes PNG/JPEG/GIF/WebP incrustadas, tablas, ecuaciones compatibles y notas se convierten a bloques. Las gráficas se recuperan como **tablas de datos**, incluidas las parejas x/y; después puedes crear una gráfica y elegir sus ejes y unidades. Los objetos agrupados se separan y las tablas largas repiten el encabezado. El acomodo, las fuentes y los efectos se adaptan al estilo de Tabula: la importación no reproduce la apariencia exacta de Office. Revisa los avisos sobre formas, patrones, celdas combinadas, recortes y medios no compatibles. Límites: 25 MiB de archivo, 100 MiB descomprimidos y hasta 200 diapositivas antes y después de adaptar. En el HTML suelto abierto con `file:`, la entrada conserva la importación JSON anterior; las herramientas adicionales requieren servir la carpeta completa.
+El PowerPoint se lee localmente, sin subirlo. Textos, imágenes PNG/JPEG/GIF/WebP incrustadas, tablas, ecuaciones compatibles y notas se convierten a bloques. Las gráficas se recuperan como **tablas de datos**, incluidas las parejas x/y; después puedes crear una gráfica y elegir sus ejes y unidades. Los objetos agrupados se separan y las tablas largas repiten el encabezado. El acomodo, las fuentes y los efectos se adaptan al estilo de Lámina: la importación no reproduce la apariencia exacta de Office. Revisa los avisos sobre formas, patrones, celdas combinadas, recortes y medios no compatibles. Límites: 25 MiB de archivo, 100 MiB descomprimidos y hasta 200 diapositivas antes y después de adaptar. En el HTML suelto abierto con `file:`, la entrada conserva la importación JSON anterior; las herramientas adicionales requieren servir la carpeta completa.
 
 **Insertar → Figura por capas** crea una composición de texto, rectángulos, elipses, flechas e imágenes. Añade un objeto y selecciónalo en la lista; cambia texto, color y orden. **Posición, tamaño y giro** despliega los controles numéricos. Los botones de movimiento y de deshacer/rehacer permiten trabajar sin arrastrar. Escribe una descripción accesible antes de insertar. El proyecto JSON guarda los objetos; un doble clic o **Editar capas** permite volver a editarlos. Las imágenes nuevas deben ser PNG/JPEG/WebP y pesar hasta 8 MiB; una figura admite hasta 100 objetos. Una copia grande puede superar la cuota de almacenamiento del navegador: descarga el proyecto si aparece el aviso de guardado.
 
-Las imágenes que insertas en una diapositiva o galería conservan los bytes del archivo original, incluidos los metadatos y la transparencia. Durante la edición, Tabula puede usar una vista temporal más pequeña; esa vista no se guarda en el proyecto ni sustituye la imagen al presentar. **Encuadrar** genera un recorte PNG y guarda también el original para volver a encuadrarlo o quitar el recorte. Los recortes rasterizados admiten hasta 32 millones de píxeles y 32 767 píxeles por lado; si no se pueden generar, el original queda intacto.
+Las imágenes que insertas en una diapositiva o galería conservan los bytes del archivo original, incluidos los metadatos y la transparencia. Durante la edición, Lámina puede usar una vista temporal más pequeña; esa vista no se guarda en el proyecto ni sustituye la imagen al presentar. **Encuadrar** genera un recorte PNG y guarda también el original para volver a encuadrarlo o quitar el recorte. Los recortes rasterizados admiten hasta 32 millones de píxeles y 32 767 píxeles por lado; si no se pueden generar, el original queda intacto.
 
 Seleccionar una imagen existente y elegir **Anotar una copia** conserva el bloque original y su fuente científica. La copia incorpora la imagen como objeto bloqueado, que puedes desbloquear si necesitas moverlo; las anotaciones son otros objetos. Al adaptar un SVG se genera una representación PNG para el lienzo de la copia. Los datos científicos del bloque original permanecen intactos.
 
@@ -72,7 +72,7 @@ Si creas una figura o un diagrama desde una portada o sección, al insertar se a
 
 **Inicio → Organizar bloques** permite agrupar, desagrupar, bloquear, alinear, duplicar, eliminar o trasladar una selección a otra zona. Ctrl/⌘/Mayús + clic añade bloques a la selección; un grupo se selecciona junto. Cada operación tiene un solo paso de deshacer. Bloquear protege los controles del editor; desbloquea antes de cambiar el contenido. Diseño → Vista previa de temas enseña los estilos sobre la diapositiva actual.
 
-En la pantalla de inicio abre **Apariencia** para ajustar el tema, el acento y el estilo visual de la aplicación. En el editor también puedes usar **Vista → Apariencia → Más opciones de apariencia…**. Estos ajustes no cambian las diapositivas: sus temas se eligen en **Diseño**.
+En la pantalla de inicio abre **Apariencia** para ajustar el tema (**Sistema**, **Claro** o **Oscuro**) y la densidad (**Cómoda** o **Compacta**) de la aplicación. Estos ajustes no cambian las diapositivas: sus temas se eligen en **Diseño**.
 
 **Insertar → Diagrama desde texto** dibuja flujos, secuencias, relaciones y cronogramas con Mermaid. Pulsa «Dibujar», revisa etiquetas y conexiones e inserta la figura. El JSON conserva SVG y fuente; «Datos científicos…» o doble clic la reabre. Se rechazan enlaces y configuración embebida. Los diagramas existentes se siguen viendo sin cargar Mermaid.
 
@@ -114,7 +114,7 @@ Antes de compartir, abre Archivo → Calidad científica. La revisión comprueba
 
 ## Una presentación que prepara el asistente
 
-Si trabajas con un asistente de IA conectado al [servidor MCP](mcp.md), puede enseñarte lo que construyó con `abrir_en_editor`: tu navegador abre el editor en `http://127.0.0.1:8130/?abrir=<clave>` (el asistente te da la dirección si el navegador no se abre solo). Slides pide el proyecto a ese mismo servidor, retira la clave de la dirección y enseña una **vista previa** con sus diapositivas. Solo al pulsar **Abrir en el editor** entra en tu biblioteca, con su título (y « (2)» si el nombre ya existe); la presentación que tenías abierta se conserva. **Cancelar** no cambia nada.
+Si trabajas con un asistente de IA conectado al [servidor MCP](mcp.md), puede enseñarte lo que construyó con `abrir_en_editor`: tu navegador abre el editor en `http://127.0.0.1:8130/?abrir=<clave>` (el asistente te da la dirección si el navegador no se abre solo). Lámina pide el proyecto a ese mismo servidor, retira la clave de la dirección y enseña una **vista previa** con sus diapositivas. Solo al pulsar **Abrir en el editor** entra en tu biblioteca, con su título (y « (2)» si el nombre ya existe); la presentación que tenías abierta se conserva. **Cancelar** no cambia nada.
 
 La clave sirve una vez y caduca a los 10 minutos: si ves «El enlace caducó o ya se usó», pide al asistente que vuelva a abrirla. Lo que edites a partir de ahí se guarda en este navegador, no en el archivo del asistente: para devolverle tus cambios, usa **Exportar → Proyecto (.json)** y guarda el archivo en su carpeta de trabajo.
 
@@ -122,9 +122,11 @@ La clave sirve una vez y caduca a los 10 minutos: si ves «El enlace caducó o y
 
 El indicador superior informa del autoguardado. Archivo permite conservar varias presentaciones con nombre. En Recursos hay copias de recuperación, respaldo ZIP, plantillas e identidad institucional. Un respaldo ZIP contiene proyectos JSON y un archivo de plantillas: importa cada presentación desde Inicio y las plantillas desde su opción específica.
 
-En la aplicación de escritorio Linux, **Abrir proyecto** (Ctrl+O) abre un JSON desde el disco. **Guardar** (Ctrl+S) escribe en el archivo abierto y **Guardar como** (Ctrl+Mayús+S) permite elegir otro; para un documento nuevo, Guardar pregunta dónde crearlo. El indicador avisa si hay cambios pendientes. Si otra aplicación modifica el archivo, Tabula evita sobrescribirlo y propone guardar una copia. Al cerrar o cambiar de presentación con cambios sin guardar en disco se pide confirmación. La copia interna sigue autoguardándose y su recuperación es independiente del archivo elegido. Al reiniciar hay que volver a abrir el archivo o elegir un destino. Para PPTX y Markdown sigue disponible **Archivo → Importar presentación**.
+Lámina guarda la biblioteca en claves propias (`tabula.*`) (`tabula.*`) y arranca sin leer los datos de la versión anterior de Erlen Slides. Para trasladar tus presentaciones, expórtalas desde esa versión como JSON e impórtalas aquí; un respaldo ZIP anterior también sirve descomprimiéndolo e importando sus proyectos individuales con la entrada de importación y su vista previa. Las preferencias se configuran de nuevo y las plantillas pueden abrirse como proyecto y guardarse otra vez como plantilla.
 
-Las imágenes originales aumentan el tamaño del JSON, y un recorte añade otra imagen además del original. Si se agota la cuota del guardado automático, Tabula avisa: guarda el proyecto en un archivo JSON antes de cerrar o cambiar de presentación. En escritorio, el JSON completo está limitado a 128 MiB al abrirlo o guardarlo; si supera ese límite, reduce el tamaño del proyecto antes de guardarlo.
+En la aplicación de escritorio Linux, **Abrir proyecto** (Ctrl+O) abre un JSON desde el disco. **Guardar** (Ctrl+S) escribe en el archivo abierto y **Guardar como** (Ctrl+Mayús+S) permite elegir otro; para un documento nuevo, Guardar pregunta dónde crearlo. El indicador avisa si hay cambios pendientes. Si otra aplicación modifica el archivo, Lámina evita sobrescribirlo y propone guardar una copia. Al cerrar o cambiar de presentación con cambios sin guardar en disco se pide confirmación. La copia interna sigue autoguardándose y su recuperación es independiente del archivo elegido. Al reiniciar hay que volver a abrir el archivo o elegir un destino. Para PPTX y Markdown sigue disponible **Archivo → Importar presentación**.
+
+Las imágenes originales aumentan el tamaño del JSON, y un recorte añade otra imagen además del original. Si se agota la cuota del guardado automático, Lámina avisa: guarda el proyecto en un archivo JSON antes de cerrar o cambiar de presentación. En escritorio, el JSON completo está limitado a 128 MiB al abrirlo o guardarlo; si supera ese límite, reduce el tamaño del proyecto antes de guardarlo.
 
 Guarda una copia JSON externa antes de borrar los datos del navegador. Importar otro proyecto valida su estructura; los borradores actuales se conservan al cambiar desde Inicio si hay espacio disponible. Si el almacenamiento se llena, descarga tu trabajo antes de continuar.
 
@@ -142,18 +144,18 @@ En PowerPoint las imágenes PNG y JPEG sencillas se incluyen con sus bytes origi
 
 | Formato | Uso | Revisión necesaria |
 |---|---|---|
-| JSON | Conservar y volver a editar en Tabula | Es la copia de trabajo recomendada |
+| JSON | Conservar y volver a editar en Lámina | Es la copia de trabajo recomendada |
 | PDF | Compartir una copia visual | Usa Imprimir/Guardar como PDF y revisa tamaño, fondos y recortes |
 | PPTX | Abrir en software de presentaciones | Algunos elementos complejos se convierten en imágenes; revisa tipografías y alineación en el programa destino |
 | PPTX editable | Continuar editando texto, tablas, gráficas XY/barras y diagramas compatibles | Archivo → PowerPoint editable usa PptxGenJS. Incertidumbres, ajustes, anotaciones, escalas especiales, ecuaciones y funciones conservan la apariencia como imagen con aviso por diapositiva. Sigue disponible el exportador clásico. El JSON conserva las fuentes originales |
 | Markdown | Editar el guion como texto y volver a importarlo | Imágenes incrustadas; los avisos indican bloques que requieren JSON para una reedición completa |
-| HTML autónomo | Presentar sin conexión, con pasos, vista general y deslizadores de funciones | Archivo → Presentación HTML autónoma usa Reveal.js y el motor científico de Tabula. Incrusta imágenes/vídeos primero. Las notas se excluyen por defecto; al incluirlas pasan a formar parte del archivo compartido |
+| HTML autónomo | Presentar sin conexión, con pasos, vista general y deslizadores de funciones | Archivo → Presentación HTML autónoma usa Reveal.js y el motor científico de Lámina. Incrusta imágenes/vídeos primero. Las notas se excluyen por defecto; al incluirlas pasan a formar parte del archivo compartido |
 | Beamer / TEX | Continuar un flujo con LaTeX | Requiere una distribución de LaTeX; temas y elementos especiales pueden diferir de la vista web |
 | SVG científico | Reutilizar una gráfica o función en un artículo | Selecciona una figura científica y usa Exportar → SVG científico; incluye ejes, trazos, etiquetas y `metadata` de procedencia, sin depender del CSS de la app |
 | Informe de exportación (JSON) | Revisar riesgos antes de compartir | Exportar → Informe de exportación lista errores, advertencias e información por diapositiva y por formato |
 | HTML | Imprimir desde el navegador cuando el cuadro de impresión falla | Se ofrece dentro de Exportar → PDF como «Archivo imprimible (.html)»: es una copia paginada para imprimir, no un modo de presentación |
 
-Los paquetes de figura y el **kit de defensa** incluyen `provenance.json` con la versión de Tabula, los identificadores de figuras, las fuentes disponibles y la huella SHA-256 de los datos. Es un registro de trazabilidad, no una copia de los datos que no hayas incluido.
+Los paquetes de figura y el **kit de defensa** incluyen `provenance.json` con la versión de Lámina, los identificadores de figuras, las fuentes disponibles y la huella SHA-256 de los datos. Es un registro de trazabilidad, no una copia de los datos que no hayas incluido.
 
 No se ha certificado compatibilidad visual idéntica con todas las versiones de PowerPoint ni con todos los motores LaTeX. La validación específica de esta publicación está en [validacion.md](validacion.md).
 

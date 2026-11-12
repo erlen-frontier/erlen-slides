@@ -1,33 +1,27 @@
-# Working on Erlen Slides
+# Working on Lámina
 
-This is the standalone scientific presentation editor, licensed AGPL-3.0-only. Read README.md and docs/desarrollo.md before editing. Preserve a complete local editor without subscriptions.
+This is the standalone presentation editor (Lámina), licensed AGPL-3.0-only. Read README.md and docs/desarrollo.md before editing. Preserve a complete local editor without subscriptions.
 
-Do not bring production credentials, cloud configuration, private research, other suite editors or unrelated operational documents into this public repository. Keep original and third-party license notices.
+Do not bring production credentials, cloud configuration, private research, other editors or unrelated operational documents into this public repository. Keep original and third-party license notices.
 
-Preserve JSON v1 compatibility, blank new slides, explicit save failures, and immutable scientific source data. Examples must label illustrative data and must not invent research claims or citations. Read src/js/_orden.txt before changing module dependencies.
+Preserve the flat JSON v1 project format, blank new slides, explicit save failures, and immutable scientific source data. Examples must label illustrative data and must not invent research claims or citations. Read src/js/_orden.txt before changing module dependencies.
 
 The MCP server for AI assistants lives in mcp/ (docs/mcp.md): mcp/operaciones.js is evaluated inside the built app and calls its functions, so block, layout and export changes can affect it; run tests/mcp.test.mjs after them.
 
 Run npm run build and relevant tests. When examples change, regenerate with npm run examples. Inspect rendered results for visual changes. JSDOM geometry is simulated; do not report it as browser validation.
 
-The current Erlen policy retires GitHub Actions and automatic synchronization with Erlen Suite. Run builds and tests locally. Historical workflows remain in this repository; verify the repository's Actions settings before pushing a tag or publishing a release.
+This repository keeps its own branch and runs builds and tests locally. GitHub Actions and automatic synchronization were retired: there are no workflows in `.github/`, and none must be restored without an explicit request in the task. Do not push tags or publish releases as part of a task.
 
-<!-- erlen-convencion-agentes:inicio v2 (bloque común; fuente: erlen-suite/docs/convencion.md; se actualiza en todos los repos a la vez) -->
-## Trabajo con varios agentes
+## Collaboration rules
 
-Este repositorio lo trabajan varios agentes (Claude, Codex, Amp, Mimo, Antigravity, Oh my Pi, Vibe) y modelos. Estas reglas son comunes a todos los repos de Erlen y prevalecen sobre costumbres de cada herramienta o instrucciones locales anteriores.
-
-- **Nunca en `main`.** Trabaja en una rama `<agente>/<tarea-corta>` en minúsculas y con guiones (por ejemplo `codex/fix-export-csv`). Solo los bots usan otros prefijos: `diseno/` (paquete de diseño) y `sync/` (sincronización de la suite). `main` está protegida: todo entra por pull request y se fusiona con *squash*; la rama se borra al fusionar.
-- **Una carpeta por agente y tarea.** Usa tu propio clon o worktree; no edites la carpeta de trabajo de otro agente ni la de Jorge.
-- **No fusiones ni apruebes.** Abre el PR y detente; Jorge revisa y fusiona. Si otro PR abierto toca los mismos archivos, dilo en tu PR en lugar de pisarlo.
-- **Cambios que cruzan repos.** Si tu cambio afecta a otra app o a la suite (paquete de diseño, módulos compartidos `suite-*.mjs`/`mey.mjs`, formatos de intercambio, avisos a la suite), usa **el mismo nombre de rama en cada repo afectado** y enlaza todos los PRs en la sección *Cross-repo*. Se fusionan juntos: primero `erlen-suite`, después las apps. No copies módulos compartidos a mano: vienen de `erlen-suite` por `diseno-propagar`.
-- **CI intocable sin permiso.** No modifiques `.github/` salvo petición explícita en la tarea.
-- **Commits y títulos de PR** en inglés con Conventional Commits (`feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`; ámbito opcional en minúsculas), sin tildes ni eñes en el título. El título del PR se convierte en el commit de `main` y lo valida el check `convencion`. Identifica agente y modelo con trailers (`Co-Authored-By` es opcional):
+- **Never work in `main`.** Work on a `<agent>/<short-task>` branch, lowercase with hyphens (for example `codex/fix-export-csv`). `main` is protected: everything enters through a pull request and is merged with *squash*; the branch is deleted after merging.
+- **One folder per agent and task.** Use your own clone or worktree; do not edit another agent's working folder or Jorge's.
+- **Do not merge or approve.** Open the PR and stop; Jorge reviews and merges. If another open PR touches the same files, say so in your PR instead of stepping on it.
+- **CI untouched without permission.** Do not modify `.github/` unless the task explicitly asks for it.
+- **Commit and PR titles** in English with Conventional Commits (`feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`; optional lowercase scope), no accents or ñ in the title. Identify agent and model with trailers (`Co-Authored-By` is optional):
   ```
   Agent: codex
-  Agent-Model: <modelo exacto>
+  Agent-Model: <exact model>
   ```
-- **Antes del PR** ejecuta las pruebas del repo y copia el resultado real en la descripción (sección *Testing* de la plantilla). No afirmes pruebas que no ejecutaste.
-- **Nada sensible:** ni secretos, tokens, datos personales, contratos ni expedientes. Si encuentras uno, detente y avisa.
-- Los repos `empresa-*`, `erlen-legal-mexico` y `erlen-burocracy` están fuera del alcance de los agentes.
-<!-- erlen-convencion-agentes:fin -->
+- **Before the PR** run the repository tests and paste the real result into the description (the *Testing* section of the template). Do not claim tests you did not run.
+- **Nothing sensitive:** no secrets, tokens, personal data, contracts or records. If you find one, stop and report.

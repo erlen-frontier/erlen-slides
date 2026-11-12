@@ -2,9 +2,9 @@ import test from 'node:test';import assert from 'node:assert/strict';import {rea
 test('Slides boots independently; all navigation and resource actions resolve',async()=>{const {dom,errors,run}=await editor();try{
  assert.match(dom.window.document.title,/Tabula/);
  // Cada ruta local abre su vista de inicio.
- const inicio=()=>dom.window.document.querySelector('#inicioRoot main.erlen-inicio');
+ const inicio=()=>dom.window.document.querySelector('#inicioRoot main.tabula-inicio');
  const vistas={inicio:'inicio',plantillas:'ejemplos',biblioteca:'biblioteca',herramientas:'recursos',servicio:'acerca'};
- for(const [view,vista] of Object.entries(vistas)){run('wsCambiar('+JSON.stringify(view)+')');assert.equal(inicio().hidden,false);assert.equal(run('INICIO.vista'),vista);assert.equal(dom.window.location.hash,view==='inicio'?'#inicio':'#inicio/'+view);}
+ for(const [view,vista] of Object.entries(vistas)){run('wsInicio('+JSON.stringify(view)+')');assert.equal(inicio().hidden,false);assert.equal(run('INICIO.vista'),vista);assert.equal(dom.window.location.hash,view==='inicio'?'#inicio':'#inicio/'+view);}
  run('wsNueva()');assert.equal(inicio().hidden,true);assert.equal(dom.window.location.hash,'#presentaciones');assert.equal(run('S.deck.slides[0].blocks.length'),0);
  run('openDecks()');run('closeModal()');run('openEdicion()');assert.match(dom.window.document.querySelector('#modalRoot').textContent,/AGPLv3/);assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
@@ -22,7 +22,37 @@ test('Named presentation survives switching to an example and back',async()=>{co
  run("wsNueva();S.deck.meta.title='Original';S.deck.slides[0].title='Original result';wsInicio();wsNueva(EJEMPLOS[0].build());wsInicio('biblioteca')");
  assert.equal(run("decksStore().Original.deck.slides[0].title"),'Original result');assert.ok(run('Object.keys(decksStore()).length>=2'));assert.deepEqual(errors,[]);
 }finally{dom.window.close();}});
-test('Direct example link opens the editor after preserving the draft',async()=>{const{dom,run,errors}=await editor('http://localhost:8130/?plantilla=cinetica');try{assert.equal(dom.window.document.querySelector('#inicioRoot main.erlen-inicio').hidden,true);assert.equal(dom.window.location.search,'','El parámetro se consume y se retira de la URL');assert.ok(!dom.window.document.querySelector('#app').inert,'El editor no queda inerte');assert.equal(run('S.deck.meta.title'),'Cinética de primer orden');assert.deepEqual(errors,[]);}finally{dom.window.close();}});
+test('A new presentation keeps the open document when conservation fails or is cancelled',async()=>{const{dom,run,errors}=await editor();try{
+ const d=dom.window.document,titulo=()=>d.querySelector('#modalRoot .mo-title')?.textContent||null;
+ const estado="JSON.stringify({deck:S.deck,nombre:S.deckName,contenidos:Object.entries(decksStore()).map(([n,v])=>[n,v.deck])})";
+ /* Documento con nombre y cambios sin guardar en la copia con nombre. */
+ run("wsNueva();S.deck.meta.title='Borrador con cambios';S.deckName='Borrador';saveInd.now();S.deck.slides[0].title='Trabajo real'");
+ run("openDecks()");
+ const antes=run(estado);
+ /* Cancelar: no se guarda ni se cambia nada. */
+ run("window.confirm=()=>false");run("newDeckFlow(false)");
+ assert.equal(run(estado),antes);
+ assert.equal(titulo(),'Mis presentaciones');
+ /* Aceptar con la cuota agotada solo para la biblioteca: aviso visible y nada cambia. */
+ run("window.__setItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k===LS_DECKS)throw new DOMException('Cuota agotada','QuotaExceededError');return window.__setItem.call(this,k,v)}");
+ run("window.confirm=()=>true");run("newDeckFlow(false)");
+ assert.equal(run(estado),antes);
+ assert.match(d.querySelector('#toasts').textContent,/No hay espacio para conservar/);
+ assert.equal(titulo(),'Mis presentaciones','El diálogo sigue abierto tras el fallo');
+ /* Con espacio de nuevo: se conserva el contenido y se abre la nueva en blanco. */
+ run("Storage.prototype.setItem=window.__setItem");
+ run("newDeckFlow(false)");
+ assert.equal(run("S.deck.meta.title"),'Presentación sin título');assert.equal(run("S.deckName"),null);
+ assert.equal(run("decksStore().Borrador.deck.slides[0].title"),'Trabajo real');
+ assert.equal(titulo(),null,'El diálogo se cierra al conseguir la nueva presentación');
+ assert.equal(dom.window.location.hash,'#presentaciones');
+ /* La vía del ejemplo conserva igualmente lo abierto. */
+ run("newDeckFlow(true)");
+ assert.equal(run("S.deck.meta.title"),run("EJEMPLOS[0].build().meta.title"));
+ assert.equal(run("decksStore().Borrador.deck.slides[0].title"),'Trabajo real');
+ assert.deepEqual(errors,[]);
+}finally{dom.window.close();}});
+test('Direct example link opens the editor after preserving the draft',async()=>{const{dom,run,errors}=await editor('http://localhost:8130/?plantilla=cinetica');try{assert.equal(dom.window.document.querySelector('#inicioRoot main.tabula-inicio').hidden,true);assert.equal(dom.window.location.search,'','El parámetro se consume y se retira de la URL');assert.ok(!dom.window.document.querySelector('#app').inert,'El editor no queda inerte');assert.equal(run('S.deck.meta.title'),'Cinética de primer orden');assert.deepEqual(errors,[]);}finally{dom.window.close();}});
 test('Build has no production endpoints, cloud SDK, external font requests or other suite editors',()=>{
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  for(const bad of ['.supabase.co','sentryDsn','window.supabase','fonts.googleapis.com','function docEstudio(','function figEstudio(','function daEstudio('])assert.equal(html.includes(bad),false,bad);
@@ -39,9 +69,9 @@ test('The editor stays independent at the root and in a subdirectory',async()=>{
   try{
    const d=app.dom.window.document;
    assert.equal(d.querySelector('erlen-suite-nav'),null,'No hay menú de otras aplicaciones en '+ruta);
-   assert.ok(d.querySelector('#inicioRoot main.erlen-inicio:not([hidden])'));
+   assert.ok(d.querySelector('#inicioRoot main.tabula-inicio:not([hidden])'));
    app.run('wsNueva()');
-   assert.equal(d.querySelector('.erlen-marco').hasAttribute('inert'),false);
+   assert.equal(d.querySelector('.tabula-marco').hasAttribute('inert'),false);
    assert.equal(d.querySelector('erlen-suite-nav'),null,'El editor tampoco monta el menú en '+ruta);
    assert.deepEqual(app.errors,[]);
   }finally{app.dom.window.close();}

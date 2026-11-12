@@ -52,19 +52,19 @@ async function importar(a) {
 
 /* ---------- Crossref ---------- */
 const RED_APAGADA = 'completar_por_doi está desactivada: consulta api.crossref.org (el servicio público de metadatos de Crossref, gratuito y sin clave), y este servidor no sale a internet sin permiso. ' +
-  'Para activarla, añade ERLEN_SLIDES_RED=1 a las variables de entorno del servidor MCP en la configuración de tu cliente (junto a ERLEN_SLIDES_DIR) y reinícialo; opcionalmente, ERLEN_SLIDES_CORREO=tu@correo para que Crossref sepa a quién avisar si algo falla. ' +
+  'Para activarla, añade TABULA_RED=1 a las variables de entorno del servidor MCP en la configuración de tu cliente (junto a TABULA_DIR) y reinícialo; opcionalmente, TABULA_CORREO=tu@correo para que Crossref sepa a quién avisar si algo falla. ' +
   'Mientras tanto: importar_bibliografia con el .bib o .ris del usuario, o agregar_referencia con los datos que él te dé.';
 
 function agenteUsuario() {
-  const correo = String(process.env.ERLEN_SLIDES_CORREO || '').trim();
+  const correo = String(process.env.TABULA_CORREO || '').trim();
   /* La «cortesía» de Crossref: identificarse con un correo da acceso a su
      grupo de servidores más estable. Solo si la persona lo configuró. */
   const mailto = /^[^\s@<>();]+@[^\s@<>();]+\.[^\s@<>();]+$/.test(correo) ? '; mailto:' + correo : '';
-  return 'ErlenSlides/' + version() + ' (https://github.com/erlen-frontier/erlen-slides' + mailto + ')';
+  return 'Tabula/' + version() + ' (https://github.com/erlen-frontier/erlen-slides' + mailto + ')';
 }
 async function consultaCrossref(doi) {
-  /* ERLEN_SLIDES_CROSSREF solo lo usan las pruebas, con un servidor local. */
-  const base = String(process.env.ERLEN_SLIDES_CROSSREF || 'https://api.crossref.org').replace(/\/+$/, '');
+  /* TABULA_CROSSREF solo lo usan las pruebas, con un servidor local. */
+  const base = String(process.env.TABULA_CROSSREF || 'https://api.crossref.org').replace(/\/+$/, '');
   let res;
   try {
     res = await fetch(base + '/works/' + encodeURIComponent(doi), {
@@ -86,7 +86,7 @@ async function consultaCrossref(doi) {
 async function completar(a) {
   const doi = limpiaDOI(a.doi);
   if (!/^10\.\d{4,9}\/\S+$/.test(doi)) throw new ErrorUso('«' + a.doi + '» no parece un DOI (empiezan por «10.», p. ej. 10.1021/ja809467h).');
-  if (process.env.ERLEN_SLIDES_RED !== '1') throw new ErrorUso(RED_APAGADA);
+  if (process.env.TABULA_RED !== '1') throw new ErrorUso(RED_APAGADA);
   lee(a.archivo);
   const mensaje = await consultaCrossref(doi);
   return {fuente: 'api.crossref.org', ...(await modifica(a.archivo, 'completaDOI', {doi, mensaje, clave: a.clave}, 'completar_por_doi'))};
@@ -110,7 +110,7 @@ export default {
         bloque_referencias: {type: 'boolean', description: 'Si no hay bloque de referencias, añadirlo (la bibliografía automática, o una diapositiva propia si está apagada).'}}},
       annotations: cambia, run: a => modifica(a.archivo, 'citaClaves', a, 'citar')},
     {name: 'completar_por_doi', title: 'Completar por DOI (Crossref)',
-      description: 'Consulta el DOI en api.crossref.org y rellena los campos vacíos de la referencia con ese DOI (o de la de «clave», si aún no tenía DOI y el título coincide); si no existe, la añade. Nunca sobrescribe lo que ya había: las diferencias se devuelven para que decida el usuario. Necesita internet y solo funciona si el servidor se arrancó con ERLEN_SLIDES_RED=1.',
+      description: 'Consulta el DOI en api.crossref.org y rellena los campos vacíos de la referencia con ese DOI (o de la de «clave», si aún no tenía DOI y el título coincide); si no existe, la añade. Nunca sobrescribe lo que ya había: las diferencias se devuelven para que decida el usuario. Necesita internet y solo funciona si el servidor se arrancó con TABULA_RED=1.',
       inputSchema: {type: 'object', required: ['archivo', 'doi'], properties: {
         archivo,
         doi: {type: 'string', description: 'El DOI, con o sin https://doi.org/.'},
@@ -127,6 +127,6 @@ export default {
 3. Cuando lo apruebe, cítalas con citar (bloque_referencias=true en la primera) y enséñame la vista previa de una diapositiva con citas y de la bibliografía.`}
   ],
   convenciones: {
-    bibliografia: 'Referencias: importar_bibliografia trae las del .bib o .ris del usuario sin duplicar (por DOI o título y año) y conserva su clave de BibTeX; citar las pone al pie de una diapositiva por clave; en un texto se cita con [@clave] o [@una; @otra]. La bibliografía se añade sola al final y se renumera por orden de aparición. completar_por_doi consulta Crossref solo si el servidor tiene ERLEN_SLIDES_RED=1. Nunca inventes referencias ni rellenes campos que no vengan del usuario o de Crossref.'
+    bibliografia: 'Referencias: importar_bibliografia trae las del .bib o .ris del usuario sin duplicar (por DOI o título y año) y conserva su clave de BibTeX; citar las pone al pie de una diapositiva por clave; en un texto se cita con [@clave] o [@una; @otra]. La bibliografía se añade sola al final y se renumera por orden de aparición. completar_por_doi consulta Crossref solo si el servidor tiene TABULA_RED=1. Nunca inventes referencias ni rellenes campos que no vengan del usuario o de Crossref.'
   }
 };

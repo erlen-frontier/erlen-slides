@@ -1,10 +1,10 @@
 /* ==== 03-state.js ==== */
 'use strict';
 /* ================= estado, historial y guardado ================= */
-const LS_AUTO = 'erlen-slides.autosave';
-const LS_DECKS = 'erlen-slides.decks';
-const LS_PREFS = 'erlen-slides.prefs';
-const LS_ESTILOS = 'erlen-slides.estilos';
+const LS_AUTO = 'tabula.autosave';
+const LS_DECKS = 'tabula.decks';
+const LS_PREFS = 'tabula.prefs';
+const LS_ESTILOS = 'tabula.estilos';
 
 /* ---------- preferencias de la app (no viajan en el .json del proyecto) ---------- */
 /* barras: 'arriba' = cinta (de fábrica), 'lado' = panel a la derecha. Si el
@@ -26,6 +26,11 @@ function aplicaTemaApp() {
   }
 }
 function cambiaTemaApp(t) { S.prefs.tema = t; guardaPrefs(); aplicaTemaApp(); }
+function aplicaDensidadApp() {
+  const d = (S.prefs || {}).densidad;
+  if (d === 'compacta' || d === 'comoda') document.documentElement.dataset.dens = d;
+  else delete document.documentElement.dataset.dens;
+}
 
 const S = {
   prefs: null,
@@ -44,7 +49,7 @@ const S = {
 };
 
 const lsGet = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { window.ErlenDiagnostico?.reportar('guardar-local'); return false; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
 
 const curSlide = () => S.deck.slides[S.cur];
 /* Devuelve (creándolo si hace falta) el arreglo de bloques de una zona. */
@@ -302,7 +307,6 @@ const saveInd = deb(() => {
     if (!lsSet(LS_DECKS,store)) toast('No se pudo actualizar la copia con nombre. Descarga un respaldo.', 'warn');
   }
   if (S.archivo) guardaArchivo();
-  if (typeof nubeSincroniza === 'function') nubeSincroniza();
   if (!ok && !S._avisoLS) {
     S._avisoLS = true;
     toast('La presentación ya no cabe en el guardado automático. Guarda el proyecto como archivo .json para conservar los cambios.', 'warn');

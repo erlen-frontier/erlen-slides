@@ -13,18 +13,18 @@
                                         transformaBloque: async (bloque, {esImagen}) => bloque
                                       }
      mcp/extensiones/<id>.pagina.js  (página del editor) se evalúa tras operaciones.js:
-                                      ERLEN_MCP.registra('miOperacion', args => {...});
-                                      ERLEN_MCP.registraRevision(deck => [{categoria, diapositiva, problema, arreglo}]);
-                                      ERLEN_MCP.util.{valida, bloqueDesde, diapositivaNueva, ...}
+                                      TABULA_MCP.registra('miOperacion', args => {...});
+                                      TABULA_MCP.registraRevision(deck => [{categoria, diapositiva, problema, arreglo}]);
+                                      TABULA_MCP.util.{valida, bloqueDesde, diapositivaNueva, ...}
 
-   Se cargan en orden alfabético. ERLEN_MCP_EXTENSIONES añade otra carpeta
+   Se cargan en orden alfabético. TABULA_MCP_EXTENSIONES añade otra carpeta
    (separadas por el delimitador de rutas del sistema); lo usan las pruebas. */
 import {readdirSync, existsSync} from 'node:fs';
 import {resolve, delimiter} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const CARPETAS = [fileURLToPath(new URL('./extensiones/', import.meta.url)),
-  ...String(process.env.ERLEN_MCP_EXTENSIONES || '').split(delimiter).filter(Boolean).map(d => resolve(d))];
+  ...String(process.env.TABULA_MCP_EXTENSIONES || '').split(delimiter).filter(Boolean).map(d => resolve(d))];
 
 /* Rutas de los archivos de un tipo, en orden estable. */
 export function archivos(sufijo) {

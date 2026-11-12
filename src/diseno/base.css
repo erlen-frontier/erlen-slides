@@ -1,115 +1,99 @@
-/* Base del cromo de Tabula, derivada del diseño MIT de Erlen.
+/* Base del cromo de Lámina, derivada del diseño MIT de Erlen.
    Solo cromo: cabecera, controles, estado, pie. El contenido de las diapositivas sigue opaco.
-   Cabecera, paneles, diálogos y .erlen-vidrio usan los tokens --erlen-vidrio* de tokens.css, que ya traen sus respaldos.
-   Ningún color literal aquí: todo es var(--erlen-*) de tokens.css. Licencia: licencias/MIT.txt */
+   Ningún color literal aquí: todo es var(--tabula-*) de tokens.css. Licencia: licencias/MIT.txt */
 *,::before,::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 /* Opt-in responsive recipes. User content remains opaque; ARIA belongs in markup.
    Original Erlen implementation; references: docs/research/ui-saas.md. */
-.erlen-ui-stack{display:grid;gap:var(--erlen-esp-4);min-inline-size:0}
-.erlen-ui-stack>*{min-inline-size:0;max-inline-size:100%}
-.erlen-ui-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:var(--erlen-esp-4);min-inline-size:0}
-.erlen-ui-grid>*{min-inline-size:0}
-.erlen-ui-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3);min-inline-size:0;max-inline-size:100%}
-.erlen-ui-toolbar>*{min-inline-size:0;max-inline-size:100%;overflow-wrap:anywhere}
-.erlen-ui-field{display:grid;gap:var(--erlen-esp-2);min-inline-size:0}
-.erlen-ui-field :is(input,select,textarea){inline-size:100%;min-inline-size:0;max-inline-size:100%}
-.erlen-ui-field :is(label,small){overflow-wrap:anywhere}
-.erlen-ui-field [aria-invalid="true"]{border-color:var(--erlen-peligro)}
-.erlen-ui-message{padding:var(--erlen-esp-3) var(--erlen-esp-4);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);overflow-wrap:anywhere}
-.erlen-ui-message[data-state="error"]{border-color:var(--erlen-peligro);background:var(--erlen-peligro-suave)}
-.erlen-ui-message[data-state="success"]{border-color:var(--erlen-verde);background:var(--erlen-verde-suave)}
-.erlen-ui-scroll{min-inline-size:0;max-inline-size:100%;overflow:auto;overscroll-behavior-inline:contain;border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie)}
-.erlen-ui-scroll:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:-3px}
-.erlen-ui-table{inline-size:100%;min-inline-size:40rem;border-collapse:collapse;background:var(--erlen-superficie);color:var(--erlen-tinta);font:inherit}
-.erlen-ui-table caption{text-align:start;padding:var(--erlen-esp-3);font-weight:700}
-.erlen-ui-table :is(th,td){text-align:start;vertical-align:top;padding:var(--erlen-esp-3);border-block-end:1px solid var(--erlen-linea);overflow-wrap:anywhere}
-.erlen-ui-table th{background:var(--erlen-superficie-2)}
-@media print{.erlen-ui-scroll{overflow:visible;border:0}.erlen-ui-table{min-inline-size:0;table-layout:fixed}}
-body{margin:0;background:var(--erlen-papel);color:var(--erlen-tinta);font:var(--erlen-texto-ui)/var(--erlen-interlineado-ui) var(--erlen-font-ui);-webkit-font-smoothing:antialiased}
+.tabula-ui-stack{display:grid;gap:var(--tabula-esp-4);min-inline-size:0}
+.tabula-ui-stack>*{min-inline-size:0;max-inline-size:100%}
+.tabula-ui-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:var(--tabula-esp-4);min-inline-size:0}
+.tabula-ui-grid>*{min-inline-size:0}
+.tabula-ui-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:var(--tabula-esp-3);min-inline-size:0;max-inline-size:100%}
+.tabula-ui-toolbar>*{min-inline-size:0;max-inline-size:100%;overflow-wrap:anywhere}
+.tabula-ui-field{display:grid;gap:var(--tabula-esp-2);min-inline-size:0}
+.tabula-ui-field :is(input,select,textarea){inline-size:100%;min-inline-size:0;max-inline-size:100%}
+.tabula-ui-field :is(label,small){overflow-wrap:anywhere}
+.tabula-ui-field [aria-invalid="true"]{border-color:var(--tabula-peligro)}
+.tabula-ui-message{padding:var(--tabula-esp-3) var(--tabula-esp-4);border:1px solid var(--tabula-linea);border-radius:var(--tabula-radio-campo);background:var(--tabula-superficie);color:var(--tabula-tinta);overflow-wrap:anywhere}
+.tabula-ui-message[data-state="error"]{border-color:var(--tabula-peligro);background:var(--tabula-peligro-suave)}
+.tabula-ui-message[data-state="success"]{border-color:var(--tabula-verde);background:var(--tabula-verde-suave)}
+.tabula-ui-scroll{min-inline-size:0;max-inline-size:100%;overflow:auto;overscroll-behavior-inline:contain;border:1px solid var(--tabula-linea);border-radius:var(--tabula-radio-campo);background:var(--tabula-superficie)}
+.tabula-ui-scroll:focus-visible{outline:2px solid var(--tabula-foco);outline-offset:-3px}
+.tabula-ui-table{inline-size:100%;min-inline-size:40rem;border-collapse:collapse;background:var(--tabula-superficie);color:var(--tabula-tinta);font:inherit}
+.tabula-ui-table caption{text-align:start;padding:var(--tabula-esp-3);font-weight:700}
+.tabula-ui-table :is(th,td){text-align:start;vertical-align:top;padding:var(--tabula-esp-3);border-block-end:1px solid var(--tabula-linea);overflow-wrap:anywhere}
+.tabula-ui-table th{background:var(--tabula-superficie-2)}
+@media print{.tabula-ui-scroll{overflow:visible;border:0}.tabula-ui-table{min-inline-size:0;table-layout:fixed}}
+body{margin:0;background:var(--tabula-papel);color:var(--tabula-tinta);font:var(--tabula-texto-ui)/var(--tabula-interlineado-ui) var(--tabula-font-ui);-webkit-font-smoothing:antialiased}
 /* Títulos en LM Roman solo a partir de 24 px; por debajo, LM Sans. */
 h1,h2,h3,h4,p{margin:0}
-h1,h2{font-family:var(--erlen-font-titulo);font-weight:400;line-height:1.12;letter-spacing:-.5px}
-h1{font-size:var(--erlen-h1-app)}
-h2{font-size:var(--erlen-h3);font-weight:700}
-h3,h4{font-family:var(--erlen-font-ui);font-size:var(--erlen-texto-base);font-weight:700;line-height:1.3}
-a{color:var(--erlen-verde);text-decoration:none}a:hover{text-decoration:underline}
-code,kbd,pre,samp{font-family:var(--erlen-font-mono);font-size:.94em}
+h1,h2{font-family:var(--tabula-font-titulo);font-weight:400;line-height:1.12;letter-spacing:-.5px}
+h1{font-size:var(--tabula-h1-app)}
+h2{font-size:var(--tabula-h3);font-weight:700}
+h3,h4{font-family:var(--tabula-font-ui);font-size:var(--tabula-texto-base);font-weight:700;line-height:1.3}
+a{color:var(--tabula-verde);text-decoration:none}a:hover{text-decoration:underline}
+code,kbd,pre,samp{font-family:var(--tabula-font-mono);font-size:.94em}
 /* Texto de lectura (párrafos largos, vistas previas): cuerpo de la familia a 17 px / 1,7. */
-.erlen-lectura{font:var(--erlen-texto-base)/var(--erlen-interlineado) var(--erlen-font-cuerpo);max-width:var(--erlen-ancho-lectura)}
+.tabula-lectura{font:var(--tabula-texto-base)/var(--tabula-interlineado) var(--tabula-font-cuerpo);max-width:var(--tabula-ancho-lectura)}
 /* Foco ámbar visible en todo lo enfocable. */
-a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px;border-radius:4px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--tabula-foco);outline-offset:3px;border-radius:4px}
 /* Cabecera del editor: marca, título, estado y acciones. */
-.erlen-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:64px;padding:var(--erlen-esp-3) 4%;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 -1px 0 var(--erlen-vidrio-borde)}
+.tabula-app-header{display:flex;align-items:center;flex-wrap:wrap;gap:var(--tabula-esp-3) var(--tabula-esp-4);min-height:64px;padding:var(--tabula-esp-3) 4%;background:var(--tabula-superficie);border-bottom:1px solid var(--tabula-linea);box-shadow:inset 0 -1px 0 var(--tabula-superficie)}
 /* El nombre de la app cede espacio con base 0: con base auto su texto inflaba la primera línea y
    bajaba la tira de controles a una segunda fila. Elipsis en marco.css;
    a ≤ 600 px queda oculto visualmente. */
-.erlen-app-header h1{flex:1 1 0%;min-width:0;overflow-wrap:anywhere}
-.erlen-app-header .erlen-marca{font-weight:700;white-space:nowrap}
-:root[data-erlen-color] .erlen-app-header .erlen-marca{color:var(--erlen-verde)}
-.badge,.erlen-badge{display:inline-block;font:700 var(--erlen-texto-xs)/1 var(--erlen-font-ui);color:var(--erlen-tinta);background:var(--erlen-verde-suave);border-radius:var(--erlen-radio-badge);padding:6px 10px;white-space:nowrap}
+.tabula-app-header h1{flex:1 1 0%;min-width:0;overflow-wrap:anywhere}
+.tabula-app-header .tabula-marca{font-weight:700;white-space:nowrap}
+.badge,.tabula-badge{display:inline-block;font:700 var(--tabula-texto-xs)/1 var(--tabula-font-ui);color:var(--tabula-tinta);background:var(--tabula-verde-suave);border-radius:var(--tabula-radio-badge);padding:6px 10px;white-space:nowrap}
 /* Controles: 44 px de alto, radio de campo, borde de línea; un solo .primary por bloque. El primario lleva el brillo especular del cristal. */
 button,input,select,textarea{font:inherit;color:inherit;margin:0}
-button,.erlen-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-4);border:1px solid var(--erlen-verde);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-verde);font-weight:700;line-height:1.2;cursor:pointer;text-decoration:none}
-button:hover,.erlen-boton:hover{background:var(--erlen-verde-suave);text-decoration:none}
-button.primary,.erlen-boton.primary{background:var(--erlen-vidrio-reflejo-acento),var(--erlen-verde);color:var(--erlen-verde-contraste);box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 2px 8px var(--erlen-vidrio-contorno)}
-button.primary:hover,.erlen-boton.primary:hover{background:var(--erlen-vidrio-reflejo-acento),color-mix(in srgb,var(--erlen-verde) 88%,var(--erlen-tinta))}
-button:disabled,.erlen-boton[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
-button.compact,.erlen-boton.compact{min-height:36px;padding:var(--erlen-esp-1) var(--erlen-esp-3);font-size:var(--erlen-texto-sm)}
-input,select,textarea{min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-3);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta)}
-input[type="checkbox"],input[type="radio"],input[type="range"],input[type="color"],input[type="file"]{min-height:0;padding:0;border:0;background:none;accent-color:var(--erlen-verde)}
-input::placeholder,textarea::placeholder{color:var(--erlen-tinta-suave);opacity:1}
-input[data-error="true"],.erlen-campo-error{border-color:var(--erlen-peligro);background:var(--erlen-peligro-suave)}
+button,.tabula-boton{display:inline-flex;align-items:center;justify-content:center;gap:var(--tabula-esp-2);min-height:var(--tabula-alto-control);padding:var(--tabula-esp-2) var(--tabula-esp-4);border:1px solid var(--tabula-verde);border-radius:var(--tabula-radio-campo);background:var(--tabula-superficie);color:var(--tabula-verde);font-weight:700;line-height:1.2;cursor:pointer;text-decoration:none}
+button:hover,.tabula-boton:hover{background:var(--tabula-verde-suave);text-decoration:none}
+button.primary,.tabula-boton.primary{background:var(--tabula-verde);color:var(--tabula-verde-contraste);box-shadow:inset 0 1px 0 var(--tabula-superficie),0 2px 8px var(--tabula-linea)}
+button.primary:hover,.tabula-boton.primary:hover{background:color-mix(in srgb,var(--tabula-verde) 88%,var(--tabula-tinta))}
+button:disabled,.tabula-boton[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+button.compact,.tabula-boton.compact{min-height:36px;padding:var(--tabula-esp-1) var(--tabula-esp-3);font-size:var(--tabula-texto-sm)}
+input,select,textarea{min-height:var(--tabula-alto-control);padding:var(--tabula-esp-2) var(--tabula-esp-3);border:1px solid var(--tabula-linea-fuerte);border-radius:var(--tabula-radio-campo);background:var(--tabula-superficie);color:var(--tabula-tinta)}
+input[type="checkbox"],input[type="radio"],input[type="range"],input[type="color"],input[type="file"]{min-height:0;padding:0;border:0;background:none;accent-color:var(--tabula-verde)}
+input::placeholder,textarea::placeholder{color:var(--tabula-tinta-suave);opacity:1}
+input[data-error="true"],.tabula-campo-error{border-color:var(--tabula-peligro);background:var(--tabula-peligro-suave)}
 textarea{line-height:1.6;resize:vertical}
-label,small,.erlen-nota{font-size:var(--erlen-texto-sm)}
+label,small,.tabula-nota{font-size:var(--tabula-texto-sm)}
 /* Estado y avisos: en aria-live, sin animación. */
-#status,.erlen-status{min-height:26px;margin:var(--erlen-esp-2) 0 var(--erlen-esp-4);font-size:var(--erlen-texto-sm);color:var(--erlen-tinta-suave)}
+#status,.tabula-status{min-height:26px;margin:var(--tabula-esp-2) 0 var(--tabula-esp-4);font-size:var(--tabula-texto-sm);color:var(--tabula-tinta-suave)}
 /* En el hueco «estado» de la cabecera del marco los márgenes verticales sobran: el hueco ya
    centra y sus márgenes inflaban la fila (67 px en lugar de 61 en notes, lens y learn). */
-.erlen-marco-estado #status,.erlen-marco-estado .erlen-status{margin:0}
-#status[data-error="true"],.erlen-status.error,.erlen-error{color:var(--erlen-peligro);font-weight:700}
-.erlen-aviso{padding:var(--erlen-esp-3) var(--erlen-esp-4);border:1px solid var(--erlen-linea);border-radius:var(--erlen-radio-pequeno);background:var(--erlen-ambar-suave);color:var(--erlen-tinta)}
+.tabula-marco-estado #status,.tabula-marco-estado .tabula-status{margin:0}
+#status[data-error="true"],.tabula-status.error,.tabula-error{color:var(--tabula-peligro);font-weight:700}
+.tabula-aviso{padding:var(--tabula-esp-3) var(--tabula-esp-4);border:1px solid var(--tabula-linea);border-radius:var(--tabula-radio-pequeno);background:var(--tabula-ambar-suave);color:var(--tabula-tinta)}
 /* Paneles: cristal fuerte sin desenfoque (están en el flujo, no flotan); .destacado con más relieve. */
-.erlen-panel{background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-tarjeta);padding:var(--erlen-esp-4);box-shadow:var(--erlen-vidrio-relieve)}
-.erlen-panel.destacado{border-radius:var(--erlen-radio-panel);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-panel)}
+.tabula-panel{background:var(--tabula-superficie);border:1px solid var(--tabula-linea);border-radius:var(--tabula-radio-tarjeta);padding:var(--tabula-esp-4);box-shadow:var(--tabula-sombra-tarjeta)}
+.tabula-panel.destacado{border-radius:var(--tabula-radio-panel);box-shadow:var(--tabula-sombra-panel)}
 /* Cristal flotante (menús, paletas, barras y paneles que se superponen al contenido): una sola capa de desenfoque por pantalla visible.
    Nunca sobre el área de trabajo que se desplaza ni como fondo de un editor, hoja o lienzo. */
-.erlen-vidrio{background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-tarjeta);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-menu);color:var(--erlen-tinta);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro)}
-/* Diálogo de cristal: <dialog class="erlen-dialogo">; el fondo se atenúa sin desenfocar (un desenfoque a pantalla completa cuesta). */
-dialog.erlen-dialogo{max-width:min(560px,calc(100vw - 32px));padding:var(--erlen-esp-5);background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-panel);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-panel);color:var(--erlen-tinta);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro)}
-dialog.erlen-dialogo::backdrop{background:color-mix(in srgb,var(--erlen-tinta) 22%,transparent)}
+.tabula-vidrio{background:var(--tabula-superficie);border:1px solid var(--tabula-linea);border-radius:var(--tabula-radio-tarjeta);box-shadow:var(--tabula-sombra-menu);color:var(--tabula-tinta);-webkit-backdrop-filter:none;backdrop-filter:none}
+/* Diálogo de cristal: <dialog class="tabula-dialogo">; el fondo se atenúa sin desenfocar (un desenfoque a pantalla completa cuesta). */
+dialog.tabula-dialogo{max-width:min(560px,calc(100vw - 32px));padding:var(--tabula-esp-5);background:var(--tabula-superficie);border:1px solid var(--tabula-linea);border-radius:var(--tabula-radio-panel);box-shadow:var(--tabula-sombra-panel);color:var(--tabula-tinta);-webkit-backdrop-filter:none;backdrop-filter:none}
+dialog.tabula-dialogo::backdrop{background:color-mix(in srgb,var(--tabula-tinta) 22%,transparent)}
 /* Cápsula: navegación, filtros y conmutadores; la activa (aria-pressed, aria-current o aria-selected) se eleva como una lente. */
-.erlen-capsula{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:36px;padding:0 var(--erlen-esp-4);border:1px solid transparent;border-radius:var(--erlen-radio-capsula);background:transparent;color:var(--erlen-tinta-suave);font:600 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);text-decoration:none;cursor:pointer}
-.erlen-capsula:hover{background:var(--erlen-vidrio-tinte);color:var(--erlen-tinta);text-decoration:none}
-.erlen-capsula:is([aria-pressed="true"],[aria-current],[aria-selected="true"]){background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-vidrio-relieve);color:var(--erlen-verde)}
+.tabula-capsula{display:inline-flex;align-items:center;justify-content:center;gap:var(--tabula-esp-2);min-height:36px;padding:0 var(--tabula-esp-4);border:1px solid transparent;border-radius:var(--tabula-radio-capsula);background:transparent;color:var(--tabula-tinta-suave);font:600 var(--tabula-texto-sm)/1.2 var(--tabula-font-ui);text-decoration:none;cursor:pointer}
+.tabula-capsula:hover{background:var(--tabula-verde-suave);color:var(--tabula-tinta);text-decoration:none}
+.tabula-capsula:is([aria-pressed="true"],[aria-current],[aria-selected="true"]){background:var(--tabula-superficie);border-color:var(--tabula-linea);box-shadow:var(--tabula-sombra-tarjeta);color:var(--tabula-verde)}
 /* Atmósfera detrás del cromo (pantallas de bienvenida, vacíos, ajustes); nunca detrás del documento del usuario. */
-.erlen-atmosfera{background:var(--erlen-atmosfera)}
-/* Los estilos elegidos también se reconocen en las acciones principales. */
-:root[data-erlen-estilo] :is(button.primary,.erlen-boton.primary){box-shadow:var(--erlen-control-relieve)}
-/* Apariencia de las acciones del marco: relieve a escala de control, sin cambiar
-   tamaños, prioridad de la acción principal ni estados de selección o peligro. */
-:root[data-erlen-estilo] :is(.erlen-marco-acciones,.erlen-marco-utilidades) :is(button,.erlen-boton):not(.primary,.danger,.peligro,[aria-pressed="true"],[aria-selected="true"]){background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-control-relieve)}
-:root[data-erlen-estilo] :is(.erlen-marco-acciones,.erlen-marco-utilidades) :is(button,.erlen-boton):not(.primary,.danger,.peligro,[aria-pressed="true"],[aria-selected="true"]):hover:not(:disabled){background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-tinte)}
-/* Los respaldos siguen ganando también para el relieve de los controles. */
-@media(prefers-contrast:more),(forced-colors:active),print{:root:root[data-erlen-estilo]{--erlen-control-relieve:var(--erlen-vidrio-relieve)}}
+.tabula-atmosfera{background:var(--tabula-papel)}
 /* Pie de app: enlaces al portal, código y licencia. */
-.erlen-app-footer{padding:var(--erlen-esp-5) 4%;border-top:1px solid var(--erlen-linea);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
+.tabula-app-footer{padding:var(--tabula-esp-5) 4%;border-top:1px solid var(--tabula-linea);font-size:var(--tabula-texto-xs);color:var(--tabula-tinta-suave)}
 .visualmente-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* Entrada de archivo nativa con aspecto de botón secundario: el input queda oculto a la vista (no a la accesibilidad), va ANTES de su label y el anillo de foco se pinta en el label. */
-.erlen-entrada-archivo{display:flex;position:relative}
-.erlen-entrada-archivo>input[type="file"]{position:absolute;width:1px;height:1px;min-width:0;max-width:1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;opacity:0;outline:0}
-.erlen-entrada-archivo>label{display:inline-flex;align-items:center;justify-content:center;gap:var(--erlen-esp-2);min-height:var(--erlen-alto-control);padding:var(--erlen-esp-2) var(--erlen-esp-4);border:1px solid var(--erlen-verde);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-verde);font-weight:700;line-height:1.2;cursor:pointer;text-align:center}
-.erlen-entrada-archivo>label:hover{background:var(--erlen-verde-suave)}
-.erlen-entrada-archivo>input[type="file"]:focus-visible+label{outline:3px solid var(--erlen-foco);outline-offset:3px;border-radius:4px}
-.erlen-entrada-archivo>input[type="file"]:disabled+label{opacity:.55;cursor:not-allowed}
-@media(max-width:760px){.erlen-app-header{padding:var(--erlen-esp-3) var(--erlen-esp-4)}.erlen-app-footer{padding:var(--erlen-esp-5) var(--erlen-esp-4)}}
-@media print{.erlen-app-header,.erlen-app-footer{display:none}}
+.tabula-entrada-archivo{display:flex;position:relative}
+.tabula-entrada-archivo>input[type="file"]{position:absolute;width:1px;height:1px;min-width:0;max-width:1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;opacity:0;outline:0}
+.tabula-entrada-archivo>label{display:inline-flex;align-items:center;justify-content:center;gap:var(--tabula-esp-2);min-height:var(--tabula-alto-control);padding:var(--tabula-esp-2) var(--tabula-esp-4);border:1px solid var(--tabula-verde);border-radius:var(--tabula-radio-campo);background:var(--tabula-superficie);color:var(--tabula-verde);font-weight:700;line-height:1.2;cursor:pointer;text-align:center}
+.tabula-entrada-archivo>label:hover{background:var(--tabula-verde-suave)}
+.tabula-entrada-archivo>input[type="file"]:focus-visible+label{outline:2px solid var(--tabula-foco);outline-offset:3px;border-radius:4px}
+.tabula-entrada-archivo>input[type="file"]:disabled+label{opacity:.55;cursor:not-allowed}
+@media(max-width:760px){.tabula-app-header{padding:var(--tabula-esp-3) var(--tabula-esp-4)}.tabula-app-footer{padding:var(--tabula-esp-5) var(--tabula-esp-4)}}
+@media print{.tabula-app-header,.tabula-app-footer{display:none}}
 
-/* Iconos del cromo: conserva el significado, las dimensiones y los estados. */
-:root[data-erlen-estilo] :is(.erlen-app-header,.erlen-cinta,.erlen-cinta-menu,.erlen-inicio-cabecera,.erlen-inicio-lateral,.erlen-marco-navegacion,.erlen-marco-detalles) :is(.erlen-icono,svg[viewBox="0 0 24 24"]){stroke-width:var(--erlen-icono-grosor);stroke-linecap:var(--erlen-icono-terminal);stroke-linejoin:var(--erlen-icono-union);stroke-dasharray:var(--erlen-icono-guion);shape-rendering:var(--erlen-icono-render);filter:var(--erlen-icono-filtro);background:var(--erlen-icono-placa);border-radius:var(--erlen-icono-radio);box-shadow:var(--erlen-icono-relieve)}
-:root[data-erlen-estilo] :is(.primary,.primario,.erlen-cinta-archivo,.erlen-cinta-agregar,[aria-pressed="true"],[aria-selected="true"]) :is(.erlen-icono,svg[viewBox="0 0 24 24"]){background:none;box-shadow:none;filter:none}
 
-:root[data-erlen-estilo] :is(.erlen-app-header,.erlen-cinta,.erlen-cinta-menu,.erlen-inicio-cabecera,.erlen-inicio-lateral,.erlen-marco-navegacion,.erlen-marco-detalles) :is(.erlen-icono,svg[viewBox="0 0 24 24"]) :is(path,line,polyline,polygon,circle,rect,ellipse){stroke-width:inherit;stroke-linecap:inherit;stroke-linejoin:inherit;stroke-dasharray:inherit}
 
-/* Material al pulsar: no cambia color semántico, posición ni foco. */
-:root[data-erlen-estilo] :is(.erlen-boton,.erlen-capsula,.erlen-inicio-boton,.erlen-cinta-boton,.erlen-cinta-archivo,.erlen-cinta-pestana,.erlen-marco-acciones button,.erlen-marco-utilidades button):active:not(:disabled,[aria-disabled="true"]){box-shadow:var(--erlen-control-presionado)}

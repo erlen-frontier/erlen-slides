@@ -8,9 +8,9 @@ import {chromium} from 'playwright-core';
 
 /* The geometry and pointer interactions below run in a real browser. */
 test('free canvas tools support layers, snapping and moving several blocks in Chromium', {timeout:120000}, async t => {
-  const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
+  const bin = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
   if (!existsSync(bin)) { t.skip('Chromium is required.'); return; }
-  const port = Number(process.env.ERLEN_HERRAMIENTAS_TEST_PORT || 4231);
+  const port = Number(process.env.TABULA_HERRAMIENTAS_TEST_PORT || 4231);
   const server = spawn(process.execPath,[fileURLToPath(new URL('../herramientas/serve.mjs', import.meta.url))],
     {env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
   t.after(()=>server.kill());
@@ -158,7 +158,7 @@ test('free canvas tools support layers, snapping and moving several blocks in Ch
     assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Adelantar capa A');
     await page.getByRole('button',{name:'Cerrar panel de capas'}).click();
     const exportado=await page.evaluate(async()=>{
-      const ext=await extensionSlides('exportador'), html=await ext.creaHTML(S.deck), ppt=await ext.creaPPTX(S.deck);
+      const ext=await extensionTabla('exportador'), html=await ext.creaHTML(S.deck), ppt=await ext.creaPPTX(S.deck);
       const zip=await window.JSZip.loadAsync(ppt.blob);
       return {html:await html.text(),xml:await zip.file('ppt/slides/slide2.xml').async('string')};
     });

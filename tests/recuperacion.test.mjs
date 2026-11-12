@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {IDBFactory} from 'fake-indexeddb';
+import {editor} from '../herramientas/test-browser.mjs';
 const source=readFileSync(new URL('../src/js/88b-recuperacion.js',import.meta.url),'utf8');
 const deck=t=>({meta:{title:'Prueba'},slides:[{layout:'content',blocks:[{type:'text',text:t}]}]});
 function setup(factory=new IDBFactory()) {
@@ -82,7 +83,7 @@ test('Respaldo completo exportado e importado en una biblioteca vacía',async()=
  const origen=setup();origen.setLibrary({Original:{deck:deck('original guardado'),when:1},Otra:{deck:deck('otra presentación'),when:2}});
  origen.ctx.flushEdicion=()=>{};origen.ctx.saveInd={now:()=>{}};origen.ctx.deepCopy=x=>JSON.parse(JSON.stringify(x));let archivo;
  origen.ctx.downloadFile=(nombre,datos)=>{archivo=datos;};await origen.ctx.recExportaBiblioteca();
- const paquete=JSON.parse(archivo);assert.equal(paquete.formato,'erlen-respaldo-v1');assert.equal(paquete.proyectos.length,3);
+ const paquete=JSON.parse(archivo);assert.equal(paquete.formato,'tabula-respaldo-v1');assert.equal(paquete.proyectos.length,3);
  const destino=setup();const nombres=destino.ctx.recImporta(paquete.proyectos);
  assert.equal(nombres.length,3);assert.deepEqual(Object.values(destino.library()).map(x=>x.deck.slides[0].blocks[0].text),['original guardado','otra presentación','actual']);
 });
@@ -152,4 +153,90 @@ test('Eliminar historial espera copias pendientes y respeta otros documentos y b
  assert.deepEqual((await s.ctx.recLista()).map(c=>c.clave),['nombre:B']);
  assert.equal(s.library().A.deck.slides[0].blocks[0].text,'biblioteca');
  assert.equal(s.ctx.S.deck.slides[0].blocks[0].text,'actual');
+});
+
+/* Aislamiento de identidad: Tabula comparte origen con la etapa anterior, pero tiene claves y
+   base de recuperación propias. Arrancar, guardar una charla y un punto de recuperación no debe
+   leer, escribir, migrar ni borrar nada de lo anterior; sus datos quedan byte a byte intactos. */
+const CLAVES_ANTERIORES=['erlen-slides.autosave','erlen-slides.decks','erlen-slides.prefs','erlen-slides.estilos',
+ 'erlen-slides.sesion','erlen-slides.historia','erlen-slides.zotero','erlen-slides.charlas','erlen-slides.biblioteca.v1',
+ 'erlen-cinta.plegada','erlen-color','erlen-estilo'];
+const BASE_ANTERIOR='erlen-slides-recuperacion-v1';
+const FILA_ANTERIOR={id:1,clave:'nombre:Anterior',nombre:'Anterior',titulo:'Anterior',
+ datos:'{"v":1,"meta":{"title":"Anterior"},"slides":[]}',fecha:1,inicio:1,bytes:43,fijada:true};
+async function siembraBaseAnterior(base) {
+ const db=await new Promise((resolve,reject)=>{
+  const req=base.open(BASE_ANTERIOR,1);
+  req.onupgradeneeded=()=>req.result.createObjectStore('copias',{keyPath:'id',autoIncrement:true});
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });
+ try {
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('copias','readwrite');tx.objectStore('copias').put(FILA_ANTERIOR);
+   tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+  });
+ } finally {db.close();}
+}
+test('Tabula no lee, escribe ni borra las claves ni la base de recuperación anteriores',async()=>{
+ const accesos=[],base=new IDBFactory();
+ await siembraBaseAnterior(base);
+ const fabrica={
+  open(nombre,...resto){accesos.push('open:'+nombre);return base.open(nombre,...resto);},
+  deleteDatabase(nombre){accesos.push('deleteDatabase:'+nombre);return base.deleteDatabase(nombre);},
+  cmp:(a,b)=>base.cmp(a,b)
+ };
+ let anteriores;
+ const {dom,errors,run}=await editor('http://localhost:8130/',{indexedDB:fabrica,preparar:w=>{
+  const al=w.localStorage,deckViejo={meta:{title:'Vieja'},slides:[{layout:'content',blocks:[{type:'text',text:'vieja'}]}]};
+  al.setItem('erlen-slides.autosave',JSON.stringify({deck:deckViejo,deckName:'Vieja'}));
+  al.setItem('erlen-slides.decks',JSON.stringify({Vieja:{deck:deckViejo,when:1}}));
+  al.setItem('erlen-slides.prefs',JSON.stringify({tema:'oscuro',barras:'lado'}));
+  al.setItem('erlen-slides.estilos',JSON.stringify({fuente:'vieja'}));
+  al.setItem('erlen-slides.sesion',JSON.stringify({linea:'vieja',when:1}));
+  al.setItem('erlen-slides.historia',JSON.stringify([{dia:'2000-01-01',clave:'Vieja',motivo:'vieja'}]));
+  al.setItem('erlen-slides.zotero',JSON.stringify({via:'web',usuario:'viejo',clave:'secreta'}));
+  al.setItem('erlen-slides.charlas',JSON.stringify([{cuando:'2000-01-01',titulo:'Vieja',diapositivas:[]}]));
+  al.setItem('erlen-slides.biblioteca.v1',JSON.stringify({Vieja:{deck:deckViejo,when:1}}));
+  al.setItem('erlen-cinta.plegada','1');
+  al.setItem('erlen-color','cobre');al.setItem('erlen-estilo','bauhaus');
+  anteriores=new Map(CLAVES_ANTERIORES.map(clave=>[clave,al.getItem(clave)]));
+  accesos.length=0;
+  const proto=Object.getPrototypeOf(al);
+  for(const metodo of ['getItem','setItem','removeItem','clear']){
+   const original=proto[metodo];
+   proto[metodo]=function(...args){accesos.push(metodo+':'+String(args[0]));return original.apply(this,args);};
+  }
+ }});
+ try{
+  assert.deepEqual(errors,[]);
+  assert.equal(run('Object.keys(decksStore()).length'),0,'La biblioteca nueva empieza vacía');
+  assert.equal(run('S.deckName'),null,'El autoguardado anterior no se adopta');
+  assert.notEqual(run('S.deck.meta.title'),'Vieja');
+  run("guardaCharla({cuando:new Date().toISOString(),titulo:'Nueva',dur:0,nota:'',diapositivas:[]})");
+  assert.equal(run('charlasStore().length'),1,'La charla se guarda en la clave nueva');
+  assert.equal(await run('recActual(true)'),true,'El punto de recuperación se guarda en la base nueva');
+  assert.ok((await run('recLista()')).length>=1,'La base nueva conserva la copia');
+  assert.equal(run('Object.keys(decksStore()).length'),0,'Guardar charla y recuperación no crea biblioteca');
+  const almacen=dom.window.localStorage;
+  assert.equal(almacen.getItem('tabula.decks'),null,'Sin biblioteca heredada no se escribe una copia');
+  const durante=accesos.slice();
+  const tocadas=durante.filter(a=>a.slice(a.indexOf(':')+1).startsWith('erlen-'));
+  assert.deepEqual(tocadas,[],'Cero lecturas, escrituras o borrados de las claves anteriores: '+tocadas.join(', '));
+  const baseTocada=durante.filter(a=>a==='open:'+BASE_ANTERIOR||a==='deleteDatabase:'+BASE_ANTERIOR);
+  assert.deepEqual(baseTocada,[],'La base anterior no se abre ni se borra: '+baseTocada.join(', '));
+  assert.ok(durante.includes('open:tabula-recuperacion-v1'),'Tabula abre su propia base de recuperación');
+  for(const clave of CLAVES_ANTERIORES)assert.equal(almacen.getItem(clave),anteriores.get(clave),'La clave '+clave+' conserva sus bytes');
+  assert.deepEqual(errors,[]);
+ }finally{dom.window.close();}
+ const control=await new Promise((resolve,reject)=>{
+  const req=base.open(BASE_ANTERIOR);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });
+ try{
+  assert.equal(control.version,1,'La base anterior conserva su versión');
+  const filas=await new Promise((resolve,reject)=>{
+   const tx=control.transaction('copias','readonly'),req=tx.objectStore('copias').getAll();
+   req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+  assert.deepEqual(filas,[FILA_ANTERIOR],'La base anterior conserva su única fila intacta');
+ }finally{control.close();}
 });

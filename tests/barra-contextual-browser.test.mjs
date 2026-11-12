@@ -8,9 +8,9 @@ import {chromium} from 'playwright-core';
 import {AxeBuilder} from '@axe-core/playwright';
 
 test('contextual controls follow the selected object and keep the canvas usable', {timeout:180000}, async t => {
-  const bin=process.env.ERLEN_CHROMIUM||'/usr/bin/chromium';
+  const bin=process.env.TABULA_CHROMIUM||'/usr/bin/chromium';
   if(!existsSync(bin)){t.skip('Chromium is required.');return;}
-  const port=Number(process.env.ERLEN_BARRA_TEST_PORT||4465);
+  const port=Number(process.env.TABULA_BARRA_TEST_PORT||4465);
   const server=spawn(process.execPath,[fileURLToPath(new URL('../herramientas/serve.mjs',import.meta.url))],{env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
   t.after(()=>server.kill());
   await new Promise((resolve,reject)=>{server.stdout.once('data',resolve);server.once('error',reject);server.once('exit',c=>reject(Error('Server exited: '+c)));});
@@ -415,13 +415,13 @@ test('contextual controls follow the selected object and keep the canvas usable'
   await t.test('an asynchronous shape color cannot change a different or replaced selection',async()=>{
     await reset();await page.evaluate(async()=>{await insertaFormaLibre('rect');});
     const r=await page.evaluate(async()=>{
-      const id=S.selBlock,b=findBlock(id).block,original=b.src,old=extensionSlides;
-      let resolver;extensionSlides=()=>new Promise(resolve=>{resolver=resolve;});
+      const id=S.selBlock,b=findBlock(id).block,original=b.src,old=extensionTabla;
+      let resolver;extensionTabla=()=>new Promise(resolve=>{resolver=resolve;});
       try {
         const tarea=cambiaColorFormaBarra(contextoBarra(),'fill','#ff0000');
         const core=await old('figurascore');selectBlock('texto');resolver(core);await tarea;
         return {src:b.src,original,fill:b.figura.objects[0].fill};
-      } finally {extensionSlides=old;}
+      } finally {extensionTabla=old;}
     });
     assert.equal(r.src,r.original);assert.notEqual(r.fill,'#ff0000');
   });
@@ -468,7 +468,7 @@ test('contextual controls follow the selected object and keep the canvas usable'
     await barra.getByRole('combobox',{name:'Tamaño del texto'}).selectOption('l');
     const r=await page.evaluate(async()=>{
       const deck=saneaDeck(JSON.parse(JSON.stringify(S.deck))).deck,b=deck.slides[1].blocks.find(b=>b.id==='texto');
-      const html=await (await (await extensionSlides('exportador')).creaHTML(deck)).text();
+      const html=await (await (await extensionTabla('exportador')).creaHTML(deck)).text();
       const tex=toBeamer(deck);return {b,html,tex};
     });
     assert.equal(r.b.negrita,true);assert.equal(r.b.cursiva,true);assert.equal(r.b.align,'right');assert.equal(r.b.size,'l');
@@ -481,7 +481,7 @@ test('contextual controls follow the selected object and keep the canvas usable'
     await barra.getByRole('button',{name:'Negrita'}).click();
     await barra.getByRole('button',{name:'Cursiva'}).click();
     const xml=await page.evaluate(async()=>{
-      const ppt=await (await extensionSlides('exportador')).creaPPTX(S.deck);
+      const ppt=await (await extensionTabla('exportador')).creaPPTX(S.deck);
       return await (await window.JSZip.loadAsync(ppt.blob)).file('ppt/slides/slide2.xml').async('string');
     });
     assert.match(xml,/<a:rPr[^>]*\bb="1"[^>]*>/);assert.match(xml,/<a:rPr[^>]*\bi="1"[^>]*>/);

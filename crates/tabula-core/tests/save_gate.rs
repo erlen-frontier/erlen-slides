@@ -1,4 +1,4 @@
-use erlen_slides_core::SaveGate;
+use tabula_core::SaveGate;
 use std::sync::{Arc, Barrier};
 use std::thread;
 

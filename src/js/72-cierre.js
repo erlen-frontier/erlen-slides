@@ -7,7 +7,7 @@
    expositor: retroalimentación agregada sobre tu propio material, no sobre
    consejos genéricos. */
 
-const LS_CHARLAS = 'erlen-slides.charlas';
+const LS_CHARLAS = 'tabula.charlas';
 const charlasStore = () => { const v = lsGet(LS_CHARLAS, []); return Array.isArray(v) ? v : []; };
 function guardaCharla(reg) {
   const st = charlasStore();

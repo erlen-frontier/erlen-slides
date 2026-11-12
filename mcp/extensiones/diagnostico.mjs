@@ -14,8 +14,13 @@ import {RAIZ, version, listar} from '../motor.mjs';
 import {archivos, CARPETAS} from '../extensiones.mjs';
 import {candidatos} from '../navegador.mjs';
 
-export const NODE_MINIMO = 22;
-export const nodeValido = (v = process.versions.node) => Number(String(v).split('.')[0]) >= NODE_MINIMO;
+export const NODE_MINIMO = '22.12.0';
+export const nodeValido = (v = process.versions.node) => {
+  const m = /^\d+\.\d+/.exec(String(v));
+  if (!m) return false;
+  const [mayor, menor] = m[0].split('.').map(Number);
+  return mayor > 22 || (mayor === 22 && menor >= 12);
+};
 
 /* El archivo más reciente de un árbol. node_modules y los ocultos no cuentan:
    no son fuente de la aplicación. */
@@ -72,8 +77,8 @@ function rutasCanal(canal) {
 export async function buscaNavegador() {
   for (const c of candidatos()) {
     if (c.executablePath) {
-      if (existsSync(c.executablePath)) return {encontrado: true, ruta: c.executablePath, origen: process.env.ERLEN_CHROMIUM ? 'ERLEN_CHROMIUM' : 'instalado'};
-      if (process.env.ERLEN_CHROMIUM) return {encontrado: false, origen: 'ERLEN_CHROMIUM', ruta: c.executablePath};
+      if (existsSync(c.executablePath)) return {encontrado: true, ruta: c.executablePath, origen: process.env.TABULA_CHROMIUM ? 'TABULA_CHROMIUM' : 'instalado'};
+      if (process.env.TABULA_CHROMIUM) return {encontrado: false, origen: 'TABULA_CHROMIUM', ruta: c.executablePath};
       continue;
     }
     if (c.channel) {
@@ -101,7 +106,7 @@ async function pruebaNavegador() {
       const v = n.version();
       await n.close();
       return {ok: true, version: v};
-    } catch (e) { primerError ||= e; if (process.env.ERLEN_CHROMIUM) break; }
+    } catch (e) { primerError ||= e; if (process.env.TABULA_CHROMIUM) break; }
   }
   return {ok: false, error: String(primerError && primerError.message || 'sin candidatos').split('\n')[0]};
 }
@@ -132,8 +137,8 @@ function tamanoArbol(dir) {
 /* La carpeta se examina sin crearla: si no existe, eso es justo lo que hay
    que contar (el servidor la crea en la primera escritura). */
 function estadoCarpeta() {
-  const ruta = resolve(process.env.ERLEN_SLIDES_DIR || resolve(homedir(), 'erlen-slides'));
-  const out = {ruta, origen: process.env.ERLEN_SLIDES_DIR ? 'ERLEN_SLIDES_DIR' : 'por omisión (~/erlen-slides)', existe: existsSync(ruta)};
+  const ruta = resolve(process.env.TABULA_DIR || resolve(homedir(), 'tabula'));
+  const out = {ruta, origen: process.env.TABULA_DIR ? 'TABULA_DIR' : 'por omisión (~/tabula)', existe: existsSync(ruta)};
   if (!out.existe) return out;
   try { accessSync(ruta, constants.W_OK); out.escribible = true; } catch { out.escribible = false; }
   try { out.presentaciones = listar().presentaciones.length; } catch (e) { out.presentaciones = null; out.error = e.message; }
@@ -144,10 +149,10 @@ function estadoCarpeta() {
 /* Variables que cambian el comportamiento del servidor. Las rutas se enseñan;
    de las que pueden llevar credenciales (un proxy con usuario y clave) o
    cualquier cosa con pinta de secreto, solo el nombre. */
-const VARIABLES = ['ERLEN_SLIDES_DIR', 'ERLEN_CHROMIUM', 'ERLEN_MCP_EXTENSIONES', 'PLAYWRIGHT_BROWSERS_PATH', 'NODE_OPTIONS', 'NODE_EXTRA_CA_CERTS', 'HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY'];
+const VARIABLES = ['TABULA_DIR', 'TABULA_CHROMIUM', 'TABULA_MCP_EXTENSIONES', 'PLAYWRIGHT_BROWSERS_PATH', 'NODE_OPTIONS', 'NODE_EXTRA_CA_CERTS', 'HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY'];
 const SENSIBLE = /KEY|TOKEN|SECRET|PASS|AUTH|CRED|PROXY|NODE_OPTIONS/i;
 export function variables(env = process.env) {
-  const nombres = new Set([...VARIABLES, ...Object.keys(env).filter(k => k.startsWith('ERLEN_'))]);
+  const nombres = new Set([...VARIABLES, ...Object.keys(env).filter(k => k.startsWith('TABULA_'))]);
   const out = {};
   for (const k of [...nombres].sort()) {
     if (env[k] == null) continue;
@@ -172,13 +177,13 @@ export async function diagnostico(a = {}) {
   else if (!compilacion.al_dia) problema('La aplicación construida es anterior a la fuente (' + compilacion.cambio_posterior + ' cambió después). El servidor usa la versión vieja.', enRaiz('npm run build') + ' y reinicia el cliente MCP');
 
   const carpeta = estadoCarpeta();
-  if (carpeta.existe && !carpeta.escribible) problema('No se puede escribir en la carpeta de trabajo ' + carpeta.ruta + '.', 'Da permiso de escritura a esa carpeta o elige otra con ERLEN_SLIDES_DIR (npm run mcp:instalar -- --carpeta <otra>).');
+  if (carpeta.existe && !carpeta.escribible) problema('No se puede escribir en la carpeta de trabajo ' + carpeta.ruta + '.', 'Da permiso de escritura a esa carpeta o elige otra con TABULA_DIR (npm run mcp:instalar -- --carpeta <otra>).');
   if (carpeta.historial && carpeta.historial.bytes > 500 * 1048576) problema('El historial ocupa ' + carpeta.historial.legible + '.', 'Puedes borrar ' + join(carpeta.ruta, '.historial') + ' sin perder las presentaciones (solo se pierde deshacer).');
 
   const navegador = await buscaNavegador();
   if (a.probar_navegador) navegador.prueba = await pruebaNavegador();
   if (!navegador.encontrado || (navegador.prueba && !navegador.prueba.ok)) {
-    problema(navegador.origen === 'ERLEN_CHROMIUM' && !navegador.encontrado ? 'ERLEN_CHROMIUM apunta a ' + navegador.ruta + ', que no existe.'
+    problema(navegador.origen === 'TABULA_CHROMIUM' && !navegador.encontrado ? 'TABULA_CHROMIUM apunta a ' + navegador.ruta + ', que no existe.'
       : navegador.encontrado ? 'Chromium no arrancó: ' + navegador.prueba.error
       : 'No hay Chromium ni Chrome: vista_previa, PDF y PowerPoint no funcionarán (lo demás sí).',
     enRaiz('npx playwright-core install chromium'));

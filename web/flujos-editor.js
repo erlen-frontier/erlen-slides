@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
-window.ERLEN_FLUJOS = (() => {
+window.TABULA_FLUJOS = (() => {
 'use strict';
 function limpiaDiagramaSVG(texto) {
   const doc = new DOMParser().parseFromString(texto, 'image/svg+xml');
@@ -15,7 +15,7 @@ function limpiaDiagramaSVG(texto) {
 /* Markdown y MCP usan el mismo analizador y el mismo constructor de bloques. */
 async function deckDesdeMarkdown(texto) {
   if (new TextEncoder().encode(texto).length > 2 * 1024 * 1024) throw new Error('El guion supera 2 MiB.');
-  const core = await extensionSlides('markdown'), ops = await extensionSlides('operaciones');
+  const core = await extensionTabla('markdown'), ops = await extensionTabla('operaciones');
   const r = core.leeMarkdown(texto);
   if (!r.diapositivas.length && !r.meta.titulo) throw new Error('Escribe # Título y ## Título de cada diapositiva.');
   if (r.diapositivas.length > 200) throw new Error('Divide el guion en presentaciones de hasta 200 diapositivas.');
@@ -61,41 +61,20 @@ function openMarkdown() {
 async function exportMarkdownUI() {
   flushEdicion(); const deck = deepCopy(S.deck), nombre = deckSlug();
   try {
-    const core = await extensionSlides('markdown');
+    const core = await extensionTabla('markdown');
     const r = core.aMarkdown(deck, { zonasPorDiseno: Object.fromEntries(LAYOUTS.map(l => [l.id, zonasDe(l.id)])), incrustarFiguras: true });
     await downloadFile(nombre + '.md', new Blob([r.md], { type: 'text/markdown;charset=utf-8' }), 'text/markdown');
     if (r.avisos.length) openModal({ title: 'Límites del guion Markdown', body: h('div', null, h('p', null, 'El proyecto JSON conserva todos los datos y formatos. En el guion:'), h('ul', null, r.avisos.map(a => h('li', null, a))), avisoCreditosCatalogo(deck)) });
   } catch (e) { toast(e.message, 'warn'); }
 }
 
-async function exportPPTXEditable() {
-  flushEdicion(); const deck = deepCopy(S.deck), nombre = deckSlug();
-  toast('Preparando PowerPoint editable…');
-  try {
-    const ext = await extensionSlides('exportador'), r = await ext.creaPPTX(deck);
-    await downloadFile(nombre + '-editable.pptx', r.blob, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
-    if (r.avisos.length) openModal({ title: 'Informe del PowerPoint', body: h('div', null, h('p', null, 'Revisa estos límites antes de compartir el archivo. El proyecto JSON conserva las fuentes científicas.'), h('ul', null, r.avisos.map(a => h('li', null, 'Diapositiva ' + a.diapositiva + ': ' + a.motivo)))) });
-  } catch (e) { toast('No se pudo exportar: ' + e.message, 'warn'); }
-}
-function openHTMLPresentacion() {
-  const notas = h('input', { type: 'checkbox' }), estado = h('p', { class: 'hint', role: 'status' }, 'Un archivo para presentar sin conexión: navegación, pasos y deslizadores de funciones. Las imágenes y vídeos deben estar incrustados.');
-  const generar = h('button', { class: 'btn btn-pri', onclick: async () => {
-    flushEdicion(); const deck = deepCopy(S.deck), nombre = deckSlug(), incluir = notas.checked;
-    generar.disabled = true; estado.textContent = 'Preparando archivo…';
-    try { const ext = await extensionSlides('exportador'); const blob = await ext.creaHTML(deck, incluir); await downloadFile(nombre + '-presentacion.html', blob, 'text/html'); estado.textContent = 'Archivo descargado. Ábrelo en el navegador.'; }
-    catch (e) { estado.textContent = 'No se pudo generar: ' + e.message; }
-    finally { generar.disabled = false; }
-  } }, 'Descargar presentación HTML');
-  openModal({ title: 'Presentación HTML autónoma', body: h('div', null, estado, avisoCreditosCatalogo(), h('label', null, notas, ' Incluir notas del orador (serán visibles para quien reciba el archivo)')), foot: [generar] });
-}
-
 /* El diagrama es un bloque image compatible con JSON v1. Conserva su fuente,
    y su SVG permite presentar y exportar sin cargar Mermaid de nuevo. */
 async function generaDiagrama(texto) {
   if (!fuenteDiagramaValida(texto)) throw new Error('Usa hasta 20 000 caracteres, sin enlaces, instrucciones de configuración ni contenido externo.');
-  const { default: mermaid } = await extensionSlides('mermaid');
+  const { default: mermaid } = await extensionTabla('mermaid');
   mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', suppressErrorRendering: true, theme: 'default', htmlLabels: false, flowchart: { htmlLabels: false }, maxTextSize: 20000 });
-  const r = await mermaid.render('erlen-diagrama-' + uid(), texto);
+  const r = await mermaid.render('tabula-diagrama-' + uid(), texto);
   return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(limpiaDiagramaSVG(r.svg));
 }
 function openDiagramaTexto(original) {
@@ -187,5 +166,5 @@ function openOrganizarBloques() {
   openModal({ title: 'Organizar bloques', body: h('div', null, estado, lista, acciones, h('div', { class: 'flujo-acciones' }, zonaDestino, h('button', { class: 'btn', disabled: !zonasDe(slide.layout), onclick: () => ejecuta('mover', +zonaDestino.value) }, 'Mover selección'), ancho, h('button', { class: 'btn', onclick: () => ejecuta('ancho', +ancho.value) }, 'Igualar anchuras'))) });
 }
 
-return { deckDesdeMarkdown, openMarkdown, exportMarkdownUI, exportPPTXEditable, openHTMLPresentacion, generaDiagrama, openDiagramaTexto, openTemasVisuales, openGrabacion, openOrganizarBloques };
+return { deckDesdeMarkdown, openMarkdown, exportMarkdownUI, generaDiagrama, openDiagramaTexto, openTemasVisuales, openGrabacion, openOrganizarBloques };
 })();

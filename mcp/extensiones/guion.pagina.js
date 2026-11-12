@@ -5,7 +5,7 @@
    cuenten los minutos igual. */
 (function () {
   'use strict';
-  const { valida, falla } = ERLEN_MCP.util;
+  const { valida, falla } = TABULA_MCP.util;
   /* El mismo paso que la línea de tiempo (78-tiempo.js): cuartos de minuto,
      que es lo que se puede arrastrar a mano. */
   const PASO = 0.25;
@@ -34,14 +34,14 @@
     return u;
   }
 
-  ERLEN_MCP.registra('ajustaTiempos', a => {
+  TABULA_MCP.registra('ajustaTiempos', a => {
     const d = a.deck;
     const objetivo = +a.minutos_objetivo;
     if (!(objetivo > 0)) falla('«minutos_objetivo» debe ser un número de minutos mayor que cero.');
     const antes = new Map(d.slides.map(sl => [sl.id, minutosDe(sl) || null]));
     const posAntes = new Map(d.slides.map((sl, i) => [sl.id, i + 1]));
     /* La misma estrella del editor («★ No la quites»): queda guardada. */
-    const marcadas = (a.imprescindibles || []).map(x => ERLEN_MCP.util.indiceDiapositiva(d, x));
+    const marcadas = (a.imprescindibles || []).map(x => TABULA_MCP.util.indiceDiapositiva(d, x));
     marcadas.forEach(i => { d.slides[i].clave = true; });
     /* Una portada o una sección sin minutos se cuentan como lo que tardan
        en pasarse, un cuarto de minuto, y no como el minuto por omisión de
@@ -139,7 +139,7 @@
   function notasMd(txt) {
     return partesNota(txt).map(p => p.tipo === 'lista' ? p.items.map(t => '- ' + t).join('\n') : p.texto).join('\n\n');
   }
-  ERLEN_MCP.registra('guion', a => {
+  TABULA_MCP.registra('guion', a => {
     const d = valida(a.deck).deck;
     if (a.html) { loadDeck(d, null); return { html: guionHTML() }; }
     const charla = slidesCharla(d), resp = slidesRespaldo(d);
@@ -178,7 +178,7 @@
   /* Mismo umbral que la tabla del ensayo del editor (reporteEnsayo): más de
      15 s de diferencia ya se nota. */
   const HOLGURA_S = 15;
-  ERLEN_MCP.registra('resumenEnsayo', a => {
+  TABULA_MCP.registra('resumenEnsayo', a => {
     const d = valida(a.deck).deck, E = d.meta.ensayo;
     if (!E || !E.tiempos || !Object.keys(E.tiempos).length) return { hay_ensayo: false,
       nota: 'Esta presentación no tiene ningún ensayo cronometrado guardado. En el editor: Presentar → Ensayar con cronómetro; al salir con Esc los tiempos quedan en el proyecto.' };

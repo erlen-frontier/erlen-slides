@@ -24,7 +24,7 @@ export class ErrorUso extends Error {}
 /* Los clientes MCP arrancan el servidor con un directorio actual que no se
    elige (a veces «/»): por eso la carpeta por omisión cuelga del usuario. */
 export function carpetaTrabajo() {
-  const dir = resolve(process.env.ERLEN_SLIDES_DIR || resolve(homedir(), 'erlen-slides'));
+  const dir = resolve(process.env.TABULA_DIR || resolve(homedir(), 'tabula'));
   mkdirSync(dir, {recursive: true});
   return dir;
 }
@@ -64,9 +64,9 @@ async function cargaPagina() {
   await new Promise(r => dom.window.addEventListener('load', r, {once: true}));
   /* La huella de los datos, igual que huellaDe (68-figuras-vivas.js): los
      cinco primeros bytes del SHA-256 del texto. JSDOM no trae crypto.subtle. */
-  dom.window.ERLEN_MCP_HUELLA = texto => createHash('sha256').update(String(texto || ''), 'utf8').digest('hex').slice(0, 10);
+  dom.window.TABULA_MCP_HUELLA = texto => createHash('sha256').update(String(texto || ''), 'utf8').digest('hex').slice(0, 10);
   dom.window.eval(readFileSync(new URL('./operaciones.js', import.meta.url), 'utf8'));
-  /* Las extensiones de la página, detrás, con ERLEN_MCP ya definido. */
+  /* Las extensiones de la página, detrás, con TABULA_MCP ya definido. */
   for (const ruta of archivosExtension('.pagina.js')) {
     try { dom.window.eval(readFileSync(ruta, 'utf8')); }
     catch (e) { throw new Error('La extensión ' + ruta + ' falló al cargarse en la página: ' + e.message); }
@@ -77,7 +77,7 @@ async function op(nombre, args) {
   pagina ||= cargaPagina().catch(e => { pagina = null; throw e; });
   const dom = await pagina;
   dom.window.__mcpArgs = JSON.stringify(args || {});
-  const r = JSON.parse(dom.window.eval('ERLEN_MCP.ejecuta(' + JSON.stringify(nombre) + ', __mcpArgs)'));
+  const r = JSON.parse(dom.window.eval('TABULA_MCP.ejecuta(' + JSON.stringify(nombre) + ', __mcpArgs)'));
   delete dom.window.__mcpArgs;
   if (r.error) throw new ErrorUso(r.error);
   return r.ok;

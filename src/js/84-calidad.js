@@ -44,7 +44,7 @@ function calidadCientifica(deck) {
    La diapositiva completa sigue teniendo una salida PNG para compartirla.
    Cuando se necesita reutilizar una figura en un artículo, el bloque de datos
    puede viajar como SVG autónomo: conserva trazos, texto y etiquetas, y no
-   depende del CSS de Erlen. */
+   depende del CSS de Lámina. */
 function bloqueCientificoActual(deck) {
   const d = deck || S.deck;
   const seleccionado = S.selBlock && findBlock(S.selBlock, d);
@@ -94,8 +94,8 @@ function figuraSVG(b, deck) {
   svg.setAttribute('version', '1.1');
   const meta = document.createElementNS(SVGNS, 'metadata');
   meta.textContent = JSON.stringify({
-    schema: 'erlen-scientific-figure-v1',
-    app: 'Tabula', version: window.ERLEN?.version || 'desconocida',
+    schema: 'tabula-scientific-figure-v1',
+    app: 'Lámina', version: window.TABULA?.version || 'desconocida',
     generatedAt: new Date().toISOString(), title: b.title || '',
     caption: b.caption || '', source: b.fuente || null
   });
@@ -115,7 +115,6 @@ function exportFiguraSVG() {
     return true;
   } catch (e) {
     toast('No se pudo generar el SVG; usa la exportación a PDF', 'warn');
-    window.ErlenDiagnostico?.reportar('exportar-svg');
     return false;
   }
 }
@@ -141,8 +140,8 @@ function informeExportacion(deck) {
   const conectadas = d.slides.flatMap((sl, i) => sl.conectores?.length ? [i + 1] : []);
   if (conectadas.length) add('connectors-not-preserved', 'warning', 'Beamer y Markdown no conservan los conectores; el proyecto JSON conserva las relaciones.', conectadas, ['beamer', 'markdown']);
   return {
-    schema: 'erlen-export-report-v1',
-    app: 'Tabula', version: window.ERLEN?.version || 'desconocida',
+    schema: 'tabula-export-report-v1',
+    app: 'Lámina', version: window.TABULA?.version || 'desconocida',
     generatedAt: new Date().toISOString(), deck: { title: d.meta?.title || '', slides: d.slides.length },
     formats: {
       pdf: 'Vectorial mediante impresión del navegador; revisa fuentes y gráficos de fondo.',

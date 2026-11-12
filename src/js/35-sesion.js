@@ -71,7 +71,7 @@ function cierraSesion(motivo) {
   guardaUltimaSesion(linea);
   toast((motivo ? motivo + ' · ' : '') + linea + (t >= 3 ? ' · ' + t + ' min de trabajo' : ''));
 }
-const LS_SESION = 'erlen-slides.sesion';
+const LS_SESION = 'tabula.sesion';
 function guardaUltimaSesion(linea) { lsSet(LS_SESION, { linea, when: Date.now() }); }
 function ultimaSesion() { return lsGet(LS_SESION, null); }
 

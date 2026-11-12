@@ -1,33 +1,40 @@
 /* ==== 88-workspace.js ==== */
 'use strict';
 /* Herramientas locales completas en todas las ediciones. Sin venta emergente. */
-const LS_BIBLIOTECA = 'erlen-slides.biblioteca.v1';
+const LS_BIBLIOTECA = 'tabula.biblioteca.v1';
 const wsPlantillas = () => { const lista=lsGet(LS_BIBLIOTECA,[]); return Array.isArray(lista) ? lista.filter(p=>p && typeof p.nombre==='string' && p.deck && Array.isArray(p.deck.slides)) : []; };
+/* Nombre libre en la biblioteca: nunca se sobrescribe una presentación.
+   Acepta el almacén ya leído para no releerlo quien ya lo tenga en la mano. */
+function wsNombreLibre(base, store = decksStore()) {
+  const b = String(base || '').trim() || 'Sin título';
+  let nombre = b, i = 2;
+  while (Object.hasOwn(store, nombre)) nombre = b + ' (' + i++ + ')';
+  return nombre;
+}
 function wsConservar() {
   flushEdicion();
   saveInd.now();
   if (hayEscritorio() && archivoEscritorioActual && !archivoEscritorioPendiente()) return true;
-  if (!deckEnBlanco() || (hayEscritorio() && archivoEscritorioPendiente())) {
-    const store = decksStore();
-    const base = S.deckName || S.deck.meta.title || 'Sin título';
-    let nombre = base;
-    if (!S.deckName) { let i = 2; while (Object.hasOwn(store, nombre)) nombre = base + ' (' + i++ + ')'; }
-    Object.defineProperty(store, nombre, {value:{deck:deepCopy(S.deck),when:Date.now()},enumerable:true,configurable:true,writable:true});
-    if (!lsSet(LS_DECKS, store)) { toast('No hay espacio para conservar la presentación. Descarga el proyecto antes de continuar.', 'warn'); return false; }
-    S.deckName = nombre;
-  }
+  if (deckEnBlanco() && !(hayEscritorio() && archivoEscritorioPendiente())) return true;
+  const store = decksStore();
+  const nombre = S.deckName || wsNombreLibre(S.deck.meta.title, store);
+  Object.defineProperty(store, nombre, {value:{deck:deepCopy(S.deck),when:Date.now()},enumerable:true,configurable:true,writable:true});
+  if (!lsSet(LS_DECKS, store)) { toast('No hay espacio para conservar la presentación. Descarga el proyecto antes de continuar.', 'warn'); return false; }
+  S.deckName = nombre;
   return true;
 }
-/* Inicio, biblioteca y recursos locales. Las rutas anteriores con otro prefijo
-   se reconocen por su vista y se normalizan sin crear una entrada en el historial. */
+/* Inicio, biblioteca y recursos locales. Solo existen #presentaciones, #inicio y
+   #inicio/{biblioteca,plantillas,herramientas,servicio}: cualquier otro hash (incluidos los
+   prefijos antiguos) abre Inicio y se normaliza sin crear una entrada en el historial. */
 let INICIO = null;
 const WS_VISTAS = {inicio:'inicio', biblioteca:'biblioteca', plantillas:'ejemplos', herramientas:'recursos', servicio:'acerca'};
 const WS_RUTAS = Object.fromEntries(Object.entries(WS_VISTAS).map(([ruta, vista]) => [vista, ruta]));
 function wsVistaValida(v) { return Object.hasOwn(WS_VISTAS, v) ? v : 'inicio'; }
 function wsRuta(hash) {
   if (hash === '#presentaciones') return 'editor';
-  const partes = String(hash || '').replace(/^#/, '').split('/');
-  return wsVistaValida(partes.length > 1 ? partes[partes.length - 1] : partes[0]);
+  if (hash === '#inicio') return 'inicio';
+  const vista = String(hash || '').startsWith('#inicio/') ? wsVistaValida(String(hash).slice('#inicio/'.length)) : 'inicio';
+  return vista;
 }
 function wsUrl(v, reemplazar = false) {
   const vista = wsVistaValida(v), hash = v === 'editor' ? '#presentaciones' : vista === 'inicio' ? '#inicio' : '#inicio/' + vista;
@@ -56,14 +63,17 @@ function wsCerrar() {
   if (wsAbierto()) INICIO.cerrar(); else wsAlEditor();
   return true;
 }
+/* Abre una presentación nueva conservando primero la abierta. Devuelve true
+   solo si el documento llegó a cambiarse. */
 function wsNueva(deck) {
-  if (!wsConservar()) return;
-  if (!loadDeck(deck || blankDeck(), null)) return;
+  if (!wsConservar()) return false;
+  if (!loadDeck(deck || blankDeck(), null)) return false;
   if (!deck) marcaArchivoNuevo();
   wsCerrar();
+  return true;
 }
 /* Recursos que trabajan sobre el editor: primero se cierra el inicio. */
-function wsAccion(fn) { return () => { if (wsCerrar() !== false) fn(); }; }
+function wsAccion(fn) { return () => { wsCerrar(); fn(); }; }
 function wsBoton(texto, fn, principal) { return h('button', {class:'btn btn-sm' + (principal ? ' btn-pri' : ''),onclick:fn}, texto); }
 function wsInicio(vista) {
   const v = wsVistaValida(vista || 'inicio');
@@ -71,7 +81,6 @@ function wsInicio(vista) {
   INICIO.abrir(WS_VISTAS[v]);
   wsUrl(v);
 }
-const wsCambiar = wsInicio;
 /* Biblioteca: las presentaciones guardadas con nombre en este navegador, de la más reciente a la más antigua. */
 function wsBiblioteca() {
   const store = decksStore();
@@ -94,9 +103,7 @@ function wsDuplicar(n) {
   if (!d) throw new Error('la presentación ya no está en este navegador.');
   const copia = deepCopy(d.deck);
   copia.meta.title = (copia.meta.title || n) + ' · copia';
-  const base = n + ' · copia';
-  let nombre = base, i = 2;
-  while (Object.hasOwn(store, nombre)) nombre = base + ' (' + i++ + ')';
+  const nombre = wsNombreLibre(n + ' · copia', store);
   Object.defineProperty(store, nombre, {value:{deck:copia,when:Date.now()},enumerable:true,configurable:true,writable:true});
   if (!lsSet(LS_DECKS, store)) throw new Error('no hay espacio en este navegador. Descarga un respaldo antes de continuar.');
   toast('Copia creada: «' + nombre + '».');
@@ -125,7 +132,7 @@ function wsEjemplos() {
   const personales = wsPlantillas().map((p, i) => ({
     id: 'personal-' + i, disciplina: 'Personal', arte: 'Plantilla personal', titulo: p.nombre,
     descripcion: 'Tu plantilla reutilizable. Guardada en este navegador.', etiqueta: 'Usar plantilla',
-    accion: () => wsNueva(deepCopy(p.deck))
+    accion: () => wsNueva(p.deck)
   }));
   return [...ejemplos, ...personales];
 }
@@ -138,7 +145,7 @@ function wsMisPlantillas() {
     if (!todas.length) { lista.append(h('p', {class:'hint'}, 'Todavía no tienes plantillas personales. Guarda la presentación actual con «Mi plantilla» o recupéralas de un respaldo.')); return; }
     todas.forEach(p => lista.append(h('div', {class:'deck-row'},
       h('div', {class:'dname'}, h('b', null, p.nombre), h('span', {class:'dmeta'}, p.deck.slides.length + ' ' + (p.deck.slides.length === 1 ? 'diapositiva' : 'diapositivas'))),
-      wsBoton('Usar plantilla', () => { closeModal(); wsNueva(deepCopy(p.deck)); }, true),
+      wsBoton('Usar plantilla', () => { closeModal(); wsNueva(p.deck); }, true),
       h('button', {class:'btn btn-sm', 'aria-label':'Quitar «' + p.nombre + '»', onclick:() => {
         const antes = wsPlantillas(), restante = antes.filter(t => t.nombre !== p.nombre);
         if (!lsSet(LS_BIBLIOTECA, restante)) { toast('No se pudo quitar la plantilla.', 'warn'); return; }
@@ -163,8 +170,8 @@ function wsRecursos() {
     ['De guion a diapositivas', 'Pega tu índice y crea la estructura de una charla sin empezar de cero.', 'Pegar esquema', wsAccion(openEsquema)]
   ];
   /* La versión sin conexión solo existe junto a la web: el archivo suelto ya lo es. */
-  if (location.protocol !== 'file:' && window.ERLEN) recursos.push(['Tabula sin conexión', 'Un solo archivo HTML con el editor completo para trabajar sin red. Los paquetes se comparten como archivos; no sincronizan equipos.', 'Descargar sin conexión', () => {
-    const a = h('a', {href:'erlen-slides-offline.html', download:'tabula-sin-conexion.html', hidden:true});
+  if (location.protocol !== 'file:' && window.TABULA) recursos.push(['Lámina sin conexión', 'Un solo archivo HTML con el editor completo para trabajar sin red. Los paquetes se comparten como archivos; no sincronizan equipos.', 'Descargar sin conexión', () => {
+    const a = h('a', {href:'lamina-offline.html', download:'lamina-sin-conexion.html', hidden:true});
     document.body.append(a); a.click(); a.remove();
   }]);
   return recursos.map(([titulo, texto, etiqueta, accion]) => ({titulo, texto, etiqueta, accion}));
@@ -178,7 +185,7 @@ function wsImportarPlantillas() {
     try {
       if(f.size>50*1048576)throw new Error('El respaldo supera 50 MB. Importa las presentaciones de forma individual.');
       const p=JSON.parse(await f.text());
-      if(p.formato!=='erlen-plantillas-v1'||!Array.isArray(p.plantillas))throw new Error('Selecciona plantillas-personales.json de un respaldo compatible.');
+      if(p.formato!=='tabula-plantillas-v1'||!Array.isArray(p.plantillas))throw new Error('Selecciona plantillas-personales.json de un respaldo compatible.');
       const lista=wsPlantillas(),nombres=new Set(lista.map(x=>x.nombre));
       for(const t of p.plantillas){
         if(!t||typeof t.nombre!=='string'||!t.nombre.trim())throw new Error('Una plantilla no tiene un nombre válido.');
@@ -201,11 +208,11 @@ function wsGuardarPlantilla() {
     const lista=wsPlantillas();if(lista.some(p=>p.nombre===n)){aviso.textContent='Ese nombre ya existe. Elige otro para conservar ambas.';return;}
     lista.push({nombre:n,deck:deepCopy(S.deck),when:Date.now()});
     if(!lsSet(LS_BIBLIOTECA,lista)){aviso.textContent='No hay espacio. Descarga un respaldo antes de continuar.';return;}
-    closeModal();wsCambiar('plantillas');toast('Plantilla guardada.');
+    closeModal();wsInicio('plantillas');toast('Plantilla guardada.');
   },true)]});
 }
 function wsEstiloSeguro(paquete) {
-  if(!paquete || paquete.formato!=='erlen-identidad-v1' || !paquete.estilo || typeof paquete.estilo!=='object' || Array.isArray(paquete.estilo)) throw new Error('El archivo no es un paquete de identidad compatible.');
+  if(!paquete || paquete.formato!=='tabula-identidad-v1' || !paquete.estilo || typeof paquete.estilo!=='object' || Array.isArray(paquete.estilo)) throw new Error('El archivo no es un paquete de identidad compatible.');
   const estilo={};
   CAMPOS_ESTILO.filter(k=>!['authors','short','notas'].includes(k)).forEach(k=>{
     if(Object.hasOwn(paquete.estilo,k)) estilo[k]=deepCopy(paquete.estilo[k]);
@@ -232,8 +239,8 @@ function wsIdentidad() {
     h('p',null,'Un mismo acabado para clases, seminarios y defensas. El paquete contiene la identidad de la presentación actual, sin sus diapositivas ni autores.'),
     h('label',null,'Importar un paquete de identidad',archivo),aviso),foot:[wsBoton('Descargar identidad',async()=>{
       const estilo=estiloActual();delete estilo.authors;delete estilo.short;delete estilo.notas;
-      try { wsEstiloSeguro({formato:'erlen-identidad-v1',estilo}); } catch(e) { aviso.textContent='Usa un logotipo PNG, JPEG o WebP incrustado para distribuir la identidad.'; return; }
-      downloadFile('erlen-identidad.json',JSON.stringify({formato:'erlen-identidad-v1',estilo},null,2),'application/json');
+      try { wsEstiloSeguro({formato:'tabula-identidad-v1',estilo}); } catch(e) { aviso.textContent='Usa un logotipo PNG, JPEG o WebP incrustado para distribuir la identidad.'; return; }
+      downloadFile('tabula-identidad.json',JSON.stringify({formato:'tabula-identidad-v1',estilo},null,2),'application/json');
     },true)]});
 }
 async function wsRespaldo() {
@@ -242,27 +249,27 @@ async function wsRespaldo() {
   if(!nombres.length){toast('Crea o importa una presentación antes de respaldar.');return;}
   try{
     const archivos=nombres.map((n,i)=>({nombre:`${i+1}-${wsNombre(n)}.json`,datos:JSON.stringify(store[n].deck,null,2)}));
-    archivos.push({nombre:'plantillas-personales.json',datos:JSON.stringify({formato:'erlen-plantillas-v1',plantillas:wsPlantillas()},null,2)});
-    archivos.push({nombre:'LEEME.txt',datos:'Tabula: importa cada archivo de presentación desde Inicio → Importar proyecto. El archivo plantillas-personales.json es un respaldo de tus plantillas, no una presentación.'});
-    downloadFile('erlen-biblioteca.zip',await armaZip(archivos),'application/zip');
+    archivos.push({nombre:'plantillas-personales.json',datos:JSON.stringify({formato:'tabula-plantillas-v1',plantillas:wsPlantillas()},null,2)});
+    archivos.push({nombre:'LEEME.txt',datos:'Lámina: importa cada archivo de presentación desde Inicio → Importar proyecto. El archivo plantillas-personales.json es un respaldo de tus plantillas, no una presentación.'});
+    downloadFile('tabula-biblioteca.zip',await armaZip(archivos),'application/zip');
   }catch(_){toast('No se pudo crear el respaldo. Descarga los proyectos individualmente.','warn');}
 }
 function wsReporte() {
   const store=decksStore();
   const csv=v=>'"'+String(v).replace(/^[=+@\-\t\r]/,"'$&").replace(/"/g,'""')+'"';
   const filas=[['Nombre','Diapositivas','Actualizado'],...Object.entries(store).map(([n,v])=>[n,v.deck.slides.length,new Date(v.when).toISOString()])];
-  downloadFile('erlen-biblioteca.csv','\ufeff'+filas.map(f=>f.map(csv).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+  downloadFile('tabula-biblioteca.csv','\ufeff'+filas.map(f=>f.map(csv).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 }
 function wsServicio(body) {
- body.append(h('h2',null,'Tabula · Presentaciones'),h('p',{class:'ws-lead'},'Editor libre, versión '+edVersion()+'. Tus presentaciones se guardan en este dispositivo.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:ERLEN_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:ERLEN_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
+ body.append(h('h2',null,'Lámina · Presentaciones'),h('p',{class:'ws-lead'},'Editor libre, versión '+edVersion()+'. Tus presentaciones se guardan en este dispositivo.'),h('p',null,'Descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos.'),h('p',null,h('a',{href:TABULA_SOURCE_URL,target:'_blank',rel:'noopener'},'Código fuente · AGPLv3')),h('p',null,h('a',{href:TABULA_SOURCE_URL+'/blob/main/docs/uso.md',target:'_blank',rel:'noopener'},'Manual, ejemplos y límites conocidos')));
 }
 /* El marco local mueve los nodos del editor sin clonarlos, conservando sus
-   listeners, selección e historial. La marca vuelve al inicio de Tabula. */
+   listeners, selección e historial. La marca vuelve al inicio de Lámina. */
 let MARCO = null;
-const MARCA_SLIDES = window.ERLEN_SLIDES_MARCA;
+const MARCA_TABULA = window.TABULA_MARCA;
 function montaMarco() {
-  MARCO = erlenMarco($('#app'), {
-    app: 'slides', nombre: 'Tabula',
+  MARCO = tabulaMarco($('#app'), {
+    nombre: 'Lámina',
     inicio: () => wsInicio(),
     elementos: {
       titulo: $('#deckTitleInput'),
@@ -275,17 +282,16 @@ function montaMarco() {
       detalles: $('#inspector')
     }
   });
-  const marca = MARCO.elemento.querySelector('.erlen-marco-marca');
-  if (marca) marca.innerHTML = MARCA_SLIDES;
+  const marca = MARCO.elemento.querySelector('.tabula-marco-marca');
+  if (marca) marca.innerHTML = MARCA_TABULA;
 }
 
 function wsInit() {
-  INICIO = erlenInicio($('#inicioRoot'), {
-    app: 'slides',
-    nombre: 'Tabula', corto: '', objetos: 'presentaciones',
-    marca: MARCA_SLIDES,
-    estado: 'Disponible · beta', subtitulo: 'Presentaciones científicas y visuales',
-    eyebrow: 'PRESENTACIONES · TABULA', titulo: ['Crea y comparte ', 'tus ideas'],
+  INICIO = tabulaInicio($('#inicioRoot'), {
+    nombre: 'Lámina', corto: '', objetos: 'presentaciones',
+    marca: MARCA_TABULA,
+    estado: 'Disponible · beta', subtitulo: 'Presentaciones visuales',
+    eyebrow: 'PRESENTACIONES · LÁMINA', titulo: ['Crea y comparte ', 'tus ideas'],
     lead: 'Crea y edita diapositivas para contar ideas, mostrar datos y presentar con claridad.',
     nuevo: {etiqueta:'Nueva presentación', detalle:'Lienzo científico en blanco', accion:() => wsNueva()},
     importar: hayEscritorio() ? {etiqueta:'Abrir proyecto (.json)', accion:abrirProyectoEscritorio} : {etiqueta:'Importar proyecto', accion:openImportarPresentacion},
@@ -294,8 +300,8 @@ function wsInit() {
     biblioteca: {listar:wsBiblioteca, vacio:{titulo:'Aquí empieza tu próxima charla', texto:'Crea una presentación o importa un archivo. Tu trabajo se guarda en este navegador; puedes descargarlo en cualquier momento.'}},
     recursos: wsRecursos(),
     acerca: {texto:'Editor científico libre, versión ' + edVersion() + '. Tus presentaciones se guardan en este navegador: descarga copias JSON para conservar tu trabajo o compartirlo. Esta edición no incluye cuentas ni sincronización entre dispositivos. Software libre con licencia AGPLv3.',
-      enlaces:[{etiqueta:'Código fuente · AGPLv3', url:ERLEN_SOURCE_URL}, {etiqueta:'Manual, ejemplos y límites conocidos', url:ERLEN_SOURCE_URL + '/blob/main/docs/uso.md'}]},
-    fuente: {url:ERLEN_SOURCE_URL, licencia:'AGPLv3'},
+      enlaces:[{etiqueta:'Código fuente · AGPLv3', url:TABULA_SOURCE_URL}, {etiqueta:'Manual, ejemplos y límites conocidos', url:TABULA_SOURCE_URL + '/blob/main/docs/uso.md'}]},
+    fuente: {url:TABULA_SOURCE_URL, licencia:'AGPLv3'},
     editor: MARCO.elemento,   /* todo el cromo del marco queda inert detrás del inicio */
     apariencia: () => openAparienciaApp(),
     alAbrir: () => { openDrawer(false); closeMenus(); },
@@ -350,18 +356,11 @@ async function wsAbrirDelAsistente(clave) {
     return null;
   }
   try { datos = await res.json(); } catch (e) { wsRechazoAsistente('Lo que llegó no es un JSON válido.'); return null; }
-  if (!datos || datos.formato !== 'erlen-mcp-abrir-v1' || !datos.deck || typeof datos.deck !== 'object') { wsRechazoAsistente('Lo que llegó no es un proyecto de Tabula.'); return null; }
+  if (!datos || datos.formato !== 'tabula-mcp-abrir-v1' || !datos.deck || typeof datos.deck !== 'object') { wsRechazoAsistente('Lo que llegó no es un proyecto de Lámina.'); return null; }
   const r = saneaDeck(datos.deck);
   if (r.error) { wsRechazoAsistente('El proyecto no se pudo leer: ' + r.error); return null; }
   wsVistaAsistente(r.deck, String(datos.archivo || 'proyecto.json').slice(0, 200), r.avisos);
   return r.deck;
-}
-/* Nombre libre en la biblioteca: nunca se sobrescribe una presentación. */
-function wsNombreLibre(base) {
-  const store = decksStore(), b = String(base || '').trim() || 'Sin título';
-  let nombre = b, i = 2;
-  while (Object.hasOwn(store, nombre)) nombre = b + ' (' + i++ + ')';
-  return nombre;
 }
 function wsVistaAsistente(deck, archivo, avisos) {
   const titulo = String(deck.meta.title || '').trim(), base = titulo || archivo.replace(/\.json$/i, ''), nombre = wsNombreLibre(base);
@@ -383,7 +382,7 @@ function wsVistaAsistente(deck, archivo, avisos) {
 function wsAbreAsistente(deck, base) {
   if (!confirmaCambioArchivo()) return false;
   if (!wsConservar()) return false;
-  const store = decksStore(), nombre = wsNombreLibre(base);
+  const store = decksStore(), nombre = wsNombreLibre(base, store);
   Object.defineProperty(store, nombre, { value: { deck: deepCopy(deck), when: Date.now() }, enumerable: true, configurable: true, writable: true });
   if (!lsSet(LS_DECKS, store)) { toast('No hay espacio en este navegador para la presentación. Descarga un respaldo y libera espacio; no se abrió nada.', 'warn'); return false; }
   closeModal();

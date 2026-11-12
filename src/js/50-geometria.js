@@ -134,7 +134,7 @@ function geometriaTikz(b, p) {
   const L = [];
   L.push(p + '\\begin{tikzpicture}[x=1cm, y=1cm, line width=0.9pt, line cap=round, line join=round]');
   d.fig.forEach(f => {
-    const est = f.liq ? '[fill=erlenliq!25, draw=none]' : f.fill ? '[fill]' : '';
+    const est = f.liq ? '[fill=tabulaliq!25, draw=none]' : f.fill ? '[fill]' : '';
     if (f.t === 'l') L.push(p + `  \\draw${est} (${X(f.x1)},${Y(f.y1)}) -- (${X(f.x2)},${Y(f.y2)});`);
     else if (f.t === 'c') L.push(p + `  \\draw${est} (${X(f.cx)},${Y(f.cy)}) circle[radius=${(f.r * k).toFixed(3)}];`);
     else if (f.t === 'e') L.push(p + `  \\draw${est} (${X(f.cx)},${Y(f.cy)}) ellipse[x radius=${(f.rx * k).toFixed(3)}, y radius=${(f.ry * k).toFixed(3)}];`);

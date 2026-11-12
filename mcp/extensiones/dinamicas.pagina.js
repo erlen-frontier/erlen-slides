@@ -7,7 +7,7 @@
    da por bueno es exactamente lo que el editor dibuja y lo que sale en el
    .tex; un validador aparte acabaría aceptando fórmulas que la app no lee. */
 (function () {
-  const { falla, avisa, buscaBloque, valida } = ERLEN_MCP.util;
+  const { falla, avisa, buscaBloque, valida } = TABULA_MCP.util;
   const r4 = v => isFinite(v) ? +(+v).toPrecision(4) : null;
   const plano = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
   const esObjeto = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -179,12 +179,12 @@
     return { valido: !errores.length, errores, avisos, curvas, modelo: modelo ? modelo.id : undefined, bloque };
   }
 
-  ERLEN_MCP.registra('dinamicaModelos', () => ({ modelos: catalogo() }));
+  TABULA_MCP.registra('dinamicaModelos', () => ({ modelos: catalogo() }));
 
-  ERLEN_MCP.registra('dinamicaAnaliza', a => {
+  TABULA_MCP.registra('dinamicaAnaliza', a => {
     let spec = a.bloque;
     if (a.deck && a.id) {
-      const f = buscaBloque(ERLEN_MCP.util.valida(a.deck).deck, a.id);
+      const f = buscaBloque(TABULA_MCP.util.valida(a.deck).deck, a.id);
       if (f.bloque.type !== 'func') falla('El bloque «' + a.id + '» es de tipo «' + f.bloque.type + '», no una gráfica dinámica (func).');
       spec = f.bloque;
     }
@@ -196,7 +196,7 @@
 
   /* Mover los deslizadores desde fuera: el estado que se ve al abrir la
      diapositiva y el que sale fijo en el PDF y en Beamer. */
-  ERLEN_MCP.registra('dinamicaAjusta', a => {
+  TABULA_MCP.registra('dinamicaAjusta', a => {
     const d = a.deck, f = buscaBloque(d, a.bloque), b = f.bloque;
     if (b.type !== 'func') falla('El bloque «' + a.bloque + '» es de tipo «' + b.type + '», no una gráfica dinámica (func).');
     const antes = JSON.stringify(b.params || []);
@@ -223,7 +223,7 @@
 
   /* En revisar_presentacion: lo mismo que se comprueba al crear, para las
      gráficas que se editaron a mano o vienen de antes. */
-  ERLEN_MCP.registraRevision('grafica-dinamica', deck => {
+  TABULA_MCP.registraRevision('grafica-dinamica', deck => {
     const out = [];
     deck.slides.forEach((sl, i) => zonas(sl).flat().forEach(b => {
       if (!b || b.type !== 'func') return;

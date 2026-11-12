@@ -1,4 +1,4 @@
-<!-- El marco de Tabula mueve estos nodos a sus huecos sin clonarlos ni reconstruirlos;
+<!-- El marco de Lámina mueve estos nodos a sus huecos sin clonarlos ni reconstruirlos;
      los listeners, la selección y el foco del editor se conservan. El inicio se monta
      aparte y deja el editor inerte mientras está abierto. -->
 <div class="app" id="app">
@@ -8,22 +8,25 @@
     <button class="icon-btn" id="undoBtn" title="Deshacer (Ctrl+Z)" aria-label="Deshacer">⟲</button>
     <button class="icon-btn" id="redoBtn" title="Rehacer (Ctrl+Shift+Z)" aria-label="Rehacer">⟳</button>
     <div class="tb-sep"></div>
-    <button class="btn only-wide" id="decksBtn" title="Mis presentaciones">Archivo</button>
-    <button class="btn only-wide" id="exportBtn" title="Exportar">Exportar</button>
-    <button class="icon-btn only-narrow" id="moreBtn" title="Archivo, exportar y ayuda" aria-label="Más opciones">⋯</button>
+    <button class="btn only-wide" id="decksBtn" title="Archivo (mis presentaciones, abrir, guardar)">Archivo</button>
+    <button class="btn only-wide" id="shareBtn" title="Compartir (revisar y exportar)">Compartir</button>
+    <button class="icon-btn only-narrow" id="moreBtn" title="Archivo, compartir y ayuda" aria-label="Más opciones">⋯</button>
     <button class="btn btn-pri" id="presentBtn" aria-label="Presentar" title="Presentar (F5)"><span class="only-wide-i">▶ Presentar</span><span class="only-narrow-i">▶</span></button>
   </div>
   <div class="cabecera-utilidades" id="cabecera-utilidades">
     <button class="icon-btn hamb" id="hambBtn" aria-controls="inspector" aria-expanded="false" title="Panel de edición" aria-label="Abrir panel de edición">☰</button>
-    <button id="edicionBadge" class="ed-badge" aria-label="AGPLv3 · Acerca de Tabula">AGPLv3</button>
+    <button id="edicionBadge" class="ed-badge" aria-label="AGPLv3 · Acerca de Lámina">AGPLv3</button>
     <button class="icon-btn" id="buscarBtn" title="Buscar y reemplazar (Ctrl+F)" aria-label="Buscar">⌕</button>
     <button class="icon-btn only-wide" id="temaBtn" title="Apariencia del editor" aria-label="Apariencia del editor">◐</button>
     <input type="checkbox" id="densChk" class="dens-chk only-wide" aria-label="Interfaz compacta">
     <label class="icon-btn dens-btn only-wide" for="densChk" title="Densidad de la interfaz: cómoda o compacta"></label>
     <button class="icon-btn" id="asisBtn" title="Asistente (Ctrl+J)" aria-label="Asistente">✦</button>
-    <button class="icon-btn" id="cuentaBtn" hidden aria-label="Tu cuenta">◯</button>
     <button class="icon-btn only-wide" id="helpBtn" title="Ayuda y atajos" aria-label="Ayuda">?</button>
   </div>
+  <div class="modo-fila" id="modoFila"><div class="seg seg-modo" role="tablist" aria-label="Modo de edición">
+    <button type="button" class="on" id="modoVisual" role="tab" aria-selected="true">Visual</button>
+    <button type="button" id="modoGuion" role="tab" aria-selected="false">Guion</button>
+  </div></div>
   <div class="cinta" id="cinta" role="region" aria-label="Cinta de herramientas" hidden></div>
   <div class="filmstrip">
     <div class="fs-head"><span class="panel-label">Diapositivas</span></div>
@@ -45,17 +48,14 @@
         <span class="zlabel" id="zoomLabel">100%</span>
         <button class="icon-btn" id="zoomIn" title="Acercar" aria-label="Acercar">+</button>
         <button class="icon-btn" id="zoomFit" title="Ajustar a la ventana" aria-label="Ajustar">⤢</button>
-        <button class="icon-btn" id="sorterBtn" title="Ver todas las diapositivas (Ctrl+G)" aria-label="Ver todas las diapositivas">⊞</button>
-        <button class="icon-btn" id="concBtn" title="Modo concentración (F9)" aria-label="Modo concentración">⛶</button>
       </div>
     </div>
   </div>
   <div class="inspector" id="inspector" aria-label="Herramientas de edición">
     <div class="insp-tabs" role="tablist" aria-label="Pestañas de herramientas">
       <button class="itab on" role="tab" aria-selected="true" aria-controls="inspBody" tabindex="0" data-tab="insert">Insertar</button>
-      <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="slide">Diapositiva</button>
-      <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="design">Diseño</button>
-      <button class="itab itab-blk" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="bloque" hidden>Bloque</button>
+      <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="slide">Propiedades</button>
+      <button class="itab" role="tab" aria-selected="false" aria-controls="inspBody" tabindex="-1" data-tab="notes">Notas</button>
     </div>
     <div class="insp-body" id="inspBody"></div>
   </div>

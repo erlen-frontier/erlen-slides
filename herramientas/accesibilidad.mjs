@@ -5,7 +5,7 @@
 
      npm run build && npx playwright-core install chromium && npm run accesibilidad
 
-   Opciones: NAVEGADOR=firefox, ERLEN_CHROMIUM=/ruta/al/chrome. Sirve public/
+   Opciones: NAVEGADOR=firefox, TABULA_CHROMIUM=/ruta/al/chrome. Sirve public/
    bajo /slides/, como el portal. */
 import http from 'node:http';import {readFile,stat} from 'node:fs/promises';import {resolve,extname,join,sep} from 'node:path';import {fileURLToPath} from 'node:url';
 import pw from 'playwright-core';import {AxeBuilder} from '@axe-core/playwright';
@@ -24,13 +24,13 @@ const base=`http://127.0.0.1:${servidor.address().port}/slides/`;
 /* Chromium se busca como en el servidor MCP: el de playwright-core, Chrome o
    Edge instalados, el de otra versión de Playwright o el del sistema. Así
    basta cualquier Chromium y no hace falta la compilación exacta que pide
-   esta versión de playwright-core. ERLEN_CHROMIUM indica uno a mano. */
+   esta versión de playwright-core. TABULA_CHROMIUM indica uno a mano. */
 async function lanza(){
  if(process.env.NAVEGADOR&&process.env.NAVEGADOR!=='chromium')return pw[process.env.NAVEGADOR].launch();
  const {candidatos}=await import('../mcp/navegador.mjs');
  let primero=null;
  for(const o of candidatos()){try{return await pw.chromium.launch(o);}catch(e){primero||=e;}}
- throw new Error('No se encontró Chromium ni Chrome. Instálalo con «npx playwright-core install chromium» o indica uno con ERLEN_CHROMIUM. Detalle: '+String(primero&&primero.message).split('\n')[0]);
+ throw new Error('No se encontró Chromium ni Chrome. Instálalo con «npx playwright-core install chromium» o indica uno con TABULA_CHROMIUM. Detalle: '+String(primero&&primero.message).split('\n')[0]);
 }
 const navegador=await lanza();
 const fallos=[];
@@ -43,9 +43,9 @@ try{
  for(const esquema of ['light','dark']){
   const ctx=await navegador.newContext({viewport:{width:1440,height:900},colorScheme:esquema});
   ctx.setDefaultTimeout(90000);const pagina=await ctx.newPage();
-  await pagina.goto(base);await pagina.waitForSelector('#inicioRoot main.erlen-inicio');
+  await pagina.goto(base);await pagina.waitForSelector('#inicioRoot main.tabula-inicio');
   await audita(pagina,`inicio (${esquema})`);
-  await pagina.locator('.erlen-inicio-ejemplo button').first().click();await pagina.waitForSelector('#app:not([inert])');
+  await pagina.locator('.tabula-inicio-ejemplo button').first().click();await pagina.waitForSelector('#app:not([inert])');
   await audita(pagina,`editor (${esquema})`);
   await pagina.evaluate(()=>openHelp());await pagina.waitForSelector('.modal');
   await audita(pagina,`ayuda (${esquema})`);

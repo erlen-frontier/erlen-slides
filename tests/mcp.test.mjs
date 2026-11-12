@@ -41,6 +41,17 @@ test('MCP: protocolo, catálogo y prompts', {timeout: 120000}, async () => {
     assert.match((await c.llama('crear_presentacion', {})).texto, /Falta «archivo»/);
     assert.match((await c.llama('herramienta_rara', {})).texto, /Herramienta desconocida/);
     assert.equal((await c.pide('metodo/raro', {})).error.code, -32601);
+
+    /* Identidad propia del servidor y su recurso de guía. */
+    const init = await c.pide('initialize', {protocolVersion: '2025-06-18', capabilities: {}, clientInfo: {name: 'prueba', version: '0'}});
+    assert.equal(init.result.serverInfo.name, 'tabula');
+    const {result: {resources}} = await c.pide('resources/list');
+    assert.equal(resources.length, 1);
+    assert.equal(resources[0].uri, 'tabula://guia');
+    const leida = await c.pide('resources/read', {uri: 'tabula://guia'});
+    assert.equal(leida.result.contents[0].uri, 'tabula://guia');
+    const guiaRecurso = JSON.parse(leida.result.contents[0].text);
+    assert.ok(guiaRecurso.disenos && guiaRecurso.convenciones, 'la guía trae diseños y convenciones');
   });
   await conServidor(async c => {
     assert.equal((await c.llama('listar_ejemplos', {})).crudo.structuredContent, undefined, 'sin structuredContent en versiones anteriores');

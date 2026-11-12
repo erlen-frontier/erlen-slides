@@ -3,14 +3,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {existsSync} from 'node:fs';
+import {mkdtemp, writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 import {AxeBuilder} from '@axe-core/playwright';
 
 test('the layers panel stays usable while editing the free canvas', {timeout:180000}, async t=>{
-  const bin=process.env.ERLEN_CHROMIUM||'/usr/bin/chromium';
+  const bin=process.env.TABULA_CHROMIUM||'/usr/bin/chromium';
   if(!existsSync(bin)){t.skip('Chromium is required.');return;}
-  const port=Number(process.env.ERLEN_PANEL_CAPAS_PORT||4445);
+  const port=Number(process.env.TABULA_PANEL_CAPAS_PORT||4445);
   const server=spawn(process.execPath,[fileURLToPath(new URL('../herramientas/serve.mjs',import.meta.url))],{env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
   t.after(()=>server.kill());
   await new Promise((resolve,reject)=>{server.stdout.once('data',resolve);server.once('error',reject);server.once('exit',c=>reject(Error('Server exited: '+c)));});
@@ -46,25 +49,64 @@ test('the layers panel stays usable while editing the free canvas', {timeout:180
     await page.mouse.up();
   };
 
-  await t.test('selection follows the canvas in both directions without closing or blocking it',async()=>{
-    await reset();await abrir();
-    assert.equal(await page.locator('#app').evaluate(el=>el.inert),false);
-    assert.equal(await page.locator('#modalRoot .mask').count(),0);
-    assert.deepEqual(await filas(),['d','c','b','a']);
-    await panel.getByRole('checkbox',{name:'Marcar A'}).check();
-    await panel.getByRole('checkbox',{name:'Marcar C'}).check();
-    assert.deepEqual((await page.evaluate(()=>[...idsSeleccionados()])).sort(),['a','c']);
-    assert.equal(await page.locator('#stageInner .blk.sel-lote').count(),2);
-    await page.locator('#stageInner .blk[data-bid="b"]').click({position:{x:8,y:8}});
-    assert.equal(await panel.isVisible(),true);
-    assert.equal(await panel.getByRole('checkbox',{name:'Marcar A'}).isChecked(),false);
-    assert.equal(await panel.getByRole('checkbox',{name:'Marcar B'}).isChecked(),true);
-    await panel.locator('[data-capa-fila="a"] .lienzo-lista-nombre').click();
-    assert.equal(await page.evaluate(()=>S.selBlock),'a');
-    assert.equal(await page.evaluate(()=>document.activeElement.dataset.bid),'a');
-    assert.equal(await panel.isVisible(),true);
-    await page.keyboard.press('ArrowRight');
-    assert.equal(await page.evaluate(()=>findBlock('a').block.posLibre.x),11);
+  await t.test('selection follows the canvas in both directions without closing or blocking it',async t=>{
+    const b=page.locator('#stageInner .blk[data-bid="b"]');
+    await context.tracing.start({screenshots:true,snapshots:true});
+    let caja=null,punto=null,url=page.url(),evidencia=null;
+    try{
+      await reset();await abrir();
+      assert.equal(await page.locator('#app').evaluate(el=>el.inert),false);
+      assert.equal(await page.locator('#modalRoot .mask').count(),0);
+      assert.deepEqual(await filas(),['d','c','b','a']);
+      await panel.getByRole('checkbox',{name:'Marcar A'}).check();
+      await panel.getByRole('checkbox',{name:'Marcar C'}).check();
+      assert.deepEqual((await page.evaluate(()=>[...idsSeleccionados()])).sort(),['a','c']);
+      assert.equal(await page.locator('#stageInner .blk.sel-lote').count(),2);
+      await b.hover({position:{x:8,y:8}});
+      /* La lista se repinta al cambiar de selección: volver a medir después. */
+      caja=await b.boundingBox();
+      assert.ok(caja && Number.isFinite(caja.x) && Number.isFinite(caja.y) && caja.width>8 && caja.height>8,
+        'la capa B necesita una caja medible tras el hover: '+JSON.stringify(caja));
+      punto={x:caja.x+8,y:caja.y+8};
+      const efectivo=await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.closest('.blk')?.dataset.bid||null,punto);
+      assert.equal(efectivo,'b','el punto debe caer sobre la capa B: '+JSON.stringify({caja,punto}));
+      url=page.url();
+      await page.mouse.click(punto.x,punto.y);
+      await page.waitForFunction(()=>S.selBlock==='b' && idsSeleccionados().size===1 && idsSeleccionados().has('b'),null,{timeout:5000});
+      assert.equal(page.url(),url,'seleccionar en el lienzo no navega');
+      assert.equal(await panel.isVisible(),true);
+      assert.equal(await panel.getByRole('checkbox',{name:'Marcar A'}).isChecked(),false);
+      assert.equal(await panel.getByRole('checkbox',{name:'Marcar C'}).isChecked(),false);
+      assert.equal(await panel.getByRole('checkbox',{name:'Marcar B'}).isChecked(),true);
+      await panel.locator('[data-capa-fila="a"] .lienzo-lista-nombre').click();
+      assert.equal(await page.evaluate(()=>S.selBlock),'a');
+      assert.equal(await page.evaluate(()=>document.activeElement.dataset.bid),'a');
+      assert.equal(await panel.isVisible(),true);
+      await page.keyboard.press('ArrowRight');
+      assert.equal(await page.evaluate(()=>findBlock('a').block.posLibre.x),11);
+    }catch(error){
+      /* Conservar el escenario fallido: selección, caja, punto efectivo y URL. */
+      evidencia=await mkdtemp(join(tmpdir(),'tabula-panel-capas-'));
+      if(!caja){
+        caja=await b.boundingBox().catch(()=>null);
+        if(caja && caja.width>8 && caja.height>8) punto={x:caja.x+8,y:caja.y+8};
+      }
+      const estado=await page.evaluate(({x,y})=>{
+        try{
+          const el=Number.isFinite(x)&&Number.isFinite(y)?document.elementFromPoint(x,y):null;
+          const capas=document.querySelector('#panelCapas');
+          return {url:location.href,bid:el?.closest('.blk')?.dataset.bid||null,seleccion:S.selBlock,
+            ids:[...idsSeleccionados()],panelAbierto:!!capas && !capas.hidden};
+        }catch(error){return {url:location.href,error:error.message};}
+      },punto||{x:-1,y:-1}).catch(()=>null);
+      await page.screenshot({path:join(evidencia,'seleccion.png')}).catch(()=>{});
+      await writeFile(join(evidencia,'diagnostico.json'),JSON.stringify({url,caja,punto,estado,error:error.message},null,2)).catch(()=>{});
+      t.diagnostic('Evidencia del fallo de capas: '+evidencia);
+      throw error;
+    }finally{
+      await context.tracing.stop(evidencia?{path:join(evidencia,'traza.zip')}:undefined)
+        .catch(error=>t.diagnostic('No se pudo guardar la traza: '+error.message));
+    }
   });
 
   await t.test('the first layer control click commits text editing even when that row changes',async()=>{
@@ -250,7 +292,7 @@ test('the layers panel stays usable while editing the free canvas', {timeout:180
         if(cmd==='cerrar_archivo_proyecto')return null;throw Error('Comando inesperado: '+cmd);
       }}};
       try {
-        const ext=await extensionSlides('exportador'),html=await (await ext.creaHTML(S.deck)).text(),ppt=await ext.creaPPTX(S.deck);
+        const ext=await extensionTabla('exportador'),html=await (await ext.creaHTML(S.deck)).text(),ppt=await ext.creaPPTX(S.deck);
         const zip=await window.JSZip.loadAsync(ppt.blob),xml=await zip.file('ppt/slides/slide2.xml').async('string');
         await guardarProyectoEscritorio(true);await abrirProyectoEscritorio();
         return {html,xml,orden:bloquesEnCapas(S.deck.slides[1]).map(b=>b.id),src:S.deck.slides[1].blocks.find(b=>b.id==='figura').src};

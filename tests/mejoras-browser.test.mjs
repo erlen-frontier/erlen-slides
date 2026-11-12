@@ -8,9 +8,9 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 test('Slides upgrades in Chromium', {timeout: 120000}, async t => {
-  const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
-  if (!existsSync(bin)) { t.skip('Set ERLEN_CHROMIUM to run browser validation.'); return; }
-  const port = Number(process.env.ERLEN_SLIDES_TEST_PORT || 4215);
+  const bin = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
+  if (!existsSync(bin)) { t.skip('Set TABULA_CHROMIUM to run browser validation.'); return; }
+  const port = Number(process.env.TABULA_SLIDES_TEST_PORT || 4215);
   const server = spawn(process.execPath, [fileURLToPath(new URL('../herramientas/serve.mjs', import.meta.url))], {env: {...process.env, PORT: String(port)}, stdio: ['ignore', 'pipe', 'pipe']});
   t.after(() => server.kill());
   await new Promise((ok, fail) => { server.stdout.once('data', ok); server.once('error', fail); server.once('exit', code => fail(new Error('Server exited: ' + code))); });
@@ -36,7 +36,7 @@ test('Slides upgrades in Chromium', {timeout: 120000}, async t => {
       d.slides.push({id:'fmt-slide',layout:'content',title:'Fragmentos',blocks:[b]},
         {id:'cita-slide',layout:'cita',title:'Herencia',blocks:[herencia]},
         {id:'math-slide',layout:'content',title:'Fórmula',blocks:[matematicas]});
-      const antes = JSON.stringify(d), ext = await extensionSlides('exportador');
+      const antes = JSON.stringify(d), ext = await extensionTabla('exportador');
       const avanzada = await ext.creaPPTX(d);
       let clasica; const descargar = window.downloadFile;
       wsNueva(d);
@@ -115,7 +115,7 @@ test('Slides upgrades in Chromium', {timeout: 120000}, async t => {
         conectores.forEach((c, i) => creaSlide(i, [c]));
         creaSlide('grupo', [conectores[0], conectores[1], conectores[4], conectores[8]]);
         wsNueva(d); S.cur = 1; renderAll();
-        const original = JSON.stringify(S.deck), ext = await extensionSlides('exportador');
+        const original = JSON.stringify(S.deck), ext = await extensionTabla('exportador');
         const avanzada = await ext.creaPPTX(S.deck);
         const descargar = window.downloadFile; let clasica;
         window.downloadFile = async (nombre, blob) => { if (nombre.endsWith('.pptx')) clasica = blob; return true; };
@@ -186,7 +186,7 @@ test('Slides upgrades in Chromium', {timeout: 120000}, async t => {
     await page.getByRole('button', {name: 'Crear presentación', exact: true}).click();
     assert.equal(await page.evaluate(() => S.deck.slides.length), 2);
     const r = await page.evaluate(async () => {
-      const before = JSON.stringify(S.deck), core = await extensionSlides('markdown');
+      const before = JSON.stringify(S.deck), core = await extensionTabla('markdown');
       const d = deepCopy(S.deck), im = newBlock('image'); im.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='; im.caption = 'Figura ilustrativa'; d.slides[1].blocks.push(im);
       const out = core.aMarkdown(d, {zonasPorDiseno: Object.fromEntries(LAYOUTS.map(l => [l.id, zonasDe(l.id)])), incrustarFiguras: true});
       const vuelta = await deckDesdeMarkdown(out.md);
@@ -295,7 +295,7 @@ test('Slides upgrades in Chromium', {timeout: 120000}, async t => {
       const f = newBlock('func'); Object.assign(f, {curves: [{expr: 'a*x', name: 'Ejemplo ilustrativo'}], params: [{name: 'a', value: 1, min: 0, max: 3, step: 0.1}], xmin: 0, xmax: 2, xlabel: 'x', ylabel: 'y', title: '', caption: 'Modelo ilustrativo', anim: 'none'}); agregar('Función interactiva ilustrativa', f);
       const lista = newBlock('bullets'); lista.items = [{t: 'Primero', lvl: 0}, {t: 'Segundo', lvl: 0}]; lista.step = true; agregar('Pasos', lista); d.slides[5].notes = 'NOTA_PRIVADA_DE_PRUEBA';
       const mermaid = newBlock('image'); mermaid.src = await generaDiagrama('flowchart LR\n A[Pregunta] --> B[Evidencia]'); mermaid.alt = 'Diagrama ilustrativo'; mermaid.caption = 'Diagrama ilustrativo'; agregar('Mermaid', mermaid);
-      const ext = await extensionSlides('exportador'), antes = JSON.stringify(d);
+      const ext = await extensionTabla('exportador'), antes = JSON.stringify(d);
       const p = await ext.creaPPTX(d), html = await ext.creaHTML(d), conNotas = await ext.creaHTML(d, true);
       const zip = await window.JSZip.loadAsync(p.blob), entries = Object.keys(zip.files), charts = entries.filter(n => /^ppt\/charts\/chart\d+\.xml$/.test(n));
       const chartXML = await zip.file(charts[0]).async('string'), smartXML = await zip.file('ppt/slides/slide4.xml').async('string');

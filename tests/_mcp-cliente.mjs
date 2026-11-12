@@ -16,8 +16,8 @@ import {join} from 'node:path';
 import {createInterface} from 'node:readline';
 
 export function cliente(dir, opciones = {}) {
-  const env = {...process.env, ERLEN_SLIDES_DIR: dir};
-  if (opciones.extensiones) env.ERLEN_MCP_EXTENSIONES = opciones.extensiones;
+  const env = {...process.env, TABULA_DIR: dir};
+  if (opciones.extensiones) env.TABULA_MCP_EXTENSIONES = opciones.extensiones;
   const proc = spawn(process.execPath, [new URL('../mcp/servidor.mjs', import.meta.url).pathname], {env, stdio: ['pipe', 'pipe', 'pipe']});
   const pendientes = new Map(), ruido = [], stderr = [];
   let n = 0;
@@ -51,7 +51,7 @@ export function cliente(dir, opciones = {}) {
    lleva mensajes del protocolo. opciones: {version, extensiones}. */
 export async function conServidor(fn, opciones = {}) {
   if (typeof opciones === 'string') opciones = {version: opciones};
-  const dir = mkdtempSync(join(tmpdir(), 'erlen-mcp-'));
+  const dir = mkdtempSync(join(tmpdir(), 'tabula-mcp-'));
   const c = cliente(dir, opciones);
   try { await c.inicia(opciones.version); await fn(c, dir); assert.deepEqual(c.ruido, [], 'stdout solo lleva mensajes del protocolo'); }
   finally { await c.cierra(); rmSync(dir, {recursive: true, force: true}); }

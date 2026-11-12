@@ -6,7 +6,7 @@
    imágenes ni tiene lienzo, y las propuestas que dependen de él no salen. */
 (function () {
   'use strict';
-  const U = ERLEN_MCP.util;
+  const U = TABULA_MCP.util;
 
   /* Lo que queda en cada zona, en corto: tipo e id, y la clase si es un
      diagrama, para que el modelo sepa qué cambiará sin leer el proyecto. */
@@ -26,7 +26,7 @@
     return { i, sl, props: propuestasDiapositiva(deck, i) };
   }
 
-  ERLEN_MCP.registra('sugiereDisenos', a => {
+  TABULA_MCP.registra('sugiereDisenos', a => {
     const deck = U.valida(a.deck).deck;
     const { i, sl, props } = calcula(deck, a.diapositiva);
     const out = {
@@ -52,7 +52,7 @@
     return out;
   });
 
-  ERLEN_MCP.registra('aplicaDiseno', a => {
+  TABULA_MCP.registra('aplicaDiseno', a => {
     const deck = U.valida(a.deck).deck;
     const total = deck.slides.length;
     const { i, props } = calcula(deck, a.diapositiva);

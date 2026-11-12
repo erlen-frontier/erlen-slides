@@ -59,7 +59,7 @@ test('La exportación SVG entrega una figura vectorial autónoma con metadatos',
     assert.match(run('window.__svgDownload.text'), /^<\?xml/);
     assert.match(run('window.__svgDownload.text'), /<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
     assert.equal((run('window.__svgDownload.text').match(/\sxmlns="http:\/\/www\.w3\.org\/2000\/svg"/g) || []).length, 1);
-    assert.match(run('window.__svgDownload.text'), /erlen-scientific-figure-v1/);
+    assert.match(run('window.__svgDownload.text'), /tabula-scientific-figure-v1/);
     assert.doesNotMatch(run('window.__svgDownload.text'), /foreignObject/);
     /* Los rótulos de los ejes van en HTML en la diapositiva; en el SVG, como texto. */
     assert.match(run('window.__svgDownload.text'), /<text[^>]*>Tiempo \(s\)<\/text>/);
@@ -73,7 +73,7 @@ test('El informe de exportación estructura advertencias científicas y por form
   try {
     run(`window.__reportDeck = deckDe({title:'Informe'}, [slidePlantilla('content','Resultados',[[Object.assign(newBlock('chart'), {data:'x,y\\n1,2', xlabel:'', ylabel:'', logX:true}), Object.assign(newBlock('video'), {src:'https://example.test/video.mp4'})]])])`);
     const report = run('informeExportacion(window.__reportDeck)');
-    assert.equal(report.schema, 'erlen-export-report-v1');
+    assert.equal(report.schema, 'tabula-export-report-v1');
     assert.equal(report.formats.svg.includes('independiente'), true);
     assert.ok(report.warnings.some(x => x.code === 'scientific-audit-aviso'));
     assert.ok(report.warnings.some(x => x.code === 'video-static-export'));

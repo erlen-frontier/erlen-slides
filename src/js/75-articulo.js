@@ -25,11 +25,11 @@ function preambuloArticulo(deck) {
   out.push('\\usepackage{caption}', '\\captionsetup{font=small,labelfont=bf}', '\\setlength{\\parskip}{4pt}',
     '% Lo que en Beamer son cajas y columnas, aquí son párrafos con título y minipages.',
     '\\newenvironment{block}[1]{\\par\\medskip\\noindent\\textbf{#1}\\par\\nobreak\\smallskip}{\\par\\medskip}',
-    '\\newenvironment{alertblock}[1]{\\par\\medskip\\noindent\\textcolor{erlenacento}{\\textbf{#1}}\\par\\nobreak\\smallskip}{\\par\\medskip}',
+    '\\newenvironment{alertblock}[1]{\\par\\medskip\\noindent\\textcolor{tabulaacento}{\\textbf{#1}}\\par\\nobreak\\smallskip}{\\par\\medskip}',
     '\\newenvironment{exampleblock}[1]{\\par\\medskip\\noindent\\textbf{#1}\\par\\nobreak\\smallskip}{\\par\\medskip}',
     '\\newenvironment{columns}[1][]{\\par\\noindent}{\\par}',
     '\\newenvironment{column}[1]{\\begin{minipage}[t]{#1}}{\\end{minipage}\\hfill}',
-    '\\providecommand{\\alert}[1]{\\textcolor{erlenacento}{#1}}',
+    '\\providecommand{\\alert}[1]{\\textcolor{tabulaacento}{#1}}',
     '\\providecommand{\\structure}[1]{\\textbf{#1}}',
     '\\providecommand{\\pause}{}');
   return out.join('\n').replace(/\n{3,}/g, '\n\n');

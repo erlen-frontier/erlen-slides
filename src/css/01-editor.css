@@ -22,68 +22,49 @@
   --h-blq:calc(46px + 12px * var(--holg));  /* botón de bloque  58 / 46 */
   /* La barra superior y las columnas las mide el marco común (diseno/marco.css). */
   /* ---- radios: los del paquete de la suite (diseno/tokens.css) ---- */
-  --r1:var(--erlen-radio-campo); --r2:var(--erlen-radio-pequeno); --r3:var(--erlen-radio-tarjeta); --r4:var(--erlen-radio-panel);
+  --r1:var(--tabula-radio-campo); --r2:var(--tabula-radio-pequeno); --r3:var(--tabula-radio-tarjeta); --r4:var(--tabula-radio-panel);
   /* ---- escala tipográfica: corta y respetada; nada por debajo de 12 px ---- */
-  --t0:12px;      /* rótulo en versalitas (--erlen-texto-xs) */
+  --t0:12px;      /* rótulo en versalitas (--tabula-texto-xs) */
   --t1:13px;      /* dato menudo */
-  --t2:14px;      /* auxiliar y controles (--erlen-texto-sm) */
-  --t3:15px;      /* cuerpo de la interfaz (--erlen-texto-ui) */
+  --t2:14px;      /* auxiliar y controles (--tabula-texto-sm) */
+  --t3:15px;      /* cuerpo de la interfaz (--tabula-texto-ui) */
   --t4:17px;      /* título de diálogo */
   --t5:20px;      /* cifra o titular */
   --lh:1.55;
   --ls-rotulo:.13em;
   /* ---- color: alias cortos de los tokens de la suite; ningún literal aquí ni
      en el resto de las hojas del cromo. Claro y oscuro salen del paquete. ---- */
-  --bg:var(--erlen-papel);
-  --canvas:color-mix(in srgb,var(--erlen-papel) 88%,var(--erlen-tinta) 12%);
-  --panel:var(--erlen-superficie); --panel2:var(--erlen-superficie-2);
-  --panel3:color-mix(in srgb,var(--erlen-superficie-2) 90%,var(--erlen-tinta) 10%);
-  --ink:var(--erlen-tinta); --mut:var(--erlen-tinta-suave); --faint:var(--erlen-tinta-suave);
-  --line:var(--erlen-linea); --line2:color-mix(in srgb,var(--erlen-linea) 55%,var(--erlen-superficie));
-  --acc:var(--erlen-verde); --acc2:color-mix(in srgb,var(--erlen-verde) 84%,var(--erlen-tinta));
-  --accSoft:var(--erlen-verde-suave); --accInk:var(--erlen-verde-contraste);
-  --accLine:var(--erlen-linea-fuerte);
-  --ok:var(--erlen-verde); --warn:var(--erlen-ambar); --danger:var(--erlen-peligro); --dangerSoft:var(--erlen-peligro-suave);
-  --shadow:var(--erlen-sombra-tarjeta);
-  --shadow-lg:var(--erlen-sombra-menu);
+  --bg:var(--tabula-papel);
+  --canvas:color-mix(in srgb,var(--tabula-papel) 88%,var(--tabula-tinta) 12%);
+  --panel:var(--tabula-superficie); --panel2:var(--tabula-superficie-2);
+  --panel3:color-mix(in srgb,var(--tabula-superficie-2) 90%,var(--tabula-tinta) 10%);
+  --ink:var(--tabula-tinta); --mut:var(--tabula-tinta-suave); --faint:var(--tabula-tinta-suave);
+  --line:var(--tabula-linea); --line2:color-mix(in srgb,var(--tabula-linea) 55%,var(--tabula-superficie));
+  --acc:var(--tabula-verde); --acc2:color-mix(in srgb,var(--tabula-verde) 84%,var(--tabula-tinta));
+  --accSoft:var(--tabula-verde-suave); --accInk:var(--tabula-verde-contraste);
+  --accLine:var(--tabula-linea-fuerte);
+  --ok:var(--tabula-verde); --warn:var(--tabula-ambar); --danger:var(--tabula-peligro); --dangerSoft:var(--tabula-peligro-suave);
+  --shadow:var(--tabula-sombra-tarjeta);
+  --shadow-lg:var(--tabula-sombra-menu);
   --anillo:0 0 0 3px var(--accSoft);
-  --ui:var(--erlen-font-ui);
-  --serif:var(--erlen-font-titulo);
-  --mono:var(--erlen-font-mono);
-  /* ---- material cristal (paquete 2.0.0, COHERENCIA-APPS §0.1) ----
-     Alias cortos de los tokens --erlen-vidrio* del paquete: el material, el
-     desenfoque y TODOS sus respaldos opacos (menos transparencia, más contraste,
-     colores forzados, material sólido, impresión y navegadores sin
-     backdrop-filter) vienen de diseno/tokens.css; aquí no se repiten.
-     --glass-fondo: capa de controles que flota sobre contenido que cambia
-     (menús, popovers, diálogos, toasts, barra del lienzo); --glass-flujo: la
-     misma capa en flujo (barra superior, pestañas, paneles), sin desenfoque. */
-  --glass-bg:var(--erlen-vidrio-fuerte);
-  --glass-fondo:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);
-  --glass-flujo:var(--erlen-vidrio-reflejo),var(--erlen-vidrio);
-  --glass-blur:var(--erlen-vidrio-filtro);
-  --glass-edge:var(--erlen-vidrio-contorno);
-  --glass-relieve:var(--erlen-vidrio-relieve);
-  /* Muelle de apertura de paneles flotantes, con su pequeño rebote. Una sola
-     curva para ambos temas: el material cambia con la luz, el gesto no. */
-  --spring-panel:linear(0,0.0068,0.027,0.06 8.1%,0.153,0.312 18.7%,0.595 27.5%,0.795 34.7%,0.94 41.5%,1.035 48.4%,1.084 55.3%,1.095 60.5%,1.088 66.2%,1.052 74.4%,1.013 82.3%,0.997 89.9%,1);
+  --ui:var(--tabula-font-ui);
+  --serif:var(--tabula-font-titulo);
+  --mono:var(--tabula-font-mono);
+  /* Superficies opacas del cromo: sin desenfoque ni translucidez. */
+  --glass-bg:var(--tabula-superficie);
+  --glass-fondo:var(--tabula-superficie);
+  --glass-flujo:var(--tabula-superficie);
+  --glass-blur:none;
+  --glass-edge:var(--tabula-linea);
+  --glass-relieve:var(--tabula-sombra-tarjeta);
 }
-/* ---- material cristal ----
-   .vidrio es la capa en flujo (barra superior): reflejo, relieve y contorno,
-   sin desenfoque, porque nada se desplaza por debajo.
-   Las superficies que crea el JS (.pop, .menu, .modal, .toast) repiten el
-   material flotante en su regla, con desenfoque. Los respaldos opacos los
-   dan los tokens del paquete. */
+/* Paneles flotantes opacos. */
 .vidrio{
-  background:var(--glass-flujo);
-  border:1px solid var(--glass-edge);
-  box-shadow:var(--glass-relieve);
+  background:var(--panel);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
 }
-/* Entrada de los paneles flotantes: showMenu y openModal insertan el elemento
-   nuevo en cada apertura, así que el muelle corre como animation (nace con el
-   nodo, como toastIn); la transition del mismo gesto queda puesta en cada
-   superficie por si algún día el estado cambia sin reinsertar. */
-@keyframes abreGlass{from{transform:scale(.97) translateY(-2px)}}
+@keyframes abrePanel{from{opacity:0;transform:translateY(-2px)}}
 /* Oscuro: colores y material cambian solos con el paquete (diseno/tokens.css),
    también el ámbar y el peligro, que el paquete aclara sobre oscuro (≥ 4,5:1). */
 /* Densidad elegible. El interruptor de la barra la cambia sin JavaScript; el
@@ -96,19 +77,19 @@ html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:var(--t3);line-height:var(--lh);
   height:100dvh;overflow:hidden;-webkit-font-smoothing:antialiased}
 button{font-family:var(--ui)}
-/* Un solo foco para todo lo que se pulsa: el ámbar de la suite (--erlen-foco), 3 px. */
-:focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px;border-radius:var(--r1)}
+/* Un solo foco para todo lo que se pulsa: el ámbar de la suite (--tabula-foco), 3 px. */
+:focus-visible{outline:2px solid var(--tabula-foco);outline-offset:3px;border-radius:var(--r1)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
 
 /* ---------- shell ----------
-   El armazón lo pone el marco común (diseno/marco.css): #app aloja .erlen-marco y los
+   El armazón lo pone el marco común (diseno/marco.css): #app aloja .tabula-marco y los
    nodos del editor viven en sus huecos. Aquí solo cómo se reparte cada nodo dentro del
    hueco que le toca. */
 .app{display:flex;flex-direction:column;height:100dvh}
-.erlen-marco-navegacion>.filmstrip{height:100%;border-right:0}
-.erlen-marco-trabajo>.canvas-wrap{height:100%}
-.erlen-marco-detalles>.inspector{height:100%;border-left:0}
+.tabula-marco-navegacion>.filmstrip{height:100%;border-right:0}
+.tabula-marco-trabajo>.canvas-wrap{height:100%}
+.tabula-marco-detalles>.inspector{height:100%;border-left:0}
 
 /* ---------- controles de la cabecera ----------
    El cristal del marco trae su propio fondo; aquí solo la geometría de los controles
@@ -117,10 +98,10 @@ button{font-family:var(--ui)}
 /* Las acciones y las utilidades de la cabecera van siempre en una sola fila, centradas con el
    resto de la cabecera: como bloques con hijos en línea, el separador (un div) cortaba la fila
    y «Presentar» caía a una segunda, y la línea de base inflaba la altura de la cabecera. */
-.cabecera-acciones,.cabecera-utilidades{display:flex;align-items:center;flex-wrap:nowrap;gap:var(--erlen-esp-2)}
+.cabecera-acciones,.cabecera-utilidades{display:flex;align-items:center;flex-wrap:nowrap;gap:var(--tabula-esp-2)}
 .cabecera-acciones>*,.cabecera-utilidades>*{flex:none}
-.cabecera-acciones .btn,.cabecera-acciones .icon-btn{min-height:var(--erlen-alto-control)}
-.cabecera-acciones .icon-btn{min-width:var(--erlen-alto-control)}
+.cabecera-acciones .btn,.cabecera-acciones .icon-btn{min-height:var(--tabula-alto-control)}
+.cabecera-acciones .icon-btn{min-width:var(--tabula-alto-control)}
 .deck-title{flex:1;width:8rem;min-width:60px;border:1px solid transparent;background:transparent;color:var(--ink);
   font:600 var(--t3) var(--ui);padding:var(--e2) var(--e3);border-radius:var(--r2);text-overflow:ellipsis;
   min-height:var(--h-ctl);transition:background .12s,border-color .12s}
@@ -331,10 +312,10 @@ input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 
 /* layout picker popover: vidrio inline, porque showMenu crea el nodo nuevo en
    cada apertura y no puede llevar la clase .vidrio */
-.pop{position:absolute;z-index:80;background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r3);
-  box-shadow:var(--glass-relieve),var(--shadow-lg);padding:var(--e3);
-  transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
+.pop{position:absolute;z-index:80;background:var(--panel);backdrop-filter:none;
+  backdrop-filter:none;border:1px solid var(--line);border-radius:var(--r3);
+  box-shadow:var(--shadow),var(--shadow-lg);padding:var(--e3);
+  transition:opacity .12s ease;animation:abrePanel .12s ease}
 .lay-grid{display:grid;grid-template-columns:repeat(3,86px);gap:var(--e2);margin-bottom:var(--e3)}
 /* El rótulo respira por arriba: es lo que abre cada apartado. */
 .sublabel{display:block;font-size:var(--t0);font-weight:700;letter-spacing:var(--ls-rotulo);text-transform:uppercase;
@@ -352,16 +333,16 @@ input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 .lp i{position:absolute;background:var(--accLine);border-radius:1px}
 
 /* ---------- modals ---------- */
-.mask{position:fixed;inset:0;background:color-mix(in srgb,var(--erlen-espacio-fondo) 48%,transparent);z-index:100;display:flex;align-items:center;
+.mask{position:fixed;inset:0;background:color-mix(in srgb,var(--tabula-espacio-fondo) 48%,transparent);z-index:100;display:flex;align-items:center;
   justify-content:center;padding:var(--e5)}
 /* Cristal inline como .pop (openModal también lo crea nuevo), el de
-   dialog.erlen-dialogo del paquete. La máscara solo vela: el único
+   dialog.tabula-dialogo del paquete. La máscara solo vela: el único
    desenfoque es el del propio diálogo (pocas capas, §0.1). */
-.modal{background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-edge);border-radius:var(--r4);
-  box-shadow:var(--glass-relieve),var(--erlen-sombra-panel);
+.modal{background:var(--panel);backdrop-filter:none;backdrop-filter:none;
+  border:1px solid var(--line);border-radius:var(--r4);
+  box-shadow:var(--shadow),var(--tabula-sombra-panel);
   width:min(760px,100%);max-height:min(88dvh,760px);display:flex;flex-direction:column;overflow:hidden;
-  transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
+  transition:opacity .12s ease;animation:abrePanel .12s ease}
 .modal.modal-sm{width:min(460px,100%)}
 .modal.modal-lg{width:min(880px,100%)}
 /* La cabecera se separa con un cambio de fondo; abajo sí hace falta la raya. */
@@ -412,10 +393,10 @@ input[type=range]{accent-color:var(--acc);width:100%;height:22px}
 /* toast */
 .toasts{position:fixed;bottom:var(--e5);left:50%;transform:translateX(-50%);z-index:200;display:flex;
   flex-direction:column;gap:var(--e2);align-items:center;pointer-events:none}
-.toast{background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-edge);color:var(--ink);font-size:var(--t2);font-weight:500;padding:var(--e3) var(--e5);
+.toast{background:var(--panel);backdrop-filter:none;backdrop-filter:none;
+  border:1px solid var(--line);color:var(--ink);font-size:var(--t2);font-weight:500;padding:var(--e3) var(--e5);
   border-radius:var(--r3);
-  box-shadow:var(--glass-relieve),var(--shadow-lg);
+  box-shadow:var(--shadow),var(--shadow-lg);
   max-width:min(520px,90vw);text-align:center;animation:toastIn .18s ease}
 .toast.warn{border-color:var(--warn)}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -434,10 +415,10 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
   font-size:var(--t2);color:var(--ink)}
 
 /* menu: cristal inline como .pop (mismo showMenu de nacimiento) */
-.menu{position:absolute;z-index:90;background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r3);
-  box-shadow:var(--glass-relieve),var(--shadow-lg);padding:var(--e2);min-width:232px;
-  transition:transform .38s var(--spring-panel),opacity .18s ease;animation:abreGlass .38s var(--spring-panel)}
+.menu{position:absolute;z-index:90;background:var(--panel);backdrop-filter:none;
+  backdrop-filter:none;border:1px solid var(--line);border-radius:var(--r3);
+  box-shadow:var(--shadow),var(--shadow-lg);padding:var(--e2);min-width:232px;
+  transition:opacity .12s ease;animation:abrePanel .12s ease}
 .menu button{display:flex;align-items:center;gap:var(--e3);width:100%;border:none;background:transparent;
   color:var(--ink);font:500 var(--t2) var(--ui);padding:var(--e2) var(--e3);min-height:var(--h-ctl);
   border-radius:var(--r2);cursor:pointer;text-align:left}
@@ -456,8 +437,8 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
   .only-narrow{display:inline-flex}
   .only-narrow-i{display:inline}
   /* En la barra inferior del marco hay ancho de sobra: «Presentar» lleva su texto, no solo el icono. */
-  .erlen-marco-barra-accion .only-wide-i{display:inline!important}
-  .erlen-marco-barra-accion .only-narrow-i{display:none!important}
+  .tabula-marco-barra-accion .only-wide-i{display:inline!important}
+  .tabula-marco-barra-accion .only-narrow-i{display:none!important}
   .deck-title{min-width:0;font-size:var(--t2);padding:var(--e1) var(--e2)}
   .save-ind{display:none}
   /* el ajuste de zoom reserva 22 px en total: el aire de aquí no puede pasarse */
@@ -486,9 +467,9 @@ kbd{font:600 var(--t0) var(--mono);background:var(--panel2);border:1px solid var
    partir las palabras. */
 .help-tabs{display:flex;flex-wrap:wrap;gap:var(--e1);margin:-4px 0 var(--e4)}
 .help-tabs button{border:1px solid transparent;background:transparent;color:var(--mut);font:600 var(--t1) var(--ui);
-  padding:var(--e2) var(--e3);cursor:pointer;border-radius:var(--erlen-radio-capsula);white-space:nowrap}
-.help-tabs button:hover{color:var(--ink);background:var(--erlen-vidrio-tinte)}
-.help-tabs button.on{color:var(--acc);background:var(--glass-fondo);border-color:var(--glass-edge);box-shadow:var(--glass-relieve)}
+  padding:var(--e2) var(--e3);cursor:pointer;border-radius:var(--tabula-radio-capsula);white-space:nowrap}
+.help-tabs button:hover{color:var(--ink);background:var(--tabula-verde-suave)}
+.help-tabs button.on{color:var(--acc);background:var(--panel);border-color:var(--line);box-shadow:var(--shadow)}
 .glo{padding:var(--e3) 0 var(--e3);border-bottom:1px solid var(--line2)}
 .glo:last-child{border-bottom:none}
 .glo b{display:block;font-size:var(--t2);color:var(--ink);margin-bottom:3px}
@@ -974,11 +955,11 @@ textarea.field.es-area{min-height:300px;font:var(--t2)/1.6 var(--mono);white-spa
 .pd-item .icon-btn{flex:none;width:24px;height:24px;font-size:var(--t1)}
 
 /* ---------- modo concentración ---------- */
-.app.concentrado .erlen-app-header,
-.app.concentrado .erlen-marco-cinta,
-.app.concentrado .erlen-marco-navegacion,
-.app.concentrado .erlen-marco-detalles{display:none}
-.app.concentrado .erlen-marco-cuerpo{grid-template-columns:minmax(0,1fr)}
+.app.concentrado .tabula-app-header,
+.app.concentrado .tabula-marco-cinta,
+.app.concentrado .tabula-marco-navegacion,
+.app.concentrado .tabula-marco-detalles{display:none}
+.app.concentrado .tabula-marco-cuerpo{grid-template-columns:minmax(0,1fr)}
 .app.concentrado .canvas-scroll{padding:var(--e5) var(--e5) var(--pie-lienzo)}
 
 /* ---------- simulacro de sala ---------- */
@@ -1277,10 +1258,10 @@ body.con-dis .app{width:calc(100% - 372px);transition:width .22s cubic-bezier(.3
    La cinta es el componente local de diseno/cinta.css y diseno/cinta.js.
    Aquí solo su sitio en el editor y el panel de detalles que se abre desde ella. */
 .cinta{flex:none;min-width:0;position:relative;z-index:5}
-.cinta .erlen-cinta{border-bottom-color:var(--line)}
+.cinta .tabula-cinta{border-bottom-color:var(--line)}
 /* Al cambiar de tema, el color y el fondo de los interruptores deben cambiar
    juntos para no perder contraste durante la transición entre claro y oscuro. */
-.cinta .erlen-cinta-boton:is([data-control="lienzo-libre"],[data-control="lienzo-iman"]){transition-property:border-color,box-shadow}
+.cinta .tabula-cinta-boton:is([data-control="lienzo-libre"],[data-control="lienzo-iman"]){transition-property:border-color,box-shadow}
 .cinta-cerrar{display:flex;align-items:center;gap:var(--e2);padding:var(--e2) var(--e3);border-bottom:1px solid var(--line);
   font:600 var(--t1) var(--ui);color:var(--mut)}
 .cinta-cerrar span{flex:1}
@@ -1598,16 +1579,14 @@ details.zot-arch > div{margin-top:var(--e2)}
 .ins-btn .ic{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;
   background:var(--accSoft);color:var(--acc);font-size:17px;transition:transform .15s,background .15s}
 .ins-btn .lb{color:var(--ink);font-weight:500}
-.ins-btn:hover{transform:translateY(-1px);border-color:color-mix(in srgb, var(--acc) 40%, var(--line));
-  background:var(--panel);box-shadow:0 8px 20px -10px color-mix(in srgb, var(--acc) 45%, transparent), var(--shadow)}
-.ins-btn:hover .ic{background:var(--acc);color:var(--accInk);transform:scale(1.06)}
+.ins-btn:hover{border-color:var(--acc);background:var(--panel)}
 .ins-btn:active{transform:none}
 .panel-label{letter-spacing:.13em}
 .panel-label::before{content:"";display:inline-block;width:10px;height:2px;background:var(--acc);margin-right:8px;vertical-align:3px;border-radius:1px}
 
 /* pestañas del panel: una píldora en vez de un subrayado */
-.insp-tabs{background:var(--panel2);border-radius:999px;padding:4px;margin:var(--e3) var(--e3) 0;gap:2px}
-.itab{border-radius:999px;border-bottom:none;padding:7px 10px}
+.insp-tabs{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:4px;margin:var(--e3) var(--e3) 0;gap:2px}
+.itab{border-radius:var(--r1);padding:6px 10px;min-height:44px}
 .itab:hover{background:transparent}
 .itab.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
 

@@ -11,7 +11,7 @@
      se dice en la respuesta y en el pie propuesto; nunca en silencio. */
 (function () {
   'use strict';
-  const U = ERLEN_MCP.util, falla = U.falla, avisa = U.avisa;
+  const U = TABULA_MCP.util, falla = U.falla, avisa = U.avisa;
   const numTexto = v => isFinite(v) ? String(+(+v).toPrecision(10)) : '';
   const redondea = (v, n) => +(+v).toPrecision(n || 6);
 
@@ -73,7 +73,7 @@
   const SUSTANTIVO = { xrd: 'Difractogramas de rayos X', ftir: 'Espectros FTIR', raman: 'Espectros Raman', uvvis: 'Espectros UV-Vis',
     pl: 'Espectros de fotoluminiscencia', tga: 'Termogramas (TGA)', cv: 'Voltamperogramas' };
 
-  ERLEN_MCP.registra('graficasCompara', a => {
+  TABULA_MCP.registra('graficasCompara', a => {
     const d = a.deck;
     const archivos = a.archivos || [];
     const normalizar = a.normalizar == null ? 'ninguno' : String(a.normalizar);
@@ -183,7 +183,7 @@
     if (apiladas) b.offsetPct = offsetPct;
     b.legend = true;
     const nombres = series.map(s => s.nombre);
-    const hash = ERLEN_MCP_HUELLA(texto);
+    const hash = TABULA_MCP_HUELLA(texto);
     b.fuente = { nombre: String(series.map(s => s.f.archivo).join(' + ')).slice(0, 120), cuando: new Date().toISOString().slice(0, 10),
       n: filas.length, huella: hash, instrumento: conTec ? tec.n : undefined };
 
@@ -247,7 +247,7 @@
   /* ---------- recorte de archivo_datos (transformaBloque) ----------
      La técnica se detecta con el archivo completo, antes de recortar: un
      difractograma recortado a 5–15° ya no parecería uno. */
-  ERLEN_MCP.registra('graficasRecorta', a => {
+  TABULA_MCP.registra('graficasRecorta', a => {
     const [lo, hi] = intervalo(a.intervalo_x);
     const t = parseTable(a.texto);
     if (t.rows.length < 2 || t.headers.length < 2) falla('No se reconocieron al menos dos columnas numéricas y dos filas en «' + a.nombre + '».');
@@ -293,7 +293,7 @@
   }
   const esDrx = b => b.tecnica === 'xrd' || /2\s*θ|2\s*\\theta|2theta/i.test(String(b.xlabel || ''));
 
-  ERLEN_MCP.registra('graficasPicos', a => {
+  TABULA_MCP.registra('graficasPicos', a => {
     const d = a.deck, f = U.buscaBloque(d, a.bloque), b = f.bloque;
     if (b.type !== 'chart') falla('marcar_picos trabaja sobre bloques «chart»; este es «' + b.type + '».');
     if ((b.kind || 'linea') === 'barras') falla('En una gráfica de barras no hay picos que marcar.');
@@ -386,7 +386,7 @@
   /* ---------- revisión ----------
      Un rótulo de pico que ya no cae en un punto de su serie (se cambiaron los
      datos a mano o se volvieron a leer) señala algo que la figura no muestra. */
-  ERLEN_MCP.registraRevision('picos-sin-dato', deck => {
+  TABULA_MCP.registraRevision('picos-sin-dato', deck => {
     const out = [];
     deck.slides.forEach((sl, i) => zonas(sl).flat().forEach(b => {
       if (!b || b.type !== 'chart' || !Array.isArray(b.picos) || !b.picos.length) return;

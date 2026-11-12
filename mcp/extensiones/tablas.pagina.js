@@ -9,7 +9,7 @@
    dígitos, sin el error binario que convierte 1,005 en 1,00. */
 (function () {
   'use strict';
-  const { falla } = ERLEN_MCP.util;
+  const { falla } = TABULA_MCP.util;
 
   /* ---------- leer el archivo ----------
      Separador y coma decimal con las mismas reglas que parseTable
@@ -162,7 +162,7 @@
      misma posición decimal que la última cifra de su incertidumbre. */
   const redondeaError = (e, cifrasError) => aCifras(e, cifrasError || (e.dig[0] === '1' ? 2 : 1));
 
-  ERLEN_MCP.registra('tablaDesdeTexto', a => {
+  TABULA_MCP.registra('tablaDesdeTexto', a => {
     const nombre = a.nombre || 'archivo';
     const o = a.opciones || {};
     const lineas = String(a.texto || '').replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim() !== '');
@@ -374,9 +374,9 @@
      comprueba antes de la operación; y si el pie nombraba otro archivo
      («Datos: a.csv.»), esa frase se quita: no se atribuye a un archivo lo
      que ya no viene de él. */
-  const ejecuta = ERLEN_MCP.ejecuta;
-  const { buscaBloque, ErrorMcp } = ERLEN_MCP.util;
-  ERLEN_MCP.ejecuta = function (op, json) {
+  const ejecuta = TABULA_MCP.ejecuta;
+  const { buscaBloque, ErrorMcp } = TABULA_MCP.util;
+  TABULA_MCP.ejecuta = function (op, json) {
     if (op !== 'editaBloque' || String(json).indexOf('"archivo_tabla"') < 0) return ejecuta(op, json);
     let a;
     try { a = JSON.parse(json); } catch (e) { return ejecuta(op, json); }

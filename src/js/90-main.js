@@ -24,31 +24,32 @@ function showMenu(menu, anchor) {
   _menuLibreCleanup=()=>{clearTimeout(timer);document.removeEventListener('mousedown',off);limpia();};
 }
 
-/* Preferencias de la aplicación: no modifican el tema de la presentación. */
+/* Preferencias de la aplicación: tema claro/oscuro/sistema y densidad cómoda/compacta.
+   No modifican el tema de la presentación. */
 function openAparienciaApp() {
   const opciones = lista => lista.map(({ id, nombre }) => h('option', { value: id }, nombre));
   const tema = h('select', { id: uid(), class: 'field', onchange: e => cambiaTemaApp(e.target.value) },
-    opciones([{ id: 'auto', nombre: 'Según el sistema' }, { id: 'claro', nombre: 'Claro' }, { id: 'oscuro', nombre: 'Oscuro' }]));
-  const color = h('select', { id: uid(), class: 'field', onchange: e => colorTabula.guardar(window, e.target.value) }, opciones(colorTabula.colores));
-  const estilo = h('select', { id: uid(), class: 'field', onchange: e => colorTabula.guardarEstilo(window, e.target.value) }, opciones(colorTabula.estilos));
+    opciones([{ id: 'auto', nombre: 'Sistema' }, { id: 'claro', nombre: 'Claro' }, { id: 'oscuro', nombre: 'Oscuro' }]));
+  const densidades = [{ id: 'comoda', nombre: 'Cómoda' }, { id: 'compacta', nombre: 'Compacta' }];
+  const densidad = h('select', { id: uid(), class: 'field', onchange: e => {
+    const d = e.target.value;
+    document.documentElement.dataset.dens = d;
+    S.prefs.densidad = d; guardaPrefs();
+  } }, opciones(densidades));
   tema.value = ['auto', 'claro', 'oscuro'].includes(S.prefs.tema) ? S.prefs.tema : 'auto';
-  const sincroniza = () => { color.value = colorTabula.leer(window); estilo.value = colorTabula.leerEstilo(window); };
+  densidad.value = ['comoda', 'compacta'].includes(S.prefs.densidad) ? S.prefs.densidad
+    : (document.querySelector('#densChk')?.checked ? 'compacta' : 'comoda');
   const fila = (nombre, campo) => h('div', { class: 'irow' }, h('label', { for: campo.id }, nombre), h('div', { style: 'flex:1.4' }, campo));
-  sincroniza();
   openModal({
-    title: 'Apariencia de Tabula', size: 'modal-sm',
+    title: 'Apariencia de Lámina', size: 'modal-sm',
     body: h('div', null,
       h('p', null, 'Estos ajustes cambian la aplicación, no las diapositivas. Se aplican al momento.'),
-      fila('Tema', tema), fila('Color de acento', color), fila('Estilo visual', estilo),
-      h('p', null, 'Se guardan en este navegador; si el almacenamiento está bloqueado, duran solo esta sesión.')),
+      fila('Tema', tema), fila('Densidad', densidad)),
     foot: [h('button', { class: 'btn', onclick: () => {
       cambiaTemaApp('auto'); tema.value = 'auto';
-      colorTabula.guardar(window, 'verde'); colorTabula.guardarEstilo(window, 'original');
-    } }, 'Restablecer'), h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Cerrar')],
-    onclose: () => { window.removeEventListener('tabula-color', sincroniza); window.removeEventListener('tabula-estilo', sincroniza); }
+      document.documentElement.dataset.dens = 'comoda'; S.prefs.densidad = 'comoda'; guardaPrefs(); densidad.value = 'comoda';
+    } }, 'Restablecer'), h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Cerrar')]
   });
-  window.addEventListener('tabula-color', sincroniza);
-  window.addEventListener('tabula-estilo', sincroniza);
 }
 
 function initShortcuts() {
@@ -148,7 +149,9 @@ function initChrome() {
       h('button', { onclick: () => { closeMenus(); presentaEnsayo(); } }, h('span', { class: 'mi' }, '⏱'), h('span', null, 'Ensayar con cronómetro'), h('span', { class: 'msub' }, 'mide tu tiempo real')));
     showMenu(menu, e.currentTarget);
   });
-  $('#exportBtn').addEventListener('click', e => openExport(e.currentTarget));
+  $('#exportBtn')?.addEventListener('click', e => openExport(e.currentTarget));
+  const shareBtn = $('#shareBtn');
+  if (shareBtn) shareBtn.addEventListener('click', e => { if (typeof openCompartir === 'function') openCompartir(); else openExport(e.currentTarget); });
   const mkItem = menu => (ic, label, sub, fn) => menu.append(h('button', { onclick: () => { closeMenus(); fn(); pistaAtajo(leeAtajo(sub), label); } },
     h('span', { class: 'mi' }, ic), h('span', null, label), sub ? h('span', { class: 'msub' }, sub) : null));
   function fileMenu(anchor) {
@@ -228,11 +231,11 @@ function initChrome() {
   $('#zoomIn').addEventListener('click', () => { S.zoom = clamp((S.zoom || effZoom()) * 1.2, 0.1, 3); renderCanvas(); });
   $('#zoomOut').addEventListener('click', () => { S.zoom = clamp((S.zoom || effZoom()) / 1.2, 0.1, 3); renderCanvas(); });
   $('#zoomFit').addEventListener('click', () => { S.zoom = null; renderCanvas(); });
-  $('#sorterBtn').addEventListener('click', alternaClasificador);
+  $('#sorterBtn')?.addEventListener('click', alternaClasificador);
   $('#prepInd').addEventListener('click', () => openRevision());
-  $('#concBtn').addEventListener('click', () => alternaConcentracion());
+  $('#concBtn')?.addEventListener('click', () => alternaConcentracion());
   $$('.itab').forEach(t => t.addEventListener('click', () => {
-    S.tab = t.dataset.tab;
+    S.tab = t.dataset.tab; // visible Insertar|Propiedades|Notas -> interno insert|slide|design|bloque|notes
     $$('.itab').forEach(x => { const activo = x === t; x.classList.toggle('on', activo); x.setAttribute('aria-selected', String(activo)); x.tabIndex = activo ? 0 : -1; });
     renderInspector(); openDrawer(true);
   }));
@@ -273,8 +276,8 @@ function cierraDrawer() {
 function detallesEstado() {
   const insp = $('#inspector');
   if (!insp) return null;
-  if (window.matchMedia('(max-width:920px)').matches) return insp.closest('.erlen-marco-cajon') ? 'cajon' : null;
-  return insp.closest('.erlen-marco-cuerpo')?.classList.contains('con-detalles') ? 'columna' : null;
+  if (window.matchMedia('(max-width:920px)').matches) return insp.closest('.tabula-marco-cajon') ? 'cajon' : null;
+  return insp.closest('.tabula-marco-cuerpo')?.classList.contains('con-detalles') ? 'columna' : null;
 }
 /* El marco enseña u oculta el panel (abrirDetalles/cerrarDetalles) según el estado de la
    app: idempotente, y conserva la selección y el foco del editor al mover los nodos. */
@@ -311,8 +314,8 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => {
   const t = e.target;
   if (!(t instanceof Element) || !$('#inspector')?.classList.contains('open')) return;
-  if (t.closest('.erlen-marco-cajon-cerrar') || t.closest('.erlen-marco-mascara')) cierraDrawer();
-  else if (t.closest('.erlen-marco-abrir-cajon')) openDrawer(false);
+  if (t.closest('.tabula-marco-cajon-cerrar') || t.closest('.tabula-marco-mascara')) cierraDrawer();
+  else if (t.closest('.tabula-marco-abrir-cajon')) openDrawer(false);
 }, true);
 
 /* ---------- arranque ---------- */
@@ -320,6 +323,7 @@ function boot() {
   montaMarco();
   S.prefs = cargaPrefs();
   aplicaTemaApp();
+  if (typeof aplicaDensidadApp === 'function') aplicaDensidadApp();
   const auto = lsGet(LS_AUTO, null);
   S.respaldoId = null;
   let rescatado = null, sitio = null;
@@ -347,6 +351,8 @@ function boot() {
   snapNow();
   initChrome();
   initCanvasEvents();
+  const modoGuion = $('#modoGuion');
+  if (modoGuion) modoGuion.addEventListener('click', () => { if (typeof openEditorGuion === 'function') openEditorGuion({ dialecto: 'qmd', nuevo: false }); else toast('Guion pendiente de implementar (paso 4).', 'warn'); });
   initShortcuts();
   initPresentTouch();
   initEntrada();
@@ -387,7 +393,7 @@ function avisaAutoRoto() {
       h('button', { class: 'btn', onclick: () => closeModal() }, 'Ahora no'),
       h('button', { class: 'btn', onclick: openRecuperacion }, 'Buscar versiones anteriores'),
       h('button', { class: 'btn btn-pri', onclick: () => {
-        downloadFile('erlen-rescate.json', JSON.stringify(roto, null, 1), 'application/json');
+        downloadFile('tabula-rescate.json', JSON.stringify(roto, null, 1), 'application/json');
         closeModal();
       } }, 'Descargar lo que había')
     ]

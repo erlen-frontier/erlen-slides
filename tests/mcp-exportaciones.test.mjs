@@ -94,7 +94,7 @@ test('MCP exportaciones: figuras e informe, sin Chromium', {timeout: 180000}, as
     Object.values(svgs).forEach(bienFormado);
     const textos = [...bienFormado(svgs.chart).getElementsByTagName('text')].map(t => t.textContent);
     assert.ok(textos.includes(chart.xlabel) && textos.includes(chart.ylabel), 'rótulos de los ejes en el SVG: ' + chart.xlabel);
-    assert.match(svgs.chart, /erlen-scientific-figure-v1/);
+    assert.match(svgs.chart, /tabula-scientific-figure-v1/);
     assert.doesNotMatch(svgs.estruct, /var\(--|inherit/, 'sin variables de CSS ni letra heredada');
     assert.match(svgs.estruct, /<text[^>]*>O<\/text>/);
     /* El CSV son los datos de la gráfica, con punto decimal. */
@@ -107,7 +107,7 @@ test('MCP exportaciones: figuras e informe, sin Chromium', {timeout: 180000}, as
     assert.equal(i.error, false, i.texto);
     assert.equal(i.datos.archivo, 'salidas/informe.json');
     const inf = JSON.parse(readFileSync(join(dir, 'salidas', 'informe.json'), 'utf8'));
-    assert.equal(inf.schema, 'erlen-export-report-v1');
+    assert.equal(inf.schema, 'tabula-export-report-v1');
     assert.equal(inf.deck.slides, 4);
     assert.deepEqual(i.datos.resumen, inf.summary);
 
@@ -170,7 +170,7 @@ test('MCP exportaciones: png, folleto y paquete en Chromium', {timeout: 300000},
     bienFormado(zip.get('figuras/figura-' + chart.id.slice(0, 8) + '.svg').toString());
     assert.ok([...zip.keys()].some(n => /^figuras\/figura-\w+\.png$/.test(n)), 'la imagen original');
     assert.match(zip.get('LEEME.txt').toString(), /datos\/\s+Los datos de cada gráfica/);
-    assert.equal(JSON.parse(zip.get('informe-exportacion.json')).schema, 'erlen-export-report-v1');
+    assert.equal(JSON.parse(zip.get('informe-exportacion.json')).schema, 'tabula-export-report-v1');
     assert.match(zip.get('presentacion.tex').toString(), /\\begin\{document\}/);
   });
 });

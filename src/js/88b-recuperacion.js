@@ -6,10 +6,10 @@ function recDB() {
   if (RECUP.db) return RECUP.db;
   RECUP.db = new Promise((resolve,reject) => {
     if (typeof indexedDB === 'undefined') { reject(new Error('Sin almacenamiento de recuperación')); return; }
-    const req = indexedDB.open('erlen-slides-recuperacion-v1',1);
+    const req = indexedDB.open('tabula-recuperacion-v1',1);
     req.onupgradeneeded = () => req.result.createObjectStore('copias',{keyPath:'id',autoIncrement:true});
     req.onerror = () => reject(req.error);
-    req.onblocked = () => reject(new Error('Cierra otras pestañas de Tabula para activar las copias'));
+    req.onblocked = () => reject(new Error('Cierra otras pestañas de Lámina para activar las copias'));
     req.onsuccess = () => {const db=req.result;db.onversionchange=()=>{db.close();RECUP.db=null;};resolve(db);};
   }).catch(e=>{RECUP.db=null;throw e;});
   return RECUP.db;
@@ -133,10 +133,10 @@ async function recExportaBiblioteca() {
   flushEdicion();saveInd.now();
   const proyectos=Object.entries(decksStore()).map(([nombre,v])=>({nombre,deck:v.deck}));
   if (!S.deckName || !proyectos.some(p=>p.nombre===S.deckName && JSON.stringify(p.deck)===JSON.stringify(S.deck))) proyectos.push({nombre:S.deckName || S.deck.meta.title || 'Sin nombre',deck:deepCopy(S.deck)});
-  const paquete={formato:'erlen-respaldo-v1',creado:new Date().toISOString(),proyectos};
+  const paquete={formato:'tabula-respaldo-v1',creado:new Date().toISOString(),proyectos};
   const datos=JSON.stringify(paquete);
   if(proyectos.length>200 || new TextEncoder().encode(datos).byteLength>RECUP.maxBytes) {toast('La biblioteca supera el límite de este respaldo (200 presentaciones o 32 MB). Descarga el ZIP desde Inicio → Herramientas o los proyectos individuales.','warn');return;}
-  await downloadFile('erlen-respaldo-'+new Date().toISOString().slice(0,10)+'.json',datos,'application/json');
+  await downloadFile('tabula-respaldo-'+new Date().toISOString().slice(0,10)+'.json',datos,'application/json');
 }
 function openRecuperacion() {
   flushEdicion();
@@ -152,7 +152,7 @@ function openRecuperacion() {
     preparado=null;importar.disabled=true;const f=archivo.files[0];if(!f)return;
     try {
       if(f.size>RECUP.maxBytes)throw new Error('Este respaldo supera 32 MB. Importa sus proyectos individualmente.');
-      const p=JSON.parse(await f.text());if(p.formato!=='erlen-respaldo-v1')throw new Error('Elige un respaldo de biblioteca compatible. Los proyectos individuales se importan desde Archivo.');
+      const p=JSON.parse(await f.text());if(p.formato!=='tabula-respaldo-v1')throw new Error('Elige un respaldo de biblioteca compatible. Los proyectos individuales se importan desde Archivo.');
       recMezcla(decksStore(),p.proyectos);preparado=p.proyectos;importar.disabled=false;
       aviso.textContent=`${p.proyectos.length} presentaciones listas. Se crearán copias sin reemplazar tu biblioteca.`;
     }catch(e){aviso.textContent=e instanceof SyntaxError?'El archivo está incompleto o no es JSON válido.':e.message;}
@@ -169,7 +169,7 @@ function openRecuperacion() {
           try {const nombres=recImporta([{nombre:c.nombre,deck:JSON.parse(c.datos)}]);aviso.textContent='Copia creada: '+nombres[0]+'. Ábrela desde Archivo. Tu presentación actual sigue intacta.';actualizar();}
           catch(e){aviso.textContent=e.message;}
         }},'Restaurar como copia'),
-        h('button',{class:'btn btn-sm',onclick:()=>downloadFile('erlen-version-'+c.id+'.json',c.datos,'application/json')},'Descargar versión'),
+        h('button',{class:'btn btn-sm',onclick:()=>downloadFile('tabula-version-'+c.id+'.json',c.datos,'application/json')},'Descargar versión'),
         !historiales.has(c.clave) && (historiales.add(c.clave),h('button',{class:'btn btn-sm btn-danger',onclick:async()=>{
           if(!confirm('¿Eliminar todas las versiones de «'+c.nombre+'»? No se puede deshacer. La biblioteca y el documento abierto seguirán intactos. Si sigues editándolo o vuelve a abrirse desde la biblioteca, se crearán nuevas copias.'))return;
           try {await recEliminar(c.clave);aviso.textContent='Historial eliminado. La biblioteca y el documento abierto no cambiaron.';actualizar();}

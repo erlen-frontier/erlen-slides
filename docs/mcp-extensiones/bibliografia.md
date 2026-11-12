@@ -39,10 +39,10 @@ Los títulos de Crossref vienen con marcado JATS: `<sub>2</sub>` pasa a «₂» 
 Está **apagada por omisión**, porque sale a internet. Para activarla, en la configuración del cliente MCP:
 
 ```json
-"env": {"ERLEN_SLIDES_DIR": "…", "ERLEN_SLIDES_RED": "1", "ERLEN_SLIDES_CORREO": "tu@correo"}
+"env": {"TABULA_DIR": "…", "TABULA_RED": "1", "TABULA_CORREO": "tu@correo"}
 ```
 
-`ERLEN_SLIDES_CORREO` es opcional: va en el `User-Agent` (`ErlenSlides/<versión> (https://github.com/erlen-frontier/erlen-slides; mailto:…)`), como pide Crossref para su servicio «polite». Sin `ERLEN_SLIDES_RED=1` la herramienta responde con un error que explica esto y no toca el proyecto. La consulta espera como mucho 15 s. `ERLEN_SLIDES_CROSSREF` cambia la dirección de Crossref y solo lo usan las pruebas, con un servidor local.
+`TABULA_CORREO` es opcional: va en el `User-Agent` (`Tabula/<versión> (https://github.com/erlen-frontier/erlen-slides; mailto:…)`), como pide Crossref para su servicio «polite». Sin `TABULA_RED=1` la herramienta responde con un error que explica esto y no toca el proyecto. La consulta espera como mucho 15 s. `TABULA_CROSSREF` cambia la dirección de Crossref y solo lo usan las pruebas, con un servidor local.
 
 ## Revisión
 

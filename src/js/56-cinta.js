@@ -18,7 +18,7 @@ function enCinta() { return disposicion() === 'arriba'; }
 
 /* ---------- iconos: SVG de lucide incrustados en el build (herramientas/build.mjs) ---------- */
 function icCinta(nombre) {
-  const d = window.ERLEN_ICONOS && window.ERLEN_ICONOS[nombre];
+  const d = window.TABULA_ICONOS && window.TABULA_ICONOS[nombre];
   if (!d) return null;
   const esc = v => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
@@ -85,6 +85,17 @@ function cintaInicio() {
 function cintaInsertar() {
   const zonas = () => zonasDe(curSlide().layout);
   return { id: 'insertar', etiqueta: 'Insertar', grupos: [
+    grupoC('Diapositivas',
+      menuC('nueva', 'Nueva', 'SquarePlus', () => LAYOUTS.map(l => ({ etiqueta: l.name, descripcion: l.d, accion: () => addSlide(l.id) })),
+        { d: 'Nueva diapositiva con el acomodo que elijas; Ctrl+M añade una de contenido' }),
+      peque('duplicar-diapo', 'Duplicar', 'Copy', () => dupSlide(S.cur), { atajo: 'Ctrl+D', d: 'Duplicar esta diapositiva' }),
+      peque('quitar-diapo', 'Eliminar', 'Trash2', () => delSlide(S.cur), { d: 'Eliminar esta diapositiva', deshabilitado: () => S.deck.slides.length <= 1 }),
+      peque('esquema', 'Desde un esquema', 'ListTree', openEsquema, { d: 'Pega tu índice y se vuelve diapositivas' })),
+    grupoC('Edición',
+      peque('organizar-bloques', 'Organizar bloques', 'Group', openOrganizarBloques, { d: 'Seleccionar, agrupar, bloquear y alinear varios bloques' }),
+      peque('guion-markdown', 'Desde Markdown', 'FileInput', openMarkdown),
+      peque('buscar', 'Buscar y reemplazar', 'Search', () => openBuscar(), { atajo: 'Ctrl+F' }),
+      peque('paleta', 'Ir a / hacer', 'Command', openPaleta, { atajo: 'Ctrl+K', d: 'Cualquier orden por su nombre' })),
     grupoC('Destino',
       menuC('zona', 'Zona', 'Columns3', () => {
         const nz = zonas(), nombres = NOMBRES_ZONA[curSlide().layout] || [];
@@ -142,6 +153,8 @@ function cintaDiseno() {
       peque('pie', 'Pie de página…', 'PanelBottom', openPieEditor, { d: 'Plantillas al estilo Beamer' }),
       peque('escudo', 'Escudo…', 'Shield', () => abrePanelLateral('design', 'Identidad institucional'), { d: 'Logotipo institucional' }),
       peque('estilos', 'Estilos guardados…', 'Bookmark', openEstilos, { d: 'Guardar y reutilizar una combinación de tema, color y tipografía' })),
+    grupoC('Diapositiva',
+      peque('panel-diapo', 'Más opciones…', 'PanelRight', () => abrePanelLateral('slide'), { d: 'Abre el panel de detalles de la diapositiva' })),
     grupoC('Detalles',
       peque('panel-diseno', 'Más opciones…', 'PanelRight', () => abrePanelLateral('design'), { d: 'Abre el panel de detalles de Diseño' }))
   ] };
@@ -200,6 +213,22 @@ function cintaPresentar() {
       grande('presentar', 'Desde el principio', 'Play', () => startPresent(false), { atajo: 'F5' }),
       peque('desde-aqui', 'Desde aquí', 'StepForward', () => startPresent(true), { atajo: 'Mayús+F5' }),
       peque('presentador', 'Vista de presentador', 'Presentation', () => { startPresent(false); alternaPresentador(); }, { d: 'Segunda ventana con cronómetro y notas' })),
+    grupoC('Preparar',
+      menuC('preparar', 'Preparar', 'NotebookPen', () => [
+        { etiqueta: 'Argumento', descripcion: 'La charla como cadena de afirmaciones', accion: alternaArgumento },
+        { etiqueta: 'Cuéntamelo', descripcion: 'Habla o pega lo que dirías y saca las afirmaciones', accion: openCuentamelo },
+        { etiqueta: 'Línea de tiempo', descripcion: 'La charla como línea de tiempo', accion: alternaLineaTiempo },
+        { etiqueta: 'Memoria', descripcion: 'Buscar en todas tus charlas', accion: () => openMemoria() },
+        { etiqueta: 'Tutor', descripcion: 'Las reglas que ya son tuyas', accion: openTutor },
+        { separador: true },
+        { etiqueta: 'Preguntas', descripcion: 'Las que te van a hacer, con su respaldo', accion: openPreguntas },
+        { etiqueta: 'Pendientes', descripcion: 'Anotados en esta diapositiva (F8)', accion: openPendientes },
+        { etiqueta: 'Lo aprendido', descripcion: 'Lo que confunde en tus charlas', accion: openAprendizaje },
+        { etiqueta: 'Ramas…', descripcion: 'La del comité, la de diez minutos…', accion: openRamas },
+        { separador: true },
+        { etiqueta: 'Organizar bloques', descripcion: 'Seleccionar, agrupar, bloquear y alinear varios bloques', accion: openOrganizarBloques },
+        { etiqueta: 'Desde Markdown', descripcion: 'Crear desde guion Markdown (vista previa)', accion: openMarkdown }
+      ], { d: 'Herramientas pedagógicas y de argumentación actuales' })),
     grupoC('Ensayo',
       peque('grabar', 'Grabar presentación', 'Video', openGrabacion),
       peque('ensayar', 'Ensayar', 'Timer', presentaEnsayo, { d: 'Mide tu tiempo real por diapositiva' }),
@@ -320,7 +349,7 @@ function elementosArchivo() {
   item('PenTool', 'Figura en SVG científico', 'gráfica o función seleccionada', exportFiguraSVG);
   item('ClipboardList', 'Informe de exportación', 'advertencias por formato', exportInformeExportacion);
   sep();
-  item('Info', 'Acerca de Tabula', 'versión y licencia', openEdicion);
+  item('Info', 'Acerca de Lámina', 'versión y licencia', openEdicion);
   item('HelpCircle', 'Ayuda y atajos', null, () => openHelp());
   return el;
 }
@@ -355,7 +384,7 @@ function abreArchivo(ancla) {
 /* ---------- montaje y refresco ---------- */
 let CINTA = null;
 function muestraPestanaCinta() {
-  const fila = $('#cinta .erlen-cinta-pestanas');
+  const fila = $('#cinta .tabula-cinta-pestanas');
   const tab = fila?.querySelector('[role=tab][aria-selected=true]');
   if (!tab || !fila.clientWidth) return;
   const borde = fila.getBoundingClientRect(), actual = tab.getBoundingClientRect();
@@ -365,11 +394,10 @@ function muestraPestanaCinta() {
 window.addEventListener('resize', muestraPestanaCinta);
 function configCinta() {
   return {
-    app: 'slides',
-    etiqueta: 'Herramientas de Slides',
+    etiqueta: 'Herramientas de Lámina',
     archivo: { etiqueta: 'Archivo', accion: abreArchivo },
-    pestanas: [cintaInicio(), cintaInsertar(), cintaDiseno(), cintaDiapositiva(), cintaPresentar(), cintaVista()],
-    contextuales: cintaContextual,
+    pestanas: [cintaInsertar(), cintaDiseno(), cintaPresentar()],
+    contextuales: () => [],
     alCambiar: muestraPestanaCinta,
     inicial: 'inicio'
   };
@@ -377,7 +405,20 @@ function configCinta() {
 /* The side layout has no mounted ribbon; derive the same available actions
    from the declarations so the command palette works in either layout. */
 function comandosCintaParaPaleta() {
-  if (CINTA) return CINTA.comandos().filter(c => c.clave !== 'archivo');
+  if (CINTA) { const live = CINTA.comandos().filter(c => c.clave !== 'archivo'); const seen = new Set(live.map(c => c.clave));
+    const config = configCinta(), out = [...live];
+    const pestanas = [cintaInicio(), cintaDiapositiva(), cintaVista()];
+    for (const p of pestanas) for (const g of p.grupos) for (const c of g.controles) {
+      if ((c.oculto && c.oculto()) || (c.deshabilitado && c.deshabilitado())) continue;
+      const clave = c.id || c.etiqueta;
+      if (seen.has(clave)) continue;
+      const ruta = [p.etiqueta, g.etiqueta];
+      if (c.tipo === 'menu') {
+        const opciones = typeof c.opciones === 'function' ? c.opciones() : (c.opciones || []);
+        for (const o of opciones) { if (o.separador || (o.deshabilitado && o.deshabilitado())) continue; out.push({ clave: clave + ' › ' + o.etiqueta, pestana: p.id, etiqueta: c.etiqueta + ' › ' + o.etiqueta, ruta, titulo: o.descripcion, habilitado: true, ejecutar: () => { o.accion?.(); } }); }
+      } else out.push({ clave, pestana: p.id, etiqueta: c.etiqueta, ruta, atajo: c.atajo, titulo: c.titulo, habilitado: true, ejecutar: () => c.accion?.() });
+    }
+    return out; }
   const config = configCinta(), out = [];
   const pestanas = [...config.pestanas, ...config.contextuales()];
   for (const p of pestanas) for (const g of p.grupos) for (const c of g.controles) {
@@ -412,9 +453,9 @@ function actualizaCinta() {
     return;
   }
   if (!S.deck) return;
-  if (!CINTA) CINTA = erlenCinta(host, configCinta());
+  if (!CINTA) CINTA = tabulaCinta(host, configCinta());
   else CINTA.actualizar();
-  const a = CINTA.elemento.querySelector('.erlen-cinta-archivo');
+  const a = CINTA.elemento.querySelector('.tabula-cinta-archivo');
   if (a && !a.hasAttribute('aria-haspopup')) {
     a.setAttribute('aria-haspopup', 'menu'); a.setAttribute('aria-expanded', 'false');
     a.title = 'Archivo: abrir, guardar, exportar y acerca de';
@@ -429,7 +470,7 @@ function actualizaCinta() {
   if (CINTA.elemento.querySelector('[data-pestana=bloque][aria-selected=true]')) {
     for (const c of (cintaContextual()[0]?.grupos || []).flatMap(g => g.controles)) {
       const b = CINTA.elemento.querySelector('[data-control="' + c.id + '"]');
-      const texto = b?.querySelector('.erlen-cinta-texto');
+      const texto = b?.querySelector('.tabula-cinta-texto');
       if (texto && texto.textContent !== c.etiqueta) texto.textContent = c.etiqueta;
       if (b) b.title = c.titulo;
     }
@@ -445,8 +486,13 @@ function abrePanelLateral(tab, seccion) {
   const visiblesAntes = detallesEstado() !== null;
   if (!body.classList.contains('panel-temporal')) detallesFoco = document.activeElement;
   /* Con la cinta, «Insertar» vive solo en la cinta: el panel abre en Diapositiva. */
-  S.tab = tab === 'bloque' && !blq() ? 'slide' : tab;
-  if (enCinta() && S.tab === 'insert') S.tab = 'slide';
+  // Propiedades visible = interno slide|design|bloque; foco en la sección pedida (Tema/Bloque/Diapositiva)
+  if (tab === 'design') S.tab = 'design';
+  else if (tab === 'bloque') S.tab = blq() ? 'bloque' : 'slide';
+  else if (tab === 'slide') S.tab = 'slide';
+  else if (tab === 'notes') S.tab = 'notes';
+  else if (tab === 'insert') S.tab = 'insert';
+  else S.tab = tab;
   const yaAbierto = body.classList.contains('panel-temporal');
   if (enCinta()) body.classList.add('panel-temporal');
   renderInspector();

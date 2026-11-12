@@ -1,6 +1,6 @@
 # Extensión: abrir en el editor
 
-`abrir_en_editor {archivo}` enseña un proyecto de la carpeta de trabajo en el editor de Erlen Slides, en el navegador del usuario, para que lo vea y lo siga editando a mano.
+`abrir_en_editor {archivo}` enseña un proyecto de la carpeta de trabajo en el editor de Tabula, en el navegador del usuario, para que lo vea y lo siga editando a mano.
 
 ```json
 {"archivo": "hdl.json", "url": "http://127.0.0.1:8130/?abrir=Qm9…", "navegador": "abierto",
@@ -31,8 +31,8 @@ El almacenamiento del navegador va por origen, puerto incluido. Por eso el servi
 
 | Variable | Para qué |
 |---|---|
-| `ERLEN_SLIDES_SIN_NAVEGADOR=1` | No abre el navegador; solo devuelve la URL (pruebas, servidores sin escritorio). |
-| `ERLEN_SLIDES_PUERTO` | Puerto preferido (8130 por omisión); `0` elige uno libre. |
-| `ERLEN_SLIDES_CADUCIDAD` | Segundos de validez de cada clave (600 por omisión). |
+| `TABULA_SIN_NAVEGADOR=1` | No abre el navegador; solo devuelve la URL (pruebas, servidores sin escritorio). |
+| `TABULA_PUERTO` | Puerto preferido (8130 por omisión); `0` elige uno libre. |
+| `TABULA_CADUCIDAD` | Segundos de validez de cada clave (600 por omisión). |
 
 Se prueba en `tests/mcp-editor.test.mjs` (el servidor, con el `fetch` de Node) y `tests/editor-asistente.test.mjs` (el camino de la app, en JSDOM con un `fetch` simulado).

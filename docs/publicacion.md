@@ -11,10 +11,10 @@ Repositorio público: `erlen-frontier/erlen-slides`. El repositorio privado `pro
 5. Escribe las notas en `docs/publicacion-<version>.md`.
 6. Tras la revisión del propietario, publica manualmente una release con la etiqueta
    `v<version>`, las notas, el ZIP y su suma SHA-256. La etiqueta debe coincidir con la
-   versión de `package.json`. La política actual retira GitHub Actions y la publicación
-   automática, pero este repositorio aún conserva workflows históricos. Antes de crear
-   una etiqueta o release, comprueba que Actions esté deshabilitado en el repositorio;
-   de lo contrario esos workflows podrían ejecutarse.
+   versión de `package.json`. La política retira GitHub Actions y la publicación
+   automática: este repositorio ya no conserva workflows. Si un cambio restaurara
+   algo en `.github/`, revisa que Actions esté deshabilitado en el repositorio antes
+   de crear una etiqueta o release.
 
 ## Zenodo
 

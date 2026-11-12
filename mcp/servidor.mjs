@@ -246,7 +246,7 @@ if (Object.keys(FORMATOS).length) {
 const escribe = m => process.stdout.write(JSON.stringify(m) + '\n');
 const responde = (id, result) => escribe({jsonrpc: '2.0', id, result});
 const error = (id, code, message) => escribe({jsonrpc: '2.0', id, error: {code, message}});
-const log = (...x) => process.stderr.write('[erlen-slides-mcp] ' + x.join(' ') + '\n');
+const log = (...x) => process.stderr.write('[tabula-mcp] ' + x.join(' ') + '\n');
 
 let versionProtocolo = VERSIONES[0];
 /* structuredContent existe desde 2025-06-18: a clientes anteriores no se les manda. */
@@ -272,7 +272,7 @@ async function llamaHerramienta(nombre, args) {
   }
 }
 
-const RECURSO_GUIA = 'erlen-slides://guia';
+const RECURSO_GUIA = 'tabula://guia';
 async function atiende(m) {
   const {id, method, params} = m;
   switch (method) {
@@ -282,7 +282,7 @@ async function atiende(m) {
       return responde(id, {
         protocolVersion: versionProtocolo,
         capabilities: {tools: {}, resources: {}, prompts: {}},
-        serverInfo: {name: 'erlen-slides', title: 'Tabula', version: M.version()},
+        serverInfo: {name: 'tabula', title: 'Tabula', version: M.version()},
         instructions: INSTRUCCIONES
       });
     }

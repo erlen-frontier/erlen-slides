@@ -14,7 +14,7 @@ async function openCatalogoFiguras() {
   const dialogo = openModal({title:'Catálogo científico', size:'modal-lg', body:carga, foot:[cancelar],
     onclose:() => { cerrado = true; turno++; observador?.disconnect(); }});
   let catalogo;
-  try { catalogo = await extensionSlides('catalogo'); }
+  try { catalogo = await extensionTabla('catalogo'); }
   catch (error) { if (!cerrado) carga.textContent = 'No se pudo abrir el catálogo local. ' + error.message; return; }
   if (cerrado) return;
   if (!vigente()) { carga.textContent = 'La diapositiva cambió. Cierra el catálogo y vuelve a abrirlo.'; return; }
@@ -145,7 +145,7 @@ function svgConCreditosCatalogo(svg, item) {
 }
 function marcaRecorteCatalogo(block, recortada) {
   if (!esFuenteCatalogo(block.catalogo)) return;
-  const marca = 'Recortada en Tabula';
+  const marca = 'Recortada en Lámina';
   const changes = Array.isArray(block.catalogo.changes) ? block.catalogo.changes.filter(c => c !== marca) : [];
   block.catalogo.changes = recortada ? [...changes, marca] : changes;
 }

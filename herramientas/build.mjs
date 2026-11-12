@@ -1,23 +1,17 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
-import {readFileSync as read,writeFileSync as write,mkdirSync,cpSync,existsSync,readdirSync} from 'node:fs';
+import {readFileSync as read,writeFileSync as write,mkdirSync,cpSync,existsSync,readdirSync,rmSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {icons} from 'lucide';
 import {minify} from 'terser';
 import {build as bundle} from 'esbuild';
-import {generateGlassMap} from './glass-map.mjs';
 const root=join(dirname(fileURLToPath(import.meta.url)),'..');
 const get=p=>read(join(root,p),'utf8');
 const version=JSON.parse(get('package.json')).version;
 const order=get('src/js/_orden.txt').trim().split('\n');
 /* Compact editor modules without renaming globals used by MCP and lazy adapters. */
 const compactos=new Set(['03b-herramientas-lienzo.js','05-editor.js','05b-barra-contextual.js','07-modals.js','31-revision.js','56-cinta.js','79-accesible.js','85-edicion-lote.js','85-flujos.js']);
-/* Mapa de refracción del vidrio (Tier 2, solo-Chromium): se genera en cada
-   build y se escribe como módulo ANTES de unir los de src/js, para que
-   _orden.txt siempre lo encuentre aunque el repositorio esté limpio.
-   El data-URL es base64 (sin comillas); el replace es solo preventivo. */
-write(join(root,'src/js/_glass-map-gen.js'),'// Generado por herramientas/glass-map.mjs — no editar a mano.\nconst ERLEN_GLASS_MAP=\''+generateGlassMap().replace(/'/g,"\\'")+'\';\n');
 /* Los componentes locales conservan la licencia de sus fuentes originales. */
 const licenciaDiseno='/* SPDX-License-Identifier: MIT\n'+get('src/diseno/licencias/MIT.txt').replace(/\*\//g,'* /')+'\n*/\n';
 async function componente(archivo,exportado,global){
@@ -26,8 +20,8 @@ async function componente(archivo,exportado,global){
  return licenciaDiseno+`const ${global}=(()=>{`+out.outputFiles[0].text+`return componente.${exportado};})();`;
 }
 const modulos=await Promise.all(order.map(async n=>{
- if(n==='../diseno/inicio.mjs')return componente('inicio','mountInicio','erlenInicio');
- if(n==='../diseno/marco.mjs')return componente('marco','mountMarco','erlenMarco');
+ if(n==='../diseno/inicio.mjs')return componente('inicio','mountInicio','tabulaInicio');
+ if(n==='../diseno/marco.mjs')return componente('marco','mountMarco','tabulaMarco');
  const s=get('src/js/'+n);return compactos.has(n)?(await minify(s,{compress:{unused:false},mangle:false,format:{comments:/SPDX/}})).code:s;
 }));
 /* Solo se incrustan las caras utilizadas por el cromo para que el archivo
@@ -37,7 +31,7 @@ const fuentesApp=get('src/diseno/fuentes.css').split('\n').filter(l=>l.startsWit
  .map(l=>l.replace(/url\((fuentes\/[^)]+\.woff2)\)/,(_,f)=>'url(data:font/woff2;base64,'+read(join(root,'src/diseno',f)).toString('base64')+')')).join('\n');
 if(fuentesApp.split('\n').length!==CARAS_CROMO.length)throw new Error('src/diseno/fuentes.css no declara todas las caras del cromo');
 const tokens=get('src/diseno/tokens.css');
-const token=n=>{const m=tokens.match(new RegExp('--erlen-'+n+':(#[0-9a-fA-F]{3,8})'));if(!m)throw new Error('falta --erlen-'+n+' en src/diseno/tokens.css');return m[1];};
+const token=n=>{const m=tokens.match(new RegExp('--tabula-'+n+':(#[0-9a-fA-F]{3,8})'));if(!m)throw new Error('falta --tabula-'+n+' en src/diseno/tokens.css');return m[1];};
 const css=tokens+'\n'+get('src/diseno/cinta.css')+'\n'+get('src/diseno/inicio.css')+'\n'+get('src/diseno/base.css')+'\n'+get('src/diseno/marco.css')+'\n'+fuentesApp+'\n'+get('src/css/_preludio.css')+get('src/css/_orden.txt').trim().split('\n').map(n=>get('src/css/'+n)).join('\n');
 const lib=p=>get('node_modules/'+p);
 const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','Plus','HelpCircle','FlaskConical','Atom','ChartLine','FolderOpen','Download','Play','Settings2','House','Presentation','ArrowUpRight','ArrowRight','Archive','ChevronRight',
@@ -48,17 +42,26 @@ const names=['Undo2','Redo2','Search','Expand','Minimize2','ZoomIn','ZoomOut','P
  'MousePointer2','ListOrdered','Magnet','Shapes','AlignHorizontalSpaceAround','Waypoints','ChartSpline','Film'];
 if(names.some(n=>!icons[n]))throw new Error('Icono de lucide inexistente: '+names.filter(n=>!icons[n]).join(', '));
 const licenses=['@floating-ui/core','@floating-ui/dom','lucide'];
-const ui='/*\n'+licenses.map(p=>lib(p+'/LICENSE')).join('\n').replace(/\*\//g,'* /')+'\n*/\n'+lib('@floating-ui/core/dist/floating-ui.core.umd.min.js')+'\n'+lib('@floating-ui/dom/dist/floating-ui.dom.umd.min.js')+'\nwindow.ERLEN_ICONOS='+JSON.stringify(Object.fromEntries(names.map(n=>[n,icons[n]])))+';';
+const ui='/*\n'+licenses.map(p=>lib(p+'/LICENSE')).join('\n').replace(/\*\//g,'* /')+'\n*/\n'+lib('@floating-ui/core/dist/floating-ui.core.umd.min.js')+'\n'+lib('@floating-ui/dom/dist/floating-ui.dom.umd.min.js')+'\nwindow.TABULA_ICONOS='+JSON.stringify(Object.fromEntries(names.map(n=>[n,icons[n]])))+';';
 /* The app-owned mark is shared by the home screen, editor and favicon. */
 const FAVICON=get('src/identidad/marca.svg').trim();
 const ICONO='<link rel="icon" href="data:image/svg+xml,'+encodeURIComponent(FAVICON).replace(/'/g,'%27')+'">';
 const script=s=>'<script>'+s.replace(/<\/script/gi,'<\\/script')+'</script>';
-const html='<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tabula · Presentaciones</title>'+ICONO+'<meta name="description" content="Presentaciones visuales con ecuaciones, química, datos y exportación. Sin cuenta."><style>body{margin:0;font:14px system-ui,sans-serif;background:'+token('papel')+';color:'+token('tinta')+'}img{max-width:100%}[hidden]{display:none!important}</style><style>'+get('src/css/fuentes-katex.css')+get('src/css/fuentes-tx.css')+css+'</style></head><body>'+get('src/cuerpo.html')+script(get('vendor/katex.min.js'))+script(get('vendor/mhchem.min.js'))+script('window.ERLEN={version:'+JSON.stringify(version)+',telemetria:false};window.ERLEN_LIBRE=true;window.ERLEN_SLIDES_MARCA='+JSON.stringify(FAVICON)+';')+script(ui)+script(get('src/preludio.js')+modulos.join('\n'))+'</body></html>\n';
-const out=join(root,'public');mkdirSync(out,{recursive:true});
-write(join(out,'index.html'),html);write(join(out,'erlen-slides-offline.html'),html.replace('window.ERLEN_LIBRE=true;','window.ERLEN_LIBRE=false;'));
+/* El flag de edición libre es el único byte que cambia entre la app servida
+   y el archivo suelto: un solo constructor evita dos rutas de payload. */
+const creaHTML=libre=>'<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lámina · Presentaciones</title>'+ICONO+'<meta name="description" content="Presentaciones visuales con Markdown, Quarto y reveal.js"><style>body{margin:0;font:14px system-ui,sans-serif;background:'+token('papel')+';color:'+token('tinta')+'}img{max-width:100%}[hidden]{display:none!important}</style><style>'+get('src/css/fuentes-katex.css')+get('src/css/fuentes-tx.css')+css+'</style></head><body>'+get('src/cuerpo.html')+script(get('vendor/katex.min.js'))+script(get('vendor/mhchem.min.js'))+script('window.TABULA={version:'+JSON.stringify(version)+'};window.TABULA_LIBRE='+libre+';window.TABULA_MARCA='+JSON.stringify(FAVICON)+';')+script(ui)+script(get('src/preludio.js')+modulos.join('\n'))+'</body></html>\n';
+const html=creaHTML(true);
+const out=join(root,'public');
+/* Quedan fuera src/, licenses/ y todo lo ajeno al generador: limpiar solo
+   los destinos que este script vuelve a crear evita distribuir restos de
+   builds anteriores (chunks, licencias o HTML obsoletos). */
+const LIMPIEZA=[['libre/mermaid',true],['libre/figures-catalog',true],['libre/themes',true],['licenses',true],['erlen-slides-offline.html',false],['tabula-offline.html',false],['lamina-offline.html',false]];
+if(existsSync(out))for(const [p,esCarpeta]of LIMPIEZA){const destino=join(out,p);rmSync(destino,{recursive:esCarpeta,force:true});}
+mkdirSync(out,{recursive:true});
+write(join(out,'index.html'),html);write(join(out,'lamina-offline.html'),creaHTML(false));
 cpSync(join(root,'LICENSE'),join(out,'LICENSE'));cpSync(join(root,'licenses'),join(out,'licenses'),{recursive:true});
 /* Licencias de los recursos visuales y las fuentes del cromo. */
-cpSync(join(root,'src/diseno/licencias/MIT.txt'),join(out,'licenses/erlen-diseno-MIT.txt'));cpSync(join(root,'src/diseno/licencias/OFL.txt'),join(out,'licenses/CMU-OFL.txt'));
+cpSync(join(root,'src/diseno/licencias/MIT.txt'),join(out,'licenses/diseno-MIT.txt'));cpSync(join(root,'src/diseno/licencias/OFL.txt'),join(out,'licenses/CMU-OFL.txt'));
 const science=join(out,'libre');mkdirSync(science,{recursive:true});
 const assets=[['@rdkit/rdkit','dist/RDKit_minimal.js','rdkit.js'],['@rdkit/rdkit','dist/RDKit_minimal.wasm','RDKit_minimal.wasm'],['kekule','dist/kekule.min.js','kekule.js'],['3dmol','build/3Dmol-min.js','3dmol.js'],['plotly.js-basic-dist-min','plotly-basic.min.js','plotly.js'],['pptxgenjs','dist/pptxgen.bundle.js','pptxgen.bundle.js'],['reveal.js','dist/reveal.js','reveal.js'],['reveal.js','dist/reveal.css','reveal.css'],['mermaid','dist/mermaid.esm.min.mjs','mermaid/mermaid.esm.min.mjs'],['pptxtojson','dist/index.js','pptxtojson.mjs'],['fabric','dist/index.min.mjs','fabric.mjs']];
 const manifest=[];
@@ -66,14 +69,17 @@ for(const [pkg,file,name]of assets){const data=read(join(root,'node_modules',pkg
 /* Keep optional runtimes outside the editor HTML. They are served locally,
    and autonomous presentations inline only the runtime they actually use. */
 cpSync(join(root,'node_modules/mermaid/dist/chunks/mermaid.esm.min'),join(science,'mermaid/chunks/mermaid.esm.min'),{recursive:true,filter:p=>!p.endsWith('.map')});
-const propios=[['src/markdown-core.mjs','markdown-core.mjs'],['mcp/operaciones.js','operaciones.js'],['web/exportaciones-avanzadas.js','exportaciones-avanzadas.js'],['web/flujos-editor.js','flujos-editor.js'],['src/pptx-core.mjs','pptx-core.mjs'],['src/figuras-core.mjs','figuras-core.mjs'],['web/pptx-worker.mjs','pptx-worker.mjs'],['web/importar-presentacion.js','importar-presentacion.js'],['web/figuras-editor.js','figuras-editor.js'],['web/compartir-presentacion.js','compartir-presentacion.js']];
+const propios=[['mcp/operaciones.js','operaciones.js'],['web/exportaciones-avanzadas.js','exportaciones-avanzadas.js'],['web/flujos-editor.js','flujos-editor.js'],['src/pptx-core.mjs','pptx-core.mjs'],['src/figuras-core.mjs','figuras-core.mjs'],['web/pptx-worker.mjs','pptx-worker.mjs'],['web/importar-presentacion.js','importar-presentacion.js'],['web/figuras-editor.js','figuras-editor.js'],['web/compartir-presentacion.js','compartir-presentacion.js']];
 for(const [from,to]of [...propios,['vendor/katex.min.js','katex.min.js']])cpSync(join(root,from),join(science,to));
+/* markdown-core usa el specifier desnudo 'yaml': el bundle lo resuelve a un formato consumible en el navegador. */
+const mdCore = await bundle({ stdin: { contents: 'export * from "./src/markdown-core.mjs";', resolveDir: root }, bundle: true, format: 'esm', outfile: join(science, 'markdown-core.mjs'), write: true, platform: 'browser', target: ['es2022'], minify: false, sourcemap: false });
+
 /* El catálogo científico se mantiene local, pero sus dibujos se cargan solo
    cuando se necesitan. Los archivos de procedencia viajan con cada pieza. */
 cpSync(join(root,'src/figures-catalog'),join(science,'figures-catalog'),{recursive:true});
 write(join(science,'chart-runtime.js'),['01-util.js','02-data.js','11-expr.js','12-chart.js','15-smart.js'].map(n=>get('src/js/'+n)).join('\n')+'\n'+get('src/js/79-accesible.js').split('function revisaAccesibilidad')[0]);
 const registra=(file,pkg,version)=>{const data=read(join(science,file));manifest.push({package:pkg,version,file,bytes:data.length,sha256:createHash('sha256').update(data).digest('hex')});};
-for(const file of [...propios.map(x=>x[1]),'chart-runtime.js'])registra(file,'@erlen/slides',version);
+for(const file of [...propios.map(x=>x[1]),'markdown-core.mjs','chart-runtime.js'])registra(file,'tabula',version);
 registra('katex.min.js','katex',get('vendor/katex.min.js').match(/version:"([^"]+)"/)[1]);
 function registraCarpeta(dir,pkg,ver){for(const ent of readdirSync(join(science,dir),{withFileTypes:true})){const p=dir+'/'+ent.name;if(ent.isDirectory())registraCarpeta(p,pkg,ver);else registra(p,pkg,ver);}}
 registraCarpeta('mermaid/chunks/mermaid.esm.min','mermaid',JSON.parse(lib('mermaid/package.json')).version);
@@ -88,7 +94,7 @@ function avisosPaquete(nombre,desde=root){const d=carpetaPaquete(nombre,desde),m
  else throw new Error('Falta licencia de '+id);
  for(const dep of Object.keys(m.dependencies||{}))if(!(m.name==='pptxgenjs'&&dep==='https'))avisosPaquete(dep,d);
 }
-for(const p of ['mermaid','pptxgenjs','reveal.js','pptxtojson','fabric'])avisosPaquete(p);
+for(const p of ['mermaid','pptxgenjs','reveal.js','pptxtojson','fabric','yaml'])avisosPaquete(p);
 write(join(out,'licenses/presentation-components.json'),JSON.stringify(componentes,null,2)+'\n');
 /* Cada paquete trae su licencia con un nombre distinto, y alguno deja de traerla (@rdkit/rdkit 2026.3 solo publica README y dist/): entonces vale la copia
    que ya está en licenses/, revisada a mano. Sin ninguna de las dos, el build se detiene: no se publica un paquete sin su licencia. */
@@ -100,4 +106,4 @@ cpSync(join(root,'node_modules/3dmol/build/3Dmol-min.js.LICENSE.txt'),join(out,'
 cpSync(join(root,'node_modules/kekule/dist/themes'),join(science,'themes'),{recursive:true});cpSync(join(root,'web/quimica-worker.js'),join(science,'quimica-worker.js'));
 write(join(science,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 write(join(out,'build.json'),JSON.stringify({version,modules:order.length,sha256:createHash('sha256').update(html).digest('hex')},null,2)+'\n');
-console.log(`Built Tabula ${version}: ${order.length} modules, ${(Buffer.byteLength(html)/1024).toFixed(0)} KiB, no production configuration.`);
+console.log(`Built Lámina ${version}: ${order.length} modules, ${(Buffer.byteLength(html)/1024).toFixed(0)} KiB, no production configuration.`);

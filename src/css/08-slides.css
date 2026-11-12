@@ -4,10 +4,10 @@
 /* ==== 09-editorial-scientific-workspace.css ====
    Continuidad visual con Erlen Suite: una mesa editorial de laboratorio. */
 /* Paleta, fuentes, radios y vidrio vienen de 01-editor.css, que los toma del
-   paquete de la suite (--erlen-*). Aquí solo las medidas del espacio de trabajo. */
+   paquete de la suite (--tabula-*). Aquí solo las medidas del espacio de trabajo. */
 body{letter-spacing:0;background:var(--bg)}
 .app{background:var(--panel)}
-.ed-badge{font:700 var(--t0)/1 var(--ui);letter-spacing:.02em;border-radius:var(--erlen-radio-badge);padding:5px 10px;background:var(--accSoft);color:var(--acc);border-color:var(--accLine)}
+.ed-badge{font:700 var(--t0)/1 var(--ui);letter-spacing:.02em;border-radius:var(--tabula-radio-badge);padding:5px 10px;background:var(--accSoft);color:var(--acc);border-color:var(--accLine)}
 .tb-sep{height:20px;margin:0 6px}.deck-title{font:600 var(--t2) var(--ui);border-radius:var(--r2);padding-inline:10px}
 @media(max-width:920px){.deck-title{padding-inline:6px}}
 .save-ind{font:500 var(--t0) var(--ui);letter-spacing:0}.save-ind.on{color:var(--ok)}
@@ -25,14 +25,14 @@ body{letter-spacing:0;background:var(--bg)}
 .canvas-scroll{padding:38px 38px var(--pie-lienzo)}.stage{filter:drop-shadow(0 3px 8px color-mix(in srgb,var(--ink) 9%,transparent)) drop-shadow(0 22px 46px color-mix(in srgb,var(--ink) 13%,transparent))}
 .stage::before,.stage::after{content:'';position:absolute;width:12px;height:12px;background:var(--panel);border:1px solid var(--ink);z-index:4;pointer-events:none}
 .stage::before{left:-6px;top:-6px}.stage::after{right:-6px;bottom:-6px}
-.slide-pos,.zoombox{border-radius:var(--erlen-radio-capsula);border-color:var(--glass-edge);background:var(--glass-fondo);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-relieve)}
+.slide-pos,.zoombox{border-radius:var(--tabula-radio-capsula);border-color:var(--line);background:var(--panel);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:var(--shadow)}
 .slide-pos{font:500 var(--t0) var(--ui);font-variant-numeric:tabular-nums}.zoombox .zlabel{font:500 var(--t0) var(--ui);font-variant-numeric:tabular-nums}
-/* Pestañas del panel en cápsula; la actual es la «lente» del paquete (.erlen-capsula,
+/* Pestañas del panel en cápsula; la actual es la «lente» del paquete (.tabula-capsula,
    GUIA-DISENO §0): cápsula de cristal con relieve y texto en el acento. */
-.inspector{background:var(--panel)}.insp-tabs{gap:2px;padding:4px;margin:var(--e3) var(--e3) 0;border:1px solid var(--glass-edge);border-radius:var(--erlen-radio-capsula);background:var(--glass-flujo);box-shadow:none;min-height:0}
-.itab{border-radius:var(--erlen-radio-capsula);padding:7px 8px;font:600 var(--t1) var(--ui);letter-spacing:0;border:1px solid transparent}
-.itab:hover{background:var(--erlen-vidrio-tinte);color:var(--ink)}
-.itab.on{color:var(--acc);border-color:var(--glass-edge);background:var(--glass-fondo);box-shadow:var(--glass-relieve)}
+.inspector{background:var(--panel)}.insp-tabs{gap:2px;padding:4px;margin:var(--e3) var(--e3) 0;border:1px solid var(--line);border-radius:6px;background:var(--panel);box-shadow:none;min-height:0}
+.itab{border-radius:6px;padding:6px 10px;min-height:44px;font:600 var(--t1) var(--ui);letter-spacing:0;border:1px solid transparent}
+.itab:hover{background:var(--tabula-verde-suave);color:var(--ink)}
+.itab.on{color:var(--acc);border-color:var(--line);background:var(--panel);box-shadow:var(--shadow)}
 .insp-body{padding:20px 16px 48px}.igroup{margin-bottom:26px}.igroup>.panel-label{margin:26px 0 12px!important}
 .insert-grid{gap:7px}.ins-btn{min-height:76px;border-radius:var(--r2);background:var(--panel);position:relative;overflow:hidden}
 .ins-btn::after{content:'';position:absolute;left:0;top:0;width:3px;height:100%;background:var(--line2);transition:background .14s}
@@ -43,7 +43,7 @@ body{letter-spacing:0;background:var(--bg)}
 .g-cab{border-bottom:1px solid var(--line2);border-radius:0}.g-cab .panel-label::before{display:none}
 .mo-head{background:var(--panel);padding-block:18px}.mo-title{font-family:var(--serif);font-size:24px;font-weight:400}
 .menu button{border-radius:var(--r1)}.menu button .mi{color:var(--acc)}
-.blk-toolbar{border-radius:var(--r2);background:var(--ink)}.toast{border-radius:var(--erlen-radio-capsula)}
+.blk-toolbar{border-radius:var(--r2);background:var(--ink)}.toast{border-radius:var(--tabula-radio-capsula)}
 @media (min-width:921px) and (max-width:1180px){.canvas-scroll{padding:28px 20px var(--pie-lienzo)}}
 @media (max-width:920px){.canvas-wrap{background-size:16px 16px}.stage::before,.stage::after{display:none}.filmstrip{background:var(--panel2)}.insp-tabs{min-height:0}
  /* El ajuste de zoom en pantallas estrechas reserva poco aire (01-editor.css): con los 38 px de

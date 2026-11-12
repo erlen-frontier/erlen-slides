@@ -7,9 +7,9 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 test('free canvas preserves layout context and image annotations in Chromium', {timeout:120000}, async t => {
-  const bin=process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
-  if(!existsSync(bin)){t.skip('Set ERLEN_CHROMIUM to run browser validation.');return;}
-  const port=Number(process.env.ERLEN_LIENZO_CONTEXTO_TEST_PORT || 4220);
+  const bin=process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
+  if(!existsSync(bin)){t.skip('Set TABULA_CHROMIUM to run browser validation.');return;}
+  const port=Number(process.env.TABULA_LIENZO_CONTEXTO_TEST_PORT || 4220);
   const server=spawn(process.execPath,[fileURLToPath(new URL('../herramientas/serve.mjs',import.meta.url))],
     {env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
   t.after(()=>server.kill());
@@ -65,7 +65,7 @@ test('free canvas preserves layout context and image annotations in Chromium', {
         medidas.push({modo,img:rect(img),capa:rect(root.querySelector('.fig-capas')),escala:rect(root.querySelector('.esc-capa')),barra:rect(root.querySelector('.esc-barra'))});
         root.remove();
       }
-      const html=await (await extensionSlides('exportador')).creaHTML(d);
+      const html=await (await extensionTabla('exportador')).creaHTML(d);
       return {medidas,datos:JSON.stringify(im),antes,html:await html.text()};
     });
     const verifica=m=>{
@@ -117,7 +117,7 @@ test('free canvas preserves layout context and image annotations in Chromium', {
       async function muestra(uri){const pic=new Image();pic.src=uri;await pic.decode();const cv=document.createElement('canvas');cv.width=pic.width;cv.height=pic.height;const c=cv.getContext('2d');c.drawImage(pic,0,0);
         return [.02,.10,.50,.90,.98].map(x=>[...c.getImageData(Math.floor(pic.width*x),Math.floor(pic.height*.7),1,1).data]);}
       const directo=await muestra(png),estiloDespues=el.getAttribute('style');root.remove();
-      const ext=await extensionSlides('exportador'),pptx=await ext.creaPPTX(d),zip=await window.JSZip.loadAsync(pptx.blob);
+      const ext=await extensionTabla('exportador'),pptx=await ext.creaPPTX(d),zip=await window.JSZip.loadAsync(pptx.blob);
       const media=Object.keys(zip.files).find(n=>/^ppt\/media\/.*\.png$/i.test(n));
       if(!media)throw new Error('El PowerPoint no contiene la figura rasterizada.');
       const ppt=await muestra('data:image/png;base64,'+await zip.file(media).async('base64'));

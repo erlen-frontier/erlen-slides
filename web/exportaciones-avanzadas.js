@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 /* Adaptadores locales. El JSON científico es la fuente; los conversores no lo
    modifican. Los límites se devuelven por diapositiva, nunca en silencio. */
-window.ERLEN_EXPORTADORES = (() => {
+window.TABULA_EXPORTADORES = (() => {
   const pausa = () => new Promise(r => setTimeout(r, 20));
   const hex = (c, fondo) => hex6(c, fondo).replace('#', '');
   const script = s => '<script>' + s.replace(/<\/script/gi, '<\\/script') + '</script>';
@@ -68,12 +68,12 @@ window.ERLEN_EXPORTADORES = (() => {
   }
   async function creaPPTX(deck) {
     deck = deepCopy(deck);
-    const C = await extensionSlides('pptx');
+    const C = await extensionTabla('pptx');
     if (typeof C !== 'function') throw new Error('El escritor PowerPoint no se cargó correctamente.');
     const pptx = new C(), avisos = [], th = temaDe(deck), [W, H] = slideDims(deck), pw = deck.meta.aspect === '43' ? 10 : 13.333333;
     const k = pw / W, fuente = FUENTE_PPTX[fuenteDe(deck.meta).id] || 'Calibri';
-    pptx.defineLayout({ name: 'ERLEN', width: pw, height: 7.5 }); pptx.layout = 'ERLEN';
-    pptx.author = deck.meta.authors || ''; pptx.subject = 'Presentación · Tabula'; pptx.title = deck.meta.title || ''; pptx.company = deck.meta.institute || ''; pptx.lang = 'es-ES';
+    pptx.defineLayout({ name: 'TABULA', width: pw, height: 7.5 }); pptx.layout = 'TABULA';
+    pptx.author = deck.meta.authors || ''; pptx.subject = 'Presentación · Lámina'; pptx.title = deck.meta.title || ''; pptx.company = deck.meta.institute || ''; pptx.lang = 'es-ES';
     pptx.theme = { headFontFace: fuente, bodyFontFace: fuente, lang: 'es-ES' };
     const banco = h('div', { style: 'position:absolute;left:-99999px;top:0' }); document.body.append(banco);
     const css = collectCSS();
@@ -197,7 +197,7 @@ window.ERLEN_EXPORTADORES = (() => {
 async function creaHTML(deck, incluirNotas = false) {
   deck = deepCopy(deck);
   const [js, cssReveal, runtime, katexJS] = await Promise.all(['reveal.js', 'reveal.css', 'chart-runtime.js', 'katex.min.js'].map(recurso));
-  const avisosLicencia = ['LICENSE', 'licenses/reveal.js.txt', 'licenses/KaTeX-MIT.txt', 'licenses/KaTeX-fonts-MIT.txt', 'licenses/GUST-FONT-LICENSE.txt', 'licenses/LPPL-1.3c.txt', 'licenses/CMU-OFL.txt', 'licenses/erlen-diseno-MIT.txt'];
+  const avisosLicencia = ['LICENSE', 'licenses/reveal.js.txt', 'licenses/KaTeX-MIT.txt', 'licenses/KaTeX-fonts-MIT.txt', 'licenses/GUST-FONT-LICENSE.txt', 'licenses/LPPL-1.3c.txt', 'licenses/CMU-OFL.txt', 'licenses/diseno-MIT.txt'];
   const licencias = Object.fromEntries(await Promise.all(avisosLicencia.map(async p => [p, await recurso('../' + p)])));
   const [W, H] = slideDims(deck), paginas = [], vivos = [];
   const banco = h('div', { style: 'position:absolute;left:-99999px;top:0' }); document.body.append(banco);
@@ -233,8 +233,8 @@ const nota=document.getElementById('notasLectura');
 if(nota){let visible=false;const actualiza=()=>{nota.innerHTML=presenter.getCurrentSlide()?.querySelector('.notes')?.innerHTML||'Sin notas';};document.getElementById('verNotas').onclick=()=>{visible=!visible;nota.hidden=!visible;actualiza();};presenter.on('slidechanged',actualiza);}
 document.addEventListener('keydown',e=>{if(e.target.matches('input[type=range]')&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))e.stopPropagation();},true);`;
   const estilo = '\nhtml,body{background:#10151b;margin:0;overflow:hidden}.reveal .slides>section{padding:0;text-align:initial}.reveal .slides .slide{width:' + W + 'px;height:' + H + 'px}.reveal .slides .fragment{visibility:visible;opacity:0}.reveal .slides .fragment.visible{opacity:1}.reveal .slides .notes{display:none}.reveal .slides .slide img{max-width:100%;max-height:none;border:0;box-shadow:none;margin:0}.reveal .slides .slide p{margin:0}.html-ayuda{position:fixed;left:12px;bottom:10px;z-index:30;color:#eee;background:#10151be6;padding:6px 10px;border-radius:6px;font:12px system-ui}.html-ayuda a{color:#eee}.html-notas{position:fixed;right:12px;bottom:40px;z-index:31;width:min(420px,80vw);max-height:40vh;overflow:auto;padding:16px;background:#fff;color:#17202a;font:16px/1.5 system-ui}.html-notas[hidden]{display:none}@media(prefers-reduced-motion:reduce){.reveal *{animation:none!important;transition:none!important}}';
-  const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(deck.meta.title || 'Presentación') + '</title><style>' + cssReveal + '\n' + collectCSS() + estilo + '</style></head><body><div class="reveal"><div class="slides">' + paginas.join('') + '</div></div><div class="html-ayuda">Flechas: avanzar · F: pantalla completa · Esc: vista general' + (incluirNotas ? ' · <button id="verNotas">Notas</button>' : '') + ' · <a href="' + esc(ERLEN_SOURCE_URL) + '">Código fuente de Tabula</a></div>' + (incluirNotas ? '<div id="notasLectura" class="html-notas" hidden></div>' : '') + script(katexJS) + script(js) + script(arranque) + '</body></html>';
-  return new Blob([html.replace('</body>', '<script type="application/json" id="erlen-licencias">' + json(licencias) + '</script></body>')], { type: 'text/html;charset=utf-8' });
+  const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(deck.meta.title || 'Presentación') + '</title><style>' + cssReveal + '\n' + collectCSS() + estilo + '</style></head><body><div class="reveal"><div class="slides">' + paginas.join('') + '</div></div><div class="html-ayuda">Flechas: avanzar · F: pantalla completa · Esc: vista general' + (incluirNotas ? ' · <button id="verNotas">Notas</button>' : '') + ' · <a href="' + esc(TABULA_SOURCE_URL) + '">Código fuente de Lámina</a></div>' + (incluirNotas ? '<div id="notasLectura" class="html-notas" hidden></div>' : '') + script(katexJS) + script(js) + script(arranque) + '</body></html>';
+  return new Blob([html.replace('</body>', '<script type="application/json" id="tabula-licencias">' + json(licencias) + '</script></body>')], { type: 'text/html;charset=utf-8' });
 }
   return { creaPPTX, creaHTML, chartNativo, puntosPath };
 })();

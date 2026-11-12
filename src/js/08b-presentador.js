@@ -200,11 +200,11 @@ function abrePresentador() {
   let w = null;
   // WebKit needs an explicit URL to dispatch the native new-window request.
   const destino = window.__TAURI__?.core?.invoke ? 'about:blank' : '';
-  try { w = window.open(destino, 'erlenPresentador', 'width=1180,height=780,menubar=no,toolbar=no'); } catch (e) { w = null; }
+  try { w = window.open(destino, 'tabulaPresentador', 'width=1180,height=780,menubar=no,toolbar=no'); } catch (e) { w = null; }
   if (!w || !w.document) return false;
   try {
     const d = w.document;
-    d.open(); d.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Tabula · presentador</title></head><body class="vp"></body></html>'); d.close();
+    d.open(); d.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Lámina · presentador</title></head><body class="vp"></body></html>'); d.close();
     $$('style, link[rel="stylesheet"]').forEach(s => d.head.append(s.cloneNode(true)));
     d.head.append(estiloPresentador());
     d.body.className = 'vp';

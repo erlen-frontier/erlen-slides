@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
-window.ERLEN_FIGURAS = (() => {
+window.TABULA_FIGURAS = (() => {
 'use strict';
 async function openFiguraCapas(original) {
   flushEdicion(); const deck = S.deck, slide = curSlide();
   if (original?.locked) { toast('Desbloquea la figura antes de editarla.', 'warn'); return; }
-  const core = await extensionSlides('figurascore');
+  const core = await extensionTabla('figurascore');
   if (S.deck !== deck || curSlide() !== slide) return;
   let modelo = original?.figura ? core.validaFigura(original.figura) : { v: 1, width: 960, height: 540, background: '#ffffff', objects: [] };
   /* Adapting an existing scientific image creates a new block. The source
@@ -97,7 +97,7 @@ async function openFiguraCapas(original) {
       const b = original?.figura ? original : newBlock('image');
       if (b !== original && esFuenteCatalogo(original?.catalogo)) {
         b.catalogo = deepCopy(original.catalogo);
-        b.catalogo.changes = [...(Array.isArray(b.catalogo.changes) ? b.catalogo.changes : []), 'Adaptada como copia anotada en Tabula'];
+        b.catalogo.changes = [...(Array.isArray(b.catalogo.changes) ? b.catalogo.changes : []), 'Adaptada como copia anotada en Lámina'];
       }
       let svg = core.svgFigura(fig, nombre.value.trim());
       if (esFuenteCatalogo(b.catalogo)) svg = svgConCreditosCatalogo(svg, b.catalogo);
@@ -133,7 +133,7 @@ async function openFiguraCapas(original) {
     undo.disabled = !copias.length; redo.disabled = !futuros.length; fondo.value = modelo.background;
     if (!canvas) return;
     const turno = ++pintando; canvas.clear(); canvas.backgroundColor = modelo.background;
-    const F = await extensionSlides('fabric');
+    const F = await extensionTabla('fabric');
     for (const x of modelo.objects) {
       if (cerrado || turno !== pintando) return;
       const opt = { left: x.x, top: x.y, angle: x.angle, originX: 'left', originY: 'top', fill: x.fill, stroke: x.stroke, strokeWidth: x.strokeWidth, selectable: !x.locked, evented: !x.locked, objectCaching: false, lockScalingFlip: true };
@@ -153,7 +153,7 @@ async function openFiguraCapas(original) {
     canvas.requestRenderAll();
   }
   try {
-    const F = await extensionSlides('fabric'); if (cerrado) return;
+    const F = await extensionTabla('fabric'); if (cerrado) return;
     canvas = new F.Canvas(lienzo, { width: modelo.width, height: modelo.height, selection: false, preserveObjectStacking: true, enableRetinaScaling: false });
     canvas.upperCanvasEl.removeAttribute('tabindex'); canvas.upperCanvasEl.setAttribute('aria-hidden', 'true');
     const seleccion = e => { const id = e.selected?.[0]?.__id; if (id && id !== seleccionado) { seleccionado = id; refresca(); estado.textContent = 'Seleccionado: ' + etiqueta(actual()); } };

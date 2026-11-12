@@ -21,11 +21,12 @@ function formaColorBarra(b) {
   return obj && !obj.locked && obj.kind === esperado ? b.formaLibre : '';
 }
 function mismoContextoBarra(a, b) {
+  // Mantener el nodo si no cambia el bloque ancla leído/selección (multi-selección conserva el nodo y el foco).
   return !!a && !!b && a.deck === b.deck && a.slide === b.slide && a.b === b.b && a.tipo === b.tipo && a.forma === b.forma &&
-    a.conImagen === b.conImagen && a.conFigura === b.conFigura && a.conFuente === b.conFuente &&
-    a.ids.length === b.ids.length && a.ids.every((id, i) => id === b.ids[i] && a.bloques[i] === b.bloques[i] && a.bloqueos[i] === b.bloqueos[i]);
+    a.conImagen === b.conImagen && a.conFigura === b.conFigura && a.conFuente === b.conFuente;
 }
 function vigenteBarra(ctx) { return mismoContextoBarra(ctx, contextoBarra()); }
+/* EDITORES_BLOQUE vive en 56-cinta.js (compartido): la pestaña contextual ya no es una pestaña de cinta. */
 
 /* Guarda la selección de texto antes de que un control del navegador tome el
    foco, para aplicar el formato sin desplazar el cursor. */
@@ -110,7 +111,7 @@ async function cambiaColorFormaBarra(ctx, propiedad, color) {
   if (!vigenteBarra(ctx)) return;
   const b = ctx.b, figura = b.figura, firma = JSON.stringify(figura), fuente = b.src;
   try {
-    const core = await extensionSlides('figurascore');
+    const core = await extensionTabla('figurascore');
     if (!vigenteBarra(ctx) || b.figura !== figura || JSON.stringify(b.figura) !== firma || b.src !== fuente) return;
     const modelo = deepCopy(figura), objeto = modelo.objects[0];
     if (!objeto || objeto[propiedad] === color) return;
@@ -131,6 +132,8 @@ function actualizaBarraContextual(bar, ctx) {
     ['izquierda',!b.align || b.align === 'left'], ['centro',b.align === 'center'], ['derecha',b.align === 'right']]) {
     const boton = bar.querySelector('[data-barra-accion="'+accion+'"]'); if (boton) boton.setAttribute('aria-pressed', String(activo));
   }
+  const dup = bar.querySelector('[data-barra-accion="duplicar"]');
+  if (dup) dup.setAttribute('aria-label', 'Duplicar ' + (idsSeleccionados().size > 1 ? 'selección' : 'bloque'));
   for (const input of bar.querySelectorAll('input[type="color"]')) {
     const valor = b.figura?.objects?.[0]?.[input.dataset.color];
     if (/^#[\da-f]{6}$/i.test(valor || '') && document.activeElement !== input) input.value = valor;
@@ -155,7 +158,7 @@ function pintaBarraContextual() {
     if (cambia) ajustaVistaPorBarra();
     return;
   }
-  if (mismoContextoBarra(bar._contexto, ctx)) { bar.hidden = false; actualizaBarraContextual(bar, ctx); return; }
+  if (mismoContextoBarra(bar._contexto, ctx) || (bar._contexto && bar._contexto.slide === ctx.slide && bar._contexto.tipo === ctx.tipo)) { bar.hidden = false; bar._contexto = ctx; actualizaBarraContextual(bar, ctx); return; }
   const foco = bar.contains(document.activeElement) ? document.activeElement?.dataset.barraAccion : null;
   const desplazamiento = bar.scrollLeft, aparece = bar.hidden;
   bar.replaceChildren(); bar.hidden = false; bar._contexto = ctx; bar._textoPrevio = null;
@@ -202,7 +205,19 @@ function pintaBarraContextual() {
     if (b.figura) btn(g,icono('Pencil','✎'),'Editar capas de la figura','figura',() => openFiguraCapas(b));
     else if (b.cientifico) btn(g,icono('FlaskConical','✎'),'Editar fuente de la figura','fuente',() => cienciaReabrir(b));
   }
-  const g = grupo(), sufijo = varias ? 'selección' : 'bloque';
+  if (!varias && !bloqueada) {
+    // Acciones exclusivas del toolbar anterior (05-editor mountToolbar) y de la pestaña contextual (56-cinta):
+    // ahora viven SOLO en la barra única. No se duplican desde otra superficie.
+    const g = grupo();
+    if (EDITORES_BLOQUE()[b.type]) btn(g, icono('Pencil', '✎'), 'Editar ' + (BLOCK_DEFS.find(d => d.id === b.type)?.name || 'bloque'), 'editar', () => { ejecutaBarra(ctx, () => EDITORES_BLOQUE()[b.type](b)); });
+    if (b.type === 'video') btn(g, icono('Film', '▶'), 'Cambiar video', 'video', () => pickVideo(b));
+    if (b.type === 'teorema') btn(g, icono('BookMarked', '∴'), 'Tipo de enunciado', 'teorema', () => openTeorema(b));
+    if (b.type === 'table') btn(g, icono('Table', '▦'), 'Filas y columnas…', 'tabla', () => menuTabla(b, null));
+    // Mover a otra diapositiva/zona y más acciones (antes menú "⋯" flotante): conservado como ruta accesible.
+    btn(g, icono('ArrowRightToLine', '⇥'), 'Mover a otra diapositiva o zona…', 'mover', () => openMoverBloque(b));
+    btn(g, icono('Settings2', '⚙'), 'Efectos, pasos y velocidad en Propiedades', 'propiedades', () => abrePanelLateral('bloque'));
+  }
+  const g = grupo(), sufijo = idsSeleccionados().size > 1 ? 'selección' : 'bloque';
   btn(g,icono('CopyPlus','⧉'),'Duplicar '+sufijo,'duplicar',duplicarSeleccionActiva,{disabled:bloqueada});
   if (ctx.slide.lienzoLibre) {
     btn(g,icono('ArrowUp','↑'),varias ? 'Adelantar selección' : 'Adelantar capa','adelantar',() => mueveCapasSeleccionadas('adelante'),{disabled:bloqueada});

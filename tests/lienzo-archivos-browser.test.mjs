@@ -9,9 +9,9 @@ import {chromium} from 'playwright-core';
 // Chromium exercises the editor and shortcuts; the native file picker and IPC
 // are simulated here. Native Rust file operations have their own tests.
 test('canvas composition survives desktop save, reopen and a failed save', {timeout:120000}, async t => {
-  const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
+  const bin = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
   if (!existsSync(bin)) { t.skip('Chromium is required.'); return; }
-  const port = Number(process.env.ERLEN_LIENZO_ARCHIVOS_TEST_PORT || 4268);
+  const port = Number(process.env.TABULA_LIENZO_ARCHIVOS_TEST_PORT || 4268);
   const server = spawn(process.execPath, [fileURLToPath(new URL('../herramientas/serve.mjs', import.meta.url))],
     {env:{...process.env, PORT:String(port)}, stdio:['ignore','pipe','pipe']});
   t.after(() => server.kill());

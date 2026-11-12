@@ -9,9 +9,9 @@ import { AxeBuilder } from '@axe-core/playwright';
 import PptxGenJS from 'pptxgenjs';
 
 test('Accessible import, figure editing and sharing in Chromium', { timeout: 180000 }, async t => {
-  const executablePath = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
-  if (!existsSync(executablePath)) { t.skip('Set ERLEN_CHROMIUM to validate in a browser.'); return; }
-  const port = Number(process.env.ERLEN_SLIDES_ACCESSIBLE_PORT || 4216);
+  const executablePath = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
+  if (!existsSync(executablePath)) { t.skip('Set TABULA_CHROMIUM to validate in a browser.'); return; }
+  const port = Number(process.env.TABULA_SLIDES_ACCESSIBLE_PORT || 4216);
   const server = spawn(process.execPath, [fileURLToPath(new URL('../herramientas/serve.mjs', import.meta.url))], { env: { ...process.env, PORT: String(port) }, stdio: ['ignore', 'pipe', 'pipe'] });
   t.after(() => server.kill());
   await new Promise((ok, fail) => { server.stdout.once('data', ok); server.once('error', fail); server.once('exit', c => fail(new Error('Server exited: ' + c))); });
@@ -122,7 +122,7 @@ test('Accessible import, figure editing and sharing in Chromium', { timeout: 180
   await t.test('Figures can be authored with keyboard controls, undone, reopened and read as SVG', async () => {
     await page.evaluate(() => { wsNueva(); window.__prevUndo = S.undo.length; window.__prevSlides = S.deck.slides.length; document.querySelector('#deckTitleInput').focus(); openFiguraCapas(); });
     await status().filter({ hasText: /^Listo\./ }).waitFor();
-    assert.equal(await page.evaluate(() => document.querySelector('.erlen-marco').inert), true);
+    assert.equal(await page.evaluate(() => document.querySelector('.tabula-marco').inert), true);
     const add = page.getByRole('button', { name: 'Añadir texto', exact: true }); await add.focus(); await add.press('Enter');
     await page.getByLabel('Texto del objeto', { exact: true }).fill('Datos ilustrativos'); await page.getByText('Posición, tamaño y giro', { exact: true }).click(); await page.getByLabel('Posición horizontal', { exact: true }).fill('140'); await page.getByLabel('Posición horizontal', { exact: true }).press('Tab');
     await page.getByRole('button', { name: 'Mover a la derecha', exact: true }).focus(); await page.keyboard.press('Enter');
@@ -149,7 +149,7 @@ test('Accessible import, figure editing and sharing in Chromium', { timeout: 180
     await page.evaluate(() => openFiguraCapas(curSlide().blocks.find(b => b.figura))); await status().filter({ hasText: /^Listo\./ }).waitFor();
     await page.getByRole('button', { name: /Texto: Datos ilustrativos/ }).click(); await page.getByText('Posición, tamaño y giro', { exact: true }).click(); assert.equal(await page.getByLabel('Posición horizontal', { exact: true }).inputValue(), '150');
     await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('.modal'));
-    assert.equal(await page.evaluate(() => document.querySelector('.erlen-marco').inert), false);
+    assert.equal(await page.evaluate(() => document.querySelector('.tabula-marco').inert), false);
   });
 
   await t.test('Annotations create a new block and preserve the scientific original; locks and stale documents are respected', async () => {

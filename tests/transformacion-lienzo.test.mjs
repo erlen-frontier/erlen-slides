@@ -131,7 +131,7 @@ test('Beamer keeps orientation and annotations on full-bleed figures', async t =
   run("curSlide().layout='sangre';const b=findBlock('figura').block;b.marcas=[{t:'rect',x:.1,y:.2,w:.3,h:.2}];b.transformacionLibre={giro:45,voltearH:true,voltearV:false}");
   const tex=run('toBeamer(S.deck)');
   assert.match(tex,/\\rotatebox\[origin=c\]\{-45\}\{\\scalebox\{-1\}\[1\]\{/);
-  assert.match(tex,/\\erlensangre\{figura-figura\}/);
-  assert.match(tex,/\\draw\[erlenliq/);
+  assert.match(tex,/\\tabulasangre\{figura-figura\}/);
+  assert.match(tex,/\\draw\[tabulaliq/);
   assert.deepEqual(errors,[]);
 });

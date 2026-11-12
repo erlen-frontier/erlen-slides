@@ -11,10 +11,10 @@
 }
 @media (max-width:920px) {
   .tb-sep,#buscarBtn,#asisBtn {display:none}
-  .erlen-marco-controles .save-ind {display:block;min-width:0;width:130px;overflow:hidden;text-overflow:ellipsis;font-size:var(--t0)}
+  .tabula-marco-controles .save-ind {display:block;min-width:0;width:130px;overflow:hidden;text-overflow:ellipsis;font-size:var(--t0)}
   #presentBtn {margin-left:auto}
-  .erlen-marco-controles .icon-btn,.erlen-marco-controles .btn,.erlen-marco-controles .ed-badge {min-width:44px;min-height:44px}
-  .erlen-marco-controles .ed-badge {font-size:var(--t0);padding:4px;max-width:82px;overflow:hidden;text-overflow:ellipsis}
+  .tabula-marco-controles .icon-btn,.tabula-marco-controles .btn,.tabula-marco-controles .ed-badge {min-width:44px;min-height:44px}
+  .tabula-marco-controles .ed-badge {font-size:var(--t0);padding:4px;max-width:82px;overflow:hidden;text-overflow:ellipsis}
   .canvas-foot {gap:4px;flex-wrap:wrap}
   .foot-izq {min-width:0}
   .zoombox {margin-left:auto;gap:0}
@@ -52,9 +52,9 @@
 
 /* Pantalla de inicio común (src/diseno/inicio.css, z-index 300): lo que se abre desde ella
    —diálogos y avisos con «Deshacer»— queda encima; el botón flotante de buscar, oculto. */
-.erlen-inicio-abierto .toasts,.erlen-inicio-abierto .mask{z-index:310}
-.erlen-inicio-abierto .bz-boton{display:none}
+.tabula-inicio-abierto .toasts,.tabula-inicio-abierto .mask{z-index:310}
+.tabula-inicio-abierto .bz-boton{display:none}
 
 .mask{z-index:300}
 
-body:has(.erlen-marco-cajon .inspector) .bz-boton,body:has(#modalRoot .mask) .bz-boton{display:none}
+body:has(.tabula-marco-cajon .inspector) .bz-boton,body:has(#modalRoot .mask) .bz-boton{display:none}

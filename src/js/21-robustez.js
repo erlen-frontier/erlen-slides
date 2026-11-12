@@ -201,7 +201,7 @@ function saneaBloque(b, avisos, deck) {
 function saneaDeck(bruto) {
   const avisos = [];
   SANEA_REMOTOS = [];
-  if (!bruto || typeof bruto !== 'object') return { error: 'El archivo no contiene un proyecto compatible con Tabula.' };
+  if (!bruto || typeof bruto !== 'object') return { error: 'El archivo no contiene un proyecto compatible con Lámina.' };
   const d = deepCopy(bruto);
   if (!Array.isArray(d.slides) || !d.slides.length) return { error: 'El archivo no trae diapositivas.' };
   d.meta = Object.assign({ theme: 'metropolis', aspect: '169', numbers: true, footline: true, title: '' }, d.meta || {});
@@ -355,7 +355,7 @@ function openAvisosImport(avisos) {
     title: 'El proyecto se abrió con ajustes', size: 'modal-sm',
     body: h('div', null,
       h('p', { style: 'margin:0 0 10px;font-size:13.5px;line-height:1.55' },
-        'El archivo venía de otra versión o traía datos que Tabula no reconoce. Se abrió igualmente y esto es lo que se ajustó:'),
+        'El archivo venía de otra versión o traía datos que Lámina no reconoce. Se abrió igualmente y esto es lo que se ajustó:'),
       lista,
       h('p', { class: 'hint', style: 'margin-top:10px' }, 'Nada se perdió de lo que sí se pudo leer. Si algo no quedó como esperabas, deshaz con Ctrl+Z y vuelve a exportar el proyecto desde donde salió.')),
     foot: [h('button', { class: 'btn btn-pri', onclick: closeModal }, 'Entendido')]

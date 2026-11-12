@@ -7,7 +7,7 @@
 @media print{
   #printArea{display:block}
   *,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-shadow:none!important;box-shadow:none!important}
-  .app,.toasts,.mask,.menu,.pop,.modal-mask,.pv-root,.erlen-inicio{display:none!important}
+  .app,.toasts,.mask,.menu,.pop,.modal-mask,.pv-root,.tabula-inicio{display:none!important}
   .pr-page{page-break-after:always;break-after:page;overflow:hidden;page-break-inside:avoid}
   .pr-page:last-child{page-break-after:auto;break-after:auto}
   .pr-page .slide{border-radius:0}

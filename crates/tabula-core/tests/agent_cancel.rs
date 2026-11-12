@@ -1,4 +1,4 @@
-use erlen_slides_core::AgentRequests;
+use tabula_core::AgentRequests;
 use std::future::pending;
 
 #[tokio::test]

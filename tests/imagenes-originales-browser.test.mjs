@@ -10,9 +10,9 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 test('original images survive import, editing and export', {timeout:180000}, async t=>{
-  const bin=process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
+  const bin=process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
   if(!existsSync(bin)){t.skip('Chromium is required.');return;}
-  const port=Number(process.env.ERLEN_IMAGENES_TEST_PORT || 4310);
+  const port=Number(process.env.TABULA_IMAGENES_TEST_PORT || 4310);
   const server=spawn(process.execPath,[fileURLToPath(new URL('../herramientas/serve.mjs',import.meta.url))],{env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
   t.after(()=>server.kill());
   await new Promise((resolve,reject)=>{server.stdout.once('data',resolve);server.once('error',reject);server.once('exit',c=>reject(Error('Server exited: '+c)));});
@@ -246,7 +246,7 @@ test('original images survive import, editing and export', {timeout:180000}, asy
   });
 
   const presentaciones = async formato => page.evaluate(async ({formato, guardar})=>{
-    const ext=await extensionSlides('exportador'), avanzada=await ext.creaPPTX(S.deck);
+    const ext=await extensionTabla('exportador'), avanzada=await ext.creaPPTX(S.deck);
     let clasica;const descargar=window.downloadFile;
     window.downloadFile=async (nombre,blob)=>{if(nombre.endsWith('.pptx')) clasica=blob;};
     try {await exportPPTX();} finally {window.downloadFile=descargar;closeModal();}
