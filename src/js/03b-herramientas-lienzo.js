@@ -284,7 +284,7 @@ async function insertaFormaLibre(tipo) {
   const deck = S.deck, slide = curSlide();
   const vigente = () => deck === S.deck && slide === curSlide() && slide.lienzoLibre && zonasDe(slide.layout) > 0;
   if (!vigente()) return false;
-  const core = await extensionSlides('figurascore');
+  const core = await extensionTabla('figurascore');
   if (!vigente()) return false;
   if (typeof flushEdicion === 'function') flushEdicion();
   if (!vigente()) return false;

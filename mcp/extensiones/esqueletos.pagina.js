@@ -7,8 +7,8 @@
    blankDeck, y respaldo y «clave» son marcas de la diapositiva que
    diapositivaNueva no conoce. Se usan las mismas que el editor (58-respaldo,
    59-ajustar-tiempo) para que ajustar el tiempo y el apéndice funcionen igual. */
-ERLEN_MCP.registra('esqueletoAcaba', a => {
-  const d = ERLEN_MCP.util.valida(a.deck).deck;
+TABULA_MCP.registra('esqueletoAcaba', a => {
+  const d = TABULA_MCP.util.valida(a.deck).deck;
   const p = a.portada || {};
   if (p.notas) d.slides[0].notes = String(p.notas);
   if (p.minutos > 0) d.slides[0].min = +p.minutos;
@@ -19,7 +19,7 @@ ERLEN_MCP.registra('esqueletoAcaba', a => {
   d.slides = d.slides.filter(sl => !resp.has(sl)).concat([...resp]);
   if (NK[a.nivel]) d.meta.nivel = a.nivel;
   if (a.sinCorto) d.meta.short = '';
-  return ERLEN_MCP.util.valida(d);
+  return TABULA_MCP.util.valida(d);
 });
 
 /* ---------- regla de revisión ----------
@@ -45,7 +45,7 @@ ERLEN_MCP.registra('esqueletoAcaba', a => {
   }
   const corto = s => s.length > 60 ? s.slice(0, 59) + '…' : s;
 
-  ERLEN_MCP.registraRevision('esqueleto-pendiente', deck => {
+  TABULA_MCP.registraRevision('esqueleto-pendiente', deck => {
     const out = [];
     deck.slides.forEach((sl, i) => {
       const faltan = [];

@@ -1,6 +1,6 @@
-# Trabajar en Tabula
+# Trabajar en Lámina
 
-Tabula es el editor independiente de presentaciones científicas, derivado de Erlen Slides y publicado bajo AGPL-3.0-only. Lee README.md y docs/desarrollo.md antes de editar. Conserva un editor local completo, sin suscripciones obligatorias.
+Lámina es el editor independiente de presentaciones, derivado de Erlen Slides y publicado bajo AGPL-3.0-only. Lee README.md y docs/desarrollo.md antes de editar. Conserva un editor local completo, sin suscripciones obligatorias.
 
 ## Alcance y contratos
 
@@ -18,11 +18,11 @@ La compilación y las pruebas se realizan localmente cuando el entorno lo permit
 
 Registra los comandos realmente ejecutados, sus resultados y su alcance. Si una comprobación no se ejecutó, indica el motivo y la incertidumbre pendiente. No presentes pruebas omitidas como aprobadas ni resultados históricos como validación del código actual. JSDOM simula la geometría: no lo describas como validación en un navegador real.
 
-Tabula no depende de sincronización automática con Erlen Suite. No presupongas propagación de diseño, módulos compartidos ni fusiones coordinadas entre repositorios. Las atribuciones de los componentes derivados se conservan. No añadas CI, sincronización ni cambios en .github/ salvo petición explícita.
+Lámina no depende de sincronización automática con Erlen Suite. No presupongas propagación de diseño, módulos compartidos ni fusiones coordinadas entre repositorios. Las atribuciones de los componentes derivados se conservan. No añadas CI, sincronización ni cambios en .github/ salvo petición explícita.
 
 ## Trabajo con varios agentes
 
-Estas reglas son locales a Tabula; no constituyen un bloque sincronizado con otros repositorios.
+Estas reglas son locales a Lámina; no constituyen un bloque sincronizado con otros repositorios.
 
 - Trabaja por defecto en una rama <agente>/<tarea-corta>, en minúsculas y con guiones. No escribas directamente en main salvo autorización explícita del propietario para la operación concreta. No presupongas la configuración de protección de ramas.
 - Usa tu propio clon o worktree por agente y tarea; no edites la carpeta de trabajo de otro agente ni la de Jorge.

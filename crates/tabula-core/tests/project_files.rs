@@ -1,4 +1,4 @@
-use erlen_slides_core::save_project;
+use tabula_core::save_project;
 use std::fs;
 
 const PROJECT: &str = r#"{

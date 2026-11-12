@@ -1,12 +1,12 @@
-# Tabula: presentaciones
+# Lámina: presentaciones
 
-**Presentaciones libres, editables y hechas en tu dispositivo.**
+**Presentaciones visuales con Markdown, Quarto y reveal.js**
 
-Tabula reúne edición de diapositivas, herramientas visuales y científicas y modo de presentación en una aplicación local, sin cuenta ni suscripción. Nace de Erlen Slides y conserva la compatibilidad con sus proyectos.
+Lámina es una aplicación local de creación de presentaciones, sin cuenta ni suscripción. Nace de Erlen Slides y mantiene el proyecto plano JSON: para trasladar documentos desde la versión anterior, expórtalos como JSON e impórtalos aquí.
 
-**Versión 0.3.0 · beta · AGPLv3.** Publicación independiente del módulo Presentaciones de Erlen, con auditoría científica y paquetes reproducibles. Interfaz en español.
+**Versión 0.3.0 · beta · AGPLv3.** Aplicación independiente de presentaciones, con auditoría científica y paquetes reproducibles. Interfaz en español.
 
-![Inicio de Tabula](docs/images/inicio.png)
+![Inicio de Lámina](docs/images/inicio.png)
 
 [Empezar](#empezar) · [Ejemplos editables](examples/README.md) · [Cómo es la interfaz](docs/interfaz.md) · [Manual](docs/uso.md) · [English](docs/README.en.md) · [Citar](CITATION.cff)
 
@@ -18,7 +18,7 @@ Tabula reúne edición de diapositivas, herramientas visuales y científicas y m
 - **Preparación:** notas del orador, tiempos, revisión del contenido, orden de diapositivas y modos de ensayo/presentación.
 - **Archivos propios:** biblioteca local, proyecto JSON, plantillas personales, identidad institucional y copias de recuperación.
 - **Guion y edición visual:** importar/exportar Markdown, previsualizar temas con tu contenido, agrupar, bloquear, alinear y mover varios bloques, y crear diagramas Mermaid con su fuente guardada. El lienzo libre ofrece selección por recuadro, transformación de grupos, alineación, distribución, capas, guías y formas básicas. Las figuras pueden girarse y voltearse; el tamaño puede ajustarse con proporciones bloqueadas y controles precisos.
-- **Importación y figuras:** una entrada para JSON, PPTX y Markdown, con vista previa antes de guardar una copia. PowerPoint se adapta a bloques de Erlen; sus gráficas se recuperan como tablas de datos. Las figuras por capas conservan objetos editables y pueden crearse mediante lista y controles de teclado.
+- **Importación y figuras:** una entrada para JSON, PPTX y Markdown, con vista previa antes de guardar una copia. PowerPoint se adapta a los bloques de Tabula; sus gráficas se recuperan como tablas de datos. Las figuras por capas conservan objetos editables y pueden crearse mediante lista y controles de teclado.
 - **Catálogo científico:** 1000 piezas de Erlen Figures, disponibles sin conexión para insertar y organizar como objetos del lienzo libre. Cada figura conserva su autoría y licencia; los créditos pueden descargarse antes de compartir.
 - **Compartir con revisión:** elige formato y revisa recortes, descripciones accesibles, recursos externos y límites de edición. Las notas privadas se incluyen en PowerPoint y HTML solo si marcas la opción; el proyecto JSON siempre las conserva.
 - **Exportaciones:** PDF mediante impresión, PowerPoint con objetos compatibles editables, fuente Beamer, SVG científico, Markdown, HTML imprimible y presentación HTML autónoma con funciones interactivas. Grabación local con micrófono opcional. Cada formato tiene [límites documentados](docs/uso.md#exportaciones).
@@ -28,11 +28,11 @@ La ayuda por reglas sigue disponible. Su pestaña **Conversar con IA** conecta, 
 
 ## Empezar
 
-La versión actual se ejecuta desde el código fuente; necesitas Node.js 22 o superior y npm:
+La versión actual se ejecuta desde el código fuente; necesitas Node.js 22.12.0 o superior y npm:
 
 ```sh
-git clone https://github.com/erlen-frontier/erlen-slides.git
-cd erlen-slides
+git clone https://github.com/erlen-frontier/erlen-slides.git lamina
+cd lamina
 npm ci
 npm run build
 npm test
@@ -41,7 +41,7 @@ npm start
 
 El servidor escucha únicamente en `127.0.0.1:8130`. La instalación inicial descarga dependencias; después la edición y el cálculo local pueden funcionar sin Internet. Las consultas voluntarias a Crossref o Zotero Web sí necesitan conexión.
 
-El build también genera `public/erlen-slides-offline.html` para la edición básica. Las bibliotecas científicas, Markdown, Mermaid, PowerPoint editable y la presentación HTML autónoma necesitan servir la carpeta `public` completa, como hace `npm start`.
+El build también genera `public/lamina-offline.html` para la edición básica. Las bibliotecas científicas, Markdown, Mermaid, PowerPoint editable y la presentación HTML autónoma necesitan servir la carpeta `public` completa, como hace `npm start`.
 
 En [Releases](https://github.com/erlen-frontier/erlen-slides/releases) está disponible la versión histórica 0.1.0; no contiene necesariamente las funciones descritas para el código actual. Todavía no hay un paquete 0.3.0 publicado allí.
 
@@ -71,7 +71,7 @@ Cada ejemplo contiene **seis diapositivas**, notas, archivo JSON editable, fuent
 
 El autoguardado usa el almacenamiento de **este navegador y este origen web**. Borrar los datos del sitio, cambiar de navegador o moverlo a otra dirección no traslada tu biblioteca. Descarga proyectos JSON y respaldos ZIP. El historial de recuperación local no sustituye una copia externa.
 
-Tabula conserva las claves de almacenamiento de Erlen Slides para que las bibliotecas existentes del mismo navegador y origen sigan disponibles. Para traer una presentación desde otro navegador u origen, expórtala como JSON e impórtala aquí. Tabula no admite el intercambio de copias entre aplicaciones ni convierte informes específicos de otras herramientas; el servidor MCP general sigue disponible. No contiene configuración de producción, telemetría automática ni claves de servicios.
+Lámina arranca con su biblioteca propia, sin leer las claves de almacenamiento de la versión anterior. Para trasladar tus presentaciones, expórtalas desde la aplicación anterior como JSON e impórtalas aquí; también puedes descomprimir un respaldo ZIP anterior e importar sus proyectos individuales mediante la entrada de importación y su vista previa. Las preferencias se configuran de nuevo y las plantillas pueden abrirse como proyecto y guardarse otra vez como plantilla. Lámina no admite el intercambio de copias entre aplicaciones ni convierte informes específicos de otras herramientas; el servidor MCP general sigue disponible. No contiene configuración de producción, telemetría automática ni claves de servicios.
 
 ## Desarrollo y validación
 
@@ -81,7 +81,7 @@ Las capturas documentadas proceden de Chromium; las pruebas de integración con 
 
 ## Escritorio en Linux
 
-La versión de escritorio está en desarrollo con Tauri y un núcleo Rust. Utiliza el WebView del sistema y conserva el editor y sus bibliotecas locales; Node.js solo se necesita para construirla. Permite abrir y guardar proyectos JSON mediante diálogos nativos: Rust escribe de forma segura e informa si el archivo ha cambiado fuera de Tabula.
+La versión de escritorio está en desarrollo con Tauri y un núcleo Rust. Utiliza el WebView del sistema y conserva el editor y sus bibliotecas locales; Node.js solo se necesita para construirla. Permite abrir y guardar proyectos JSON mediante diálogos nativos: Rust escribe de forma segura e informa si el archivo ha cambiado fuera de Lámina.
 
 La biblioteca de la aplicación de escritorio es independiente de la del navegador. Para llevar una presentación existente, expórtala como JSON desde el navegador e impórtala en la app. Consulta los requisitos y pasos en [Escritorio Linux](docs/escritorio-linux.md).
 
@@ -95,4 +95,4 @@ La interfaz contiene un enlace visible al código fuente. Si modificas y desplie
 
 ## Código y verificación
 
-Tabula parte de la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`. Es una distribución independiente, sin sincronización automática con Erlen Suite. No utiliza CI ni publicación automática mediante GitHub Actions; la compilación, las pruebas disponibles y la preparación de versiones se realizan localmente, y la publicación es manual. La ausencia de CI forma parte del flujo de trabajo y no implica añadirlo como requisito.
+Lámina parte de la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`. Es una distribución independiente, sin sincronización automática con Erlen Suite. No utiliza CI ni publicación automática mediante GitHub Actions; la compilación, las pruebas disponibles y la preparación de versiones se realizan localmente, y la publicación es manual. La ausencia de CI forma parte del flujo de trabajo y no implica añadirlo como requisito.

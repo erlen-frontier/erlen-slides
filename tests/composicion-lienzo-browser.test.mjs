@@ -8,9 +8,9 @@ import {chromium} from 'playwright-core';
 import {AxeBuilder} from '@axe-core/playwright';
 
 test('free canvas composition with real pointer and keyboard input', {timeout:120000}, async t => {
-  const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
+  const bin = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
   if (!existsSync(bin)) { t.skip('Chromium is required.'); return; }
-  const port = Number(process.env.ERLEN_COMPOSICION_TEST_PORT || 4243);
+  const port = Number(process.env.TABULA_COMPOSICION_TEST_PORT || 4243);
   const server = spawn(process.execPath, [fileURLToPath(new URL('../herramientas/serve.mjs', import.meta.url))],
     {env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
   t.after(()=>server.kill());
@@ -320,7 +320,7 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     const salida=await page.evaluate(async()=>{
       const sl=curSlide();sl.blocks[0].step=true;sl.blocks[1].step=true;
       sl.blocks[1].posLibre.y=40;sl.conectores=[{desde:'b',hasta:'a'}];
-      const original=JSON.stringify(S.deck), ext=await extensionSlides('exportador');
+      const original=JSON.stringify(S.deck), ext=await extensionTabla('exportador');
       const pasos=[0,1,2].map(n=>{
         const r=renderSlide(S.deck,S.cur,'present',n), g=r.querySelector('.lienzo-conectores g');
         return {count:+r.dataset.frags,step:+g.dataset.frag,visible:g.classList.contains('on')};
@@ -400,7 +400,7 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
       await page.waitForFunction(n => curSlide().blocks.filter(b=>b.formaLibre).length===n, ['Rectángulo','Elipse','Línea','Flecha'].indexOf(nombre)+1);
     }
     const resultado=await page.evaluate(async()=>{
-      const core=await extensionSlides('figurascore');
+      const core=await extensionTabla('figurascore');
       const figuras=curSlide().blocks.filter(b=>b.formaLibre);
       figuras.forEach(b=>core.validaFigura(b.figura));
       const ciencia=newBlock('image');Object.assign(ciencia,{id:'ciencia',alt:'Micrografía ilustrativa',caption:'Micrografía',
@@ -423,7 +423,7 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     await page.getByRole('button',{name:'Flecha',exact:true}).click();
     await page.waitForFunction(()=>curSlide().blocks.some(b=>b.formaLibre==='arrow'));
     const salida=await page.evaluate(async()=>{
-      const id=curSlide().blocks.find(b=>b.formaLibre==='arrow').id, ext=await extensionSlides('exportador');
+      const id=curSlide().blocks.find(b=>b.formaLibre==='arrow').id, ext=await extensionTabla('exportador');
       const html=await ext.creaHTML(S.deck), ppt=await ext.creaPPTX(S.deck), zip=await window.JSZip.loadAsync(ppt.blob);
       return {id,html:await html.text(),xml:await zip.file('ppt/slides/slide2.xml').async('string'),medios:Object.keys(zip.files).filter(n=>n.startsWith('ppt/media/'))};
     });
@@ -477,7 +477,7 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
       const tab=nombre==='contextual'?'#cinta [data-contextual]':'#cinta [data-pestana='+nombre+']';
       await page.locator(tab).click();
       const cinta=await page.evaluate(()=>{
-        const panel=document.querySelector('#cinta .erlen-cinta-panel'),fila=panel.querySelector('.erlen-cinta-fila');
+        const panel=document.querySelector('#cinta .tabula-cinta-panel'),fila=panel.querySelector('.tabula-cinta-fila');
         return {alto:panel.getBoundingClientRect().height,ancho:fila.clientWidth,contenido:fila.scrollWidth};
       });
       assert.ok(cinta.alto<=83,JSON.stringify({nombre,...cinta}));
@@ -488,10 +488,10 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
       const tab=nombre==='contextual'?'#cinta [data-contextual]':'#cinta [data-pestana='+nombre+']';
       await page.locator(tab).click();
       const cinta=await page.evaluate(()=>{
-        const panel=document.querySelector('#cinta .erlen-cinta-panel');
+        const panel=document.querySelector('#cinta .tabula-cinta-panel');
         return {alto:panel.getBoundingClientRect().height,grupos:[...panel.querySelectorAll('[role=group]:not([hidden])')].map(g=>g.getAttribute('aria-label')),
           botones:[...panel.querySelectorAll('button:not([hidden])')].map(b=>{
-          const r=b.getBoundingClientRect(),t=b.querySelector('.erlen-cinta-texto').getBoundingClientRect();
+          const r=b.getBoundingClientRect(),t=b.querySelector('.tabula-cinta-texto').getBoundingClientRect();
           return {nombre:b.textContent,width:r.width,height:r.height,cabe:t.left>=r.left-1 && t.right<=r.right+1 && t.top>=r.top-1 && t.bottom<=r.bottom+1};
         })};
       });
@@ -541,12 +541,12 @@ test('free canvas composition with real pointer and keyboard input', {timeout:12
     await page.locator('#cinta [data-pestana=diapo]').click();
     await page.setViewportSize({width:390,height:844});
     const rects=()=>page.evaluate(()=>{
-      const fila=document.querySelector('#cinta .erlen-cinta-pestanas').getBoundingClientRect();
+      const fila=document.querySelector('#cinta .tabula-cinta-pestanas').getBoundingClientRect();
       const tab=document.querySelector('#cinta [role=tab][aria-selected=true]').getBoundingClientRect();
       return {fila:{left:fila.left,right:fila.right},tab:{left:tab.left,right:tab.right}};
     });
     await page.waitForFunction(()=>{
-      const fila=document.querySelector('#cinta .erlen-cinta-pestanas').getBoundingClientRect();
+      const fila=document.querySelector('#cinta .tabula-cinta-pestanas').getBoundingClientRect();
       const tab=document.querySelector('#cinta [role=tab][aria-selected=true]').getBoundingClientRect();
       return tab.left>=fila.left-1 && tab.right<=fila.right+1;
     });

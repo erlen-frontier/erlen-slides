@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 async function prepara(t, port) {
-  const bin=process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
+  const bin=process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
   if (!existsSync(bin)) { t.skip('Chromium is required.'); return null; }
   const server=spawn(process.execPath,[fileURLToPath(new URL('../herramientas/serve.mjs',import.meta.url))],
     {env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
@@ -28,7 +28,7 @@ async function prepara(t, port) {
 }
 
 test('canvas controls rotate and flip a figure, lock its proportions and undo changes', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_UI_PORT || 4281));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_UI_PORT || 4281));if(!app)return;
   const {page,errors}=app;
   await page.locator('#stageInner .blk[data-bid="figura"]').click();
   await page.getByRole('button',{name:'Transformar objeto'}).click();
@@ -64,11 +64,11 @@ test('canvas controls rotate and flip a figure, lock its proportions and undo ch
 });
 
 test('rotated and flipped figures retain their orientation in HTML and both PowerPoint formats', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_EXPORT_PORT || 4282));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_EXPORT_PORT || 4282));if(!app)return;
   const {page,browser,errors}=app;
   const result=await page.evaluate(async()=>{
     const b=curSlide().blocks[0];b.transformacionLibre={giro:90,voltearH:true,voltearV:false};
-    const old=b.src, ext=await extensionSlides('exportador');
+    const old=b.src, ext=await extensionTabla('exportador');
     const html=await (await ext.creaHTML(S.deck)).text(), ppt=await ext.creaPPTX(S.deck);
     const zip=await window.JSZip.loadAsync(ppt.blob), xml=await zip.file('ppt/slides/slide2.xml').async('string');
     const guardar=window.downloadFile; let classicBlob;
@@ -91,7 +91,7 @@ test('rotated and flipped figures retain their orientation in HTML and both Powe
 });
 
 test('rotation handle previews a drag, commits once and cancels safely', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_GESTURE_PORT || 4284));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_GESTURE_PORT || 4284));if(!app)return;
   const {page,errors}=app;
   await page.locator('#stageInner .blk[data-bid="figura"]').click();
   const handle=page.getByRole('button',{name:'Girar figura'});
@@ -121,7 +121,7 @@ test('rotation handle previews a drag, commits once and cancels safely', {timeou
 });
 
 test('rotated image annotations stay aligned and clipping is reported', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_ANNOTATIONS_PORT || 4283));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_ANNOTATIONS_PORT || 4283));if(!app)return;
   const {page,errors}=app;
   const result=await page.evaluate(async()=>{
     const b=curSlide().blocks[0];b.caption='';b.posLibre={x:0,y:0,w:50,h:10};
@@ -139,12 +139,12 @@ test('rotated image annotations stay aligned and clipping is reported', {timeout
 });
 
 test('a transformed figure with annotations exports in both PowerPoint writers', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_COMPLEX_PORT || 4290));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_COMPLEX_PORT || 4290));if(!app)return;
   const {page,errors}=app;
   const result=await page.evaluate(async()=>{
     const b=curSlide().blocks[0];b.marcas=[{t:'rect',x:.15,y:.15,w:.3,h:.5}];
     b.transformacionLibre={giro:-35,voltearH:false,voltearV:true};
-    const ext=await extensionSlides('exportador'),ppt=await ext.creaPPTX(S.deck),zip=await window.JSZip.loadAsync(ppt.blob);
+    const ext=await extensionTabla('exportador'),ppt=await ext.creaPPTX(S.deck),zip=await window.JSZip.loadAsync(ppt.blob);
     const old=window.downloadFile;let classic;window.downloadFile=async(_name,blob)=>{classic=blob;return true;};
     try{await exportPPTX();}finally{window.downloadFile=old;closeModal();}
     const cz=await window.JSZip.loadAsync(classic);
@@ -157,7 +157,7 @@ test('a transformed figure with annotations exports in both PowerPoint writers',
 });
 
 test('rotated figures do not cover their captions in the editor, HTML or print output', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_CAPTION_PORT || 4285));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_CAPTION_PORT || 4285));if(!app)return;
   const {page,browser,errors}=app;
   const result=await page.evaluate(async()=>{
     const b=curSlide().blocks[0];b.posLibre={x:25,y:25,w:45,h:35};
@@ -170,7 +170,7 @@ test('rotated figures do not cover their captions in the editor, HTML or print o
   });
   assert.ok(result.bottom<=result.top+1,JSON.stringify(result));
   const outputs=await page.evaluate(async()=>{
-    const ext=await extensionSlides('exportador');
+    const ext=await extensionTabla('exportador');
     return {html:await (await ext.creaHTML(S.deck)).text(),print:buildPrintableHTML(false)};
   });
   const offline=await browser.newPage({viewport:{width:1440,height:1000}});t.after(()=>offline.close());
@@ -192,7 +192,7 @@ test('rotated figures do not cover their captions in the editor, HTML or print o
 });
 
 test('rotation does not push a fitting caption off the slide or report visible overflow as clipping', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_FIT_PORT || 4291));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_FIT_PORT || 4291));if(!app)return;
   const {page,errors}=app;
   const result=await page.evaluate(async()=>{
     const b=curSlide().blocks[0];b.posLibre={x:25,y:60,w:45,h:20};
@@ -213,7 +213,7 @@ test('rotation does not push a fitting caption off the slide or report visible o
 });
 
 test('presentation review reports a rotated caption that extends beyond the slide', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_REVIEW_PORT || 4293));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_REVIEW_PORT || 4293));if(!app)return;
   const {page,errors}=app;
   const result=await page.evaluate(async()=>{
     const b=curSlide().blocks[0];b.posLibre={x:25,y:75,w:45,h:20};
@@ -233,7 +233,7 @@ test('presentation review reports a rotated caption that extends beyond the slid
 });
 
 test('presentation review reports an image that has not loaded, then checks its caption', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_UNLOADED_PORT || 4297));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_UNLOADED_PORT || 4297));if(!app)return;
   const {page,errors}=app;
   const result=await page.evaluate(async()=>{
     const b=curSlide().blocks[0];b.posLibre={x:25,y:75,w:45,h:20};
@@ -250,7 +250,7 @@ test('presentation review reports an image that has not loaded, then checks its 
 });
 
 test('presentation review reports overflowing text when the slide clips it', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_TEXT_PORT || 4294));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_TEXT_PORT || 4294));if(!app)return;
   const {page,errors}=app;
   const result=await page.evaluate(()=>{
     const b=newBlock('text');Object.assign(b,{id:'texto-largo',text:'Contenido científico ilustrativo '.repeat(80),
@@ -266,7 +266,7 @@ test('presentation review reports overflowing text when the slide clips it', {ti
 });
 
 test('direct PDF printing keeps transformed annotations and captions', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_PRINT_PORT || 4295));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_PRINT_PORT || 4295));if(!app)return;
   const {page,errors}=app;
   await page.evaluate(()=>{
     const b=curSlide().blocks[0];b.posLibre={x:25,y:25,w:45,h:35};
@@ -289,7 +289,7 @@ test('direct PDF printing keeps transformed annotations and captions', {timeout:
 });
 
 test('handouts and speaker notes keep transformed annotations and captions', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_HANDOUT_PORT || 4296));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_HANDOUT_PORT || 4296));if(!app)return;
   const {page,browser,errors}=app;
   const html=await page.evaluate(()=>{
     const b=curSlide().blocks[0];b.posLibre={x:25,y:25,w:45,h:35};
@@ -313,7 +313,7 @@ test('handouts and speaker notes keep transformed annotations and captions', {ti
 });
 
 test('transformation controls remain usable in the narrow drawer', {timeout:120000}, async t=>{
-  const app=await prepara(t,Number(process.env.ERLEN_TRANSFORMACION_MOBILE_PORT || 4286));if(!app)return;
+  const app=await prepara(t,Number(process.env.TABULA_TRANSFORMACION_MOBILE_PORT || 4286));if(!app)return;
   const {page,errors}=app;
   await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>{renderAll();selectBlock('figura');});

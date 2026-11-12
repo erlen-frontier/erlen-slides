@@ -438,14 +438,14 @@ function montajeTikz(b, p) {
   const L = [];
   const reg = registroColores();
   const marcaDefs = L.length;
-  L.push(p + '\\begin{tikzpicture}[x=1cm, y=1cm, line width=0.7pt, line cap=round, line join=round, draw=erlentinta, text=erlentinta]');
+  L.push(p + '\\begin{tikzpicture}[x=1cm, y=1cm, line width=0.7pt, line cap=round, line join=round, draw=tabulatinta, text=tabulatinta]');
   (m.flechas || []).forEach(f => {
     const pts = puntosLinea(f).map(q => `(${X(q[0])},${Y(q[1])})`).join(' -- ');
     const cable = f.tipo === 'cable' || f.tipo === 'cableL';
     L.push(p + `  \\draw[${cable ? '' : '-{Stealth[length=2mm]}'}] ${pts};`);
     if (cable) {
-      L.push(p + `  \\fill[erlentinta] (${X(f.x1)},${Y(f.y1)}) circle[radius=0.05];`);
-      L.push(p + `  \\fill[erlentinta] (${X(f.x2)},${Y(f.y2)}) circle[radius=0.05];`);
+      L.push(p + `  \\fill[tabulatinta] (${X(f.x1)},${Y(f.y1)}) circle[radius=0.05];`);
+      L.push(p + `  \\fill[tabulatinta] (${X(f.x2)},${Y(f.y2)}) circle[radius=0.05];`);
     }
     if (f.texto) L.push(p + `  \\node[above, font=\\scriptsize] at (${X((f.x1 + f.x2) / 2)},${Y(Math.min(f.y1, f.y2))}) {${rotuloTex(f.texto)}};`);
   });

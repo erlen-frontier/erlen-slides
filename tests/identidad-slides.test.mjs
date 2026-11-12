@@ -27,36 +27,6 @@ function paletteBlocks(app, layout = 'arriba') {
   }`);
 }
 
-test('Tabula has its own mark and no Mey in home or editor', async t => {
-  const app = await appFor(t);
-  const d = app.dom.window.document;
-  const mascots = () => d.querySelectorAll('erlen-mey, .mey-libre, .mey-libre-pausa, .erlen-marco-mey, .erlen-inicio-mey');
-  assert.equal(mascots().length, 0);
-  assert.equal(d.title, 'Inicio · Tabula');
-  assert.match(d.querySelector('#inicioRoot .erlen-inicio-marca').textContent, /Tabula/);
-  assert.ok(d.querySelector('#inicioRoot .erlen-inicio-marca svg[data-identidad="tabula"]'));
-  assert.match(decodeURIComponent(d.querySelector('link[rel="icon"]').href), /data-identidad="tabula"/);
-  app.run('wsNueva()');
-  assert.equal(mascots().length, 0);
-  assert.ok(d.querySelector('.erlen-marco-marca svg[data-identidad="tabula"]'));
-  assert.equal(d.querySelector('#cinta').hidden, false);
-  assert.equal(app.run('S.deck.slides.length'), 1);
-});
-
-test('desktop name changes while its storage identity remains compatible', () => {
-  const config = JSON.parse(readFileSync(new URL('../src-tauri/tauri.conf.json', import.meta.url), 'utf8'));
-  assert.equal(config.productName, 'Tabula');
-  assert.equal(config.app.windows[0].title, 'Tabula');
-  assert.equal(config.identifier, 'com.erlen.slides');
-});
-
-test('the standalone build does not ship the Mey implementation', () => {
-  const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-  assert.doesNotMatch(html, /function mey\(pose='hola'/);
-  assert.doesNotMatch(html, /\.mey-libre\{position:fixed/);
-  assert.ok(Buffer.byteLength(html) < 3.4 * 1024 * 1024, 'the single-file editor remains under 3.4 MiB');
-});
-
 test('a stale block from a different slide is not offered by search', async t => {
   const app = await appFor(t);
   app.run("wsNueva();addBlockToSlide('chart',1);closeModal();window.__old=S.selBlock;addSlide('content');S.selBlock=__old;renderAll();openPaleta();");

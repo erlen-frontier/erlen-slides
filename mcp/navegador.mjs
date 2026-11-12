@@ -21,7 +21,7 @@ const TIPOS = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.
    y los de sistema. Así la vista previa funciona sin configurar nada en la
    mayoría de las máquinas. */
 export function candidatos() {
-  if (process.env.ERLEN_CHROMIUM) return [{executablePath: process.env.ERLEN_CHROMIUM}];
+  if (process.env.TABULA_CHROMIUM) return [{executablePath: process.env.TABULA_CHROMIUM}];
   const out = [{}, {channel: 'chrome'}, {channel: 'msedge'}];
   const cachés = [process.env.PLAYWRIGHT_BROWSERS_PATH, join(homedir(), '.cache', 'ms-playwright'), join(homedir(), 'Library', 'Caches', 'ms-playwright'),
     process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, 'ms-playwright')].filter(Boolean);
@@ -54,12 +54,12 @@ async function arranca() {
   let navegador, primerError = null;
   for (const opciones of candidatos()) {
     try { navegador = await pw.chromium.launch(opciones); break; }
-    catch (e) { primerError ||= e; if (process.env.ERLEN_CHROMIUM) break; }
+    catch (e) { primerError ||= e; if (process.env.TABULA_CHROMIUM) break; }
   }
   if (!navegador) {
     servidor.close();
     throw new ErrorUso('No se encontró Chromium ni Chrome. Instálalo con «npx playwright-core install chromium» en ' + RAIZ +
-      ' o indica uno con la variable ERLEN_CHROMIUM. Detalle: ' + String(primerError && primerError.message).split('\n')[0]);
+      ' o indica uno con la variable TABULA_CHROMIUM. Detalle: ' + String(primerError && primerError.message).split('\n')[0]);
   }
   const contexto = await navegador.newContext({acceptDownloads: true, viewport: {width: 1440, height: 900}});
   contexto.setDefaultTimeout(90000);

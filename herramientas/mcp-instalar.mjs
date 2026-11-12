@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
-/* Conecta el servidor MCP de Erlen Slides a Claude sin editar JSON a mano.
+/* Conecta el servidor MCP de Tabula a Claude sin editar JSON a mano.
 
      npm run mcp:instalar
      npm run mcp:instalar -- --cliente claude-desktop|claude-code|imprimir
@@ -7,7 +7,7 @@
                              [--compilar | --no-compilar] [--config <archivo>] [--sin-prueba]
 
    Comprueba Node, las dependencias y el build; después escribe la entrada
-   «erlen-slides» en la configuración de Claude Desktop (con copia de
+   «tabula» en la configuración de Claude Desktop (con copia de
    seguridad antes de tocarla), o da el comando de Claude Code, o solo lo
    imprime. Ejecutarlo dos veces no cambia nada la segunda.
 
@@ -15,9 +15,9 @@
    Desktop se abre desde el escritorio, sin el PATH de la terminal, y un
    «node» a secas falla ahí aunque en la terminal funcione.
 
-   Para las pruebas todo se puede desviar: ERLEN_INSTALAR_HOME (la carpeta
-   personal), ERLEN_INSTALAR_APPDATA (%APPDATA% de Windows) y
-   ERLEN_INSTALAR_PLATAFORMA (darwin, win32, linux). */
+   Para las pruebas todo se puede desviar: TABULA_INSTALAR_HOME (la carpeta
+   personal), TABULA_INSTALAR_APPDATA (%APPDATA% de Windows) y
+   TABULA_INSTALAR_PLATAFORMA (darwin, win32, linux). */
 import {readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, copyFileSync, readdirSync} from 'node:fs';
 import {spawnSync, spawn} from 'node:child_process';
 import {createInterface} from 'node:readline';
@@ -28,16 +28,16 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const SERVIDOR = path.resolve(RAIZ, 'mcp', 'servidor.mjs');
-const NOMBRE = 'erlen-slides';
+const NOMBRE = 'tabula';
 
 /* ---------- rutas ---------- */
 export function entorno(env = process.env) {
-  const plataforma = env.ERLEN_INSTALAR_PLATAFORMA || process.platform;
-  const home = env.ERLEN_INSTALAR_HOME || homedir();
+  const plataforma = env.TABULA_INSTALAR_PLATAFORMA || process.platform;
+  const home = env.TABULA_INSTALAR_HOME || homedir();
   /* Con la carpeta personal desviada, %APPDATA% cuelga de ella: así una
      prueba nunca llega a la configuración real. */
-  const appdata = env.ERLEN_INSTALAR_APPDATA || (env.ERLEN_INSTALAR_HOME ? path.win32.join(home, 'AppData', 'Roaming') : env.APPDATA || path.win32.join(home, 'AppData', 'Roaming'));
-  const localappdata = env.ERLEN_INSTALAR_HOME ? path.win32.join(home, 'AppData', 'Local') : env.LOCALAPPDATA || path.win32.join(home, 'AppData', 'Local');
+  const appdata = env.TABULA_INSTALAR_APPDATA || (env.TABULA_INSTALAR_HOME ? path.win32.join(home, 'AppData', 'Roaming') : env.APPDATA || path.win32.join(home, 'AppData', 'Roaming'));
+  const localappdata = env.TABULA_INSTALAR_HOME ? path.win32.join(home, 'AppData', 'Local') : env.LOCALAPPDATA || path.win32.join(home, 'AppData', 'Local');
   return {plataforma, home, appdata, localappdata};
 }
 
@@ -62,7 +62,7 @@ export function rutaConfigDesktop({plataforma, home, appdata, localappdata}) {
 
 /* ---------- configuración de Claude Desktop ---------- */
 export function entrada({node = process.execPath, servidor = SERVIDOR, carpeta, chromium}) {
-  return {command: node, args: [servidor], env: {ERLEN_SLIDES_DIR: carpeta, ...(chromium ? {ERLEN_CHROMIUM: chromium} : {})}};
+  return {command: node, args: [servidor], env: {TABULA_DIR: carpeta, ...(chromium ? {TABULA_CHROMIUM: chromium} : {})}};
 }
 
 /* Sangría y fin de línea del archivo, para que el que ya lo editó a mano lo
@@ -85,7 +85,7 @@ export function combina(textoPrevio, nueva) {
   }
   const previa = config.mcpServers && config.mcpServers[NOMBRE];
   /* Lo que alguien haya añadido a la entrada (otra variable, como
-     ERLEN_CHROMIUM) se conserva; solo se fija lo nuestro. */
+     TABULA_CHROMIUM) se conserva; solo se fija lo nuestro. */
   const combinada = {...(previa || {}), ...nueva, env: {...(previa && previa.env || {}), ...nueva.env}};
   if (previa && JSON.stringify(previa) === JSON.stringify(combinada)) return {estado: 'igual', config};
   const out = {...config, mcpServers: {...(config.mcpServers || {}), [NOMBRE]: combinada}};
@@ -126,7 +126,7 @@ export function cita(s, plataforma = process.platform) {
   return /^[\w@%+=:,./-]+$/.test(s) ? s : "'" + s.replace(/'/g, "'\\''") + "'";
 }
 export function argsClaudeCode({node = process.execPath, servidor = SERVIDOR, carpeta}) {
-  return ['mcp', 'add', NOMBRE, '--scope', 'user', '-e', 'ERLEN_SLIDES_DIR=' + carpeta, '--', node, servidor];
+  return ['mcp', 'add', NOMBRE, '--scope', 'user', '-e', 'TABULA_DIR=' + carpeta, '--', node, servidor];
 }
 export const comandoClaudeCode = (o, plataforma = process.platform) => ['claude', ...argsClaudeCode(o)].map(x => cita(x, plataforma)).join(' ');
 
@@ -158,12 +158,12 @@ function pruebaServidor(e, segundos = 60) {
 }
 
 /* ---------- línea de órdenes ---------- */
-const AYUDA = `Conecta Erlen Slides a Claude (servidor MCP).
+const AYUDA = `Conecta Tabula a Claude (servidor MCP).
 
   npm run mcp:instalar -- [opciones]
 
   --cliente <c>     claude-desktop, claude-code o imprimir (solo muestra la configuración)
-  --carpeta <dir>   carpeta de trabajo de las presentaciones (por omisión ~/erlen-slides)
+  --carpeta <dir>   carpeta de trabajo de las presentaciones (por omisión ~/tabula)
   --dry-run         dice lo que haría sin escribir ni ejecutar nada
   --ejecutar        con claude-code: ejecuta «claude mcp add» en vez de solo mostrarlo
   --compilar        construye la aplicación si falta o está vieja, sin preguntar
@@ -215,7 +215,7 @@ async function principal(argv) {
   try {
     const ent = entorno();
     const D = await comprobaciones();
-    console.log('Erlen Slides · instalación del servidor MCP' + (o.dryRun ? ' (simulación: no se escribe nada)' : ''));
+    console.log('Tabula · instalación del servidor MCP' + (o.dryRun ? ' (simulación: no se escribe nada)' : ''));
 
     paso('1. Comprobaciones');
     if (!D.nodeValido()) throw new ErrorInstalar('Node ' + process.versions.node + ' es demasiado antiguo: hace falta ' + D.NODE_MINIMO + ' o posterior. Instala la versión LTS de https://nodejs.org y vuelve a ejecutar «npm run mcp:instalar».');
@@ -250,7 +250,7 @@ async function principal(argv) {
     else aviso('No hay Chromium ni Chrome: la vista previa, el PDF y el PowerPoint no funcionarán (lo demás sí). Para instalarlo: cd "' + RAIZ + '" && npx playwright-core install chromium');
 
     paso('2. Carpeta de trabajo');
-    const carpeta = path.resolve(o.carpeta ? o.carpeta.replace(/^~(?=$|[\\/])/, ent.home) : path.join(ent.home, 'erlen-slides'));
+    const carpeta = path.resolve(o.carpeta ? o.carpeta.replace(/^~(?=$|[\\/])/, ent.home) : path.join(ent.home, 'tabula'));
     bien(carpeta + (existsSync(carpeta) ? '' : ' (nueva)') + ': ahí van tus proyectos .json, imágenes y datos');
 
     let cliente = o.cliente;
@@ -261,9 +261,9 @@ async function principal(argv) {
     /* Sin terminal y sin --cliente no se toca nada: se muestra. */
     cliente ||= 'imprimir';
     /* Si el navegador solo se encontró gracias a una variable de esta
-       terminal (ERLEN_CHROMIUM, PLAYWRIGHT_BROWSERS_PATH), Claude Desktop no
+       terminal (TABULA_CHROMIUM, PLAYWRIGHT_BROWSERS_PATH), Claude Desktop no
        la tendrá: se fija su ruta en la entrada. */
-    const chromium = nav.encontrado && (process.env.ERLEN_CHROMIUM || process.env.PLAYWRIGHT_BROWSERS_PATH) ? nav.ruta : null;
+    const chromium = nav.encontrado && (process.env.TABULA_CHROMIUM || process.env.PLAYWRIGHT_BROWSERS_PATH) ? nav.ruta : null;
     const e = entrada({carpeta, chromium});
     /* Se crea solo si se conecta algo: «imprimir» y --dry-run no escriben. */
     if (cliente !== 'imprimir' && !o.dryRun) mkdirSync(carpeta, {recursive: true});
@@ -307,7 +307,7 @@ async function principal(argv) {
       console.log('  Claude Desktop, en ' + rutaConfigDesktop(ent) + ':\n');
       console.log(JSON.stringify({mcpServers: {[NOMBRE]: e}}, null, 2).replace(/^/gm, '    '));
       console.log('\n  Claude Code:\n\n    ' + comandoClaudeCode({carpeta}));
-      console.log('\n  Otro cliente MCP por stdio: comando «' + e.command + '», argumento «' + e.args[0] + '», variable ERLEN_SLIDES_DIR=' + carpeta);
+      console.log('\n  Otro cliente MCP por stdio: comando «' + e.command + '», argumento «' + e.args[0] + '», variable TABULA_DIR=' + carpeta);
     }
 
     if (!o.dryRun && !o.sinPrueba && cliente !== 'imprimir' && deps.ok && comp.existe) {
@@ -318,11 +318,11 @@ async function principal(argv) {
     }
 
     paso('Siguientes pasos');
-    if (cliente === 'claude-desktop') console.log('  • Cierra Claude Desktop del todo (también desde la bandeja o el Dock) y vuelve a abrirlo.\n  • En una conversación nueva debería aparecer «erlen-slides» en el menú de herramientas.');
-    else if (cliente === 'claude-code') console.log('  • Abre Claude Code y escribe /mcp: debería aparecer «erlen-slides» conectado.');
+    if (cliente === 'claude-desktop') console.log('  • Cierra Claude Desktop del todo (también desde la bandeja o el Dock) y vuelve a abrirlo.\n  • En una conversación nueva debería aparecer «tabula» en el menú de herramientas.');
+    else if (cliente === 'claude-code') console.log('  • Abre Claude Code y escribe /mcp: debería aparecer «tabula» conectado.');
     else console.log('  • Copia la configuración de arriba en tu cliente, o vuelve a ejecutar con --cliente claude-desktop para que la escriba yo.');
     console.log('  • Prueba a pedir: «Crea una presentación de 5 diapositivas sobre la síntesis de nanopartículas de plata y enséñame el mosaico».');
-    console.log('  • Si algo falla, pide: «Ejecuta el diagnóstico de Erlen Slides».');
+    console.log('  • Si algo falla, pide: «Ejecuta el diagnóstico de Tabula».');
     return 0;
   } catch (e) {
     if (!(e instanceof ErrorInstalar)) throw e;

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 /* Interfaz de sesión para un proveedor elegido por la persona. */
-window.ERLEN_AGENTE_UI = (() => {
+window.TABULA_AGENTE_UI = (() => {
   'use strict';
   let activo = false, controlador = null, panelAgente = null, ayuda = null, pieAyuda = null;
   let alcance = null;
@@ -26,20 +26,20 @@ window.ERLEN_AGENTE_UI = (() => {
   }
   function detiene() { if (controlador) controlador.abort(); }
   function alcanceActual() {
-    return {documento: window.ERLEN_AGENTE.identidadDocumento(), endpoint: endpoint.value.trim(), modelo: modelo.value.trim(), clave: clave.value, notas: notas.checked};
+    return {documento: window.TABULA_AGENTE.identidadDocumento(), endpoint: endpoint.value.trim(), modelo: modelo.value.trim(), clave: clave.value, notas: notas.checked};
   }
   function actualizaAlcance() {
     if (!panelAgente || controlador) return;
     const siguiente = alcanceActual();
     if (alcance && Object.keys(siguiente).some(k => siguiente[k] !== alcance[k])) {
-      window.ERLEN_AGENTE.reinicia(); hilo.replaceChildren();
+      window.TABULA_AGENTE.reinicia(); hilo.replaceChildren();
       burbuja('bot', 'Nueva conversación para esta presentación y conexión.');
       estado.textContent = '';
     }
     alcance = siguiente;
   }
   function reinicia() {
-    detiene(); window.ERLEN_AGENTE.reinicia(); hilo.replaceChildren();
+    detiene(); window.TABULA_AGENTE.reinicia(); hilo.replaceChildren();
     burbuja('bot', 'Configura el servicio y el modelo; después escribe lo que quieres hacer.');
     estado.textContent = '';
     alcance = alcanceActual();
@@ -55,9 +55,9 @@ window.ERLEN_AGENTE_UI = (() => {
     const ctrl = new AbortController(); controlador = ctrl;
     entrada.value = ''; burbuja('yo', mensaje); habilita(true); estado.textContent = 'Consultando el modelo…';
     try {
-      const r = await window.ERLEN_AGENTE.conversa({mensaje, url: endpoint.value.trim(), modelo: modelo.value.trim(), clave: clave.value, incluirNotas: notas.checked, signal: ctrl.signal});
+      const r = await window.TABULA_AGENTE.conversa({mensaje, url: endpoint.value.trim(), modelo: modelo.value.trim(), clave: clave.value, incluirNotas: notas.checked, signal: ctrl.signal});
       if (ctrl.signal.aborted) return;
-      if (alcance) alcance.documento = window.ERLEN_AGENTE.identidadDocumento();
+      if (alcance) alcance.documento = window.TABULA_AGENTE.identidadDocumento();
       burbuja('bot', r.respuesta);
       if (r.cambios.length) {
         const lista = h('ul', {class: 'agente-cambios'}, r.cambios.map(x => h('li', null, x)));
@@ -68,7 +68,7 @@ window.ERLEN_AGENTE_UI = (() => {
       estado.textContent = 'Respuesta recibida.';
     } catch (e) {
       if (controlador === ctrl) { controlador = null; actualizaAlcance(); }
-      if (ctrl.signal.aborted) estado.textContent = 'Consulta detenida en Tabula; no se aplicaron cambios.';
+      if (ctrl.signal.aborted) estado.textContent = 'Consulta detenida en Lámina; no se aplicaron cambios.';
       else { estado.textContent = 'No se completó la solicitud.'; burbuja('bot', e.message || 'El servicio no respondió.'); }
     } finally {
       if (controlador === ctrl) controlador = null;

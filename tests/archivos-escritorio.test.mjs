@@ -225,7 +225,7 @@ test('opening another file is not blocked by a full library when the current fil
   await app.run('guardarProyectoEscritorio(true)');
   next = app.run("(()=>{const d=blankDeck();d.meta.title='Otro';return JSON.stringify(d)})()");
   const proto = app.dom.window.Storage.prototype, set = proto.setItem;
-  proto.setItem = function(key, value) { if (key === 'erlen-slides.decks') throw new Error('quota'); return set.call(this,key,value); };
+  proto.setItem = function(key, value) { if (key === 'tabula.decks') throw new Error('quota'); return set.call(this,key,value); };
   t.after(() => { proto.setItem = set; });
   await app.run('abrirProyectoEscritorio()');
   assert.equal(app.run('S.deck.meta.title'), 'Otro');

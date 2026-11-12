@@ -24,8 +24,8 @@ const TIPOS = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
    origen (con puerto), así que en el mismo puerto la biblioteca es la misma
    se abra el editor desde aquí o desde npm start. Si está ocupado, cualquiera
    libre, y se avisa de que esa biblioteca es otra. */
-const PUERTO = process.env.ERLEN_SLIDES_PUERTO != null && process.env.ERLEN_SLIDES_PUERTO !== '' ? Number(process.env.ERLEN_SLIDES_PUERTO) : 8130;
-const CADUCIDAD_MS = Math.max(1, Number(process.env.ERLEN_SLIDES_CADUCIDAD) || 600) * 1000;
+const PUERTO = process.env.TABULA_PUERTO != null && process.env.TABULA_PUERTO !== '' ? Number(process.env.TABULA_PUERTO) : 8130;
+const CADUCIDAD_MS = Math.max(1, Number(process.env.TABULA_CADUCIDAD) || 600) * 1000;
 const MAX_PENDIENTES = 20;
 const RUTA = '/mcp/abrir/';
 
@@ -120,9 +120,9 @@ export default {
       if (pendientes.size >= MAX_PENDIENTES) pendientes.delete(pendientes.keys().next().value);
       const clave = randomBytes(24).toString('base64url');
       const caduca = Date.now() + CADUCIDAD_MS;
-      pendientes.set(clave, {caduca, cuerpo: JSON.stringify({formato: 'erlen-mcp-abrir-v1', archivo: basename(ruta), deck})});
+      pendientes.set(clave, {caduca, cuerpo: JSON.stringify({formato: 'tabula-mcp-abrir-v1', archivo: basename(ruta), deck})});
       const url = 'http://127.0.0.1:' + puerto + '/?abrir=' + clave;
-      const navegador = process.env.ERLEN_SLIDES_SIN_NAVEGADOR === '1' ? 'no se abrió (ERLEN_SLIDES_SIN_NAVEGADOR=1)' : await abreNavegador(url);
+      const navegador = process.env.TABULA_SIN_NAVEGADOR === '1' ? 'no se abrió (TABULA_SIN_NAVEGADOR=1)' : await abreNavegador(url);
       const out = {archivo: visible(ruta), url, navegador, caduca: new Date(caduca).toISOString(),
         nota: (navegador === 'abierto' ? 'Se abrió el navegador. ' : 'Dale al usuario la URL para que la abra en su navegador. ') +
           'El enlace sirve una sola vez; el editor enseña la presentación y pide confirmación antes de abrirla. ' +

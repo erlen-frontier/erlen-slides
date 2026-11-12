@@ -3,7 +3,7 @@ Generated from Cargo.lock with cargo-about; see THIRD_PARTY_NOTICES.md.
 
 ========================================================================
 GNU Affero General Public License v3.0 only (AGPL-3.0-only)
-Packages: erlen-slides-core 0.1.0, erlen-slides-desktop 0.3.0
+Packages: tabula-core 0.1.0, tabula-desktop 0.3.0
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 Version 3, 19 November 2007

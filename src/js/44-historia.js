@@ -5,7 +5,7 @@
    progreso visible (la palanca más fuerte sobre el ánimo de trabajar). El
    deshacer muere al cerrar la pestaña; esto no. */
 
-const LS_HISTORIA = 'erlen-slides.historia';
+const LS_HISTORIA = 'tabula.historia';
 const TOPE_HISTORIA = 10;
 const TOPE_HISTORIA_BYTES = 4 * 1024 * 1024;
 

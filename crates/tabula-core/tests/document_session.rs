@@ -1,4 +1,4 @@
-use erlen_slides_core::ProjectFiles;
+use tabula_core::ProjectFiles;
 use std::fs;
 
 const FIRST: &str = r#"{"v":1,"meta":{"title":"Original"},"slides":[{"id":"s1","blocks":[{"type":"chart","cientifico":{"fuente":"original"}}]}],"extension":{"keep":true}}"#;

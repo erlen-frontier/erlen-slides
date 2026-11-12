@@ -1,0 +1,24 @@
+---
+title: "Charla"
+author: "Autora A"
+format:
+  revealjs:
+    theme: simple
+    transition: none
+    slide-number: true
+    incremental: false
+    embed-resources: true
+    html-math-method: mathml
+execute:
+  enabled: false
+  eval: false
+---
+
+## Evidencia
+Resultado
+
+::: {.fragment}
+```python
+print(1)
+```
+:::

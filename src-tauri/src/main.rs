@@ -9,7 +9,7 @@ use tauri_plugin_dialog::DialogExt;
 #[tauri::command]
 async fn guardar_proyecto(
     app: tauri::AppHandle,
-    gate: tauri::State<'_, erlen_slides_core::SaveGate>,
+    gate: tauri::State<'_, tabula_core::SaveGate>,
     nombre: String,
     contenido: String,
 ) -> Result<Option<String>, String> {
@@ -33,7 +33,7 @@ async fn guardar_proyecto(
             return Ok(None);
         };
         let path = selected.into_path().map_err(|error| error.to_string())?;
-        erlen_slides_core::save_project(&path, &contenido).map_err(|error| error.to_string())?;
+        tabula_core::save_project(&path, &contenido).map_err(|error| error.to_string())?;
         Ok(Some(
             path.file_name()
                 .and_then(|name| name.to_str())
@@ -49,9 +49,9 @@ async fn guardar_proyecto(
 #[tauri::command]
 async fn abrir_archivo_proyecto(
     app: tauri::AppHandle,
-    gate: tauri::State<'_, erlen_slides_core::SaveGate>,
-    files: tauri::State<'_, erlen_slides_core::ProjectFiles>,
-) -> Result<Option<erlen_slides_core::OpenedProject>, String> {
+    gate: tauri::State<'_, tabula_core::SaveGate>,
+    files: tauri::State<'_, tabula_core::ProjectFiles>,
+) -> Result<Option<tabula_core::OpenedProject>, String> {
     let guard = gate
         .try_enter()
         .ok_or("Ya hay una operación de archivo abierta")?;
@@ -76,11 +76,11 @@ async fn abrir_archivo_proyecto(
 #[tauri::command]
 async fn guardar_archivo_proyecto_como(
     app: tauri::AppHandle,
-    gate: tauri::State<'_, erlen_slides_core::SaveGate>,
-    files: tauri::State<'_, erlen_slides_core::ProjectFiles>,
+    gate: tauri::State<'_, tabula_core::SaveGate>,
+    files: tauri::State<'_, tabula_core::ProjectFiles>,
     nombre: String,
     contenido: String,
-) -> Result<Option<erlen_slides_core::ProjectReference>, String> {
+) -> Result<Option<tabula_core::ProjectReference>, String> {
     let guard = gate
         .try_enter()
         .ok_or("Ya hay una operación de archivo abierta")?;
@@ -113,8 +113,8 @@ async fn guardar_archivo_proyecto_como(
 
 #[tauri::command]
 async fn guardar_archivo_proyecto(
-    gate: tauri::State<'_, erlen_slides_core::SaveGate>,
-    files: tauri::State<'_, erlen_slides_core::ProjectFiles>,
+    gate: tauri::State<'_, tabula_core::SaveGate>,
+    files: tauri::State<'_, tabula_core::ProjectFiles>,
     id: u64,
     contenido: String,
 ) -> Result<(), String> {
@@ -131,7 +131,7 @@ async fn guardar_archivo_proyecto(
 }
 
 #[tauri::command]
-fn cerrar_archivo_proyecto(files: tauri::State<'_, erlen_slides_core::ProjectFiles>, id: u64) {
+fn cerrar_archivo_proyecto(files: tauri::State<'_, tabula_core::ProjectFiles>, id: u64) {
     files.close(id);
 }
 
@@ -148,7 +148,7 @@ fn cerrar_presentador(app: tauri::AppHandle) -> Result<(), String> {
 /// validates the destination, limits both bodies and never follows redirects.
 #[tauri::command]
 async fn agente_consulta(
-    solicitudes: tauri::State<'_, erlen_slides_core::AgentRequests>,
+    solicitudes: tauri::State<'_, tabula_core::AgentRequests>,
     solicitud: String,
     url: String,
     clave: String,
@@ -162,7 +162,7 @@ async fn agente_consulta(
             .recv()
             .await
             .ok_or_else(|| "Solicitud cancelada.".to_owned())?;
-        erlen_slides_core::request_agent_chat(
+        tabula_core::request_agent_chat(
             &url,
             (!clave.is_empty()).then_some(clave.as_str()),
             &cuerpo,
@@ -181,7 +181,7 @@ async fn agente_consulta(
 
 #[tauri::command]
 fn agente_cancelar(
-    solicitudes: tauri::State<'_, erlen_slides_core::AgentRequests>,
+    solicitudes: tauri::State<'_, tabula_core::AgentRequests>,
     solicitud: String,
 ) -> Result<(), String> {
     solicitudes.cancel(&solicitud)
@@ -189,9 +189,9 @@ fn agente_cancelar(
 
 fn main() {
     tauri::Builder::default()
-        .manage(erlen_slides_core::SaveGate::default())
-        .manage(erlen_slides_core::ProjectFiles::default())
-        .manage(erlen_slides_core::AgentRequests::default())
+        .manage(tabula_core::SaveGate::default())
+        .manage(tabula_core::ProjectFiles::default())
+        .manage(tabula_core::AgentRequests::default())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let app_handle = app.handle().clone();

@@ -23,7 +23,7 @@ async function esperaModal(d) {
 const botonModal = (d, texto) => [...modal(d).querySelectorAll('button')].find(b => b.textContent.trim() === texto);
 
 test('?abrir=<clave> fetches the project from the same origin, previews it and opens it only after confirming', async () => {
-  const r = red(responde({formato: 'erlen-mcp-abrir-v1', archivo: 'hdl.json', deck: DECK}));
+  const r = red(responde({formato: 'tabula-mcp-abrir-v1', archivo: 'hdl.json', deck: DECK}));
   const {dom, run, errors} = await editor('http://localhost:8130/?abrir=' + CLAVE, {fetch: r.fetch});
   try {
     const d = dom.window.document;
@@ -41,13 +41,13 @@ test('?abrir=<clave> fetches the project from the same origin, previews it and o
     assert.equal(run('S.deck.slides[1].title'), 'El pH 10 da la fase más pura');
     assert.equal(run('S.deckName'), 'Síntesis de HDL Zn-Al');
     assert.equal(run('decksStore()["Síntesis de HDL Zn-Al"].deck.slides.length'), 2, 'Queda en la biblioteca');
-    assert.equal(d.querySelector('#inicioRoot main.erlen-inicio').hidden, true, 'Se entra al editor');
+    assert.equal(d.querySelector('#inicioRoot main.tabula-inicio').hidden, true, 'Se entra al editor');
     assert.deepEqual(errors, []);
   } finally { dom.window.close(); }
 });
 
 test('Cancelling the preview leaves everything as it was, and a second copy never overwrites the first', async () => {
-  const r = red(responde({formato: 'erlen-mcp-abrir-v1', archivo: 'hdl.json', deck: DECK}));
+  const r = red(responde({formato: 'tabula-mcp-abrir-v1', archivo: 'hdl.json', deck: DECK}));
   const {dom, run, errors} = await editor('http://localhost:8130/?abrir=' + CLAVE, {fetch: r.fetch});
   try {
     const d = dom.window.document;
@@ -77,7 +77,7 @@ test('Expired keys, broken JSON, foreign payloads, malformed keys and a stopped 
     [responde({error: 'x'}, 404), /caducó o ya se usó/],
     [responde(() => { throw new SyntaxError('Unexpected token'); }), /no es un JSON válido/],
     [responde({v: 1, slides: []}), /no es un proyecto de Tabula/],
-    [responde({formato: 'erlen-mcp-abrir-v1', archivo: 'x.json', deck: {v: 1, meta: {}, slides: 'nada'}}), /no se pudo leer/],
+    [responde({formato: 'tabula-mcp-abrir-v1', archivo: 'x.json', deck: {v: 1, meta: {}, slides: 'nada'}}), /no se pudo leer/],
     [responde({}, 500), /error \(500\)/],
     [async () => { throw new TypeError('Failed to fetch'); }, /ya no está en marcha/]
   ];
@@ -108,7 +108,7 @@ test('Under /slides/ the request stays relative to the deployment, and the norma
   try {
     await esperaModal(dom.window.document);
     assert.equal(new URL(r.pedidas[0].u, dom.window.location.href).pathname, '/slides/mcp/abrir/' + CLAVE);
-    assert.equal(dom.window.location.pathname + dom.window.location.search + dom.window.location.hash, '/slides/#inicio/biblioteca', 'Se conserva la vista pedida y se normaliza la ruta antigua');
+    assert.equal(dom.window.location.pathname + dom.window.location.search + dom.window.location.hash, '/slides/#inicio', 'El prefijo desconocido abre Inicio y se normaliza');
   } finally { dom.window.close(); }
   const sin = red(responde({}));
   const normal = await editor('http://localhost:8130/', {fetch: sin.fetch});

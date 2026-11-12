@@ -8,7 +8,7 @@
    duplicar lo que ya estaba en la presentación. */
 (function () {
   'use strict';
-  const U = ERLEN_MCP.util;
+  const U = TABULA_MCP.util;
   const CLAVE_OK = /^[A-Za-z0-9]{1,40}$/;
   const CAMPOS = ['autores', 'titulo', 'revista', 'anio', 'vol', 'pag', 'doi', 'url'];
   const MAX_AUTORES = 400;          /* lo que conserva saneaDeck */
@@ -127,7 +127,7 @@
     return l.length;
   }
 
-  ERLEN_MCP.registra('importaBibliografia', a => {
+  TABULA_MCP.registra('importaBibliografia', a => {
     const d = a.deck;
     aseguraClaves(d);
     const entradas = a.formato === 'ris' ? entradasRIS(a.texto) : entradasBib(a.texto);
@@ -197,7 +197,7 @@
     return { estado: 'agregada', diapositiva: pos + 1 };
   }
 
-  ERLEN_MCP.registra('citaClaves', a => {
+  TABULA_MCP.registra('citaClaves', a => {
     const d = a.deck;
     aseguraClaves(d);
     const sl = d.slides[U.indiceDiapositiva(d, a.diapositiva)];
@@ -244,7 +244,7 @@
      sobrescribe lo que ya tenía la referencia: solo se rellenan los huecos, y
      las diferencias se enseñan para que las decida la persona. */
   const compara = s => zotLlano(s);
-  ERLEN_MCP.registra('completaDOI', a => {
+  TABULA_MCP.registra('completaDOI', a => {
     const d = a.deck;
     aseguraClaves(d);
     const refs = refsDe(d);
@@ -302,7 +302,7 @@
      Lo que se escapa al citar a mano: una [@clave] que no existe (en pantalla
      sale «[cita perdida]») y referencias citadas a las que les falta lo mínimo
      para encontrarlas. */
-  ERLEN_MCP.registraRevision('bibliografia', deck => {
+  TABULA_MCP.registraRevision('bibliografia', deck => {
     const d = JSON.parse(JSON.stringify(deck));
     aseguraClaves(d);
     const hallazgos = [], avisadas = new Set();

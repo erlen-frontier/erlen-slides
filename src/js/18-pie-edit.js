@@ -119,7 +119,7 @@ function openPieEditor() {
       onchange: e => { p.enPortada = e.target.checked; guarda(); } }), 'Mostrarlo también en la portada'));
     ctr.append(h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!p.enSecciones,
       onchange: e => { p.enSecciones = e.target.checked; guarda(); } }), 'Mostrarlo en las diapositivas de sección'));
-    ctr.append(h('p', { class: 'hint' }, 'En Beamer esas dos diapositivas se declaran [plain], que quita el pie. Al activarlas, Tabula las exporta sin [plain] para que la barra aparezca.'));
+    ctr.append(h('p', { class: 'hint' }, 'En Beamer esas dos diapositivas se declaran [plain], que quita el pie. Al activarlas, Lámina las exporta sin [plain] para que la barra aparezca.'));
   }
 
   pinta();
@@ -134,12 +134,13 @@ function openPieEditor() {
 }
 
 /* ---------- notas del orador ---------- */
-function openNotasEditor(idx, modo) {
+function renderNotasEditor(host, idx, modo) {
   let i = clamp(idx == null ? S.cur : idx, 0, S.deck.slides.length - 1);
   let vista = modo === 'todas' ? 'todas' : 'una';
   const m = S.deck.meta;
   const cfg = notasDe(m);
   const cuerpo = h('div');
+  host.append(cuerpo);
   const selector = () => {
     const seg = h('div', { class: 'seg', style: 'margin-bottom:12px;max-width:340px' });
     [['una', 'Una a una'], ['todas', 'Todas de corrido']].forEach(([v, n]) =>
@@ -147,6 +148,7 @@ function openNotasEditor(idx, modo) {
     return seg;
   };
   const dibuja = () => {
+    if (typeof host._flushNotas === 'function') host._flushNotas();
     if (vista === 'todas') { cuerpo.innerHTML = ''; cuerpo.append(selector()); notasDeCorrido(cuerpo, n => { i = n; vista = 'una'; dibuja(); }); return; }
     const sl = S.deck.slides[i];
     cuerpo.innerHTML = '';
@@ -169,7 +171,18 @@ function openNotasEditor(idx, modo) {
       });
       if (!prev.firstChild) prev.append(h('p', { class: 'vacio' }, 'Sin notas para esta diapositiva.'));
     };
-    ta.addEventListener('input', () => { sl.notes = ta.value; pinta(); saveInd(); });
+    let _needsCommit = false;
+    const flushNotes = () => {
+      if (!S.deck || S.deck.slides[i] !== sl || !S.deck.slides.includes(sl)) return;
+      if (!_needsCommit) return;
+      _needsCommit = false;
+      commit();
+    };
+    host._flushNotas = flushNotes;
+    _cambioPanelPendiente = flushNotes;
+    ta.setAttribute('aria-label','Notas del orador, diapositiva '+(i+1));
+    ta.addEventListener('input', () => { sl.notes = ta.value; pinta(); saveInd(); _needsCommit = true; });
+    ta.addEventListener('blur', () => { flushNotes(); });
     pinta();
 
     const min = h('input', { class: 'field', type: 'number', min: '0', max: '60', step: '0.5', style: 'width:88px',
@@ -198,13 +211,18 @@ function openNotasEditor(idx, modo) {
     g.append(seg);
     g.append(h('p', { class: 'hint' }, (NOTA_MODOS.find(x => x.id === cfg.modo) || {}).d || ''));
     cuerpo.append(g);
-  };
+  }
   dibuja();
+}
+
+function openNotasEditor(idx, modo) {
+  const host = h('div');
+  renderNotasEditor(host, idx, modo);
   openModal({
-    title: 'Notas del orador', size: 'modal-lg', body: cuerpo,
-    onclose: () => commit(),
-    foot: [h('button', { class: 'btn', onclick: () => { closeModal(); commit(); exportGuion(); } }, '¶ Guion imprimible'),
-      h('button', { class: 'btn btn-pri', onclick: () => { closeModal(); commit(); } }, 'Listo')]
+    title: 'Notas del orador', size: 'modal-lg', body: host,
+    onclose: () => { flushEdicion(); },
+    foot: [h('button', { class: 'btn', onclick: () => { closeModal(); exportGuion(); } }, '¶ Guion imprimible'),
+      h('button', { class: 'btn btn-pri', onclick: () => closeModal() }, 'Listo')]
   });
 }
 

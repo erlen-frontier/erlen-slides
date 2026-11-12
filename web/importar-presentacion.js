@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
-window.ERLEN_IMPORTAR = (() => {
+window.TABULA_IMPORTAR = (() => {
 'use strict';
 function textoPPTX(html) {
   const doc = new DOMParser().parseFromString(String(html || '').replace(/<br\s*\/?\s*>|<\/p>|<\/li>/gi, '\n'), 'text/html');
@@ -11,7 +11,7 @@ function imagenPPTX(src) {
   return /^data:image\/(png|jpeg|gif|webp);base64,[a-z\d+/=\s]+$/i.test(src) ? src : '';
 }
 /* Content adaptation is explicit: Office geometry and fonts are replaced by
-   Erlen layouts. Never claim pixel-perfect import or discard a chart's data. */
+   Tabula layouts. Never claim pixel-perfect import or discard a chart's data. */
 function adaptaPPTX(raw, archivo = 'PowerPoint') {
   if (!Array.isArray(raw?.slides) || !raw.slides.length || raw.slides.length > 200) throw new Error('La presentación debe contener de 1 a 200 diapositivas.');
   const deck = blankDeck(); deck.slides = []; deck.meta.title = archivo.replace(/\.pptx$/i, '');
@@ -54,7 +54,7 @@ function adaptaPPTX(raw, archivo = 'PowerPoint') {
           for (const serie of e.data || []) for (const v of serie.values || []) rows.push([String(serie.key || ''), String(serie.xlabels?.[v.x] ?? v.x), String(v.y)]);
           tabla(rows, i, 'Datos importados de la gráfica');
         }
-        add(i, 'La gráfica se importó como tabla de datos. Crea una gráfica de Tabula para elegir sus ejes y unidades.');
+        add(i, 'La gráfica se importó como tabla de datos. Crea una gráfica de Lámina para elegir sus ejes y unidades.');
       } else if (e.type === 'math' && e.latex) bloques.push(block('math', { tex: String(e.latex).slice(0, 20000) }));
       else add(i, 'Un objeto ' + String(e.type || 'desconocido').slice(0, 40) + ' no se importó. Revísalo en el PowerPoint original.');
     }
@@ -97,7 +97,7 @@ function openImportarPresentacion() {
       let r;
       if (/\.pptx$/i.test(f.name)) {
         const buffer = await f.arrayBuffer(); if (cerrado || actual !== turno) return;
-        const core = await extensionSlides('pptxcore'); core.revisaPaquetePPTX(buffer);
+        const core = await extensionTabla('pptxcore'); core.revisaPaquetePPTX(buffer);
         if (cerrado || actual !== turno) return;
         const raw = await new Promise((resolve, reject) => {
           rechazaLectura = reject;
@@ -109,7 +109,7 @@ function openImportarPresentacion() {
         });
         if (cerrado || actual !== turno) return;
         r = adaptaPPTX(raw, f.name);
-        detalles.append(h('p', null, 'Se importan textos, imágenes incrustadas, tablas, ecuaciones compatibles y notas. El acomodo, las fuentes y los efectos se adaptan al estilo de Tabula; compara con el PowerPoint original.'));
+        detalles.append(h('p', null, 'Se importan textos, imágenes incrustadas, tablas, ecuaciones compatibles y notas. El acomodo, las fuentes y los efectos se adaptan al estilo de Lámina; compara con el PowerPoint original.'));
       } else if (/\.(md|markdown)$/i.test(f.name)) r = await deckDesdeMarkdown(await f.text());
       else if (/\.json$/i.test(f.name)) {
         const bruto = JSON.parse(await f.text());

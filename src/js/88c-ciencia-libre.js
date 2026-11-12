@@ -5,16 +5,16 @@ const CIENCIA_LIBRES={promesas:new Map(),base:'libre/'};
 function cienciaIcono(nombre) {
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
  for(const [k,v] of Object.entries({viewBox:'0 0 24 24',width:20,height:20,fill:'none',stroke:'currentColor','stroke-width':1.8,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',focusable:'false'}))svg.setAttribute(k,v);
- for(const [tag,attrs] of window.ERLEN_ICONOS?.[nombre] || []) {const p=document.createElementNS(svg.namespaceURI,tag);for(const [k,v] of Object.entries(attrs))p.setAttribute(k,v);svg.append(p);}
+ for(const [tag,attrs] of window.TABULA_ICONOS?.[nombre] || []) {const p=document.createElementNS(svg.namespaceURI,tag);for(const [k,v] of Object.entries(attrs))p.setAttribute(k,v);svg.append(p);}
  return svg;
 }
 function cienciaIconos() {
- if(!window.ERLEN_ICONOS)return;
+ if(!window.TABULA_ICONOS)return;
  const botones={undoBtn:'Undo2',redoBtn:'Redo2',buscarBtn:'Search',zoomIn:'ZoomIn',zoomOut:'ZoomOut',zoomFit:'Expand',sorterBtn:'Settings2',concBtn:'Minimize2',helpBtn:'HelpCircle'};
  for(const [id,n] of Object.entries(botones)){const b=document.getElementById(id);if(b){if(!b.getAttribute('aria-label'))b.setAttribute('aria-label',b.title || b.textContent);b.replaceChildren(cienciaIcono(n));}}
 }
 function cienciaJS(nombre) {
- if(location.protocol==='file:'||window.ERLEN_LIBRE!==true)return Promise.reject(new Error('Abre el editor web para usar el laboratorio. Las figuras ya insertadas siguen disponibles en este archivo.'));
+ if(location.protocol==='file:'||window.TABULA_LIBRE!==true)return Promise.reject(new Error('Abre el editor web para usar el laboratorio. Las figuras ya insertadas siguen disponibles en este archivo.'));
  if(!['kekule','3dmol','plotly'].includes(nombre))return Promise.reject(new Error('Biblioteca desconocida'));
  if(CIENCIA_LIBRES.promesas.has(nombre))return CIENCIA_LIBRES.promesas.get(nombre);
  const p=new Promise((resolve,reject)=>{
@@ -26,7 +26,7 @@ function cienciaJS(nombre) {
 }
 function cienciaAnaliza(entrada,signal) {
  return new Promise((resolve,reject)=>{
-  if(location.protocol==='file:'||window.ERLEN_LIBRE!==true){reject(new Error('El análisis molecular se abre desde el editor web.'));return;}
+  if(location.protocol==='file:'||window.TABULA_LIBRE!==true){reject(new Error('El análisis molecular se abre desde el editor web.'));return;}
   if(signal?.aborted){reject(new Error('Operación cancelada'));return;}
   let w;try{w=new Worker(CIENCIA_LIBRES.base+'quimica-worker.js');}catch{reject(new Error('Este navegador no pudo abrir el motor molecular.'));return;}
   const fin=(err,data)=>{clearTimeout(t);signal?.removeEventListener('abort',abortar);w.terminate();err?reject(err):resolve(data);};

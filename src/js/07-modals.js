@@ -26,7 +26,7 @@ function openModal(opts) {
   closeModal();
   _focoPrevio = document.activeElement;
   _modalCleanup = opts.onclose || null;
-  _modalFondos = [...new Set([$('#app'), $('.erlen-marco'), $('#inicioRoot .erlen-inicio')].filter(Boolean))].map(el => [el, el.inert]);
+  _modalFondos = [...new Set([$('#app'), $('.tabula-marco'), $('#inicioRoot .tabula-inicio')].filter(Boolean))].map(el => [el, el.inert]);
   _modalFondos.forEach(([el]) => { el.inert = true; });
   const tid = 'mo-t-' + Math.random().toString(36).slice(2, 8);
   const box = h('div', { class: 'modal ' + (opts.size || ''), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': tid, tabindex: '-1' },
@@ -476,11 +476,10 @@ function saveDeckAs() {
   openModal({title: 'Guardar en mi biblioteca', body: form});
 }
 function newDeckFlow(demo) {
-  if (!confirm('Se abrirá una presentación nueva. La actual queda en el autoguardado' + (S.deckName ? ` y en «${S.deckName}»` : '') + '. ¿Continuar?')) return;
-  if (S.deckName) { const s = decksStore(); s[S.deckName] = { deck: S.deck, when: Date.now() }; lsSet(LS_DECKS, s); }
-  if (!loadDeck(demo ? demoDeck() : blankDeck(), null)) return;
-  if (!demo && typeof marcaArchivoNuevo === 'function') marcaArchivoNuevo();
+  if (!confirm('Se abrirá una presentación nueva. La actual queda en el autoguardado' + (S.deckName ? ` y en «${S.deckName}»` : '') + '. ¿Continuar?')) return false;
+  if (!wsNueva(demo ? demoDeck() : undefined)) return false;
   closeModal();
+  return true;
 }
 function loadDeck(deck, name, confirmado = false) {
   quitaGuiaEjemplo();
@@ -644,22 +643,9 @@ function openHelp(pestana) {
   }
 
   function panelPrivacidad() {
-    const diagnostico = window.ErlenDiagnostico;
-    if (!diagnostico?.disponible) return h('p', null, 'Esta copia no envía diagnósticos. Tu presentación se guarda en este navegador.');
-    const check = h('input', {type: 'checkbox', 'aria-label': 'Compartir diagnósticos técnicos'});
-    check.checked = diagnostico.estado().activo;
-    check.addEventListener('change', () => { diagnostico.activar(check.checked); pintar(); });
-    const estado = h('p', {role: 'status', style: 'font-size:13px'}, '');
-    const prueba = h('button', {class: 'btn', disabled: !check.checked, onclick: () => {
-      const id = diagnostico.reportar('prueba');
-      estado.textContent = id ? 'Prueba preparada. Su recepción se comprueba en Sentry.' : 'Espera a que cargue el diagnóstico. Solo se permite una prueba por sesión.';
-    }}, 'Enviar diagnóstico de prueba');
     return h('div', null,
-      h('p', null, 'El diagnóstico es opcional y está desactivado inicialmente. Activarlo ayuda a corregir fallos de edición, guardado y descarga.'),
-      h('label', {style: 'display:flex;align-items:center;gap:10px;margin:16px 0'}, check, 'Compartir diagnósticos técnicos'),
-      h('p', null, 'Solo enviamos a Sentry el tipo de fallo, la versión de Tabula y la línea del programa. No enviamos textos, títulos, archivos, cuentas, historial de clics ni grabaciones de pantalla. Como proveedor de la conexión, Sentry recibe datos de red; estos informes no llevan identificadores de usuario.'),
-      h('p', null, 'Puedes desactivarlo aquí en cualquier momento. La preferencia se guarda en este navegador. No cambia la telemetría de uso, que sigue desactivada, ni afecta a las herramientas gratuitas.'),
-      prueba, estado);
+      h('p', null, 'Esta copia no envía diagnósticos ni telemetría de uso. Tu presentación se guarda en este navegador.'),
+      h('p', null, 'Las conexiones voluntarias —herramientas de IA, Crossref y Zotero— solo se usan si tú las activas y pides algo concreto. Sin conexión, la edición, el guardado y las exportaciones funcionan igual.'));
   }
 
   function pintar() {

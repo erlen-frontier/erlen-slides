@@ -1,5 +1,5 @@
 /* Cinta local de Tabula, derivada del componente MIT de Erlen. */
-const erlenCinta=(()=>{
+const tabulaCinta=(()=>{
 // SPDX-License-Identifier: MIT
 /* Copyright (c) 2026 Erlen contributors
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,10 +23,9 @@ const erlenCinta=(()=>{
    cinta al estilo de las apps de oficina, con el patrón ARIA de pestañas y barra de
    herramientas, teclado completo, menús, pestañas contextuales y plegado. No importa
    nada y no toca el DOM fuera de su anfitrión (salvo el menú abierto, en <body>).
-   Estilos en diseno/cinta.css, solo con tokens --erlen-*.
+   Estilos en diseno/cinta.css, solo con tokens --tabula-*.
 
    mountCinta(host, {
-     app: 'slides',                       // clave de preferencias (plegado)
      etiqueta: 'Herramientas',            // nombre accesible de la cinta
      archivo: {etiqueta:'Archivo', accion},  // opcional: botón «Archivo» a la izquierda
      pestanas: [{id, etiqueta, grupos:[{etiqueta, controles:[control…]}]}],
@@ -50,8 +49,8 @@ function mountCinta(host,config){
  if(!host||!host.ownerDocument)throw Error('mountCinta necesita un elemento anfitrión.');
  if(!config||!Array.isArray(config.pestanas)||!config.pestanas.length)throw Error('mountCinta necesita al menos una pestaña.');
  for(const p of config.pestanas)validarPestana(p);
- const doc=host.ownerDocument,win=doc.defaultView,uid='erlen-cinta-'+(++contador);
- const clave='erlen.cinta.'+(config.app||'app')+'.plegada';
+ const doc=host.ownerDocument,win=doc.defaultView,uid='tabula-cinta-'+(++contador);
+ const clave='tabula.cinta.plegada';
  const leer=()=>{try{return win.localStorage.getItem(clave)==='1';}catch{return false;}};
  const guardar=v=>{try{win.localStorage.setItem(clave,v?'1':'0');}catch{}};
  // Paisaje corto (teléfono girado, mismo criterio que marco.css): sin preferencia guardada la cinta arranca plegada para
@@ -62,12 +61,12 @@ function mountCinta(host,config){
  let activa=config.inicial||config.pestanas[0].id,plegada=plegadoAuto||leer(),menu=null,firmaPestanas='',firmaPanel='';
  const vivos=new Map();   // botón → control, para refrescar estados sin repintar
 
- const raiz=el('div',{class:'erlen-cinta'});
+ const raiz=el('div',{class:'tabula-cinta'});
  // La fila de pestañas lleva «Archivo» y «Plegar» fuera del tablist: un tablist solo puede
  // contener pestañas (ARIA aria-required-children).
- const fila=el('div',{class:'erlen-cinta-pestanas'});
- const lista=el('div',{class:'erlen-cinta-lista',role:'tablist','aria-label':config.etiqueta||'Herramientas'});
- const panel=el('div',{class:'erlen-cinta-panel',role:'tabpanel',id:uid+'-panel',tabindex:'-1'});
+ const fila=el('div',{class:'tabula-cinta-pestanas'});
+ const lista=el('div',{class:'tabula-cinta-lista',role:'tablist','aria-label':config.etiqueta||'Herramientas'});
+ const panel=el('div',{class:'tabula-cinta-panel',role:'tabpanel',id:uid+'-panel',tabindex:'-1'});
  raiz.append(fila,panel);
  host.append(raiz);
 
@@ -79,7 +78,7 @@ function mountCinta(host,config){
  }
  function icono(i){
   if(i===undefined||i===null||i==='')return null;
-  const s=el('span',{class:'erlen-cinta-icono','aria-hidden':'true'});
+  const s=el('span',{class:'tabula-cinta-icono','aria-hidden':'true'});
   if(typeof i==='string'&&i.trim().startsWith('<svg'))s.innerHTML=i;
   else if(typeof i==='string')s.textContent=i;
   else s.append(i.cloneNode(true));
@@ -90,19 +89,19 @@ function mountCinta(host,config){
  function pintarPestanas(ps){
   fila.replaceChildren();lista.replaceChildren();
   if(config.archivo){
-   const b=el('button',{type:'button',class:'erlen-cinta-archivo','data-control':'archivo'},config.archivo.etiqueta||'Archivo');
+   const b=el('button',{type:'button',class:'tabula-cinta-archivo','data-control':'archivo'},config.archivo.etiqueta||'Archivo');
    b.addEventListener('click',()=>config.archivo.accion&&config.archivo.accion(b));
    fila.append(b);
   }
   fila.append(lista);
   for(const p of ps){
-   const b=el('button',{type:'button',role:'tab',class:'erlen-cinta-pestana',id:uid+'-tab-'+p.id,'aria-controls':uid+'-panel','aria-selected':'false',tabindex:'-1','data-pestana':p.id,'data-contextual':p.contextual?'true':null},p.etiqueta);
+   const b=el('button',{type:'button',role:'tab',class:'tabula-cinta-pestana',id:uid+'-tab-'+p.id,'aria-controls':uid+'-panel','aria-selected':'false',tabindex:'-1','data-pestana':p.id,'data-contextual':p.contextual?'true':null},p.etiqueta);
    b.addEventListener('click',()=>{if(plegada)fijarPlegado(false,!plegadoAuto);seleccionar(p.id,true);});
    b.addEventListener('dblclick',()=>fijarPlegado(!plegada));
    lista.append(b);
   }
-  fila.append(el('span',{class:'erlen-cinta-hueco'}));
-  const pl=el('button',{type:'button',class:'erlen-cinta-plegar','aria-expanded':String(!plegada),'aria-controls':uid+'-panel',title:'Plegar o desplegar la cinta (Ctrl+F1)'},el('span',{'aria-hidden':'true'},plegada?'⌄':'⌃'),el('span',{class:'erlen-cinta-oculto'},plegada?'Desplegar la cinta':'Plegar la cinta'));
+  fila.append(el('span',{class:'tabula-cinta-hueco'}));
+  const pl=el('button',{type:'button',class:'tabula-cinta-plegar','aria-expanded':String(!plegada),'aria-controls':uid+'-panel',title:'Plegar o desplegar la cinta (Ctrl+F1)'},el('span',{'aria-hidden':'true'},plegada?'⌄':'⌃'),el('span',{class:'tabula-cinta-oculto'},plegada?'Desplegar la cinta':'Plegar la cinta'));
   pl.addEventListener('click',()=>fijarPlegado(!plegada));
   fila.append(pl);
  }
@@ -112,14 +111,14 @@ function mountCinta(host,config){
   vivos.clear();
   panel.replaceChildren();
   panel.setAttribute('aria-labelledby',uid+'-tab-'+p.id);
-  const barra=el('div',{class:'erlen-cinta-fila',role:'toolbar','aria-label':p.etiqueta});
+  const barra=el('div',{class:'tabula-cinta-fila',role:'toolbar','aria-label':p.etiqueta});
   for(const g of p.grupos){
-   const grupo=el('div',{class:'erlen-cinta-grupo',role:'group','aria-label':g.etiqueta});
-   const controles=el('div',{class:'erlen-cinta-controles'});
+   const grupo=el('div',{class:'tabula-cinta-grupo',role:'group','aria-label':g.etiqueta});
+   const controles=el('div',{class:'tabula-cinta-controles'});
    const grandes=g.controles.filter(c=>c.tipo==='grande'),resto=g.controles.filter(c=>c.tipo!=='grande');
    for(const c of grandes)controles.append(boton(c));
-   for(let i=0;i<resto.length;i+=3){const col=el('div',{class:'erlen-cinta-columna'});for(const c of resto.slice(i,i+3))col.append(boton(c));controles.append(col);}
-   grupo.append(controles,el('span',{class:'erlen-cinta-rotulo','aria-hidden':'true'},g.etiqueta));
+   for(let i=0;i<resto.length;i+=3){const col=el('div',{class:'tabula-cinta-columna'});for(const c of resto.slice(i,i+3))col.append(boton(c));controles.append(col);}
+   grupo.append(controles,el('span',{class:'tabula-cinta-rotulo','aria-hidden':'true'},g.etiqueta));
    barra.append(grupo);
   }
   barra.addEventListener('keydown',moverEnBarra);
@@ -133,7 +132,7 @@ function mountCinta(host,config){
 
  function boton(c){
   const nombre=c.etiqueta+(c.atajo?' ('+c.atajo+')':'');
-  const b=el('button',{type:'button',class:'erlen-cinta-boton','data-tipo':c.tipo,'data-control':c.id||c.etiqueta,title:c.titulo||nombre,'aria-haspopup':c.tipo==='menu'?'menu':null,'aria-expanded':c.tipo==='menu'?'false':null},icono(c.icono),el('span',{class:'erlen-cinta-texto'},c.etiqueta),c.tipo==='menu'?el('span',{class:'erlen-cinta-flecha','aria-hidden':'true'},'▾'):null);
+  const b=el('button',{type:'button',class:'tabula-cinta-boton','data-tipo':c.tipo,'data-control':c.id||c.etiqueta,title:c.titulo||nombre,'aria-haspopup':c.tipo==='menu'?'menu':null,'aria-expanded':c.tipo==='menu'?'false':null},icono(c.icono),el('span',{class:'tabula-cinta-texto'},c.etiqueta),c.tipo==='menu'?el('span',{class:'tabula-cinta-flecha','aria-hidden':'true'},'▾'):null);
   b.addEventListener('click',()=>{
    if(b.disabled)return;
    if(c.tipo==='menu'){abrirMenu(c,b);return;}
@@ -150,7 +149,7 @@ function mountCinta(host,config){
    b.disabled=!!(c.deshabilitado&&c.deshabilitado());
    if(c.tipo==='interruptor')b.setAttribute('aria-pressed',String(!!(c.activo&&c.activo())));
   }
-  for(const col of panel.querySelectorAll('.erlen-cinta-columna,.erlen-cinta-grupo'))col.hidden=![...col.querySelectorAll('.erlen-cinta-boton')].some(b=>!b.hidden);
+  for(const col of panel.querySelectorAll('.tabula-cinta-columna,.tabula-cinta-grupo'))col.hidden=![...col.querySelectorAll('.tabula-cinta-boton')].some(b=>!b.hidden);
   // La barra conserva siempre un único punto de tabulación, aunque el control que lo tenía
   // se haya deshabilitado u ocultado (p. ej. Deshacer cuando se acaba el historial).
   const bs=[...vivos.keys()],usables=bs.filter(b=>!b.hidden&&!b.disabled);
@@ -158,7 +157,7 @@ function mountCinta(host,config){
   if(usables.length&&!usables.some(b=>b.tabIndex===0))usables[0].tabIndex=0;
  }
 
- const enfocables=barra=>[...barra.querySelectorAll('.erlen-cinta-boton')].filter(b=>!b.hidden&&!b.disabled);
+ const enfocables=barra=>[...barra.querySelectorAll('.tabula-cinta-boton')].filter(b=>!b.hidden&&!b.disabled);
  function moverEnBarra(e){
   const bs=enfocables(e.currentTarget),i=bs.indexOf(doc.activeElement);
   if(i<0)return;
@@ -191,19 +190,19 @@ function mountCinta(host,config){
  function abrirMenu(c,ancla){
   cerrarMenu();
   const opciones=typeof c.opciones==='function'?c.opciones():(c.opciones||[]);
-  const m=el('div',{class:'erlen-cinta-menu',role:'menu','aria-label':c.etiqueta,tabindex:'-1'});
+  const m=el('div',{class:'tabula-cinta-menu',role:'menu','aria-label':c.etiqueta,tabindex:'-1'});
   for(const o of opciones){
-   if(o.separador){m.append(el('div',{class:'erlen-cinta-separador',role:'separator'}));continue;}
+   if(o.separador){m.append(el('div',{class:'tabula-cinta-separador',role:'separator'}));continue;}
    const conMarca=typeof o.marcado==='function';
-   const it=el('button',{type:'button',role:conMarca?'menuitemcheckbox':'menuitem','aria-checked':conMarca?String(!!o.marcado()):null,class:'erlen-cinta-opcion',tabindex:'-1',disabled:o.deshabilitado&&o.deshabilitado()?true:null},
-    icono(o.icono)||el('span',{class:'erlen-cinta-icono','aria-hidden':'true'}),
-    el('span',{class:'erlen-cinta-opcion-texto'},o.etiqueta,o.descripcion?el('small',null,o.descripcion):null),
+   const it=el('button',{type:'button',role:conMarca?'menuitemcheckbox':'menuitem','aria-checked':conMarca?String(!!o.marcado()):null,class:'tabula-cinta-opcion',tabindex:'-1',disabled:o.deshabilitado&&o.deshabilitado()?true:null},
+    icono(o.icono)||el('span',{class:'tabula-cinta-icono','aria-hidden':'true'}),
+    el('span',{class:'tabula-cinta-opcion-texto'},o.etiqueta,o.descripcion?el('small',null,o.descripcion):null),
     o.atajo?el('kbd',null,o.atajo):null);
    it.addEventListener('click',()=>{cerrarMenu(true);if(o.accion)o.accion(ancla);actualizar();});
    m.append(it);
   }
   m.addEventListener('keydown',e=>{
-   const its=[...m.querySelectorAll('.erlen-cinta-opcion:not([disabled])')],i=its.indexOf(doc.activeElement);
+   const its=[...m.querySelectorAll('.tabula-cinta-opcion:not([disabled])')],i=its.indexOf(doc.activeElement);
    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();cerrarMenu(true);return;}
    if(e.key==='Tab'){cerrarMenu(true);return;}
    let j=null;
@@ -224,7 +223,7 @@ function mountCinta(host,config){
   // cierra o la cinta se destruye antes, se cancela el temporizador y no queda ningún listener tardío.
   const temporizador=win.setTimeout(()=>doc.addEventListener('pointerdown',fuera),0);
   menu={m,ancla,fuera,temporizador};
-  const primero=m.querySelector('.erlen-cinta-opcion:not([disabled])');
+  const primero=m.querySelector('.tabula-cinta-opcion:not([disabled])');
   (primero||m).focus();
  }
  function cerrarMenu(devolverFoco){

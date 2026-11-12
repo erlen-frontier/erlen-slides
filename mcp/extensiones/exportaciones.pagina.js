@@ -4,7 +4,7 @@
    editor (figuraSVG, svgEstructura, allImageBlocks, informeExportacion). */
 (function () {
   'use strict';
-  const { valida } = ERLEN_MCP.util;
+  const { valida } = TABULA_MCP.util;
 
   /* Una celda de CSV: comillas solo cuando hacen falta (RFC 4180). */
   const celda = v => {
@@ -33,13 +33,13 @@
       .replace(/font-family="inherit"/g, 'font-family="Arial, Helvetica, sans-serif"');
   }
 
-  ERLEN_MCP.registra('exportaInforme', a => informeExportacion(valida(a.deck).deck));
+  TABULA_MCP.registra('exportaInforme', a => informeExportacion(valida(a.deck).deck));
 
   /* Todas las figuras de la charla: gráficas y funciones en SVG (con los
      datos de las gráficas en CSV), estructuras en SVG e imágenes con su
      formato original. Los nombres son los de figName, los mismos que usan
      el .tex y el kit. */
-  ERLEN_MCP.registra('exportaFiguras', a => {
+  TABULA_MCP.registra('exportaFiguras', a => {
     const deck = valida(a.deck).deck;
     loadDeck(deck, null);
     const figuras = [], datos = [], avisos = [];

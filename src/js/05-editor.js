@@ -137,7 +137,8 @@ function enfocaBloqueLibre(id) {
   destino.focus({ preventScroll: true });
 }
 function mountToolbar() {
-  /* Algunas selecciones restauran varios ids después de elegir el activo. */
+  /* Toolbar flotante retirada: la barra única es la contextual (05b-barra-contextual.js).
+     mountToolbar conserva selección, manijas y arrastre; no construye .blk-toolbar. */
   pintaBarraContextual();
   const old = $('#stageInner .blk-toolbar'); if (old) old.remove();
   $$('#stageInner .ancho-asa').forEach(e => e.remove());
@@ -148,50 +149,6 @@ function mountToolbar() {
   const f = findBlock(S.selBlock);
   if (!el || !f) return;
   if (curSlide().lienzoLibre && idsSeleccionados().size > 1) montaMarcoSeleccionLibre();
-  if (f.block.locked) {
-    const varias = curSlide().lienzoLibre && idsSeleccionados().size > 1;
-    el.append(h('div', { class: 'blk-toolbar' }, h('button', { onclick: () => cambiaBloqueoSeleccion(false) }, varias ? 'Desbloquear selección' : 'Desbloquear'))); return;
-  }
-  const k = clamp(1 / effZoom(), 0.6, 2.4);   // en móvil el zoom es bajo: la barra no debe volverse gigante
-  const bar = h('div', { class: 'blk-toolbar', style: `top:-8px;right:0;transform:translateY(-100%) scale(${k});transform-origin:bottom right` });
-  /* Perder el foco repinta el lienzo. Mantenerlo hasta el clic evita que el
-     botón desaparezca antes de ejecutar su acción; esta vacía la edición. */
-  bar.addEventListener('pointerdown', e => { if (rawEl && e.target.closest('button')) e.preventDefault(); });
-  const add = (txt, title, fn, cls) => bar.append(h('button', { title, 'aria-label': title, class: cls || '', onclick: e => { e.stopPropagation(); fn(e); } }, txt));
-  const asa = h('button', { class: 'tb-asa', title: 'Arrastra para colocarlo en otro sitio o suéltalo sobre una miniatura', 'aria-label': 'Mover bloque' }, '⠿');
-  asa.addEventListener('pointerdown', ev => curSlide().lienzoLibre ? iniciaGestoLibre(ev, S.selBlock, 'mover') : iniciaArrastre(ev, S.selBlock));
-  asa.addEventListener('click', ev => ev.stopPropagation());
-  bar.append(asa);
-  if (curSlide().lienzoLibre) {
-    const varias = idsSeleccionados().size > 1;
-    add('↑', varias ? 'Adelantar selección' : 'Adelantar capa', () => mueveCapasSeleccionadas('adelante'));
-    add('↓', varias ? 'Retrasar selección' : 'Retrasar capa', () => mueveCapasSeleccionadas('atras'));
-    if (idsSeleccionados().size === 1) bar.append(h('button', { type:'button', title:'Transformar objeto', 'aria-label':'Transformar objeto',
-      onclick: e => { e.stopPropagation(); abrePanelLateral('bloque', 'Posición en la diapositiva'); } }, '↻'));
-  } else {
-    add('↑', 'Subir bloque', () => moveBlock(S.selBlock, -1));
-    add('↓', 'Bajar bloque', () => moveBlock(S.selBlock, 1));
-  }
-  if (f.block.type === 'table') {
-    bar.append(h('div', { class: 'tb-sep2' }));
-    add('▦', 'Filas y columnas…', ev => menuTabla(f.block, ev));
-  }
-  if (f.block.type === 'math') add('ƒ', 'Editar ecuación', () => openEqEditor(f.block));
-  if (f.block.type === 'chem') add('⇌', 'Editar reacción', () => openChemEditor(f.block));
-  if (f.block.type === 'image') { add('▣', 'Cambiar imagen', () => pickImage(f.block)); if (f.block.figura) add('✎', 'Editar capas de la figura', () => openFiguraCapas(f.block)); if (f.block.cientifico) add('✎', 'Editar fuente de la figura', () => cienciaReabrir(f.block)); }
-  if (f.block.type === 'chart') add('∿', 'Editar datos y gráfica', () => openChartEditor(f.block));
-  if (f.block.type === 'func') add('𝑓', 'Editar fórmulas y parámetros', () => openFuncEditor(f.block));
-  if (f.block.type === 'video') add('▶', 'Cambiar video', () => pickVideo(f.block));
-  if (f.block.type === 'smart') add('◈', 'Editar diagrama', () => openSmartEditor(f.block));
-  if (f.block.type === 'estruct') add('⬡', 'Dibujar la estructura', () => openEstructura(f.block));
-  if (f.block.type === 'montaje') add('⚗', 'Editar el montaje', () => openMontaje(f.block));
-  if (f.block.type === 'teorema') add('∴', 'Tipo de enunciado', () => openTeorema(f.block));
-  if (f.block.type === 'geo') add('△', 'Elegir la figura y sus rótulos', () => openGeometria(f.block));
-  bar.append(h('div', { class: 'tb-sep2' }));
-  add('⋯', 'Más acciones…', ev => menuBloque(f, ev));
-  add('⚙', 'Propiedades en el panel', () => abrePanelLateral('bloque'));
-  add('✕', curSlide().lienzoLibre && idsSeleccionados().size > 1 ? 'Eliminar selección' : 'Eliminar bloque', eliminarSeleccionActiva, 'tb-danger');
-  el.append(bar);
   if (ARRASTRA_CUERPO[f.block.type]) {
     el.classList.add('blk-movible');
     if (!el._arrastraCuerpoMontado) {
@@ -201,17 +158,6 @@ function mountToolbar() {
   }
   if (curSlide().lienzoLibre) { if (idsSeleccionados().size <= 1) montaManijasLibres(el, f.block); }
   else montaManija(el, f.block);
-  /* Si arriba no cabe, intenta colocar la barra debajo del objeto. No debe
-     ocupar el propio texto que la persona acaba de seleccionar para editar. */
-  const cuerpo = el.closest('.fbody') || el.closest('.slide');
-  if (cuerpo && bar.getBoundingClientRect().top < cuerpo.getBoundingClientRect().top + 2) {
-    const bloque = el.getBoundingClientRect(), limite = cuerpo.getBoundingClientRect();
-    if (bloque.bottom + bar.getBoundingClientRect().height + 8 <= limite.bottom) {
-      bar.style.top = 'calc(100% + 8px)';
-      bar.style.transform = `scale(${k})`;
-      bar.style.transformOrigin = 'top right';
-    }
-  }
 }
 
 /* ---------- menús de la barra del bloque ----------

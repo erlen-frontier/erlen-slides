@@ -216,48 +216,47 @@ function grupo(id, titulo, hijos, opts) {
   return h('div', { class: 'igroup plegable' + (cerrado ? ' cerrado' : '') }, cab, cuerpo);
 }
 
+function body_contains_active(body, el) { return !!el && el !== document.body && body.contains(el) && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.isContentEditable); }
 function renderInspector() {
   aplicaCambioPanelPendiente();
-  /* La cinta solo se refresca (sin repintar); con la cinta puesta, el panel
-     de la derecha se pinta únicamente cuando está abierto como panel de detalles. */
+  /* Inspector persistente único: ya no se oculta con la cinta arriba. */
   actualizaCinta();
-  if (enCinta() && !document.body.classList.contains('panel-temporal')) return;
-  const tabIns = $('.itab[data-tab=insert]');
-  if (tabIns) tabIns.hidden = enCinta();                   // «Insertar» vive en la cinta
-  if (enCinta() && S.tab === 'insert') S.tab = 'slide';
-  const body = $('#inspBody'); body.innerHTML = '';
-  const tabBlk = $('.itab-blk');
+  const body = $('#inspBody');
+  if (!body) return;
+  // No destruir un editor de Notas con foco activo ni un textarea en edición: no repintar el cuerpo si sigue activo.
+  const activo = document.activeElement;
+  if (S.tab === 'notes' && body.contains(activo) && activo && (activo.tagName === 'TEXTAREA' || activo.tagName === 'INPUT')) return;
+  if (body_contains_active(body, activo)) return;
+  body.innerHTML = '';
   const hayBloque = !!(S.selBlock && findBlock(S.selBlock));
-  if (tabBlk) {
-    tabBlk.hidden = !hayBloque;
-    if (hayBloque) {
-      const f = findBlock(S.selBlock);
-      const d = BLOCK_DEFS.find(x => x.id === f.block.type);
-      /* El rótulo se queda corto a propósito: el nombre largo del tipo va en
-         la cabecera de abajo, y así la fila de pestañas no crece. */
-      tabBlk.title = d ? 'Propiedades de: ' + d.name : 'Propiedades del bloque';
-    }
-  }
-  if (S.tab === 'bloque' && !hayBloque) S.tab = S.tabPrev || 'insert';
+  if (S.tab === 'bloque' && !hayBloque) S.tab = 'slide';
   $$('.itab').forEach(t => {
-    const activo=t.dataset.tab===S.tab;t.classList.toggle('on',activo);
+    const visibleTab = (S.tab === 'design' || S.tab === 'bloque') ? 'slide' : S.tab;
+    const activo=t.dataset.tab===visibleTab;t.classList.toggle('on',activo);
     t.setAttribute('role','tab');t.id='insp-tab-'+t.dataset.tab;
     t.setAttribute('aria-selected',String(activo));t.setAttribute('aria-controls','inspBody');t.tabIndex=activo?0:-1;
   });
   $('#inspBody').setAttribute('role','tabpanel');
-  $('#inspBody').setAttribute('aria-labelledby','insp-tab-'+S.tab);
+  $('#inspBody').setAttribute('aria-labelledby','insp-tab-'+((S.tab === 'design' || S.tab === 'bloque') ? 'slide' : S.tab));
   /* Con la cinta puesta, el panel de detalles se abre a petición y se cierra con ✕ o Escape. */
   if (document.body.classList.contains('panel-temporal')) {
     body.append(h('div', { class: 'cinta-cerrar' },
       h('span', null, 'Detalles'),
       h('button', { type: 'button', class: 'btn btn-sm', id: 'detallesCerrar', title: 'Cerrar el panel de detalles (Escape)', onclick: cierraPanelDetalles }, '✕ Cerrar')));
   }
-  if (S.tab === 'bloque') renderBlockTab(body);
+  if (S.tab === 'notes') renderNotesTab(body);
+  else if (S.tab === 'bloque') renderBlockTab(body);
   else if (S.tab === 'insert') renderInsertTab(body);
   else if (S.tab === 'slide') renderSlideTab(body);
   else renderDesignTab(body);
 }
 
+/* Pestaña Notas: usa el cuerpo compartido renderNotasEditor(host, idx, modo) para no duplicar el editor. */
+function renderNotesTab(body) {
+  if (typeof renderNotasEditor !== 'function') return;
+  flushEdicion();
+  renderNotasEditor(body, S.cur, 'una');
+}
 /* ---------- pestaña contextual: el bloque seleccionado ----------
    Lo que antes vivía tras ⚙ en una ventana ahora está a la vista mientras
    editas, y cada cambio se ve en la diapositiva sin cerrar nada. */

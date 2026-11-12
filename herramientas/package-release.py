@@ -10,7 +10,7 @@ import zipfile,hashlib,json
 root=Path(__file__).resolve().parent.parent
 version=json.loads((root/'package.json').read_text())['version']
 out=root/'dist';out.mkdir(exist_ok=True)
-zip_path=out/f'erlen-slides-{version}-web.zip'
+zip_path=out/f'tabula-{version}-web.zip'
 FECHA=(1980,1,1,0,0,0)
 def add(z,ruta,nombre):
  info=zipfile.ZipInfo(str(nombre).replace('\\','/'),date_time=FECHA)

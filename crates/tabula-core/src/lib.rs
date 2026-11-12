@@ -70,7 +70,7 @@ pub fn save_project(path: &Path, contents: &str) -> io::Result<()> {
         .filter(|parent| !parent.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
     let mut temporary = tempfile::Builder::new()
-        .prefix(".erlen-slides-")
+        .prefix(".tabula-")
         .tempfile_in(parent)?;
     temporary.write_all(contents.as_bytes())?;
     // Never copy mode bits from an existing file: the new file can inherit a

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 /* El instalador (herramientas/mcp-instalar.mjs) y la herramienta
    «diagnostico». El instalador se ejecuta de verdad, pero con la carpeta
-   personal desviada a una temporal (ERLEN_INSTALAR_HOME): nunca toca la
+   personal desviada a una temporal (TABULA_INSTALAR_HOME): nunca toca la
    configuración real de quien corre las pruebas. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,13 +20,13 @@ const SERVIDOR = resolve(RAIZ, 'mcp', 'servidor.mjs');
 /* Una carpeta personal falsa con Linux simulado, para que la ruta de la
    configuración sea la misma en cualquier sistema donde corran las pruebas. */
 function casa() {
-  const home = mkdtempSync(join(tmpdir(), 'erlen-instalar-'));
+  const home = mkdtempSync(join(tmpdir(), 'tabula-instalar-'));
   const config = join(home, '.config', 'Claude', 'claude_desktop_config.json');
   /* Sin las variables del navegador de quien corre las pruebas: cambiarían
      la entrada escrita. */
-  const {ERLEN_CHROMIUM, PLAYWRIGHT_BROWSERS_PATH, ...env} = process.env;
+  const {TABULA_CHROMIUM, PLAYWRIGHT_BROWSERS_PATH, ...env} = process.env;
   const instala = (...args) => spawnSync(process.execPath, [SCRIPT, '--sin-prueba', '--no-compilar', ...args], {
-    encoding: 'utf8', env: {...env, ERLEN_INSTALAR_HOME: home, ERLEN_INSTALAR_PLATAFORMA: 'linux', ...instala.env}});
+    encoding: 'utf8', env: {...env, TABULA_INSTALAR_HOME: home, TABULA_INSTALAR_PLATAFORMA: 'linux', ...instala.env}});
   instala.env = {};
   const respaldos = () => existsSync(join(home, '.config', 'Claude')) ? readdirSync(join(home, '.config', 'Claude')).filter(n => n.includes('.respaldo-')) : [];
   return {home, config, instala, respaldos, limpia: () => rmSync(home, {recursive: true, force: true})};
@@ -40,34 +40,34 @@ test('instalador: rutas de Claude Desktop en cada sistema', () => {
     'C:\\Users\\ana\\AppData\\Roaming\\Claude\\claude_desktop_config.json');
   /* Con la carpeta personal desviada, %APPDATA% cuelga de ella aunque el
      sistema tenga otro. */
-  const e = entorno({ERLEN_INSTALAR_HOME: 'C:\\Users\\prueba', ERLEN_INSTALAR_PLATAFORMA: 'win32', APPDATA: 'C:\\Users\\real\\AppData\\Roaming'});
+  const e = entorno({TABULA_INSTALAR_HOME: 'C:\\Users\\prueba', TABULA_INSTALAR_PLATAFORMA: 'win32', APPDATA: 'C:\\Users\\real\\AppData\\Roaming'});
   assert.equal(rutaConfigDesktop(e), 'C:\\Users\\prueba\\AppData\\Roaming\\Claude\\claude_desktop_config.json');
-  assert.equal(entorno({ERLEN_INSTALAR_PLATAFORMA: 'darwin', ERLEN_INSTALAR_HOME: '/tmp/x'}).plataforma, 'darwin');
+  assert.equal(entorno({TABULA_INSTALAR_PLATAFORMA: 'darwin', TABULA_INSTALAR_HOME: '/tmp/x'}).plataforma, 'darwin');
 });
 
 test('instalador: comillas del comando de Claude Code', () => {
   assert.equal(cita('/usr/bin/node', 'linux'), '/usr/bin/node');
   assert.equal(cita("/Users/ana/Mis cosas/l'x", 'darwin'), "'/Users/ana/Mis cosas/l'\\''x'");
   assert.equal(cita('C:\\Program Files\\nodejs\\node.exe', 'win32'), '"C:\\Program Files\\nodejs\\node.exe"');
-  assert.equal(cita('C:\\erlen\\mcp\\servidor.mjs', 'win32'), 'C:\\erlen\\mcp\\servidor.mjs');
+  assert.equal(cita('C:\\tabula\\mcp\\servidor.mjs', 'win32'), 'C:\\tabula\\mcp\\servidor.mjs');
   assert.equal(comandoClaudeCode({node: '/n', servidor: '/s.mjs', carpeta: '/a b'}, 'linux'),
-    "claude mcp add erlen-slides --scope user -e 'ERLEN_SLIDES_DIR=/a b' -- /n /s.mjs");
+    "claude mcp add tabula --scope user -e 'TABULA_DIR=/a b' -- /n /s.mjs");
   assert.throws(() => leeArgs(['--cliente', 'vscode']), /Cliente desconocido/);
   assert.throws(() => leeArgs(['--carpeta']), /Falta el valor/);
 });
 
 test('instalador: combina conservando lo demás y la sangría', () => {
   const previo = '{\r\n\t"mcpServers": {"otro": {"command": "x"}},\r\n\t"tema": "oscuro"\r\n}\r\n';
-  const e = {command: '/n', args: ['/s'], env: {ERLEN_SLIDES_DIR: '/d'}};
+  const e = {command: '/n', args: ['/s'], env: {TABULA_DIR: '/d'}};
   const r = combina(previo, e);
   assert.equal(r.estado, 'nuevo');
   assert.ok(r.texto.includes('\r\n\t"tema": "oscuro"'), 'misma sangría y fin de línea');
-  assert.deepEqual(Object.keys(JSON.parse(r.texto).mcpServers), ['otro', 'erlen-slides']);
+  assert.deepEqual(Object.keys(JSON.parse(r.texto).mcpServers), ['otro', 'tabula']);
   /* Una variable añadida a mano a la entrada se conserva. */
-  const conExtra = JSON.stringify({mcpServers: {'erlen-slides': {command: '/viejo', args: ['/s'], env: {ERLEN_CHROMIUM: '/c', ERLEN_SLIDES_DIR: '/x'}}}});
+  const conExtra = JSON.stringify({mcpServers: {'tabula': {command: '/viejo', args: ['/s'], env: {TABULA_CHROMIUM: '/c', TABULA_DIR: '/x'}}}});
   const r2 = combina(conExtra, e);
   assert.equal(r2.estado, 'cambiado');
-  assert.deepEqual(r2.config.mcpServers['erlen-slides'].env, {ERLEN_CHROMIUM: '/c', ERLEN_SLIDES_DIR: '/d'});
+  assert.deepEqual(r2.config.mcpServers['tabula'].env, {TABULA_CHROMIUM: '/c', TABULA_DIR: '/d'});
   assert.equal(combina(r2.texto, e).estado, 'igual');
   assert.equal(combina('', e).estado, 'nuevo', 'un archivo vacío es una configuración vacía');
   assert.equal(combina('\uFEFF{}', e).estado, 'nuevo', 'con BOM');
@@ -87,9 +87,9 @@ test('instalador: Claude Desktop de punta a punta, idempotente y con copia', () 
     const config = JSON.parse(readFileSync(c.config, 'utf8'));
     assert.deepEqual(config.mcpServers.otro, {command: 'uvx', args: ['otro-mcp']});
     assert.equal(config.globalShortcut, 'Ctrl+Space');
-    assert.deepEqual(config.mcpServers['erlen-slides'], {command: process.execPath, args: [SERVIDOR], env: {ERLEN_SLIDES_DIR: join(c.home, 'erlen-slides')}});
+    assert.deepEqual(config.mcpServers['tabula'], {command: process.execPath, args: [SERVIDOR], env: {TABULA_DIR: join(c.home, 'tabula')}});
     assert.ok(readFileSync(c.config, 'utf8').includes('\n    "globalShortcut"'), 'conserva la sangría de 4');
-    assert.ok(existsSync(join(c.home, 'erlen-slides')), 'crea la carpeta de trabajo');
+    assert.ok(existsSync(join(c.home, 'tabula')), 'crea la carpeta de trabajo');
     const [respaldo] = c.respaldos();
     assert.equal(c.respaldos().length, 1);
     assert.equal(readFileSync(join(c.home, '.config', 'Claude', respaldo), 'utf8'), original, 'la copia es el archivo de antes');
@@ -104,7 +104,7 @@ test('instalador: Claude Desktop de punta a punta, idempotente y con copia', () 
     /* Otra carpeta: cambia la entrada y guarda otra copia. */
     const r3 = c.instala('--cliente', 'claude-desktop', '--carpeta', join(c.home, 'Charlas'));
     assert.equal(r3.status, 0, r3.stderr);
-    assert.equal(JSON.parse(readFileSync(c.config, 'utf8')).mcpServers['erlen-slides'].env.ERLEN_SLIDES_DIR, join(c.home, 'Charlas'));
+    assert.equal(JSON.parse(readFileSync(c.config, 'utf8')).mcpServers['tabula'].env.TABULA_DIR, join(c.home, 'Charlas'));
     assert.ok(c.respaldos().length >= 2);
   } finally { c.limpia(); }
 });
@@ -115,14 +115,14 @@ test('instalador: sin configuración previa la crea, sin copia', () => {
     const r = c.instala('--cliente', 'claude-desktop', '--carpeta', '~/Presentaciones');
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /No encuentro Claude Desktop/);
-    assert.equal(JSON.parse(readFileSync(c.config, 'utf8')).mcpServers['erlen-slides'].env.ERLEN_SLIDES_DIR, join(c.home, 'Presentaciones'), '«~» es la carpeta personal');
+    assert.equal(JSON.parse(readFileSync(c.config, 'utf8')).mcpServers['tabula'].env.TABULA_DIR, join(c.home, 'Presentaciones'), '«~» es la carpeta personal');
     assert.deepEqual(c.respaldos(), []);
 
     /* Un navegador que solo se encuentra por una variable de la terminal se
        fija en la entrada: Claude Desktop no hereda esa variable. */
-    c.instala.env = {ERLEN_CHROMIUM: process.execPath};
+    c.instala.env = {TABULA_CHROMIUM: process.execPath};
     assert.equal(c.instala('--cliente', 'claude-desktop').status, 0);
-    assert.equal(JSON.parse(readFileSync(c.config, 'utf8')).mcpServers['erlen-slides'].env.ERLEN_CHROMIUM, process.execPath);
+    assert.equal(JSON.parse(readFileSync(c.config, 'utf8')).mcpServers['tabula'].env.TABULA_CHROMIUM, process.execPath);
   } finally { c.limpia(); }
 });
 
@@ -148,14 +148,14 @@ test('instalador: --dry-run no escribe nada', () => {
     const r = c.instala('--cliente', 'claude-desktop', '--dry-run');
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /Escribiría en/);
-    assert.match(r.stdout, /"erlen-slides"/);
+    assert.match(r.stdout, /"tabula"/);
     assert.equal(readFileSync(c.config, 'utf8'), '{}');
     assert.deepEqual(readdirSync(c.home).sort(), ['.config'], 'ni la carpeta de trabajo');
     assert.deepEqual(c.respaldos(), []);
 
     const k = c.instala('--cliente', 'claude-code', '--dry-run');
     assert.equal(k.status, 0, k.stderr);
-    assert.ok(k.stdout.includes('claude mcp add erlen-slides --scope user -e'), k.stdout);
+    assert.ok(k.stdout.includes('claude mcp add tabula --scope user -e'), k.stdout);
     /* Sin terminal y sin --cliente, solo se muestra. */
     const i = c.instala();
     assert.equal(i.status, 0, i.stderr);
@@ -174,13 +174,13 @@ test('instalador: Claude Code con --ejecutar, repetible', {skip: process.platfor
     mkdirSync(bin);
     writeFileSync(join(bin, 'claude'), `#!/bin/sh
 echo "$*" >> "${join(c.home, 'llamadas.txt')}"
-if [ "$2" = add ] && [ -f "${join(c.home, 'hay')}" ]; then echo "MCP server erlen-slides already exists in user config" >&2; exit 1; fi
+if [ "$2" = add ] && [ -f "${join(c.home, 'hay')}" ]; then echo "MCP server tabula already exists in user config" >&2; exit 1; fi
 if [ "$2" = add ]; then touch "${join(c.home, 'hay')}"; fi
 if [ "$2" = remove ]; then rm -f "${join(c.home, 'hay')}"; fi
 exit 0
 `, {mode: 0o755});
     const corre = () => spawnSync(process.execPath, [SCRIPT, '--sin-prueba', '--no-compilar', '--cliente', 'claude-code', '--ejecutar'], {
-      encoding: 'utf8', env: {...process.env, PATH: bin + ':' + process.env.PATH, ERLEN_INSTALAR_HOME: c.home}});
+      encoding: 'utf8', env: {...process.env, PATH: bin + ':' + process.env.PATH, TABULA_INSTALAR_HOME: c.home}});
     const r1 = corre();
     assert.equal(r1.status, 0, r1.stdout + r1.stderr);
     const r2 = corre();
@@ -188,7 +188,7 @@ exit 0
     assert.match(r2.stdout, /sustituye a la entrada anterior/);
     const llamadas = readFileSync(join(c.home, 'llamadas.txt'), 'utf8').trim().split('\n');
     assert.deepEqual(llamadas.map(l => l.split(' ').slice(0, 2).join(' ')), ['mcp add', 'mcp add', 'mcp remove', 'mcp add']);
-    assert.equal(llamadas[0], `mcp add erlen-slides --scope user -e ERLEN_SLIDES_DIR=${join(c.home, 'erlen-slides')} -- ${process.execPath} ${SERVIDOR}`);
+    assert.equal(llamadas[0], `mcp add tabula --scope user -e TABULA_DIR=${join(c.home, 'tabula')} -- ${process.execPath} ${SERVIDOR}`);
   } finally { c.limpia(); }
 });
 
@@ -214,7 +214,7 @@ test('MCP: diagnostico', {timeout: 120000}, async () => {
     assert.equal(d.rdkit.cargado, true, d.rdkit.error);
     assert.ok(d.extensiones.includes('mcp/extensiones/diagnostico.mjs'));
     assert.ok(d.extensiones.includes('mcp/extensiones/estadisticas.pagina.js'));
-    assert.equal(d.variables.ERLEN_SLIDES_DIR, dir);
+    assert.equal(d.variables.TABULA_DIR, dir);
     assert.equal(typeof d.navegador.encontrado, 'boolean');
     assert.equal(d.estado, d.problemas.length ? 'con_problemas' : 'bien');
     d.problemas.forEach(p => assert.ok(p.problema && p.arreglo, JSON.stringify(p)));
@@ -224,13 +224,25 @@ test('MCP: diagnostico', {timeout: 120000}, async () => {
 
 test('diagnostico: variables sensibles, solo el nombre', async () => {
   const {variables} = await import('../mcp/extensiones/diagnostico.mjs');
-  const v = variables({ERLEN_SLIDES_DIR: '/d', HTTPS_PROXY: 'http://usuario:clave@proxy:8080', ERLEN_TOKEN: 'abc', PATH: '/bin'});
-  assert.deepEqual(v, {ERLEN_SLIDES_DIR: '/d', ERLEN_TOKEN: '(definida)', HTTPS_PROXY: '(definida)'});
+  const v = variables({TABULA_DIR: '/d', HTTPS_PROXY: 'http://usuario:clave@proxy:8080', TABULA_TOKEN: 'abc', PATH: '/bin'});
+  assert.deepEqual(v, {TABULA_DIR: '/d', TABULA_TOKEN: '(definida)', HTTPS_PROXY: '(definida)'});
+});
+
+test('diagnostico: frontera de nodeValido y mínimo declarado', async () => {
+  const {nodeValido, NODE_MINIMO} = await import('../mcp/extensiones/diagnostico.mjs');
+  assert.equal(NODE_MINIMO, '22.12.0');
+  assert.equal(nodeValido('22.11.9'), false);
+  assert.equal(nodeValido('22.12.0'), true);
+  assert.equal(nodeValido('24.0.0'), true);
+  assert.equal(nodeValido(''), false);
+  assert.equal(nodeValido('x'), false);
+  assert.equal(nodeValido('22'), false);
+  assert.equal(nodeValido(undefined), true, 'la versión de quien corre las pruebas es válida');
 });
 
 test('diagnostico: build ausente, viejo o al día', async () => {
   const {estadoCompilacion} = await import('../mcp/extensiones/diagnostico.mjs');
-  const r = mkdtempSync(join(tmpdir(), 'erlen-build-'));
+  const r = mkdtempSync(join(tmpdir(), 'tabula-build-'));
   try {
     mkdirSync(join(r, 'src', 'js'), {recursive: true});
     writeFileSync(join(r, 'src', 'js', 'a.js'), '');
@@ -247,16 +259,16 @@ test('diagnostico: build ausente, viejo o al día', async () => {
   } finally { rmSync(r, {recursive: true, force: true}); }
 });
 
-test('MCP: diagnostico con ERLEN_CHROMIUM roto da el arreglo', {timeout: 120000}, async () => {
-  const antes = process.env.ERLEN_CHROMIUM;
-  process.env.ERLEN_CHROMIUM = join(tmpdir(), 'no-existe-chromium');
+test('MCP: diagnostico con TABULA_CHROMIUM roto da el arreglo', {timeout: 120000}, async () => {
+  const antes = process.env.TABULA_CHROMIUM;
+  process.env.TABULA_CHROMIUM = join(tmpdir(), 'no-existe-chromium');
   try {
     await conServidor(async c => {
       const d = (await c.llama('diagnostico', {})).datos;
       assert.equal(d.navegador.encontrado, false);
       assert.equal(d.estado, 'con_problemas');
-      assert.ok(d.problemas.some(p => /ERLEN_CHROMIUM/.test(p.problema) && p.arreglo.includes('npx playwright-core install chromium')), JSON.stringify(d.problemas));
-      assert.equal(d.variables.ERLEN_CHROMIUM, process.env.ERLEN_CHROMIUM);
+      assert.ok(d.problemas.some(p => /TABULA_CHROMIUM/.test(p.problema) && p.arreglo.includes('npx playwright-core install chromium')), JSON.stringify(d.problemas));
+      assert.equal(d.variables.TABULA_CHROMIUM, process.env.TABULA_CHROMIUM);
     });
-  } finally { if (antes == null) delete process.env.ERLEN_CHROMIUM; else process.env.ERLEN_CHROMIUM = antes; }
+  } finally { if (antes == null) delete process.env.TABULA_CHROMIUM; else process.env.TABULA_CHROMIUM = antes; }
 });

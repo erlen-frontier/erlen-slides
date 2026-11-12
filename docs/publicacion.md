@@ -15,7 +15,7 @@ Este repositorio trabaja sin CI ni revisión de código garantizada. La preparac
 
 ## Zenodo
 
-Zenodo requiere que el propietario conecte su cuenta de GitHub y habilite el repositorio en su panel GitHub. Usa **Sync now** si el repositorio nuevo no aparece. Las releases nuevas del repositorio habilitado pueden archivarse mediante la integración. Esta integración de archivo es opcional y distinta de CI; no implica sincronizar Tabula con Erlen Suite.
+Zenodo requiere que el propietario conecte su cuenta de GitHub y habilite el repositorio en su panel GitHub. Usa **Sync now** si el repositorio nuevo no aparece. Las releases nuevas del repositorio habilitado pueden archivarse mediante la integración. Esta integración de archivo es opcional y distinta de CI; no implica sincronizar Lámina con Erlen Suite.
 
 - [Habilitar repositorio](https://help.zenodo.org/docs/github/enable-repository/)
 - [Metadatos .zenodo.json](https://help.zenodo.org/docs/github/describe-software/zenodo-json/)

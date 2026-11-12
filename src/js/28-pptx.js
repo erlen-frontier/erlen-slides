@@ -3,17 +3,17 @@
 /* ================= .pptx: empaquetado ================= */
 
 const TEMA_XML = XMLCAB +
-'<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Erlen">' +
-'<a:themeElements><a:clrScheme name="Erlen">' +
+'<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Lámina">' +
+'<a:themeElements><a:clrScheme name="Lámina">' +
 '<a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>' +
 '<a:dk2><a:srgbClr val="44546A"/></a:dk2><a:lt2><a:srgbClr val="E7E6E6"/></a:lt2>' +
 '<a:accent1><a:srgbClr val="4472C4"/></a:accent1><a:accent2><a:srgbClr val="ED7D31"/></a:accent2>' +
 '<a:accent3><a:srgbClr val="A5A5A5"/></a:accent3><a:accent4><a:srgbClr val="FFC000"/></a:accent4>' +
 '<a:accent5><a:srgbClr val="5B9BD5"/></a:accent5><a:accent6><a:srgbClr val="70AD47"/></a:accent6>' +
 '<a:hlink><a:srgbClr val="0563C1"/></a:hlink><a:folHlink><a:srgbClr val="954F72"/></a:folHlink></a:clrScheme>' +
-'<a:fontScheme name="Erlen"><a:majorFont><a:latin typeface="Calibri Light"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>' +
+'<a:fontScheme name="Lámina"><a:majorFont><a:latin typeface="Calibri Light"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>' +
 '<a:minorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>' +
-'<a:fmtScheme name="Erlen">' +
+'<a:fmtScheme name="Lámina">' +
 '<a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill>' +
 '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst>' +
 '<a:lnStyleLst><a:ln w="6350"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:prstDash val="solid"/></a:ln>' +
@@ -175,7 +175,7 @@ async function exportPPTX() {
   archivos.push({ nombre: 'ppt/notesMasters/_rels/notesMaster1.xml.rels',
     datos: relsDe([rel('rId1', 'theme', '../theme/theme2.xml')]) });
   archivos.push({ nombre: 'ppt/theme/theme1.xml', datos: TEMA_XML });
-  archivos.push({ nombre: 'ppt/theme/theme2.xml', datos: TEMA_XML.replace('name="Erlen"', 'name="ErlenNotas"') });
+  archivos.push({ nombre: 'ppt/theme/theme2.xml', datos: TEMA_XML.replace('name="Lámina"', 'name="TabulaNotas"') });
 
   const tiposSlide = Array.from({ length: n }, (_, i) =>
     '<Override PartName="/ppt/slides/slide' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>').join('');
@@ -207,14 +207,14 @@ async function exportPPTX() {
     'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" ' +
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
     '<dc:title>' + xesc(m.title || 'Presentación') + '</dc:title>' +
-    '<dc:creator>' + xesc(m.authors || 'Tabula') + '</dc:creator>' +
-    '<cp:lastModifiedBy>Tabula</cp:lastModifiedBy>' +
+    '<dc:creator>' + xesc(m.authors || 'Lámina') + '</dc:creator>' +
+    '<cp:lastModifiedBy>Lámina</cp:lastModifiedBy>' +
     '<dcterms:created xsi:type="dcterms:W3CDTF">' + ahora + '</dcterms:created>' +
     '<dcterms:modified xsi:type="dcterms:W3CDTF">' + ahora + '</dcterms:modified></cp:coreProperties>' });
   archivos.push({ nombre: 'docProps/app.xml', datos: XMLCAB +
     '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" ' +
     'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">' +
-    '<Application>Tabula</Application><Slides>' + n + '</Slides></Properties>' });
+    '<Application>Lámina</Application><Slides>' + n + '</Slides></Properties>' });
 
   const blob = await armaZip(archivos);
   await downloadFile(deckSlug() + '.pptx', blob,

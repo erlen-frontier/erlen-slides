@@ -16,14 +16,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* Marco del editor de Tabula: cabecera con marca, nombre, título, estado y acciones;
+/* Marco del editor de Lámina: cabecera con marca, nombre, título, estado y acciones;
    cinta debajo; cuerpo con navegación, trabajo y detalles; pie. mountMarco solo organiza
    los nodos que la app le pasa: los mueve,
    no los clona ni los reconstruye, así que las referencias, los listeners y la selección del
-   dominio se conservan. Estilos en diseno/marco.css, solo con tokens --erlen-*.
+   dominio se conservan. Estilos en diseno/marco.css, solo con tokens --tabula-*.
 
    mountMarco(host, {
-     nombre: 'Tabula',              // nombre visible (h1 del marco)
+     nombre: 'Lámina',              // nombre visible (h1 del marco)
      inicio: () => {},              // obligatorio, sin argumentos: activa el inicio real de la app
      elementos: {                   // nodos propiedad de la app; solo trabajo es obligatorio
        titulo?,                     // título editable del documento
@@ -85,7 +85,7 @@ export function mountMarco(host,config){
  const trabajo=elementos.trabajo;
  if(!trabajo||!trabajo.ownerDocument)throw new Error('mountMarco: falta el nodo de trabajo.');
  if(trabajo.ownerDocument!==doc)throw new Error('mountMarco: los nodos deben pertenecer al documento del host.');
- if(host.querySelector('.erlen-marco'))throw new Error('mountMarco: el host ya tiene un marco montado.');
+ if(host.querySelector('.tabula-marco'))throw new Error('mountMarco: el host ya tiene un marco montado.');
 
  const win=doc.defaultView;
  const movidos=[];   // {nodo, padre, siguiente, indice} para devolverlos en destruir()
@@ -113,24 +113,24 @@ export function mountMarco(host,config){
  };
  const estadoPrevio=guardarSeleccion();
 
- const marco=crear('div','erlen-marco',doc);
- const cabecera=crear('header','erlen-app-header',doc);
- const marca=crear('button','erlen-marco-marca',doc);
+ const marco=crear('div','tabula-marco',doc);
+ const cabecera=crear('header','tabula-app-header',doc);
+ const marca=crear('button','tabula-marco-marca',doc);
  marca.type='button';marca.title='Volver a '+nombre;
  marca.setAttribute('aria-label','Volver a '+nombre);
  marca.textContent=nombre;
  const alPulsarMarca=()=>inicio();
  marca.addEventListener('click',alPulsarMarca);
- const abrirCajonNav=crear('button','erlen-marco-abrir-cajon',doc);
+ const abrirCajonNav=crear('button','tabula-marco-abrir-cajon',doc);
  abrirCajonNav.type='button';abrirCajonNav.title='Navegación';abrirCajonNav.setAttribute('aria-label','Abrir la navegación');
  abrirCajonNav.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
- const h1=crear('h1','erlen-marco-nombre',doc);
+ const h1=crear('h1','tabula-marco-nombre',doc);
  h1.textContent=nombre;
- const titulo=crear('div','erlen-marco-titulo',doc);
- const estado=crear('div','erlen-marco-estado',doc);
- const acciones=crear('div','erlen-marco-acciones',doc);
- const utilidades=crear('div','erlen-marco-utilidades',doc);
- const controles=crear('div','erlen-marco-controles',doc);
+ const titulo=crear('div','tabula-marco-titulo',doc);
+ const estado=crear('div','tabula-marco-estado',doc);
+ const acciones=crear('div','tabula-marco-acciones',doc);
+ const utilidades=crear('div','tabula-marco-utilidades',doc);
+ const controles=crear('div','tabula-marco-controles',doc);
  controles.append(titulo,estado,acciones,utilidades);
  cabecera.append(abrirCajonNav,marca,h1,controles);
  for(const [contenedor,clave] of [[titulo,'titulo'],[estado,'estado'],[acciones,'acciones'],[utilidades,'utilidades']]){
@@ -157,10 +157,10 @@ export function mountMarco(host,config){
   if(typeof doc.defaultView?.MutationObserver==='function')new doc.defaultView.MutationObserver(sincroniza).observe(nombreDoc,{childList:true,characterData:true,subtree:true});
  }
 
- const cuerpo=crear('div','erlen-marco-cuerpo',doc);
- const nodoNav=crear('nav','erlen-marco-navegacion',doc);
- const nodoTrabajo=crear('main','erlen-marco-trabajo',doc);
- const nodoDetalles=crear('aside','erlen-marco-detalles',doc);
+ const cuerpo=crear('div','tabula-marco-cuerpo',doc);
+ const nodoNav=crear('nav','tabula-marco-navegacion',doc);
+ const nodoTrabajo=crear('main','tabula-marco-trabajo',doc);
+ const nodoDetalles=crear('aside','tabula-marco-detalles',doc);
  if(elementos.navegacion){nodoNav.append(elementos.navegacion);cuerpo.classList.add('con-navegacion');}
  if(elementos.detalles){nodoDetalles.append(elementos.detalles);}
  nodoTrabajo.append(trabajo);
@@ -169,9 +169,9 @@ export function mountMarco(host,config){
  if(!elementos.detalles)nodoDetalles.remove();
 
  marco.append(cabecera);
- if(elementos.cinta){const franja=crear('div','erlen-marco-cinta',doc);franja.append(elementos.cinta);marco.append(franja);}
+ if(elementos.cinta){const franja=crear('div','tabula-marco-cinta',doc);franja.append(elementos.cinta);marco.append(franja);}
  marco.append(cuerpo);
- const pie=elementos.pie?crear('footer','erlen-app-footer',doc):null;
+ const pie=elementos.pie?crear('footer','tabula-app-footer',doc):null;
  if(pie){pie.append(elementos.pie);marco.append(pie);}
  host.append(marco);
  restaurarSeleccion(estadoPrevio);
@@ -180,7 +180,7 @@ export function mountMarco(host,config){
  // tira de la cabecera la acción quedaba a 412-650 px de un teléfono de 375 y solo se alcanzaba
  // desplazando la tira. El botón se mueve (no se clona): conserva listeners y referencias, y
  // vuelve a su sitio al ensanchar la ventana, al girar en paisaje corto o al destruir el marco.
- const barraAccion=elementos.acciones?crear('div','erlen-marco-barra-accion',doc):null;
+ const barraAccion=elementos.acciones?crear('div','tabula-marco-barra-accion',doc):null;
  let primariaMovida=null,origenPrimaria=null;
  const modoBarra=()=>win.innerWidth<=ESTRECHO&&win.innerHeight>ALTO_BAJO;
  function devolverPrimaria(){
@@ -262,18 +262,18 @@ export function mountMarco(host,config){
   tipoCajon=tipo||null;
   devolver=volver||null;
   focoPrevio=doc.activeElement;
-  mascara=crear('div','erlen-marco-mascara',doc);
-  cajon=crear('aside','erlen-marco-cajon'+(izquierda?' erlen-marco-cajon-izq':''),doc);
+  mascara=crear('div','tabula-marco-mascara',doc);
+  cajon=crear('aside','tabula-marco-cajon'+(izquierda?' tabula-marco-cajon-izq':''),doc);
   cajon.setAttribute('role','dialog');
   cajon.setAttribute('aria-modal','true');
   cajon.setAttribute('aria-label',tituloCajon);
-  const cab=crear('div','erlen-marco-cajon-cabecera',doc);
-  const rotulo=crear('div','erlen-marco-cajon-titulo',doc);
+  const cab=crear('div','tabula-marco-cajon-cabecera',doc);
+  const rotulo=crear('div','tabula-marco-cajon-titulo',doc);
   rotulo.textContent=tituloCajon;
-  const cerrar=crear('button','erlen-marco-cajon-cerrar',doc);
+  const cerrar=crear('button','tabula-marco-cajon-cerrar',doc);
   cerrar.type='button';cerrar.textContent='✕';cerrar.title='Cerrar';cerrar.setAttribute('aria-label','Cerrar');
   cab.append(rotulo,cerrar);
-  const contenido=crear('div','erlen-marco-cajon-cuerpo',doc);
+  const contenido=crear('div','tabula-marco-cajon-cuerpo',doc);
   const antesDeMover=guardarSeleccion();
   contenido.append(nodo);
   restaurarSeleccion(antesDeMover);
@@ -297,7 +297,7 @@ export function mountMarco(host,config){
  }
  function cerrarCajon(){
   if(!cajon)return;
-  const nodo=cajon.querySelector('.erlen-marco-cajon-cuerpo')?.firstElementChild;
+  const nodo=cajon.querySelector('.tabula-marco-cajon-cuerpo')?.firstElementChild;
   const volver=devolver;
   cajon.removeEventListener('keydown',alPulsar);
   cajon.remove();mascara.remove();

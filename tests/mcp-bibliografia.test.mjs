@@ -172,12 +172,12 @@ test('MCP bibliografía: sin bibliografía automática, una diapositiva propia',
 });
 
 test('MCP bibliografía: completar_por_doi sin permiso de red', {timeout: 120000}, async () => {
-  await conEntorno({ERLEN_SLIDES_RED: null, ERLEN_SLIDES_CROSSREF: 'http://127.0.0.1:9/nunca'}, () => conServidor(async (c, dir) => {
+  await conEntorno({TABULA_RED: null, TABULA_CROSSREF: 'http://127.0.0.1:9/nunca'}, () => conServidor(async (c, dir) => {
     await nueva(c);
     const antes = statSync(join(dir, 'p.json')).mtimeMs;
     const r = await c.llama('completar_por_doi', {archivo: 'p', doi: '10.5555/prueba.0001'});
     assert.equal(r.error, true);
-    assert.match(r.texto, /ERLEN_SLIDES_RED=1/);
+    assert.match(r.texto, /TABULA_RED=1/);
     assert.match(r.texto, /api\.crossref\.org/);
     assert.equal(statSync(join(dir, 'p.json')).mtimeMs, antes);
     assert.match((await c.llama('completar_por_doi', {archivo: 'p', doi: 'no-es-un-doi'})).texto, /no parece un DOI/);
@@ -206,7 +206,7 @@ test('MCP bibliografía: completar_por_doi con un Crossref local', {timeout: 120
   await new Promise(ok => srv.listen(0, '127.0.0.1', ok));
   const url = 'http://127.0.0.1:' + srv.address().port;
   try {
-    await conEntorno({ERLEN_SLIDES_RED: '1', ERLEN_SLIDES_CROSSREF: url, ERLEN_SLIDES_CORREO: 'prueba@example.org'}, () => conServidor(async (c, dir) => {
+    await conEntorno({TABULA_RED: '1', TABULA_CROSSREF: url, TABULA_CORREO: 'prueba@example.org'}, () => conServidor(async (c, dir) => {
       await nueva(c);
       await c.llama('importar_bibliografia', {archivo: 'p', texto: '@article{Perez2021, author = {P{\\\'e}rez-N{\\\'u}{\\~n}ez, Jos{\\\'e}}, title = {Un título distinto a propósito}, doi = {https://doi.org/10.5555/prueba.0001}}'});
       const r = await c.llama('completar_por_doi', {archivo: 'p', doi: 'doi:10.5555/prueba.0001'});
@@ -217,7 +217,7 @@ test('MCP bibliografía: completar_por_doi con un Crossref local', {timeout: 120
       const p = porClave(dir, 'Perez2021');
       assert.equal(p.titulo, 'Un título distinto a propósito');
       assert.deepEqual([p.revista, p.anio, p.pag], ['Journal of Test Materials', '2021', '101–115']);
-      assert.match(vistos[0].ua, /^ErlenSlides\/[\d.]+ \(https:\/\/github\.com\/erlen-frontier\/erlen-slides; mailto:prueba@example\.org\)$/);
+      assert.match(vistos[0].ua, /^Tabula\/[\d.]+ \(https:\/\/github\.com\/erlen-frontier\/erlen-slides; mailto:prueba@example\.org\)$/);
 
       const n = await c.llama('completar_por_doi', {archivo: 'p', doi: '10.5555/prueba.0009'});
       assert.equal(n.error, false, n.texto);

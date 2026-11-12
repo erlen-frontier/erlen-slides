@@ -4,7 +4,7 @@
    copia que con el tiempo se aparte de ellos. */
 (function () {
   'use strict';
-  const { valida, falla } = ERLEN_MCP.util;
+  const { valida, falla } = TABULA_MCP.util;
   const omision = t => newBlock(t) || {};
   const conW = t => 'w' in omision(t);
   const sinoDe = (v, prop) => {
@@ -76,7 +76,7 @@
   const ALIAS = {};
   Object.keys(PROPS).forEach(k => { ALIAS[k] = k; PROPS[k].alias.forEach(a => { ALIAS[a] = k; }); });
 
-  ERLEN_MCP.registra('masivaEstilo', a => {
+  TABULA_MCP.registra('masivaEstilo', a => {
     const d = a.deck;
     /* Primero todo lo que puede estar mal en la petición, antes de tocar nada. */
     const props = [];

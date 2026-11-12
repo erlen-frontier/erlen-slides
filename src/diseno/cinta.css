@@ -2,94 +2,91 @@
    elemento de base.css sobre <button>.
    Cristal (2.0.0): la cinta es una lámina de cristal fuerte con brillo especular; la pestaña activa es una lente en cápsula
    y «Archivo» una cápsula del acento. Un solo desenfoque (la cinta) y otro en el menú abierto. Licencia: licencias/MIT.txt */
-.erlen-cinta{position:relative;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-bottom:1px solid var(--erlen-vidrio-contorno);box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 6px 18px -12px var(--erlen-vidrio-contorno);font-family:var(--erlen-font-ui);color:var(--erlen-tinta);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro)}
-.erlen-cinta button,.erlen-cinta-menu button{min-height:0;margin:0;padding:0;border:1px solid transparent;border-radius:var(--erlen-radio-campo);background:transparent;color:inherit;font:inherit;line-height:1.2;cursor:pointer;text-decoration:none;box-shadow:none;transform:none}
-.erlen-cinta button:disabled,.erlen-cinta-menu button:disabled{opacity:.45;cursor:default}
-.erlen-cinta :focus-visible,.erlen-cinta-menu :focus-visible{outline:3px solid var(--erlen-foco);outline-offset:1px}
+.tabula-cinta{position:relative;background:var(--tabula-superficie);border-bottom:1px solid var(--tabula-linea);box-shadow:inset 0 1px 0 var(--tabula-superficie),0 6px 18px -12px var(--tabula-linea);font-family:var(--tabula-font-ui);color:var(--tabula-tinta);-webkit-backdrop-filter:none;backdrop-filter:none}
+.tabula-cinta button,.tabula-cinta-menu button{min-height:0;margin:0;padding:0;border:1px solid transparent;border-radius:var(--tabula-radio-campo);background:transparent;color:inherit;font:inherit;line-height:1.2;cursor:pointer;text-decoration:none;box-shadow:none;transform:none}
+.tabula-cinta button:disabled,.tabula-cinta-menu button:disabled{opacity:.45;cursor:default}
+.tabula-cinta :focus-visible,.tabula-cinta-menu :focus-visible{outline:2px solid var(--tabula-foco);outline-offset:1px}
 /* El comando encontrado se señala durante unos segundos.
    Sin animación a propósito: también cumple su función con prefers-reduced-motion. */
-.erlen-cinta [data-cinta-resalta]{outline:3px solid var(--erlen-foco);outline-offset:2px}
-.erlen-cinta-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.tabula-cinta [data-cinta-resalta]{outline:2px solid var(--tabula-foco);outline-offset:2px}
+.tabula-cinta-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 
 /* Pestañas: una fila de cápsulas; la activa se eleva como una lente de cristal con el texto en el acento, «Archivo» a la izquierda. */
-.erlen-cinta-pestanas{display:flex;align-items:center;gap:var(--erlen-esp-1);padding:var(--erlen-esp-1) var(--erlen-esp-3);border-bottom:1px solid var(--erlen-vidrio-contorno);overflow-x:auto;scrollbar-width:none}
-.erlen-cinta-pestanas::-webkit-scrollbar{display:none}
-.erlen-cinta-lista{display:flex;align-items:center;gap:var(--erlen-esp-1);flex:none}
-.erlen-cinta .erlen-cinta-pestana{flex:none;min-height:32px;padding:0 var(--erlen-esp-4);border:1px solid transparent;border-radius:var(--erlen-radio-capsula);font:600 var(--erlen-texto-sm)/1 var(--erlen-font-ui);color:var(--erlen-tinta-suave);white-space:nowrap;transition:background-color var(--erlen-dur-micro) var(--erlen-ease),color var(--erlen-dur-micro) var(--erlen-ease),box-shadow var(--erlen-dur-micro) var(--erlen-ease)}
-.erlen-cinta .erlen-cinta-pestana:hover{color:var(--erlen-tinta);background:var(--erlen-vidrio-tinte)}
-.erlen-cinta .erlen-cinta-pestana[aria-selected=true]{color:var(--erlen-verde);background:var(--erlen-vidrio-reflejo),var(--erlen-superficie);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-vidrio-relieve)}
+.tabula-cinta-pestanas{display:flex;align-items:center;gap:var(--tabula-esp-1);padding:var(--tabula-esp-1) var(--tabula-esp-3);border-bottom:1px solid var(--tabula-linea);overflow-x:auto;scrollbar-width:none}
+.tabula-cinta-pestanas::-webkit-scrollbar{display:none}
+.tabula-cinta-lista{display:flex;align-items:center;gap:var(--tabula-esp-1);flex:none}
+.tabula-cinta .tabula-cinta-pestana{flex:none;min-height:32px;padding:0 var(--tabula-esp-4);border:1px solid transparent;border-radius:var(--tabula-radio-capsula);font:600 var(--tabula-texto-sm)/1 var(--tabula-font-ui);color:var(--tabula-tinta-suave);white-space:nowrap;transition:background-color var(--tabula-dur) var(--tabula-ease),color var(--tabula-dur) var(--tabula-ease),box-shadow var(--tabula-dur) var(--tabula-ease)}
+.tabula-cinta .tabula-cinta-pestana:hover{color:var(--tabula-tinta);background:var(--tabula-verde-suave)}
+.tabula-cinta .tabula-cinta-pestana[aria-selected=true]{color:var(--tabula-verde);background:var(--tabula-superficie);border-color:var(--tabula-linea);box-shadow:var(--tabula-sombra-tarjeta)}
 /* Contextual (aparece con la selección): tinte del acento y borde discontinuo para distinguirla sin depender solo del color del texto. */
-.erlen-cinta .erlen-cinta-pestana[data-contextual]{background:var(--erlen-verde-suave);color:var(--erlen-verde);border:1px dashed var(--erlen-verde)}
-.erlen-cinta .erlen-cinta-pestana[data-contextual][aria-selected=true]{border-style:solid}
-.erlen-cinta .erlen-cinta-archivo{flex:none;align-self:center;min-height:32px;margin-right:var(--erlen-esp-2);padding:0 var(--erlen-esp-4);border-radius:var(--erlen-radio-capsula);background:var(--erlen-vidrio-reflejo-acento),var(--erlen-verde);color:var(--erlen-verde-contraste);font:700 var(--erlen-texto-sm)/1 var(--erlen-font-ui);box-shadow:inset 0 1px 0 var(--erlen-vidrio-borde),0 2px 8px var(--erlen-vidrio-contorno)}
-.erlen-cinta .erlen-cinta-archivo:hover{background:var(--erlen-vidrio-reflejo-acento),color-mix(in srgb,var(--erlen-verde) 86%,var(--erlen-tinta))}
-.erlen-cinta-hueco{flex:1}
-.erlen-cinta .erlen-cinta-plegar{position:relative;flex:none;align-self:center;width:32px;min-height:28px;border-radius:var(--erlen-radio-capsula);color:var(--erlen-tinta-suave);font-size:var(--erlen-texto-sm)}
-.erlen-cinta .erlen-cinta-plegar:hover{background:var(--erlen-vidrio-tinte);color:var(--erlen-verde)}
+.tabula-cinta .tabula-cinta-pestana[data-contextual]{background:var(--tabula-verde-suave);color:var(--tabula-verde);border:1px dashed var(--tabula-verde)}
+.tabula-cinta .tabula-cinta-pestana[data-contextual][aria-selected=true]{border-style:solid}
+.tabula-cinta .tabula-cinta-archivo{flex:none;align-self:center;min-height:32px;margin-right:var(--tabula-esp-2);padding:0 var(--tabula-esp-4);border-radius:var(--tabula-radio-capsula);background:var(--tabula-verde);color:var(--tabula-verde-contraste);font:700 var(--tabula-texto-sm)/1 var(--tabula-font-ui);box-shadow:inset 0 1px 0 var(--tabula-superficie),0 2px 8px var(--tabula-linea)}
+.tabula-cinta .tabula-cinta-archivo:hover{background:color-mix(in srgb,var(--tabula-verde) 86%,var(--tabula-tinta))}
+.tabula-cinta-hueco{flex:1}
+.tabula-cinta .tabula-cinta-plegar{position:relative;flex:none;align-self:center;width:32px;min-height:28px;border-radius:var(--tabula-radio-capsula);color:var(--tabula-tinta-suave);font-size:var(--tabula-texto-sm)}
+.tabula-cinta .tabula-cinta-plegar:hover{background:var(--tabula-verde-suave);color:var(--tabula-verde)}
 
 /* Panel: grupos separados en fila; desplazamiento horizontal si no caben (nunca desborda la página). */
-.erlen-cinta-panel[hidden]{display:none}
-.erlen-cinta-fila{display:flex;align-items:stretch;padding:var(--erlen-esp-1) var(--erlen-esp-2);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
-.erlen-cinta-grupo{flex:none;display:flex;flex-direction:column;align-items:center;gap:var(--erlen-esp-1);padding:0 var(--erlen-esp-2);border-right:1px solid var(--erlen-vidrio-contorno)}
-.erlen-cinta-grupo:last-child{border-right:0}
-.erlen-cinta-grupo[hidden],.erlen-cinta-columna[hidden]{display:none}
-.erlen-cinta-controles{flex:1;display:flex;align-items:flex-start;gap:var(--erlen-esp-1);min-height:74px}
-.erlen-cinta-columna{display:flex;flex-direction:column;gap:1px}
+.tabula-cinta-panel[hidden]{display:none}
+.tabula-cinta-fila{display:flex;align-items:stretch;padding:var(--tabula-esp-1) var(--tabula-esp-2);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.tabula-cinta-grupo{flex:none;display:flex;flex-direction:column;align-items:center;gap:var(--tabula-esp-1);padding:0 var(--tabula-esp-2);border-right:1px solid var(--tabula-linea)}
+.tabula-cinta-grupo:last-child{border-right:0}
+.tabula-cinta-grupo[hidden],.tabula-cinta-columna[hidden]{display:none}
+.tabula-cinta-controles{flex:1;display:flex;align-items:flex-start;gap:var(--tabula-esp-1);min-height:74px}
+.tabula-cinta-columna{display:flex;flex-direction:column;gap:1px}
 /* Cada grupo conserva su nombre accesible en aria-label; el rótulo no ocupa otra fila. */
-.erlen-cinta-rotulo{display:none}
+.tabula-cinta-rotulo{display:none}
 
 /* Botones: grande (icono arriba, texto debajo) y pequeño (icono y texto en línea, en columnas de tres). */
-.erlen-cinta .erlen-cinta-boton{display:inline-flex;align-items:center;gap:var(--erlen-esp-2);border-radius:var(--erlen-radio-campo);color:var(--erlen-tinta);transition:background-color var(--erlen-dur-micro) var(--erlen-ease),border-color var(--erlen-dur-micro) var(--erlen-ease),box-shadow var(--erlen-dur-micro) var(--erlen-ease)}
-.erlen-cinta .erlen-cinta-boton:hover:not(:disabled){background:var(--erlen-vidrio-reflejo),var(--erlen-superficie);border-color:var(--erlen-vidrio-contorno);box-shadow:var(--erlen-vidrio-relieve)}
-.erlen-cinta .erlen-cinta-boton:active:not(:disabled){background:var(--erlen-verde-suave);box-shadow:none}
-.erlen-cinta .erlen-cinta-boton[hidden]{display:none}
-.erlen-cinta .erlen-cinta-boton[data-tipo=grande]{flex-direction:column;justify-content:flex-start;gap:var(--erlen-esp-1);min-width:60px;max-width:88px;min-height:70px;padding:var(--erlen-esp-1);text-align:center}
-.erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-icono{width:24px;height:24px;font-size:20px;color:var(--erlen-verde)}
-.erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-texto{font-size:var(--erlen-texto-xs);line-height:1.2;white-space:normal}
-.erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]){min-height:24px;padding:0 var(--erlen-esp-2);font-size:var(--erlen-texto-xs);white-space:nowrap;justify-content:flex-start}
-.erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]) .erlen-cinta-icono{width:18px;height:18px;font-size:15px;color:var(--erlen-tinta-suave)}
-.erlen-cinta .erlen-cinta-boton:hover:not(:disabled) .erlen-cinta-icono{color:var(--erlen-verde)}
-.erlen-cinta .erlen-cinta-boton[aria-pressed=true]{background:var(--erlen-verde-suave);border-color:color-mix(in srgb,var(--erlen-verde) 35%,transparent);color:var(--erlen-verde);box-shadow:inset 0 1px 2px var(--erlen-vidrio-contorno)}
-.erlen-cinta .erlen-cinta-boton[aria-pressed=true] .erlen-cinta-icono{color:var(--erlen-verde)}
-.erlen-cinta-icono{display:inline-grid;place-items:center;flex:none;line-height:1}
-.erlen-cinta-icono svg{width:100%;height:100%}
-.erlen-cinta-flecha{font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
-.erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-flecha{line-height:1}
+.tabula-cinta .tabula-cinta-boton{display:inline-flex;align-items:center;gap:var(--tabula-esp-2);border-radius:var(--tabula-radio-campo);color:var(--tabula-tinta);transition:background-color var(--tabula-dur) var(--tabula-ease),border-color var(--tabula-dur) var(--tabula-ease),box-shadow var(--tabula-dur) var(--tabula-ease)}
+.tabula-cinta .tabula-cinta-boton:hover:not(:disabled){background:var(--tabula-superficie);border-color:var(--tabula-linea);box-shadow:var(--tabula-sombra-tarjeta)}
+.tabula-cinta .tabula-cinta-boton:active:not(:disabled){background:var(--tabula-verde-suave);box-shadow:none}
+.tabula-cinta .tabula-cinta-boton[hidden]{display:none}
+.tabula-cinta .tabula-cinta-boton[data-tipo=grande]{flex-direction:column;justify-content:flex-start;gap:var(--tabula-esp-1);min-width:60px;max-width:88px;min-height:70px;padding:var(--tabula-esp-1);text-align:center}
+.tabula-cinta .tabula-cinta-boton[data-tipo=grande] .tabula-cinta-icono{width:24px;height:24px;font-size:20px;color:var(--tabula-verde)}
+.tabula-cinta .tabula-cinta-boton[data-tipo=grande] .tabula-cinta-texto{font-size:var(--tabula-texto-xs);line-height:1.2;white-space:normal}
+.tabula-cinta .tabula-cinta-boton:not([data-tipo=grande]){min-height:24px;padding:0 var(--tabula-esp-2);font-size:var(--tabula-texto-xs);white-space:nowrap;justify-content:flex-start}
+.tabula-cinta .tabula-cinta-boton:not([data-tipo=grande]) .tabula-cinta-icono{width:18px;height:18px;font-size:15px;color:var(--tabula-tinta-suave)}
+.tabula-cinta .tabula-cinta-boton:hover:not(:disabled) .tabula-cinta-icono{color:var(--tabula-verde)}
+.tabula-cinta .tabula-cinta-boton[aria-pressed=true]{background:var(--tabula-verde-suave);border-color:color-mix(in srgb,var(--tabula-verde) 35%,transparent);color:var(--tabula-verde);box-shadow:inset 0 1px 2px var(--tabula-linea)}
+.tabula-cinta .tabula-cinta-boton[aria-pressed=true] .tabula-cinta-icono{color:var(--tabula-verde)}
+.tabula-cinta-icono{display:inline-grid;place-items:center;flex:none;line-height:1}
+.tabula-cinta-icono svg{width:100%;height:100%}
+.tabula-cinta-flecha{font-size:var(--tabula-texto-xs);color:var(--tabula-tinta-suave)}
+.tabula-cinta .tabula-cinta-boton[data-tipo=grande] .tabula-cinta-flecha{line-height:1}
 
 /* Menú desplegable de un botón de la cinta (se monta en <body>): cristal fuerte con desenfoque, radio concéntrico con sus opciones. */
-.erlen-cinta-menu{position:fixed;z-index:400;min-width:220px;max-width:min(360px,calc(100vw - 16px));max-height:min(70vh,520px);overflow:auto;padding:6px;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border:1px solid var(--erlen-vidrio-contorno);border-radius:var(--erlen-radio-tarjeta);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-menu);font-family:var(--erlen-font-ui);color:var(--erlen-tinta);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro)}
-.erlen-cinta-menu .erlen-cinta-opcion{display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:center;gap:var(--erlen-esp-2);width:100%;min-height:36px;padding:var(--erlen-esp-1) var(--erlen-esp-2);border-radius:var(--erlen-radio-campo);text-align:left;font-size:var(--erlen-texto-sm)}
-.erlen-cinta-menu .erlen-cinta-opcion:hover:not(:disabled),.erlen-cinta-menu .erlen-cinta-opcion:focus-visible{background:var(--erlen-verde-suave)}
-.erlen-cinta-menu .erlen-cinta-opcion[aria-checked=true]{color:var(--erlen-verde);font-weight:700}
-.erlen-cinta-menu .erlen-cinta-opcion[aria-checked=true] .erlen-cinta-icono:empty::before{content:"✓"}
-.erlen-cinta-menu .erlen-cinta-icono{width:20px;color:var(--erlen-verde)}
-.erlen-cinta-opcion-texto{display:flex;flex-direction:column;min-width:0}
-.erlen-cinta-opcion-texto small{font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave);font-weight:400}
-.erlen-cinta-menu kbd{font:var(--erlen-texto-xs) var(--erlen-font-mono);color:var(--erlen-tinta-suave)}
-.erlen-cinta-separador{height:1px;margin:var(--erlen-esp-1) 0;background:var(--erlen-linea)}
+.tabula-cinta-menu{position:fixed;z-index:400;min-width:220px;max-width:min(360px,calc(100vw - 16px));max-height:min(70vh,520px);overflow:auto;padding:6px;background:var(--tabula-superficie);border:1px solid var(--tabula-linea);border-radius:var(--tabula-radio-tarjeta);box-shadow:var(--tabula-sombra-menu);font-family:var(--tabula-font-ui);color:var(--tabula-tinta);-webkit-backdrop-filter:none;backdrop-filter:none}
+.tabula-cinta-menu .tabula-cinta-opcion{display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:center;gap:var(--tabula-esp-2);width:100%;min-height:36px;padding:var(--tabula-esp-1) var(--tabula-esp-2);border-radius:var(--tabula-radio-campo);text-align:left;font-size:var(--tabula-texto-sm)}
+.tabula-cinta-menu .tabula-cinta-opcion:hover:not(:disabled),.tabula-cinta-menu .tabula-cinta-opcion:focus-visible{background:var(--tabula-verde-suave)}
+.tabula-cinta-menu .tabula-cinta-opcion[aria-checked=true]{color:var(--tabula-verde);font-weight:700}
+.tabula-cinta-menu .tabula-cinta-opcion[aria-checked=true] .tabula-cinta-icono:empty::before{content:"✓"}
+.tabula-cinta-menu .tabula-cinta-icono{width:20px;color:var(--tabula-verde)}
+.tabula-cinta-opcion-texto{display:flex;flex-direction:column;min-width:0}
+.tabula-cinta-opcion-texto small{font-size:var(--tabula-texto-xs);color:var(--tabula-tinta-suave);font-weight:400}
+.tabula-cinta-menu kbd{font:var(--tabula-texto-xs) var(--tabula-font-mono);color:var(--tabula-tinta-suave)}
+.tabula-cinta-separador{height:1px;margin:var(--tabula-esp-1) 0;background:var(--tabula-linea)}
 
 /* Pantallas estrechas y táctiles: botones grandes más compactos y zonas de toque de 44 px. */
 @media (max-width:920px){
- .erlen-cinta-fila{padding-inline:var(--erlen-esp-1)}
+ .tabula-cinta-fila{padding-inline:var(--tabula-esp-1)}
 }
 @media (max-width:920px),(any-pointer:coarse){
  /* Objetivo táctil completo: 44×44 también en anchura. Las variantes con :not y [data-tipo]
     replican la especificidad de las reglas compactas de arriba para poder superarlas. */
- .erlen-cinta .erlen-cinta-boton{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
- .erlen-cinta .erlen-cinta-boton:not([data-tipo=grande]){min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
- .erlen-cinta .erlen-cinta-boton[data-tipo=grande]{flex-direction:row;justify-content:flex-start;gap:var(--erlen-esp-2);max-width:none;min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control);padding:0 var(--erlen-esp-2);text-align:left}
- .erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-icono{width:20px;height:20px;font-size:18px}
- .erlen-cinta .erlen-cinta-boton[data-tipo=grande] .erlen-cinta-texto{white-space:nowrap}
- .erlen-cinta .erlen-cinta-pestana,.erlen-cinta .erlen-cinta-plegar,.erlen-cinta .erlen-cinta-archivo{min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
- .erlen-cinta-controles{min-height:var(--erlen-alto-control)}
- .erlen-cinta-columna{flex-direction:row}
- .erlen-cinta-menu .erlen-cinta-opcion{min-height:var(--erlen-alto-control)}
+ .tabula-cinta .tabula-cinta-boton{min-height:var(--tabula-alto-control);min-width:var(--tabula-alto-control)}
+ .tabula-cinta .tabula-cinta-boton:not([data-tipo=grande]){min-height:var(--tabula-alto-control);min-width:var(--tabula-alto-control)}
+ .tabula-cinta .tabula-cinta-boton[data-tipo=grande]{flex-direction:row;justify-content:flex-start;gap:var(--tabula-esp-2);max-width:none;min-height:var(--tabula-alto-control);min-width:var(--tabula-alto-control);padding:0 var(--tabula-esp-2);text-align:left}
+ .tabula-cinta .tabula-cinta-boton[data-tipo=grande] .tabula-cinta-icono{width:20px;height:20px;font-size:18px}
+ .tabula-cinta .tabula-cinta-boton[data-tipo=grande] .tabula-cinta-texto{white-space:nowrap}
+ .tabula-cinta .tabula-cinta-pestana,.tabula-cinta .tabula-cinta-plegar,.tabula-cinta .tabula-cinta-archivo{min-height:var(--tabula-alto-control);min-width:var(--tabula-alto-control)}
+ .tabula-cinta-controles{min-height:var(--tabula-alto-control)}
+ .tabula-cinta-columna{flex-direction:row}
+ .tabula-cinta-menu .tabula-cinta-opcion{min-height:var(--tabula-alto-control)}
 }
-@media (prefers-reduced-motion:reduce){.erlen-cinta .erlen-cinta-boton,.erlen-cinta .erlen-cinta-pestana{transition:none}}
+@media (prefers-reduced-motion:reduce){.tabula-cinta .tabula-cinta-boton,.tabula-cinta .tabula-cinta-pestana{transition:none}}
 /* Colores forzados: la lente de la pestaña activa pierde su sombra; se marca con el borde del sistema. */
-@media (forced-colors:active){.erlen-cinta .erlen-cinta-pestana[aria-selected=true]{border-color:Highlight}.erlen-cinta .erlen-cinta-archivo{border:1px solid ButtonText}}
-@media print{.erlen-cinta,.erlen-cinta-menu{display:none}}
+@media (forced-colors:active){.tabula-cinta .tabula-cinta-pestana[aria-selected=true]{border-color:Highlight}.tabula-cinta .tabula-cinta-archivo{border:1px solid ButtonText}}
+@media print{.tabula-cinta,.tabula-cinta-menu{display:none}}
 
-/* Los controles compactos conservan todo el espacio de lectura al elevarse. */
-:root[data-erlen-estilo] .erlen-cinta :is(.erlen-cinta-boton:hover:not(:disabled),.erlen-cinta-pestana[aria-selected="true"]){box-shadow:var(--erlen-control-relieve)}
-:root[data-erlen-estilo] .erlen-cinta :is(.erlen-cinta-boton,.erlen-cinta-archivo,.erlen-cinta-pestana):active:not(:disabled){box-shadow:var(--erlen-control-presionado)}

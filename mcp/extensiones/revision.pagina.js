@@ -16,7 +16,7 @@
   const R = (nombre, fn) => {
     const segura = deck => { const r = fn(deck); return Array.isArray(r) ? r : []; };
     REGLAS.push({ nombre, fn: segura });
-    ERLEN_MCP.registraRevision(nombre, segura);
+    TABULA_MCP.registraRevision(nombre, segura);
   };
 
   /* ---------- el texto que ve el público ---------- */
@@ -454,8 +454,8 @@
   });
 
   /* ---------- solo estas reglas ---------- */
-  ERLEN_MCP.registra('revisionConvenciones', a => {
-    const deck = ERLEN_MCP.util.valida(a.deck).deck;
+  TABULA_MCP.registra('revisionConvenciones', a => {
+    const deck = TABULA_MCP.util.valida(a.deck).deck;
     const cats = Array.isArray(a.categorias) && a.categorias.length ? new Set(a.categorias) : null;
     const hallazgos = [];
     const t0 = Date.now();

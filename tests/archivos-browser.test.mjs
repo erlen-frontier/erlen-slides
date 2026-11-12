@@ -6,9 +6,9 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 test('desktop saving and closing commit the focused inspector field', {timeout:120000}, async t => {
-  const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
-  if (!existsSync(bin)) { t.skip('Set ERLEN_CHROMIUM to run browser validation.'); return; }
-  const port = Number(process.env.ERLEN_ARCHIVOS_TEST_PORT || 4267);
+  const bin = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
+  if (!existsSync(bin)) { t.skip('Set TABULA_CHROMIUM to run browser validation.'); return; }
+  const port = Number(process.env.TABULA_ARCHIVOS_TEST_PORT || 4267);
   const server = spawn(process.execPath, [fileURLToPath(new URL('../herramientas/serve.mjs', import.meta.url))],
     {env:{...process.env, PORT:String(port)}, stdio:['ignore','pipe','pipe']});
   t.after(() => server.kill());

@@ -1,8 +1,8 @@
 # Desarrollo
 
-Node.js >= 22. Dependencias fijadas en `package-lock.json`. Para instalar, construir, comprobar y ejecutar localmente, usa `npm ci`, `npm run build`, `npm test` y `npm start` según el entorno disponible.
+Node.js >= 22.12.0. Dependencias fijadas en `package-lock.json`. Para instalar, construir, comprobar y ejecutar localmente, usa `npm ci`, `npm run build`, `npm test` y `npm start` según el entorno disponible.
 
-Este repositorio trabaja sin CI ni revisión de código garantizada. Sigue las [reglas locales](../AGENTS.md): documenta las comprobaciones realmente realizadas y sus limitaciones; no presupongas validación automática ni revisión posterior. Tabula no depende de sincronización automática con Erlen Suite.
+Este repositorio trabaja sin CI ni revisión de código garantizada. Sigue las [reglas locales](../AGENTS.md): documenta las comprobaciones realmente realizadas y sus limitaciones; no presupongas validación automática ni revisión posterior. Lámina no depende de sincronización automática con Erlen Suite.
 
 ## Estructura
 
@@ -21,7 +21,7 @@ Este repositorio trabaja sin CI ni revisión de código garantizada. Sigue las [
 - Las formas del lienzo reutilizan bloques `image` con `figura` y SVG incrustado. `formaLibre` es un indicador opcional compatible con JSON v1; las formas sin pie no cuentan como figuras científicas. La edición por capas conserva el modelo y el PowerPoint recibe una imagen.
 - Las imágenes importadas mantienen su fuente en `src`; al recortar, `orig` conserva el original y `src` pasa a ser el recorte PNG. Las vistas reducidas de edición y miniatura son URL temporales con caché acotada; no forman parte del JSON ni de las exportaciones. Los conversores de figuras y PowerPoint solo rasterizan formatos no compatibles en la copia exportada y notifican fallos o imágenes demasiado grandes.
 - `src/figures-catalog/` contiene el catálogo y los dibujos de Erlen Figures con procedencia y licencias; `85b-catalogo-figuras.js` los carga por lotes locales e inserta bloques `image` con SVG y `catalogo` opcional. Los proyectos quedan autónomos; los créditos y cambios se conservan en las copias anotadas y en el kit. La procedencia y los avisos están documentados en `src/figures-catalog/README.md`.
-- `src/js/52b-agente.js`, `52c-agente-ui.js` y `52c-transporte-agente.js`: chat optativo con herramientas acotadas y conexión HTTPS configurada por la persona. Las operaciones se preparan en una copia y se aplican juntas con deshacer; no se guardan claves ni medios en el contexto. El transporte nativo vive en `crates/slides-core/src/agent.rs`.
+- `src/js/52b-agente.js`, `52c-agente-ui.js` y `52c-transporte-agente.js`: chat optativo con herramientas acotadas y conexión HTTPS configurada por la persona. Las operaciones se preparan en una copia y se aplican juntas con deshacer; no se guardan claves ni medios en el contexto. El transporte nativo vive en `crates/tabula-core/src/agent.rs`.
 - `src/js/85-flujos.js`: cargador local y entradas de las herramientas opcionales. `web/flujos-editor.js` contiene sus interfaces y `web/exportaciones-avanzadas.js`, los adaptadores PptxGenJS/Reveal.js. El build copia bibliotecas, chunks Mermaid y licencias a `public/`, con versiones y SHA-256 en `libre/manifest.json`. El runtime de funciones del HTML se ensambla desde el mismo motor del editor. Terser compacta módulos propios del lienzo, editor, barra contextual, diálogos, revisión, cinta, accesibilidad y flujos sin renombrar los símbolos que usa MCP.
 - `src/js/45-estructura.js`, `src/js/45b-estructura-dibujo.js` y `src/js/46-estructura-edit.js`: las estructuras químicas, partidas en modelo, motor y lienzo (ver «Editores de figura»).
 - `src/js/47-lab-catalogo.js`, `src/js/47b-lab.js` y `src/js/48-lab-edit.js`: el montaje de laboratorio, partido en catálogo, motor y editor (ver «Editores de figura»).
@@ -29,25 +29,25 @@ Este repositorio trabaja sin CI ni revisión de código garantizada. Sigue las [
 - `src/diseno/inicio.mjs`, `src/diseno/marco.mjs` y `src/diseno/cinta.js`: componentes locales de inicio, marco y cinta. `src/js/56-cinta.js` configura las acciones del editor.
 - `src/js/88-workspace.js`: monta el inicio con la biblioteca, los ejemplos, las plantillas personales y los recursos locales. Sus rutas visibles son `#inicio`, `#inicio/biblioteca`, `#inicio/plantillas`, `#inicio/herramientas` y `#inicio/servicio`; `#presentaciones` abre el editor y `?plantilla=<id>` permite abrir un ejemplo.
 - `src/js/88b-recuperacion.js`: historial en IndexedDB, separado del autoguardado.
-- `src/js/33-archivo.js` y `crates/slides-core/src/documents.rs`: ciclo de archivos de escritorio. Rust conserva las rutas elegidas en el diálogo y compara la huella antes de guardar; el editor mantiene el estado pendiente y separa la biblioteca de la copia en disco. Las referencias caducan al cambiar de documento o cerrar la app.
+- `src/js/33-archivo.js` y `crates/tabula-core/src/documents.rs`: ciclo de archivos de escritorio. Rust conserva las rutas elegidas en el diálogo y compara la huella antes de guardar; el editor mantiene el estado pendiente y separa la biblioteca de la copia en disco. Las referencias caducan al cambiar de documento o cerrar la app.
 - `src/js/88c-ciencia-libre.js`: carga local de bibliotecas científicas.
 - `web/quimica-worker.js`: trabajo RDKit fuera del hilo de la interfaz.
-- `herramientas/build.mjs`: HTML, recursos locales y manifiestos; no lee credenciales ni configuración de nube.
+- `herramientas/build.mjs`: HTML, recursos locales y manifiestos; no lee credenciales ni configuración de nube. Genera `public/index.html` y `public/lamina-offline.html` (editor completo en un archivo); la copia de licencia del diseño se distribuye como `licenses/diseno-MIT.txt`.
 - `herramientas/examples.mjs`: regenera los JSON y TEX documentados después de construir.
 - `mcp/`: servidor MCP para asistentes de IA; carga el build en JSDOM y usa sus funciones. Ver [mcp.md](mcp.md).
 - `tests/`: interacción científica, recuperación y pruebas de la aplicación construida.
 
-Tabula es independiente y no incluye un menú de otras aplicaciones ni intercambio de copias entre ellas. Conserva los avisos MIT y las atribuciones de los componentes derivados de Erlen, así como las licencias de terceros. Las notas históricas de publicación describen versiones anteriores, no las funciones de esta distribución.
+Lámina es independiente y no incluye un menú de otras aplicaciones ni intercambio de copias entre ellas. Conserva los avisos MIT y las atribuciones de los componentes derivados de Erlen, así como las licencias de terceros. Las notas históricas de publicación describen versiones anteriores, no las funciones de esta distribución.
 
 ## Contratos a preservar
 
-Conserva el formato JSON v1 y las claves `erlen-slides.*`. No migres ni sobrescribas automáticamente archivos de Erlen. Vacía la edición pendiente antes de guardar o insertar; los diálogos asíncronos deben comprobar que sigue abierto el mismo documento. Un error de cuota debe ser visible y conservar el original.
+Conserva el formato JSON v1 y las claves `tabula.*`; la app arranca con su biblioteca propia y no lee, copia ni borra las claves de la versión anterior. No migres ni sobrescribas automáticamente archivos de la instalación previa. Vacía la edición pendiente antes de guardar o insertar; los diálogos asíncronos deben comprobar que sigue abierto el mismo documento. Un error de cuota debe ser visible y conservar el original.
 
-La fuente del código es accesible desde la interfaz. Un despliegue derivado debe apuntar al código de esa versión: modifica `ERLEN_SOURCE_URL` cuando corresponda. Las licencias de terceros están en `licenses/`; las bibliotecas opcionales se cargan desde rutas relativas, compatibles con un subdirectorio.
+La fuente del código es accesible desde la interfaz. Un despliegue derivado debe apuntar al código de esa versión: modifica `TABULA_SOURCE_URL` cuando corresponda. Las licencias de terceros están en `licenses/`; las bibliotecas opcionales se cargan desde rutas relativas, compatibles con un subdirectorio.
 
 ## Estilos del editor
 
-El cromo usa los alias de `src/css/01-editor.css`: `--glass-fondo` (menús, popovers, diálogos, toasts y la barra del lienzo, con `--glass-blur`), `--glass-flujo` (barra superior y pestañas, sin desenfoque), `--glass-edge` y `--glass-relieve`. Apuntan a `--erlen-vidrio*`; los respaldos opacos para menos transparencia, más contraste, colores forzados, `data-erlen-material="solido"`, impresión y navegadores sin `backdrop-filter` están en `src/diseno/tokens.css`. No escribas `backdrop-filter` literal ni lo pongas en la barra superior o sobre el lienzo; la diapositiva y la tira quedan opacas.
+El cromo usa los tokens semánticos de `src/diseno/tokens.css` (`--tabula-papel`, `--tabula-superficie`, `--tabula-tinta`, `--tabula-linea`, `--tabula-verde`, `--tabula-ambar`, `--tabula-peligro`, `--tabula-foco`) y sus alias cortos en `src/css/01-editor.css` (`--bg`, `--panel`, `--ink`, `--line`, `--acc`, `--accSoft`, `--danger`, `--anillo`). Las superficies del cromo son opacas; no hay translucidez ni desenfoque. La diapositiva y la tira quedan opacas. Tema: `Sistema`/`Claro`/`Oscuro` vía `S.prefs.tema` (`data-theme`); densidad `Cómoda`/`Compacta` vía `S.prefs.densidad` (`data-dens`). Foco visible de 2 px con `--tabula-foco`; `forced-colors`, `prefers-contrast:more` y `prefers-reduced-motion` respetan contraste y movimiento reducido; controles táctiles mínimos de 44 px.
 
 ## Comprobar un cambio
 

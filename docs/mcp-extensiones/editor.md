@@ -31,8 +31,8 @@ El almacenamiento del navegador va por origen, puerto incluido. Por eso el servi
 
 | Variable | Para qué |
 |---|---|
-| `ERLEN_SLIDES_SIN_NAVEGADOR=1` | No abre el navegador; solo devuelve la URL (pruebas, servidores sin escritorio). |
-| `ERLEN_SLIDES_PUERTO` | Puerto preferido (8130 por omisión); `0` elige uno libre. |
-| `ERLEN_SLIDES_CADUCIDAD` | Segundos de validez de cada clave (600 por omisión). |
+| `TABULA_SIN_NAVEGADOR=1` | No abre el navegador; solo devuelve la URL (pruebas, servidores sin escritorio). |
+| `TABULA_PUERTO` | Puerto preferido (8130 por omisión); `0` elige uno libre. |
+| `TABULA_CADUCIDAD` | Segundos de validez de cada clave (600 por omisión). |
 
 Se prueba en `tests/mcp-editor.test.mjs` (el servidor, con el `fetch` de Node) y `tests/editor-asistente.test.mjs` (el camino de la app, en JSDOM con un `fetch` simulado).

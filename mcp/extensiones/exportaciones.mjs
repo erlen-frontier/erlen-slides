@@ -142,7 +142,7 @@ async function paquete(a) {
   const [fig, inf] = await Promise.all([op('exportaFiguras', {deck}), op('exportaInforme', {deck})]);
   /* Lo que el kit del editor no trae y hace falta para rehacer las figuras:
      los datos exactos de cada gráfica, su procedencia y los SVG. */
-  const procedencia = {schema: 'erlen-slides-datos-v1',
+  const procedencia = {schema: 'tabula-datos-v1',
     nota: 'Cada CSV son los datos de la gráfica tal como se dibujan (si vinieron de un archivo de equipo, ya limpios y quizá submuestreados). La huella es el SHA-256 abreviado de la tabla guardada en proyecto.json.',
     datos: fig.datos.map(d => ({archivo: 'datos/' + d.nombre, diapositiva: d.diapositiva, bloque: d.bloque, pie: d.pie, ejes: d.ejes, procedencia: d.procedencia}))};
   /* El LEEME del kit nombra una sola vez cada carpeta, en su primer archivo. */
@@ -165,7 +165,7 @@ async function paquete(a) {
   mkdirSync(dirname(destino), {recursive: true});
   await descarga.saveAs(destino);
   return {archivo: visible(destino), bytes: statSync(destino).size, contenido: lista,
-    nota: 'Kit de defensa del editor más los datos y las figuras vectoriales: proyecto.json se abre en Erlen, presentacion.tex compila en Overleaf. Falta el PDF: exportar_presentacion con formato «pdf».'};
+    nota: 'Kit de defensa del editor más los datos y las figuras vectoriales: proyecto.json se abre en Tabula, presentacion.tex compila en Overleaf. Falta el PDF: exportar_presentacion con formato «pdf».'};
 }
 
 /* Las opciones propias de estos formatos, para el esquema de exportar_presentacion. */

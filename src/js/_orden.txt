@@ -60,7 +60,6 @@
 53-imagen-estilo.js
 54-galeria.js
 55-disenador.js
-../diseno/color.js
 ../diseno/marco.mjs
 ../diseno/cinta.js
 56-cinta.js
@@ -97,6 +96,4 @@
 88-workspace.js
 88b-recuperacion.js
 88c-ciencia-libre.js
-_glass-map-gen.js
-89-glass.js
 90-main.js

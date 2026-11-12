@@ -123,7 +123,7 @@ test('alignment and distribution cannot partially change locked or incomplete se
 
 test('a shape is not inserted if the slide stops accepting blocks while its library loads', async t => {
   const app = await prepara(t);app.dom.window.__figuras = figuras;
-  const pendiente = app.run("window.__espera=new Promise(resolve=>window.__termina=resolve);extensionSlides=()=>__espera;insertaFormaLibre('rect')");
+  const pendiente = app.run("window.__espera=new Promise(resolve=>window.__termina=resolve);extensionTabla=()=>__espera;insertaFormaLibre('rect')");
   app.run("curSlide().layout='title';window.__termina(window.__figuras)");
   assert.equal(await pendiente,false);
   assert.equal(app.run("curSlide().blocks.some(b=>b.formaLibre)"),false);

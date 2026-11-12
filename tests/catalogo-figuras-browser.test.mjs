@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 async function start(t, port) {
-  const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
+  const bin = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
   if (!existsSync(bin)) { t.skip('Chromium is required.'); return null; }
   const server = spawn(process.execPath, [fileURLToPath(new URL('../herramientas/serve.mjs', import.meta.url))],
     {env:{...process.env, PORT:String(port)}, stdio:['ignore','pipe','pipe']});
@@ -28,7 +28,7 @@ async function start(t, port) {
 }
 
 test('catalog pieces are independent slide objects with preserved credits', {timeout:120000}, async t => {
-  const app = await start(t, Number(process.env.ERLEN_CATALOGO_TEST_PORT || 4271));
+  const app = await start(t, Number(process.env.TABULA_CATALOGO_TEST_PORT || 4271));
   if (!app) return;
   const {page, errors} = app;
   await page.locator('#lienzoCatalogoBtn').click();
@@ -60,7 +60,7 @@ test('catalog pieces are independent slide objects with preserved credits', {tim
   assert.equal(reloaded.src, inserted.src);
   assert.ok(await page.evaluate(() => informeExportacion(S.deck).warnings.some(w => w.code === 'catalog-attribution')));
   const exported = await page.evaluate(async () => {
-    const exporter = await extensionSlides('exportador');
+    const exporter = await extensionTabla('exportador');
     const pptx = await exporter.creaPPTX(S.deck);
     const zip = await window.JSZip.loadAsync(pptx.blob);
     const svgFiles = Object.keys(zip.files).filter(name => /^ppt\/media\/.*\.svg$/i.test(name));
@@ -78,7 +78,7 @@ test('catalog pieces are independent slide objects with preserved credits', {tim
     const exportedPixels = await pixels('data:image/svg+xml,' + encodeURIComponent(svg[0]));
     const changed = originalPixels.reduce((total, value, index) => total + (Math.abs(value - exportedPixels[index]) > 8), 0);
     const html = await (await exporter.creaHTML(S.deck)).text();
-    const review = await (await extensionSlides('compartir')).revisaSalida('pptx', S.deck);
+    const review = await (await extensionTabla('compartir')).revisaSalida('pptx', S.deck);
     return {svg, html, review, changed};
   });
   assert.ok(exported.svg.some(svg => svg.includes('Servier') && svg.includes('CC-BY-3.0')));
@@ -102,7 +102,7 @@ test('catalog pieces are independent slide objects with preserved credits', {tim
   assert.match(kit.credits, /Servier/);
   assert.equal(kit.provenance.figures[0].catalog.author, 'Servier');
   const markdownWarnings = await page.evaluate(async () => {
-    const markdown = await extensionSlides('markdown');
+    const markdown = await extensionTabla('markdown');
     return markdown.aMarkdown(S.deck, {zonasPorDiseno:Object.fromEntries(LAYOUTS.map(l => [l.id, zonasDe(l.id)])), incrustarFiguras:true}).avisos;
   });
   assert.ok(markdownWarnings.some(warning => /Markdown no conserva la procedencia/.test(warning)));
@@ -185,7 +185,7 @@ test('catalog pieces are independent slide objects with preserved credits', {tim
   assert.doesNotMatch(await page.evaluate(() => textoCreditosCatalogo(S.deck)), /Recortada en Tabula/);
 
   const annotationError = await page.evaluate(async id => {
-    try { await (await extensionSlides('figuras')).openFiguraCapas(findBlock(id).block); return null; }
+    try { await (await extensionTabla('figuras')).openFiguraCapas(findBlock(id).block); return null; }
     catch (error) { return error.message; }
   }, inserted.id);
   assert.equal(annotationError, null);
@@ -206,7 +206,7 @@ test('catalog pieces are independent slide objects with preserved credits', {tim
   await page.evaluate(id => { curSlide().blocks = curSlide().blocks.filter(block => block.id !== id); commit(); }, inserted.id);
   assert.match(await page.evaluate(() => textoCreditosCatalogo(S.deck)), /Servier/);
   const rejected = await page.evaluate(async () => {
-    const editor = await extensionSlides('figuras');
+    const editor = await extensionTabla('figuras');
     const examples = [
       '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>',
       '<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.invalid/a.png"/></svg>',
@@ -232,7 +232,7 @@ test('catalog pieces are independent slide objects with preserved credits', {tim
 });
 
 test('a failed local drawing load reports the error and leaves the slide untouched', {timeout:120000}, async t => {
-  const app = await start(t, Number(process.env.ERLEN_CATALOGO_ERROR_TEST_PORT || 4272));
+  const app = await start(t, Number(process.env.TABULA_CATALOGO_ERROR_TEST_PORT || 4272));
   if (!app) return;
   const {page, errors} = app;
   let blockLoads = true;
@@ -252,7 +252,7 @@ test('a failed local drawing load reports the error and leaves the slide untouch
 });
 
 test('changing slides while a drawing loads never inserts it into another slide', {timeout:120000}, async t => {
-  const app = await start(t, Number(process.env.ERLEN_CATALOGO_STALE_TEST_PORT || 4273));
+  const app = await start(t, Number(process.env.TABULA_CATALOGO_STALE_TEST_PORT || 4273));
   if (!app) return;
   const {page, errors} = app;
   let requested, release;
@@ -278,7 +278,7 @@ test('changing slides while a drawing loads never inserts it into another slide'
 });
 
 test('a pending catalog load never replaces a newer dialog', {timeout:120000}, async t => {
-  const app = await start(t, Number(process.env.ERLEN_CATALOGO_MODAL_TEST_PORT || 4274));
+  const app = await start(t, Number(process.env.TABULA_CATALOGO_MODAL_TEST_PORT || 4274));
   if (!app) return;
   const {page, errors} = app;
   let requested, release;
@@ -294,14 +294,14 @@ test('a pending catalog load never replaces a newer dialog', {timeout:120000}, a
   const pdf = page.getByRole('dialog', {name:'Exportar a PDF'});
   await pdf.waitFor();
   release();
-  await page.evaluate(async () => { await EXT_SLIDES.get('catalogo'); });
+  await page.evaluate(async () => { await EXT_TABULA.get('catalogo'); });
   assert.equal(await pdf.isVisible(), true);
   assert.equal(await page.getByRole('dialog', {name:'Catálogo científico'}).count(), 0);
   assert.deepEqual(errors, []);
 });
 
 test('a damaged SVG reports a PowerPoint export failure instead of disappearing', {timeout:120000}, async t => {
-  const app = await start(t, Number(process.env.ERLEN_CATALOGO_CORRUPT_TEST_PORT || 4275));
+  const app = await start(t, Number(process.env.TABULA_CATALOGO_CORRUPT_TEST_PORT || 4275));
   if (!app) return;
   const {page, errors} = app;
   await page.evaluate(() => {

@@ -181,7 +181,7 @@ function galeriaTex(b, p) {
   return L.join('\n');
 }
 const galNombre = (b, i) => 'gal-' + String(b.id).replace(/[^a-z0-9]/gi, '').slice(-6) + '-' + LETRAS_FIG[i];
-function figNombreTex(b, i, ancho) { return `\\erlenfig{${(+ancho || 1).toFixed(2)}}{${galNombre(b, i)}}`; }
+function figNombreTex(b, i, ancho) { return `\\tabulafig{${(+ancho || 1).toFixed(2)}}{${galNombre(b, i)}}`; }
 function subpie(g, i) {
   const im = g.imgs[i];
   const et = (g.letras ? '(' + LETRAS_FIG[i] + ')' : '') + (im.cap ? (g.letras ? ' ' : '') + im.cap : '');

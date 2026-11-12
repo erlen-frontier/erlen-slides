@@ -122,7 +122,7 @@ const GLOSARIO = [
       ej:'Guardar «CUCEI azul» una vez y no volver a configurar nada.' },
     { t:'Plantilla de arranque', d:'Presentaciones que ya vienen armadas con sus secciones, sus diapositivas y tiempos sugeridos: defensa de tesis, avance de proyecto, seminario de grupo y clase.',
       ej:'La de defensa trae dieciocho diapositivas: antecedentes, hipótesis, objetivos, metodología, resultados, discusión, conclusiones y agradecimientos.' },
-    { t:'Apariencia del editor', d:'Clara, oscura o la del sistema. Solo afecta a la interfaz de Tabula; las diapositivas siguen viéndose con el color de su tema.',
+    { t:'Apariencia del editor', d:'Clara, oscura o la del sistema. Solo afecta a la interfaz de Lámina; las diapositivas siguen viéndose con el color de su tema.',
       ej:'El botón ◐ de la barra de arriba. Se recuerda entre sesiones.' }
   ]},
   { g:'La ventana de trabajo', items:[
@@ -210,7 +210,7 @@ const GLOSARIO = [
       ej:'Buena elección si la presentación lleva muchas fórmulas y quieres que texto y símbolos casen.' },
     { t:'Matemáticas de la familia', d:'Paquetes como mathptmx o mathpazo cambian también las ecuaciones, no solo el texto. En pantalla las fórmulas siempre se ven con Computer Modern (es lo que dibuja KaTeX), así que si quieres que el PDF salga idéntico a la pantalla, desactiva esa casilla y solo cambiará el texto.',
       ej:'Con la casilla apagada, Times usa tgtermes: texto Times, ecuaciones Computer Modern.' },
-    { t:'IfFileExists', d:'La orden de LaTeX que carga un paquete solo si está instalado. Tabula la usa en los paquetes que pueden faltar, de modo que el .tex compila en cualquier instalación y en Overleaf toma la tipografía buena.',
+    { t:'IfFileExists', d:'La orden de LaTeX que carga un paquete solo si está instalado. Lámina la usa en los paquetes que pueden faltar, de modo que el .tex compila en cualquier instalación y en Overleaf toma la tipografía buena.',
       ej:'\\IfFileExists{stix2.sty}{\\usepackage{stix2}}{\\usepackage{mathptmx}}' }
   ]},
   { g:'Pie de página', items:[
@@ -222,7 +222,7 @@ const GLOSARIO = [
       ej:'«CUCEI · {seccion} · {n}/{N}» se ve como «CUCEI · Síntesis y caracterización · 7/24».' },
     { t:'Fondo y línea', d:'El fondo puede ser transparente, un tono tenue del color de acento, el acento sólido o la barra del tema; encima se puede poner una línea fina o de acento. Los colores salen de la tabla del tema, así que la pantalla y el PDF de LaTeX coinciden.',
       ej:'Tenue con línea de acento se lee bien sin competir con el contenido.' },
-    { t:'Portada y secciones', d:'Beamer declara esas diapositivas como [plain], y una diapositiva plain no lleva pie. Si pides que el pie aparezca ahí, Tabula las exporta sin [plain].',
+    { t:'Portada y secciones', d:'Beamer declara esas diapositivas como [plain], y una diapositiva plain no lleva pie. Si pides que el pie aparezca ahí, Lámina las exporta sin [plain].',
       ej:'Útil cuando el comité pide el folio en todas las páginas, portada incluida.' }
   ]},
   { g:'Notas del orador', items:[
@@ -240,7 +240,7 @@ const GLOSARIO = [
       ej:'Un PNG con fondo transparente se ve bien sobre cualquier tema; un SVG además no pierde nitidez al proyectar.' },
     { t:'Leyenda del pie', d:'Una línea discreta abajo a la izquierda, en todas las diapositivas de contenido. Para el programa, la dependencia o el evento.',
       ej:'«Maestría en Ciencias en Química · CUCEI · Universidad de Guadalajara».' },
-    { t:'Cómo viaja al .tex', d:'El logotipo se descarga junto con las figuras, con el nombre logo-erlen, y el código lo coloca en la portada y al pie. Si aún no subes el archivo a Overleaf, el documento compila igual y simplemente no aparece.',
+    { t:'Cómo viaja al .tex', d:'El logotipo se descarga junto con las figuras, con el nombre logo-tabula, y el código lo coloca en la portada y al pie. Si aún no subes el archivo a Overleaf, el documento compila igual y simplemente no aparece.',
       ej:'Exportar → Descargar figuras trae también el logotipo; súbelo a Overleaf con ese nombre.' }
   ]},
   { g:'Mover y ordenar', items:[
@@ -254,11 +254,11 @@ const GLOSARIO = [
   { g:'Exportación', items:[
     { t:'Folleto', d:'La versión impresa para repartir: 2, 3 o 6 diapositivas por hoja. Las de 2 y 3 llevan renglones al lado para que el comité anote mientras escucha.',
       ej:'Exportar → Folleto para repartir. Se abre en el navegador y se imprime como PDF.' },
-    { t:'Guardar en un archivo', d:'El autoguardado vive dentro del navegador y se pierde si limpias los datos del sitio. Con permiso del navegador, Tabula escribe además en un .json del disco y lo mantiene al día cada vez que guardas.',
+    { t:'Guardar en un archivo', d:'El autoguardado vive dentro del navegador y se pierde si limpias los datos del sitio. Con permiso del navegador, Lámina escribe además en un .json del disco y lo mantiene al día cada vez que guardas.',
       ej:'Archivo → Guardar en un archivo del disco. El indicador de arriba muestra ⤓ mientras está activo.' },
     { t:'PowerPoint (.pptx)', d:'El archivo se arma dentro de la app, sin subir nada. Los textos, las viñetas y las tablas quedan editables en PowerPoint; las ecuaciones, gráficas y diagramas van como imagen nítida, porque no tienen equivalente. Las notas del orador también viajan.',
       ej:'Cuando el congreso pide el archivo en PowerPoint y no acepta PDF.' },
-    { t:'Proyecto a prueba de fallos', d:'Al abrir un .json, Tabula lo revisa: repara diseños o bloques que no reconoce, empareja las filas de las tablas y repone los identificadores repetidos. Si algo se ajustó, lo dice en una lista en vez de quedarse a medias.',
+    { t:'Proyecto a prueba de fallos', d:'Al abrir un .json, Lámina lo revisa: repara diseños o bloques que no reconoce, empareja las filas de las tablas y repone los identificadores repetidos. Si algo se ajustó, lo dice en una lista en vez de quedarse a medias.',
       ej:'Un proyecto guardado con una versión anterior se abre igual y te explica qué cambió.' },
     { t:'pgfplots', d:'El paquete de LaTeX que dibuja gráficas vectoriales con la misma tipografía del documento. Tus gráficas viajan al .tex como código real, no como imágenes: se editan, escalan sin pixelarse y se ven parte del texto.',
       ej:'Cambiar un color o un rótulo en Overleaf es editar una línea, no rehacer la figura.' },

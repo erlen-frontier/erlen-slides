@@ -7,9 +7,9 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 test('free canvas actions use the visible layer order', {timeout:120000}, async t => {
-  const bin=process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
+  const bin=process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
   if (!existsSync(bin)) { t.skip('Chromium is required.'); return; }
-  const port=Number(process.env.ERLEN_COHERENCIA_TEST_PORT || 4305);
+  const port=Number(process.env.TABULA_COHERENCIA_TEST_PORT || 4305);
   const server=spawn(process.execPath,[fileURLToPath(new URL('../herramientas/serve.mjs',import.meta.url))],
     {env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
   t.after(()=>server.kill());
@@ -65,7 +65,7 @@ test('free canvas actions use the visible layer order', {timeout:120000}, async 
     const out=await page.evaluate(async()=>{
       const d=saneaDeck(JSON.parse(JSON.stringify(S.deck))).deck;
       const capas=Array.from(renderSlide(d,1,'present',99).querySelectorAll('.lienzo-capa .blk[data-bid]')).map(el=>el.dataset.bid);
-      const ext=await extensionSlides('exportador'),html=await (await ext.creaHTML(d)).text(),ppt=await ext.creaPPTX(d);
+      const ext=await extensionTabla('exportador'),html=await (await ext.creaHTML(d)).text(),ppt=await ext.creaPPTX(d);
       const zip=await window.JSZip.loadAsync(ppt.blob),xml=await zip.file('ppt/slides/slide2.xml').async('string');
       return {capas,html,xml};
     });

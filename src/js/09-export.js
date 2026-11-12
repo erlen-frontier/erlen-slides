@@ -131,7 +131,7 @@ function registroColores() {
   return {
     defs,
     n(hex, respaldo) {
-      if (!/^#[0-9a-f]{6}$/i.test(String(hex || ''))) return respaldo || 'erlentinta';
+      if (!/^#[0-9a-f]{6}$/i.test(String(hex || ''))) return respaldo || 'tabulatinta';
       const k = hex.toUpperCase();
       if (!mapa.has(k)) {
         const nom = 'tpc' + mapa.size;
@@ -155,10 +155,10 @@ function figTex(b) {
   let figura;
   if (typeof figAdaptada === 'function' && figAdaptada(b)) figura = figuraConMarcasTex(b, '');
   const e = b.escala;
-  if (!figura && (!e || !e.porPx || !e.anchoImg)) figura = `\\erlenfig{${w}}{${figName(b)}}`;
+  if (!figura && (!e || !e.porPx || !e.anchoImg)) figura = `\\tabulafig{${w}}{${figName(b)}}`;
   if (!figura) {
     const frac = (e.largo / e.porPx / e.anchoImg) * (b.w || 70) / 100;
-    figura = `\\erlenescala{${w}}{${figName(b)}}{${frac.toFixed(4)}}{${texEscape(e.largo + ' ' + (e.unidad || 'µm'))}}`;
+    figura = `\\tabulaescala{${w}}{${figName(b)}}{${frac.toFixed(4)}}{${texEscape(e.largo + ' ' + (e.unidad || 'µm'))}}`;
   }
   return orientaFiguraTex(figura, b);
 }
@@ -477,8 +477,8 @@ function chartToPgf(b, p) {
     if (pt && isFinite(pt[1])) {
       const y = pt[1] + offStep * (series.length - 1 - b.destaca.serie);
       L.push(p + '    \\only<+->{');
-      L.push(p + `    \\addplot[only marks, mark=o, mark size=4pt, line width=1.3pt, erlenacento, forget plot] coordinates {(${pgfNum(pt[0])},${pgfNum(y)})};`);
-      if (b.destaca.txt) L.push(p + `    \\node[anchor=south west, font=\\footnotesize\\bfseries, erlenacento, inner sep=2pt] at (axis cs:${pgfNum(pt[0])},${pgfNum(y)}) {${texAxisLabel(b.destaca.txt)}};`);
+      L.push(p + `    \\addplot[only marks, mark=o, mark size=4pt, line width=1.3pt, tabulaacento, forget plot] coordinates {(${pgfNum(pt[0])},${pgfNum(y)})};`);
+      if (b.destaca.txt) L.push(p + `    \\node[anchor=south west, font=\\footnotesize\\bfseries, tabulaacento, inner sep=2pt] at (axis cs:${pgfNum(pt[0])},${pgfNum(y)}) {${texAxisLabel(b.destaca.txt)}};`);
       L.push(p + '    }');
     }
   }
@@ -495,7 +495,7 @@ function chartToPgf(b, p) {
       `$${izq} = ${texNum(e.f.m)}\\,${der} ${e.f.b < 0 ? '-' : '+'} ${texNum(Math.abs(e.f.b))}$` +
       ` \\quad $R^{2} = ${e.f.r2.toFixed(4)}$`);
     L.push(p + `    \\node[anchor=north ${sube ? 'west' : 'east'}, align=${sube ? 'left' : 'right'}, font=\\footnotesize,` +
-      ` fill=erlenfondo, fill opacity=0.72, text opacity=1, inner sep=2pt]` +
+      ` fill=tabulafondo, fill opacity=0.72, text opacity=1, inner sep=2pt]` +
       ` at (rel axis cs:${sube ? '0.03' : '0.97'},0.97) {${lin.join(' \\\\ ')}};`);
   }
   L.push(p + '  \\end{axis}');
@@ -632,7 +632,7 @@ function texBlocks(arr, ind) {
       case 'func': {
         const lines = [p + '\\begin{figure}', p + '  \\centering'];
         if (b.type === 'func') {
-          lines.push(p + '  % Curvas evaluadas por Tabula:');
+          lines.push(p + '  % Curvas evaluadas por Lámina:');
           (b.curves || []).forEach(cv => lines.push(p + '  %   ' + String(cv.name || 'y').replace(/[\r\n]+/g, ' ') + ' = ' + String(cv.expr || '').replace(/[\r\n]+/g, ' ')));
           if ((b.params || []).length) lines.push(p + '  %   con ' + b.params.map(q => q.name + ' = ' + q.value + (q.unit ? ' ' + mathToUnicode(q.unit) : '')).join(', ').replace(/[\r\n]+/g, ' '));
         }
@@ -690,7 +690,7 @@ function celdaTex(c, m) {
   if (!c) return '';
   if (c.t === 'texto') return textoPieTex(c.x || '', m);
   if (c.t === 'leyenda') return texInline(m.pieTexto || '');
-  if (c.t === 'logo') return m.logo ? '\\erlenlogo{height=2.1ex}' : '';
+  if (c.t === 'logo') return m.logo ? '\\tabulalogo{height=2.1ex}' : '';
   const ins = INS[c.t];
   return ins && ins.tex ? ins.tex : '';
 }
@@ -781,11 +781,11 @@ function toBeamer(deck) {
   const pieTxt = (m.pieTexto || '').trim();
   const L = [];
   L.push('% ===================================================================');
-  L.push('%  Generado por Tabula');
+  L.push('%  Generado por Lámina');
   L.push('%  Compílalo en Overleaf, o localmente con dos pasadas de pdflatex.');
   if (m.theme === 'metropolis' || m.theme === 'nocturno')
     L.push('%  Este tema usa la tipografía Fira: compila con XeLaTeX o LuaLaTeX para verla.');
-  if (hasImg || hayLogo) L.push('%  Figuras y logotipo: descárgalos desde Tabula (botón «Descargar figuras»)');
+  if (hasImg || hayLogo) L.push('%  Figuras y logotipo: descárgalos desde Lámina (botón «Descargar figuras»)');
   if (hasImg || hayLogo) L.push('%  y súbelos junto a este archivo, conservando sus nombres.');
   L.push('% ===================================================================');
   L.push('\\documentclass[' + (m.aspect === '43' ? 'aspectratio=43' : 'aspectratio=169') + ',11pt]{beamer}');
@@ -817,7 +817,7 @@ function toBeamer(deck) {
   if (fu.id !== 'auto') {
     const lineas = (m.fuenteMat === false && fu.texTxt) ? fu.texTxt : fu.tex;
     L.push('');
-    L.push('% Tipografía: ' + fu.n + (fu.propia ? ' (la misma que ves en Tabula)' : ''));
+    L.push('% Tipografía: ' + fu.n + (fu.propia ? ' (la misma que ves en Lámina)' : ''));
     if (fu.texTxt && m.fuenteMat === false) L.push('% Solo cambia el texto; las matemáticas se quedan en Computer Modern.');
     lineas.forEach(x => L.push(x));
     L.push('');
@@ -833,15 +833,15 @@ function toBeamer(deck) {
   const hayMont = deck.slides.some(sl => CLAVES_ZONA.reduce((a, z) => a.concat(sl[z] || []), []).some(b => b.type === 'montaje' || b.type === 'geo' || (b.type === 'image' && typeof figAdaptada === 'function' && figAdaptada(b))));
   if (hayMont) {
     const thm = temaDe(deck);
-    L.push('\\definecolor{erlenliq}{HTML}{' + thm.acc.slice(1).toUpperCase() + '}');
-    L.push('\\definecolor{erlentinta}{HTML}{' + (thm.fg || '#222222').slice(1).toUpperCase() + '}');
-    L.push('\\definecolor{erlenvidrio}{HTML}{6E8FA8}');
+    L.push('\\definecolor{tabulaliq}{HTML}{' + thm.acc.slice(1).toUpperCase() + '}');
+    L.push('\\definecolor{tabulatinta}{HTML}{' + (thm.fg || '#222222').slice(1).toUpperCase() + '}');
+    L.push('\\definecolor{tabulavidrio}{HTML}{6E8FA8}');
   }
   /* El papel y el acento del tema: los montajes, las estructuras y el rótulo
      del ajuste los necesitan, así que se declaran siempre. */
   { const thm = temaDe(deck);
-    L.push('\\definecolor{erlenfondo}{HTML}{' + (thm.bg || '#FFFFFF').slice(1).toUpperCase() + '}');
-    L.push('\\definecolor{erlenacento}{HTML}{' + (thm.acc || '#C0392B').slice(1).toUpperCase() + '}'); }
+    L.push('\\definecolor{tabulafondo}{HTML}{' + (thm.bg || '#FFFFFF').slice(1).toUpperCase() + '}');
+    L.push('\\definecolor{tabulaacento}{HTML}{' + (thm.acc || '#C0392B').slice(1).toUpperCase() + '}'); }
   teoremasPreambulo(deck).forEach(x => L.push(x));
   const hayEscala = deck.slides.some(sl => zonas(sl).some(z => z.some(b => b.type === 'image' && b.escala)));
   if (haySmart || hayPie || pieTxt || hayEscala || hayQuim || haySangre) {
@@ -870,7 +870,7 @@ function toBeamer(deck) {
   }
   L.push('\\setbeamertemplate{navigation symbols}{}');
   L.push('% Algunos temas (Metropolis entre ellos) insertan solos una diapositiva al');
-  L.push('% empezar cada sección. Tabula ya emite la suya, así que se desactiva la');
+  L.push('% empezar cada sección. Lámina ya emite la suya, así que se desactiva la');
   L.push('% automática: de otro modo cada sección saldría dos veces y la numeración');
   L.push('% del PDF dejaría de coincidir con la de la app.');
   L.push('\\AtBeginSection{}');
@@ -888,17 +888,17 @@ function toBeamer(deck) {
     L.push('');
     L.push('% Logotipo institucional. Descárgalo con «Descargar figuras» y súbelo junto');
     L.push('% a este archivo: si falta, el documento compila igual y solo se omite.');
-    L.push('\\newcommand{\\erlenlogo}[1]{%');
-    L.push('  \\IfFileExists{logo-erlen.png}{\\includegraphics[#1]{logo-erlen.png}}{%');
-    L.push('  \\IfFileExists{logo-erlen.pdf}{\\includegraphics[#1]{logo-erlen.pdf}}{%');
-    L.push('  \\IfFileExists{logo-erlen.jpg}{\\includegraphics[#1]{logo-erlen.jpg}}{}}}}');
+    L.push('\\newcommand{\\tabulalogo}[1]{%');
+    L.push('  \\IfFileExists{logo-tabula.png}{\\includegraphics[#1]{logo-tabula.png}}{%');
+    L.push('  \\IfFileExists{logo-tabula.pdf}{\\includegraphics[#1]{logo-tabula.pdf}}{%');
+    L.push('  \\IfFileExists{logo-tabula.jpg}{\\includegraphics[#1]{logo-tabula.jpg}}{}}}}');
   }
   if (hayPie || pieTxt) {
     L.push('');
     L.push('% Logotipo y leyenda al pie de cada diapositiva (necesita dos pasadas).');
     L.push('\\addtobeamertemplate{footline}{}{%');
     L.push('  \\begin{tikzpicture}[remember picture,overlay]');
-    if (hayPie) L.push('    \\node[anchor=south east,inner sep=0pt,xshift=-14pt,yshift=15pt] at (current page.south east) {\\erlenlogo{height=0.062\\paperheight}};');
+    if (hayPie) L.push('    \\node[anchor=south east,inner sep=0pt,xshift=-14pt,yshift=15pt] at (current page.south east) {\\tabulalogo{height=0.062\\paperheight}};');
     if (pieTxt) L.push('    \\node[anchor=south west,inner sep=0pt,xshift=14pt,yshift=17pt,text width=0.55\\paperwidth,align=left] at (current page.south west) {\\tiny ' + texInline(pieTxt) + '};');
     L.push('  \\end{tikzpicture}}');
   }
@@ -906,7 +906,7 @@ function toBeamer(deck) {
     L.push('');
     L.push('% Inserta la figura si el archivo existe; si no, deja un recuadro con su nombre,');
     L.push('% de modo que el documento compile aunque aún no hayas subido las imágenes.');
-    L.push('\\newcommand{\\erlenfig}[2]{%');
+    L.push('\\newcommand{\\tabulafig}[2]{%');
     L.push('  \\IfFileExists{#2.png}{\\includegraphics[width=#1\\linewidth]{#2.png}}{%');
     L.push('  \\IfFileExists{#2.pdf}{\\includegraphics[width=#1\\linewidth]{#2.pdf}}{%');
     L.push('  \\IfFileExists{#2.jpg}{\\includegraphics[width=#1\\linewidth]{#2.jpg}}{%');
@@ -914,7 +914,7 @@ function toBeamer(deck) {
     if (haySangre) {
       L.push('');
       L.push('% Figura a sangre: cubre la diapositiva entera.');
-      L.push('\\newcommand{\\erlensangre}[1]{%');
+      L.push('\\newcommand{\\tabulasangre}[1]{%');
       L.push('  \\IfFileExists{#1.png}{\\includegraphics[width=\\paperwidth,height=\\paperheight,keepaspectratio]{#1.png}}{%');
       L.push('  \\IfFileExists{#1.pdf}{\\includegraphics[width=\\paperwidth,height=\\paperheight,keepaspectratio]{#1.pdf}}{%');
       L.push('  \\IfFileExists{#1.jpg}{\\includegraphics[width=\\paperwidth,height=\\paperheight,keepaspectratio]{#1.jpg}}{%');
@@ -924,9 +924,9 @@ function toBeamer(deck) {
       L.push('');
       L.push('% Barra de escala de micrografía: se dibuja encima de la figura.');
       L.push('% #1 ancho de la figura, #2 nombre, #3 fracción del ancho que ocupa la barra, #4 rótulo');
-      L.push('\\newcommand{\\erlenescala}[4]{%');
+      L.push('\\newcommand{\\tabulaescala}[4]{%');
       L.push('  \\begin{tikzpicture}');
-      L.push('    \\node[inner sep=0] (im) {\\erlenfig{#1}{#2}};');
+      L.push('    \\node[inner sep=0] (im) {\\tabulafig{#1}{#2}};');
       L.push('    \\begin{scope}[shift={(im.south east)}]');
       L.push('      \\fill[black, opacity=.55] (-#3\\textwidth-0.55em-0.2em, 0.25em) rectangle (-0.2em, 1.75em);');
       L.push('      \\draw[white, line width=1.2pt] (-#3\\textwidth-0.4em, 0.55em) -- (-0.4em, 0.55em);');
@@ -967,10 +967,10 @@ function toBeamer(deck) {
       L.push('\\begin{frame}' + (cfgPie.enPortada ? '' : '[plain]'));
       if (hayLogo && (m.logoPos || 'arriba') === 'esquina') {
         L.push('  \\begin{tikzpicture}[remember picture,overlay]');
-        L.push('    \\node[anchor=north east,inner sep=0pt,xshift=-22pt,yshift=-20pt] at (current page.north east) {\\erlenlogo{height=0.14\\paperheight}};');
+        L.push('    \\node[anchor=north east,inner sep=0pt,xshift=-22pt,yshift=-20pt] at (current page.north east) {\\tabulalogo{height=0.14\\paperheight}};');
         L.push('  \\end{tikzpicture}');
       } else if (hayLogo) {
-        L.push('  \\begin{center}\\erlenlogo{width=' + (clamp(+m.logoW || 16, 5, 60) / 100).toFixed(2) + '\\paperwidth}\\end{center}');
+        L.push('  \\begin{center}\\tabulalogo{width=' + (clamp(+m.logoW || 16, 5, 60) / 100).toFixed(2) + '\\paperwidth}\\end{center}');
         L.push('  \\vspace{-0.6em}');
       }
       L.push('  \\titlepage');
@@ -1049,7 +1049,7 @@ function toBeamer(deck) {
       L.push('\\begin{frame}[plain]');
       L.push('  \\begin{tikzpicture}[remember picture, overlay]');
       if (fig && fig.type === 'image') {
-        let imagen = '\\erlensangre{' + figName(fig) + '}';
+        let imagen = '\\tabulasangre{' + figName(fig) + '}';
         if (typeof figAdaptada === 'function' && figAdaptada(fig)) imagen = figuraConMarcasTex(fig, '', imagen);
         L.push('    \\node[anchor=center, inner sep=0] at (current page.center) {' + orientaFiguraTex(imagen, fig) + '};');
       } else if (fig) {
@@ -1282,7 +1282,6 @@ async function downloadFile(filename, text, mime, altName) {
         catch (e2) { if (e2 && e2.code === 'declined') return; }
       }
       toast('No se pudo guardar el archivo aquí; copia el contenido', 'warn');
-      window.ErlenDiagnostico?.reportar('descargar');
       return;
     }
   }
@@ -1292,7 +1291,7 @@ async function downloadFile(filename, text, mime, altName) {
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     toast('Archivo descargado');
-  } catch (e) { window.ErlenDiagnostico?.reportar('descargar'); toast('No se pudo descargar; copia el contenido', 'warn'); }
+  } catch (e) { toast('No se pudo descargar; copia el contenido', 'warn'); }
 }
 let guardandoProyectoEscritorio = false;
 async function exportJSON() {
@@ -1312,7 +1311,6 @@ async function exportJSON() {
       } else toast('Proyecto guardado en «' + guardado + '»');
     }
   } catch (e) {
-    window.ErlenDiagnostico?.reportar('guardar-proyecto');
     toast('No se pudo guardar el proyecto. ' + String(e?.message || e), 'warn');
   } finally {
     guardandoProyectoEscritorio = false;
@@ -1548,7 +1546,7 @@ async function exportFigures() {
   const imgs = [];
   try {
     for (const b of bloques) imgs.push({ nombre: b._nom || figName(b), src: await imagenParaExportar(await imagenProcesada(b, S.deck), FORMATOS_FIGURA) });
-    if (S.deck.meta.logo) imgs.unshift({ nombre: 'logo-erlen', src: await imagenParaExportar(S.deck.meta.logo, FORMATOS_FIGURA) });
+    if (S.deck.meta.logo) imgs.unshift({ nombre: 'logo-tabula', src: await imagenParaExportar(S.deck.meta.logo, FORMATOS_FIGURA) });
   } catch (error) { toast('No se pudieron exportar las figuras: ' + String(error.message || error), 'warn'); return; }
   if (!imgs.length) { toast('Esta presentación no tiene figuras'); return; }
   let n = 0;

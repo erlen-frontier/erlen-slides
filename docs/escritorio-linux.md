@@ -1,10 +1,10 @@
-# Tabula para escritorio Linux
+# Lámina para escritorio Linux
 
 La aplicación usa Tauri 2 y el WebView del sistema. El editor, los ejemplos y las bibliotecas científicas se empaquetan localmente. La instalación de la app no necesita ejecutar Node; Node y Rust se usan al construirla desde el código.
 
 ## Construir y ejecutar
 
-Necesitas Node.js 22 o superior, npm, Rust y las dependencias de desarrollo de Tauri para Linux, incluidas GTK 3 y WebKitGTK 4.1. En Debian o Ubuntu, consulta los nombres vigentes en los [requisitos de Tauri](https://v2.tauri.app/start/prerequisites/). En Debian 13, los paquetes principales son `build-essential`, `libwebkit2gtk-4.1-dev` y `libgtk-3-dev`.
+Necesitas Node.js 22.12.0 o superior, npm, Rust y las dependencias de desarrollo de Tauri para Linux, incluidas GTK 3 y WebKitGTK 4.1. En Debian o Ubuntu, consulta los nombres vigentes en los [requisitos de Tauri](https://v2.tauri.app/start/prerequisites/). En Debian 13, los paquetes principales son `build-essential`, `libwebkit2gtk-4.1-dev` y `libgtk-3-dev`.
 
 ```sh
 npm ci
@@ -22,15 +22,15 @@ Con la configuración de Cargo por defecto, el paquete se escribe en `target/rel
 
 ## Presentaciones y privacidad
 
-La aplicación de escritorio y el navegador tienen bibliotecas separadas. No se borran ni trasladan automáticamente. Para usar una presentación anterior, expórtala desde su biblioteca como proyecto JSON y ábrela en el escritorio; conserva el original y tus respaldos. La biblioteca, el autoguardado y la recuperación siguen usando el almacenamiento del WebView, independiente de los archivos guardados en disco.
+La aplicación de escritorio y el navegador tienen bibliotecas separadas. No se borran ni trasladan automáticamente. Para usar una presentación anterior, expórtala desde su biblioteca como proyecto JSON y ábrela en el escritorio; conserva el original y tus respaldos. En el escritorio, la biblioteca nueva tampoco lee los datos de `com.erlen.slides`: se traslada cada proyecto mediante JSON exportado. La biblioteca, el autoguardado y la recuperación siguen usando el almacenamiento del WebView, independiente de los archivos guardados en disco.
 
-El nombre visible es Tabula. Se conservan el identificador de escritorio y las claves de almacenamiento de Erlen Slides para mantener accesible la biblioteca de la misma instalación; el nombre nuevo no cambia el formato JSON.
+El nombre visible es Lámina y su identificador de escritorio es `app.tabula.desktop` (identificador estable): la instalación nueva dispone de una biblioteca propia, no lee ni borra los datos de una instalación anterior de Erlen Slides. Para usar una presentación de esa instalación, expórtala desde allí como proyecto JSON y ábrela aquí con los diálogos de archivos. El formato JSON del proyecto no cambia.
 
-**Abrir proyecto (.json)** en Inicio o **Archivo → Abrir proyecto** (Ctrl+O) selecciona un archivo de Tabula y lo abre para editar. **Archivo → Guardar** (Ctrl+S) actualiza ese archivo; si aún no hay uno, pregunta dónde crearlo. **Guardar como** (Ctrl+Mayús+S) elige otro destino. El indicador distingue «Archivo guardado» de «Cambios sin guardar» y de la copia que solo vive en Tabula. La escritura del archivo se hace al guardar, no durante el autoguardado local.
+**Abrir proyecto (.json)** en Inicio o **Archivo → Abrir proyecto** (Ctrl+O) selecciona un archivo de Lámina y lo abre para editar. **Archivo → Guardar** (Ctrl+S) actualiza ese archivo; si aún no hay uno, pregunta dónde crearlo. **Guardar como** (Ctrl+Mayús+S) elige otro destino. El indicador distingue «Archivo guardado» de «Cambios sin guardar» y de la copia que solo vive en Lámina. La escritura del archivo se hace al guardar, no durante el autoguardado local.
 
-Rust valida el JSON y guarda una copia temporal en la misma carpeta antes de sustituir el destino. Cancelar no escribe nada y un error se comunica sin sustituir el archivo anterior. Si el archivo cambia o se elimina fuera de Tabula, Guardar avisa y conserva ambos estados: usa Guardar como para elegir un destino. Si la apertura necesita cambiar o descartar algún dato, se pide guardar en otro destino para proteger el original. Si editas mientras está abierto un selector, los cambios posteriores quedan pendientes. Al cambiar de presentación o cerrar con cambios pendientes se solicita confirmación. El control de cambios externos no bloquea escrituras simultáneas de otras aplicaciones.
+Rust valida el JSON y guarda una copia temporal en la misma carpeta antes de sustituir el destino. Cancelar no escribe nada y un error se comunica sin sustituir el archivo anterior. Si el archivo cambia o se elimina fuera de Lámina, Guardar avisa y conserva ambos estados: usa Guardar como para elegir un destino. Si la apertura necesita cambiar o descartar algún dato, se pide guardar en otro destino para proteger el original. Si editas mientras está abierto un selector, los cambios posteriores quedan pendientes. Al cambiar de presentación o cerrar con cambios pendientes se solicita confirmación. El control de cambios externos no bloquea escrituras simultáneas de otras aplicaciones.
 
-La referencia al archivo solo dura mientras esa presentación está abierta en la sesión; al reiniciar o recuperar una copia de la biblioteca vuelve a abrir el archivo o usa Guardar como. Se admiten proyectos de hasta 128 MiB en este flujo. En Linux los archivos JSON escritos por Tabula se crean con permisos privados para su propietario (`0600`), también al reemplazar un archivo; si necesitas compartirlos puedes cambiar sus permisos después. Archivo → Exportar → Proyecto (.json) sigue disponible para guardar una copia sin cambiar el archivo abierto. La versión web mantiene su comportamiento habitual.
+La referencia al archivo solo dura mientras esa presentación está abierta en la sesión; al reiniciar o recuperar una copia de la biblioteca vuelve a abrir el archivo o usa Guardar como. Se admiten proyectos de hasta 128 MiB en este flujo. En Linux los archivos JSON escritos por Lámina se crean con permisos privados para su propietario (`0600`), también al reemplazar un archivo; si necesitas compartirlos puedes cambiar sus permisos después. Archivo → Exportar → Proyecto (.json) sigue disponible para guardar una copia sin cambiar el archivo abierto. La versión web mantiene su comportamiento habitual.
 
 El editor y sus herramientas científicas siguen ejecutándose en el WebView; la lectura, la escritura y la detección de cambios externos de archivos de proyecto se realizan en Rust. Las advertencias de importación, exportación y accesibilidad de la versión web siguen aplicando. No se incluyen cuentas, telemetría ni un servicio de sincronización.
 

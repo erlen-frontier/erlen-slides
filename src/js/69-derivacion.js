@@ -132,7 +132,7 @@ function derivacionTex(b, p) {
   const pasos = pasosDe(b);
   const L = [p + '\\begin{align*}'];
   pasos.forEach((ps, k) => {
-    const tex = k ? pasoResaltado(pasos[k - 1].tex, ps.tex, 'erlenacento') : ps.tex;
+    const tex = k ? pasoResaltado(pasos[k - 1].tex, ps.tex, 'tabulaacento') : ps.tex;
     const { izq, rel, der } = ladosDe(tex);
     /* Cada celda va en su \visible<k->: amsmath compone el align dos veces y
        un \onslide<+-> se desordena; con número explícito por celda no falla y

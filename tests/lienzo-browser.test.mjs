@@ -7,9 +7,9 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 test('free canvas uses real slide geometry in Chromium', {timeout:120000}, async t => {
-  const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
-  if (!existsSync(bin)) { t.skip('Set ERLEN_CHROMIUM to run browser validation.'); return; }
-  const port = Number(process.env.ERLEN_LIENZO_TEST_PORT || 4219);
+  const bin = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
+  if (!existsSync(bin)) { t.skip('Set TABULA_CHROMIUM to run browser validation.'); return; }
+  const port = Number(process.env.TABULA_LIENZO_TEST_PORT || 4219);
   const server = spawn(process.execPath, [fileURLToPath(new URL('../herramientas/serve.mjs', import.meta.url))],
     {env:{...process.env, PORT:String(port)}, stdio:['ignore','pipe','pipe']});
   t.after(() => server.kill());
@@ -79,7 +79,7 @@ test('free canvas uses real slide geometry in Chromium', {timeout:120000}, async
       const a=r.getBoundingClientRect(), b=r.querySelector('[data-bid="texto-prueba"]').getBoundingClientRect();
       valores.push({x:100*(b.left-a.left)/a.width,y:100*(b.top-a.top)/a.height,w:100*b.width/a.width,h:100*b.height/a.height}); r.remove();
     }
-    const ext=await extensionSlides('exportador'), pptx=await ext.creaPPTX(S.deck), html=await ext.creaHTML(S.deck);
+    const ext=await extensionTabla('exportador'), pptx=await ext.creaPPTX(S.deck), html=await ext.creaHTML(S.deck);
     return {valores,originales,actuales:JSON.stringify({data:chart.data,fuente:chart.fuente}),avisos:pptx.avisos,html:await html.text()};
   });
   for(const p of modos.valores) for(const [k,v] of Object.entries({x:10,y:20,w:35,h:15})) assert.ok(Math.abs(p[k]-v)<0.1,JSON.stringify(p));

@@ -42,6 +42,6 @@ Una regla que falla no tumba la revisión: se anota como hallazgo con «La regla
 
 ## Archivos
 
-- `mcp/extensiones/revision.pagina.js`: las reglas, registradas con `ERLEN_MCP.registraRevision`, y la operación `revisionConvenciones`. Reutiliza `zonasDe`, `textosCitables`, `esFormula`, `SIMBOLOS` y `TIPOS_FIGURA` de la app.
+- `mcp/extensiones/revision.pagina.js`: las reglas, registradas con `TABULA_MCP.registraRevision`, y la operación `revisionConvenciones`. Reutiliza `zonasDe`, `textosCitables`, `esFormula`, `SIMBOLOS` y `TIPOS_FIGURA` de la app.
 - `mcp/extensiones/revision.mjs`: la herramienta `revisar_convenciones` y la convención `revision` de `guia_formato`, para que el asistente escriba bien desde el principio.
 - `tests/mcp-revision.test.mjs`: la guía registraba casos que avisan y que no para cada regla, integración con `revisar_presentacion`, trece ejemplos y una charla de 40 diapositivas. El hallazgo descrito entonces para los ejemplos era `orador-sin-notas`; este antecedente no certifica el resultado de los ejemplos actuales. Consulta el archivo de pruebas para conocer su cobertura vigente y declara su ejecución y resultado por separado. Esta corrección documental no ejecuta esas pruebas.

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 /* Página de la extensión «estadisticas»: se evalúa tras operaciones.js. */
-ERLEN_MCP.registra('estadisticas', a => {
-  const deck = ERLEN_MCP.util.valida(a.deck).deck;
+TABULA_MCP.registra('estadisticas', a => {
+  const deck = TABULA_MCP.util.valida(a.deck).deck;
   const palabras = t => String(t || '').replace(/\$[^$]*\$/g, ' x ').split(/\s+/).filter(Boolean).length;
   const filas = deck.slides.map((sl, i) => {
     const bs = zonas(sl).flat();

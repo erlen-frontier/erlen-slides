@@ -1,37 +1,34 @@
-/* Marco de Tabula, adaptado del diseño de Erlen.
-   Estructura de mountMarco (marco.mjs): cabecera, cinta, cuerpo con navegación,
-   trabajo y detalles, y pie. Solo cromo: el área de trabajo del usuario se queda opaca
-   (var(--erlen-superficie) / var(--erlen-papel)), nunca con vidrio. Ningún color literal aquí:
-   todo es var(--erlen-*) de tokens.css, que ya trae los respaldos de accesibilidad del material
-   (prefers-reduced-transparency, prefers-contrast:more, forced-colors,
-   [data-erlen-material="solido"] e impresión). Licencia: licencias/MIT.txt */
-.erlen-marco{position:relative;display:flex;flex-direction:column;min-height:0;height:100dvh;overflow:hidden;background:var(--erlen-papel);color:var(--erlen-tinta)}
+/* Marco de Lámina. Estructura de mountMarco (marco.mjs): cabecera, cinta,
+   cuerpo con navegación, trabajo y detalles, y pie. Solo cromo: el área de
+   trabajo del usuario se queda opaca (var(--tabula-superficie) / var(--tabula-papel)).
+   Ningún color literal aquí: todo es var(--tabula-*) de tokens.css. Licencia: licencias/MIT.txt */
+.tabula-marco{position:relative;display:flex;flex-direction:column;min-height:0;height:100dvh;overflow:hidden;background:var(--tabula-papel);color:var(--tabula-tinta)}
 /* Solo el área de trabajo cede espacio: cabecera, cinta y pie nunca se comprimen ni solapan. */
-.erlen-marco>.erlen-app-header,.erlen-marco>.erlen-marco-cinta,.erlen-marco>.erlen-app-footer{flex:none}
-.erlen-marco :focus-visible{outline:3px solid var(--erlen-foco);outline-offset:3px}
+.tabula-marco>.tabula-app-header,.tabula-marco>.tabula-marco-cinta,.tabula-marco>.tabula-app-footer{flex:none}
+.tabula-marco :focus-visible{outline:2px solid var(--tabula-foco);outline-offset:3px}
 /* Cabecera: marca, nombre, título, estado y acciones. El desenfoque vive en el ::before. */
-.erlen-marco>.erlen-app-header{position:relative;z-index:2;display:flex;align-items:center;flex-wrap:wrap;gap:var(--erlen-esp-3) var(--erlen-esp-4);min-height:60px;padding:var(--erlen-esp-2) var(--erlen-esp-5);border-bottom:1px solid var(--erlen-vidrio-contorno)}
-.erlen-marco>.erlen-app-header::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro);pointer-events:none}
-.erlen-marco-marca{display:inline-flex;align-items:center;gap:var(--erlen-esp-2);min-height:44px;padding:var(--erlen-esp-1) var(--erlen-esp-2);border:1px solid transparent;border-radius:var(--erlen-radio-capsula);background:transparent;color:var(--erlen-tinta);font:700 var(--erlen-texto-ui)/1.2 var(--erlen-font-ui);cursor:pointer}
-.erlen-marco-marca:hover{background:var(--erlen-vidrio-tinte)}
-.erlen-marco-marca svg{width:26px;height:26px;flex:none}
-.erlen-marco-marca .erlen-marco-marca-nombre{font-family:var(--erlen-font-titulo);font-size:var(--erlen-texto-lg);letter-spacing:-.3px}
-.erlen-marco-nombre{font-family:var(--erlen-font-titulo);font-size:var(--erlen-h1-app);font-weight:400;line-height:1.12;letter-spacing:-.4px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tabula-marco>.tabula-app-header{position:relative;z-index:2;display:flex;align-items:center;flex-wrap:wrap;gap:var(--tabula-esp-3) var(--tabula-esp-4);min-height:56px;padding:var(--tabula-esp-2) var(--tabula-esp-5);border-bottom:1px solid var(--tabula-linea)}
+.tabula-marco>.tabula-app-header::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--tabula-superficie);-webkit-backdrop-filter:none;backdrop-filter:none;pointer-events:none}
+.tabula-marco-marca{display:inline-flex;align-items:center;gap:var(--tabula-esp-2);min-height:44px;padding:var(--tabula-esp-1) var(--tabula-esp-2);border:1px solid transparent;border-radius:var(--tabula-radio-capsula);background:transparent;color:var(--tabula-tinta);font:700 var(--tabula-texto-ui)/1.2 var(--tabula-font-ui);cursor:pointer}
+.tabula-marco-marca:hover{background:var(--tabula-verde-suave)}
+.tabula-marco-marca svg{width:26px;height:26px;flex:none}
+.tabula-marco-marca .tabula-marco-marca-nombre{font-family:var(--tabula-font-titulo);font-size:var(--tabula-texto-lg);letter-spacing:-.3px}
+.tabula-marco-nombre{font-family:var(--tabula-font-titulo);font-size:var(--tabula-h1-app);font-weight:400;line-height:1.12;letter-spacing:-.4px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 /* El nombre de la app ocupa lo que mide su texto: base.css da a todo h1 de cabecera
    «flex:1 1 0%», que repartiría el espacio libre con la tira de controles. */
-.erlen-marco>.erlen-app-header .erlen-marco-nombre{flex:0 1 auto}
+.tabula-marco>.tabula-app-header .tabula-marco-nombre{flex:0 1 auto}
 /* Sin filas de más en escritorio: si no cabe, el desborde lo absorbe el título (elipsis) o la
    tira gana scroll con degradado en el borde (data-desborde, lo vigila marco.mjs).
    Base 0 en la tira: con base auto su contenido podría forzar una segunda fila de cabecera. */
-.erlen-marco-controles{display:flex;align-items:center;flex-wrap:nowrap;gap:var(--erlen-esp-3);flex:1 1 0%;min-width:0;overflow-x:auto;scrollbar-width:none;padding-block:var(--erlen-esp-1);margin-block:calc(var(--erlen-esp-1)*-1)}
-.erlen-marco-controles::-webkit-scrollbar{display:none}
+.tabula-marco-controles{display:flex;align-items:center;flex-wrap:nowrap;gap:var(--tabula-esp-3);flex:1 1 0%;min-width:0;overflow-x:auto;scrollbar-width:none;padding-block:var(--tabula-esp-1);margin-block:calc(var(--tabula-esp-1)*-1)}
+.tabula-marco-controles::-webkit-scrollbar{display:none}
 /* El título aprovecha el espacio libre hasta su máximo, pero cede cuando falta ancho
    (ver el bloque de escritorio más abajo). */
-.erlen-marco-titulo{flex:1 1 auto;max-width:clamp(160px,45%,28rem);display:flex;align-items:center;gap:var(--erlen-esp-2)}
+.tabula-marco-titulo{flex:1 1 auto;max-width:clamp(160px,45%,28rem);display:flex;align-items:center;gap:var(--tabula-esp-2)}
 /* Estado: en móvil y tableta (≤ 920 px) no cede y la tira se desplaza con degradado en el borde
    (data-desborde). En escritorio ver el bloque siguiente. */
-.erlen-marco-estado{flex:none;margin-inline-start:auto;display:flex;align-items:center;justify-content:flex-end;gap:var(--erlen-esp-2);font-size:var(--erlen-texto-sm);color:var(--erlen-tinta-suave);white-space:nowrap}
-.erlen-marco-acciones,.erlen-marco-utilidades{display:flex;align-items:center;flex:none;gap:var(--erlen-esp-2)}
+.tabula-marco-estado{flex:none;margin-inline-start:auto;display:flex;align-items:center;justify-content:flex-end;gap:var(--tabula-esp-2);font-size:var(--tabula-texto-sm);color:var(--tabula-tinta-suave);white-space:nowrap}
+.tabula-marco-acciones,.tabula-marco-utilidades{display:flex;align-items:center;flex:none;gap:var(--tabula-esp-2)}
 /* Escritorio (> 920 px, una sola fila): lo que cede cuando falta ancho son el nombre y el estado,
    nunca las acciones. Con un proyecto abierto el nombre y el mensaje de estado medían lo que mide su
    texto y empujaban fuera de la tira el botón principal. El nombre
@@ -41,137 +38,128 @@
    cortos; el estado de la cabecera es un resumen y un aviso que importa (por ejemplo «ejemplo
    simulado, no citable») debe vivir también en el cuerpo de la app. */
 @media (min-width:921px){
- .erlen-marco-titulo{flex:1 3 auto;min-width:min(6rem,100%)}
- .erlen-marco-titulo>*{min-width:0}
- .erlen-marco-estado{flex:0 1 auto;min-width:min(9rem,100%);white-space:normal}
- .erlen-marco-estado #status{min-width:0;white-space:normal}
+ .tabula-marco-titulo{flex:1 3 auto;min-width:min(6rem,100%)}
+ .tabula-marco-titulo>*{min-width:0}
+ .tabula-marco-estado{flex:0 1 auto;min-width:min(9rem,100%);white-space:normal}
+ .tabula-marco-estado #status{min-width:0;white-space:normal}
 }
-.erlen-marco-acciones>*,.erlen-marco-utilidades>*{flex:none;white-space:nowrap}
+.tabula-marco-acciones>*,.tabula-marco-utilidades>*{flex:none;white-space:nowrap}
 [data-desborde="fin"]{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
 [data-desborde="inicio"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px);mask-image:linear-gradient(90deg,transparent,#000 28px)}
 [data-desborde="ambos"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent)}
 @media (forced-colors:active),print{[data-desborde]{-webkit-mask-image:none;mask-image:none}}
 /* Cinta de herramientas a todo el ancho, debajo de la cabecera; su aspecto lo pone cinta.css. */
-.erlen-marco-cinta{flex:none;position:relative;z-index:1}
-.erlen-marco-sin-cinta>.erlen-marco-cinta{display:none}
+.tabula-marco-cinta{flex:none;position:relative;z-index:1}
+.tabula-marco-sin-cinta>.tabula-marco-cinta{display:none}
 /* Cuerpo: 200 px de navegación · trabajo elástico · 310 px de detalles. La ausencia de un slot
    elimina su columna (sin hueco). Solo los paneles se desplazan, no la ventana. */
-.erlen-marco-cuerpo{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);overflow:hidden}
-.erlen-marco-cuerpo.con-navegacion{grid-template-columns:200px minmax(0,1fr)}
-.erlen-marco-cuerpo.con-detalles{grid-template-columns:minmax(0,1fr) 310px}
-.erlen-marco-cuerpo.con-navegacion.con-detalles{grid-template-columns:200px minmax(0,1fr) 310px}
-.erlen-marco-navegacion{min-width:0;overflow:auto;background:var(--erlen-superficie-2);border-right:1px solid var(--erlen-linea)}
-.erlen-marco-cuerpo:not(.con-navegacion)>.erlen-marco-navegacion{display:none}
-.erlen-marco-trabajo{min-width:0;min-height:0;overflow:auto;background:var(--erlen-papel)}
-.erlen-marco-detalles{min-width:0;overflow:auto;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-left:1px solid var(--erlen-linea)}
-.erlen-marco-cuerpo:not(.con-detalles)>.erlen-marco-detalles{display:none}
-.erlen-marco-titulo:empty,.erlen-marco-estado:empty,.erlen-marco-acciones:empty,.erlen-marco-utilidades:empty,.erlen-marco-navegacion:empty,.erlen-marco-detalles:empty{display:none}
+.tabula-marco-cuerpo{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);overflow:hidden}
+.tabula-marco-cuerpo.con-navegacion{grid-template-columns:208px minmax(0,1fr)}
+.tabula-marco-cuerpo.con-detalles{grid-template-columns:minmax(0,1fr) 288px}
+.tabula-marco-cuerpo.con-navegacion.con-detalles{grid-template-columns:208px minmax(0,1fr) 288px}
+.tabula-marco-navegacion{min-width:0;overflow:auto;background:var(--tabula-superficie-2);border-right:1px solid var(--tabula-linea)}
+.tabula-marco-cuerpo:not(.con-navegacion)>.tabula-marco-navegacion{display:none}
+.tabula-marco-trabajo{min-width:0;min-height:0;overflow:auto;background:var(--tabula-papel)}
+.tabula-marco-detalles{min-width:0;overflow:auto;background:var(--tabula-superficie);border-left:1px solid var(--tabula-linea)}
+.tabula-marco-cuerpo:not(.con-detalles)>.tabula-marco-detalles{display:none}
+.tabula-marco-titulo:empty,.tabula-marco-estado:empty,.tabula-marco-acciones:empty,.tabula-marco-utilidades:empty,.tabula-marco-navegacion:empty,.tabula-marco-detalles:empty{display:none}
 /* Pie: estado y enlaces. */
-.erlen-marco>.erlen-app-footer{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--erlen-esp-3);padding:var(--erlen-esp-4) var(--erlen-esp-5);border-top:1px solid var(--erlen-linea);background:var(--erlen-superficie);font-size:var(--erlen-texto-xs);color:var(--erlen-tinta-suave)}
-.erlen-marco>.erlen-app-footer:empty{display:none}
+.tabula-marco>.tabula-app-footer{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--tabula-esp-3);padding:var(--tabula-esp-4) var(--tabula-esp-5);border-top:1px solid var(--tabula-linea);background:var(--tabula-superficie);font-size:var(--tabula-texto-xs);color:var(--tabula-tinta-suave)}
+.tabula-marco>.tabula-app-footer:empty{display:none}
 /* Barra inferior de la acción principal (marco.mjs la monta solo con ≤ 920 px de ancho y más de 500 px
    de alto): en el teléfono vertical el botón principal quedaba a 412-650 px
    de una pantalla de 375 y solo se alcanzaba desplazando la tira. Ocupa su propia fila del marco, así que no
    tapa el trabajo ni el pie; el botón conserva su tamaño táctil y, en tableta, no se estira más de 24 rem. */
-.erlen-marco-barra-accion{display:none}
-.erlen-marco-barra-accion:not(:has(>:not([hidden]))){display:none!important}
+.tabula-marco-barra-accion{display:none}
+.tabula-marco-barra-accion:not(:has(>:not([hidden]))){display:none!important}
 @media (max-width:920px) and (min-height:501px){
- .erlen-marco-barra-accion{flex:none;position:relative;z-index:2;display:flex;justify-content:flex-end;gap:var(--erlen-esp-3);padding:var(--erlen-esp-2) var(--erlen-esp-4);padding-bottom:calc(var(--erlen-esp-2) + env(safe-area-inset-bottom,0px));border-top:1px solid var(--erlen-linea);background:var(--erlen-superficie)}
- .erlen-marco>.erlen-marco-barra-accion>*{flex:1 1 auto;max-width:24rem;min-height:var(--erlen-alto-control)!important;justify-content:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .tabula-marco-barra-accion{flex:none;position:relative;z-index:2;display:flex;justify-content:flex-end;gap:var(--tabula-esp-3);padding:var(--tabula-esp-2) var(--tabula-esp-4);padding-bottom:calc(var(--tabula-esp-2) + env(safe-area-inset-bottom,0px));border-top:1px solid var(--tabula-linea);background:var(--tabula-superficie)}
+ .tabula-marco>.tabula-marco-barra-accion>*{flex:1 1 auto;max-width:24rem;min-height:var(--tabula-alto-control)!important;justify-content:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  /* Los avisos flotantes dejan libre la barra para no tapar el botón. */
- :root:has(.erlen-marco.con-barra-accion) :is(.toasts,.sheet-toasts,.lens-toasts){margin-bottom:calc(var(--erlen-alto-control) + var(--erlen-esp-4) + 1px + env(safe-area-inset-bottom,0px))}
+ :root:has(.tabula-marco.con-barra-accion) :is(.toasts,.sheet-toasts,.lens-toasts){margin-bottom:calc(var(--tabula-alto-control) + var(--tabula-esp-4) + 1px + env(safe-area-inset-bottom,0px))}
 }
 /* Cajón accesible (navegación en móvil, detalles a ≤ 920 px): diálogo con máscara, foco atrapado,
    Escape y restauración de foco; el resto queda inert mientras está abierto. */
-.erlen-marco-mascara{position:fixed;inset:0;z-index:40;background:color-mix(in srgb,var(--erlen-tinta) 22%,transparent)}
-.erlen-marco-cajon{position:fixed;z-index:41;top:0;bottom:0;right:0;width:min(340px,92vw);display:flex;flex-direction:column;gap:var(--erlen-esp-3);padding:var(--erlen-esp-4);overflow:auto;background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-left:1px solid var(--erlen-vidrio-contorno);box-shadow:var(--erlen-vidrio-relieve),var(--erlen-sombra-panel);-webkit-backdrop-filter:var(--erlen-vidrio-filtro);backdrop-filter:var(--erlen-vidrio-filtro)}
-.erlen-marco-cajon[hidden]{display:none}
-.erlen-marco-cajon-izq{right:auto;left:0;border-left:0;border-right:1px solid var(--erlen-vidrio-contorno)}
-.erlen-marco-cajon-cabecera{display:flex;align-items:center;justify-content:space-between;gap:var(--erlen-esp-3)}
-.erlen-marco-cajon-titulo{min-width:0;overflow-wrap:anywhere;font:700 var(--erlen-texto-sm)/1.2 var(--erlen-font-ui);letter-spacing:.13em;text-transform:uppercase;color:var(--erlen-tinta-suave)}
-.erlen-marco-cajon-cerrar{min-height:44px;min-width:44px;padding:var(--erlen-esp-2);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);cursor:pointer}
-.erlen-marco-cajon-cerrar:hover{background:var(--erlen-verde-suave)}
-.erlen-marco-cajon-cuerpo{min-height:0;overflow:auto}
+.tabula-marco-mascara{position:fixed;inset:0;z-index:40;background:color-mix(in srgb,var(--tabula-tinta) 22%,transparent)}
+.tabula-marco-cajon{position:fixed;z-index:41;top:0;bottom:0;right:0;width:min(340px,92vw);display:flex;flex-direction:column;gap:var(--tabula-esp-3);padding:var(--tabula-esp-4);overflow:auto;background:var(--tabula-superficie);border-left:1px solid var(--tabula-linea);box-shadow:var(--tabula-sombra-panel);-webkit-backdrop-filter:none;backdrop-filter:none}
+.tabula-marco-cajon[hidden]{display:none}
+.tabula-marco-cajon-izq{right:auto;left:0;border-left:0;border-right:1px solid var(--tabula-linea)}
+.tabula-marco-cajon-cabecera{display:flex;align-items:center;justify-content:space-between;gap:var(--tabula-esp-3)}
+.tabula-marco-cajon-titulo{min-width:0;overflow-wrap:anywhere;font:700 var(--tabula-texto-sm)/1.2 var(--tabula-font-ui);letter-spacing:.13em;text-transform:uppercase;color:var(--tabula-tinta-suave)}
+.tabula-marco-cajon-cerrar{min-height:44px;min-width:44px;padding:var(--tabula-esp-2);border:1px solid var(--tabula-linea-fuerte);border-radius:var(--tabula-radio-campo);background:var(--tabula-superficie);color:var(--tabula-tinta);cursor:pointer}
+.tabula-marco-cajon-cerrar:hover{background:var(--tabula-verde-suave)}
+.tabula-marco-cajon-cuerpo{min-height:0;overflow:auto}
 /* Botón de cajón de navegación: solo en estrecho (≤ 920 px). */
-.erlen-marco-abrir-cajon{display:none;min-height:44px;min-width:44px;padding:var(--erlen-esp-2);border:1px solid var(--erlen-linea-fuerte);border-radius:var(--erlen-radio-campo);background:var(--erlen-superficie);color:var(--erlen-tinta);cursor:pointer}
-.erlen-marco-abrir-cajon:hover{background:var(--erlen-verde-suave)}
+.tabula-marco-abrir-cajon{display:none;min-height:44px;min-width:44px;padding:var(--tabula-esp-2);border:1px solid var(--tabula-linea-fuerte);border-radius:var(--tabula-radio-campo);background:var(--tabula-superficie);color:var(--tabula-tinta);cursor:pointer}
+.tabula-marco-abrir-cajon:hover{background:var(--tabula-verde-suave)}
 /* 921–1180 px: columnas estrechas. */
 @media (max-width:1180px){
- .erlen-marco-cuerpo.con-navegacion{grid-template-columns:176px minmax(0,1fr)}
- .erlen-marco-cuerpo.con-detalles{grid-template-columns:minmax(0,1fr) 280px}
- .erlen-marco-cuerpo.con-navegacion.con-detalles{grid-template-columns:176px minmax(0,1fr) 280px}
- .erlen-marco>.erlen-app-header{padding:var(--erlen-esp-2) var(--erlen-esp-4)}
- .erlen-marco>.erlen-app-footer{padding:var(--erlen-esp-4)}
+ .tabula-marco-cuerpo.con-navegacion{grid-template-columns:176px minmax(0,1fr)}
+ .tabula-marco-cuerpo.con-detalles{grid-template-columns:minmax(0,1fr) 280px}
+ .tabula-marco-cuerpo.con-navegacion.con-detalles{grid-template-columns:176px minmax(0,1fr) 280px}
+ .tabula-marco>.tabula-app-header{padding:var(--tabula-esp-2) var(--tabula-esp-4)}
+ .tabula-marco>.tabula-app-footer{padding:var(--tabula-esp-4)}
 }
 /* ≤ 920 px: una columna; navegación y detalles pasan a cajón. El trabajo conserva su scroll. */
 @media (max-width:920px){
- .erlen-marco-cuerpo,.erlen-marco-cuerpo.con-navegacion,.erlen-marco-cuerpo.con-detalles,.erlen-marco-cuerpo.con-navegacion.con-detalles{grid-template-columns:minmax(0,1fr)}
- .erlen-marco-cuerpo.con-navegacion>.erlen-marco-navegacion{display:none}
- .erlen-marco-cuerpo>.erlen-marco-detalles{display:none}
- .erlen-marco-abrir-cajon{display:inline-flex;align-items:center;justify-content:center}
- .erlen-marco>.erlen-app-header .erlen-marco-nombre{font-size:var(--erlen-texto-lg);font-family:var(--erlen-font-ui);font-weight:700;letter-spacing:0}
+ .tabula-marco-cuerpo,.tabula-marco-cuerpo.con-navegacion,.tabula-marco-cuerpo.con-detalles,.tabula-marco-cuerpo.con-navegacion.con-detalles{grid-template-columns:minmax(0,1fr)}
+ .tabula-marco-cuerpo.con-navegacion>.tabula-marco-navegacion{display:none}
+ .tabula-marco-cuerpo>.tabula-marco-detalles{display:none}
+ .tabula-marco-abrir-cajon{display:inline-flex;align-items:center;justify-content:center}
+ .tabula-marco>.tabula-app-header .tabula-marco-nombre{font-size:var(--tabula-texto-lg);font-family:var(--tabula-font-ui);font-weight:700;letter-spacing:0}
  /* Dos filas: identidad arriba; título, estado y controles en una tira que se desplaza.
     El padding evita que el overflow-x recorte el anillo de foco de 3 px (aquí sin margen
     negativo: la cabecera de dos filas necesita sus 121 px). */
- .erlen-marco-controles{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;gap:var(--erlen-esp-2);padding:var(--erlen-esp-1);margin-block:0}
- .erlen-marco-titulo{min-width:120px;max-width:min(60vw,20rem)}
+ .tabula-marco-controles{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;gap:var(--tabula-esp-2);padding:var(--tabula-esp-1);margin-block:0}
+ .tabula-marco-titulo{min-width:120px;max-width:min(60vw,20rem)}
 }
 /* ≤ 600 px: la tira de controles sigue en una fila con scroll, sin filas de más; 44 px en todo.
    El nombre (h1, única de la vista) se oculta visualmente pero sigue en el árbol de accesibilidad:
    la marca ya identifica la app y así la fila de identidad tiene aire para los controles reales. */
 @media (max-width:600px){
- .erlen-marco>.erlen-app-header{gap:var(--erlen-esp-2);padding:var(--erlen-esp-2) var(--erlen-esp-3)}
- .erlen-marco-controles{gap:var(--erlen-esp-2)}
- .erlen-marco-utilidades>*,.erlen-marco-acciones>*,.erlen-marco-marca,.erlen-marco-abrir-cajon,.erlen-marco-cajon-cerrar{min-height:44px}
- .erlen-marco-nombre{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+ .tabula-marco>.tabula-app-header{gap:var(--tabula-esp-2);padding:var(--tabula-esp-2) var(--tabula-esp-3)}
+ .tabula-marco-controles{gap:var(--tabula-esp-2)}
+ .tabula-marco-utilidades>*,.tabula-marco-acciones>*,.tabula-marco-marca,.tabula-marco-abrir-cajon,.tabula-marco-cajon-cerrar{min-height:44px}
+ .tabula-marco-nombre{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
  /* Pie compacto: misma mecánica de tira que los controles, sin segundas filas. El bloque queda
     en 4 px para que con enlaces de 44 px (puntero táctil) el pie no pase de 56 px. */
- .erlen-marco>.erlen-app-footer{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-block:var(--erlen-esp-1)}
+ .tabula-marco>.tabula-app-footer{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-block:var(--tabula-esp-1)}
 }
 /* El mismo mínimo en estrecho y cuando hay cualquier entrada táctil, también en equipos
    híbridos. Los paneles usan la misma zona de toque en columna y dentro del cajón. */
 @media (max-width:920px),(any-pointer:coarse){
- .erlen-app-header :is(button,a,select,summary,input:not([type=checkbox]):not([type=radio])),
- :is(.erlen-marco-cajon,.erlen-marco-navegacion,.erlen-marco-detalles,dialog) :is(button,a,select,input:not([type=checkbox]):not([type=radio])),
- .erlen-app-footer :is(a,button){min-height:var(--erlen-alto-control);min-width:var(--erlen-alto-control)}
- :is(.erlen-marco-cajon,.erlen-marco-navegacion,.erlen-marco-detalles,dialog) a{display:inline-flex;align-items:center}
- .erlen-marco>.erlen-app-footer :is(a,button){display:inline-flex;align-items:center;justify-content:center}
+ .tabula-app-header :is(button,a,select,summary,input:not([type=checkbox]):not([type=radio])),
+ :is(.tabula-marco-cajon,.tabula-marco-navegacion,.tabula-marco-detalles,dialog) :is(button,a,select,input:not([type=checkbox]):not([type=radio])),
+ .tabula-app-footer :is(a,button){min-height:var(--tabula-alto-control);min-width:var(--tabula-alto-control)}
+ :is(.tabula-marco-cajon,.tabula-marco-navegacion,.tabula-marco-detalles,dialog) a{display:inline-flex;align-items:center}
+ .tabula-marco>.tabula-app-footer :is(a,button){display:inline-flex;align-items:center;justify-content:center}
 }
 @media (max-width:400px){
- .erlen-marco-marca .erlen-marco-marca-nombre{display:none}
+ .tabula-marco-marca .tabula-marco-marca-nombre{display:none}
  /* El bloque de la cabecera vuelve a 8 px: la tira de controles lleva 4 px propios (anillo de
     foco sin recortar) y la cabecera de dos filas debe seguir midiendo 121 px. El pie compacto
     queda en 4 px para no pasar de 56 px con enlaces de 44 px. */
- .erlen-marco>.erlen-app-header{padding:var(--erlen-esp-2) var(--erlen-esp-3)}
- .erlen-marco>.erlen-app-footer{padding:var(--erlen-esp-1) var(--erlen-esp-3)}
+ .tabula-marco>.tabula-app-header{padding:var(--tabula-esp-2) var(--tabula-esp-3)}
+ .tabula-marco>.tabula-app-footer{padding:var(--tabula-esp-1) var(--tabula-esp-3)}
 }
 /* En paisaje corto, identidad y controles comparten una fila desplazable. El pie compacto
    reserva espacio para editar sin reducir las zonas de toque ni ocultar sus acciones. */
 @media (max-width:920px) and (max-height:500px){
- .erlen-marco>.erlen-app-header{flex-wrap:nowrap}
- .erlen-marco-controles{flex:1 1 0%}
- .erlen-marco>.erlen-app-footer{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-block:var(--erlen-esp-1)}
+ .tabula-marco>.tabula-app-header{flex-wrap:nowrap}
+ .tabula-marco-controles{flex:1 1 0%}
+ .tabula-marco>.tabula-app-footer{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-block:var(--tabula-esp-1)}
 }
 /* Impresión y material sólido: cromo sin desenfoque; el material opaco ya lo fijan los tokens. */
 @media print{
- .erlen-marco{height:auto;overflow:visible}
- .erlen-marco>.erlen-app-header::before{-webkit-backdrop-filter:none;backdrop-filter:none}
- .erlen-marco-cinta,.erlen-marco-navegacion,.erlen-marco-detalles,.erlen-marco-cajon,.erlen-marco-mascara{display:none!important}
+ .tabula-marco{height:auto;overflow:visible}
+ .tabula-marco>.tabula-app-header::before{-webkit-backdrop-filter:none;backdrop-filter:none}
+ .tabula-marco-cinta,.tabula-marco-navegacion,.tabula-marco-detalles,.tabula-marco-cajon,.tabula-marco-mascara{display:none!important}
  /* Sin columnas de cromo: el documento se imprime a todo el ancho. */
- .erlen-marco-cuerpo,.erlen-marco-cuerpo.con-navegacion,.erlen-marco-cuerpo.con-detalles,.erlen-marco-cuerpo.con-navegacion.con-detalles{grid-template-columns:minmax(0,1fr)}
- .erlen-marco-cuerpo{overflow:visible}
- .erlen-marco-trabajo{overflow:visible}
+ .tabula-marco-cuerpo,.tabula-marco-cuerpo.con-navegacion,.tabula-marco-cuerpo.con-detalles,.tabula-marco-cuerpo.con-navegacion.con-detalles{grid-template-columns:minmax(0,1fr)}
+ .tabula-marco-cuerpo{overflow:visible}
+ .tabula-marco-trabajo{overflow:visible}
 }
 /* Cromo mineral: marca y título compactos; la cinta conserva la memoria muscular. */
-.erlen-marco-nombre{font-weight:600;letter-spacing:-.035em}
-.erlen-marco-marca{border-radius:var(--erlen-radio-campo)}
-/* Apariencia opcional del marco: una sola superficie de cristal en la cabecera.
-   La navegación y los detalles siguen el material elegido; el trabajo permanece
-   opaco. Las sombras de borde quedan dentro, sin invadir controles ni documentos. */
-:root[data-erlen-estilo] .erlen-marco>.erlen-app-header{background:transparent;box-shadow:none}
-:root[data-erlen-estilo] .erlen-marco>.erlen-app-header::before{box-shadow:inset 0 -2px 0 var(--erlen-vidrio-contorno)}
-:root[data-erlen-estilo] .erlen-marco :is(.erlen-marco-navegacion,.erlen-marco-detalles){background:var(--erlen-vidrio-reflejo),var(--erlen-vidrio-fuerte);border-color:var(--erlen-vidrio-contorno);box-shadow:inset 1px 0 0 var(--erlen-vidrio-contorno),inset -1px 0 0 var(--erlen-vidrio-contorno)}
+.tabula-marco-nombre{font-weight:600;letter-spacing:-.035em}
+.tabula-marco-marca{border-radius:var(--tabula-radio-campo)}
 
-/* La atmósfera elegida llega al marco sin pintar el área de trabajo. */
-:root[data-erlen-estilo] .erlen-marco{background:var(--erlen-cromo-fondo)}
-:root[data-erlen-estilo] .erlen-marco>.erlen-app-header::before,:root[data-erlen-estilo] .erlen-marco :is(.erlen-marco-navegacion,.erlen-marco-detalles){background:var(--erlen-vidrio-reflejo),var(--erlen-cromo-trama),var(--erlen-vidrio-fuerte)}

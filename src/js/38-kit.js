@@ -105,12 +105,12 @@ function leemeKit(pgs, extra) {
   const m = S.deck.meta;
   return [
     'KIT DE DEFENSA · ' + (m.title || 'Presentación'),
-    'Generado con Tabula el ' + new Date().toLocaleString('es-MX'),
+    'Generado con Lámina el ' + new Date().toLocaleString('es-MX'),
     '',
     'QUÉ HAY AQUÍ',
     '  presentacion.tex       El código Beamer. Se compila en Overleaf o con pdflatex.',
     '  presentacion-4-3.tex   La misma, en formato 4:3, por si el proyector del aula es antiguo.',
-    '  proyecto.json          El proyecto entero. Se abre en Tabula con Archivo → Importar.',
+    '  proyecto.json          El proyecto entero. Se abre en Lámina con Archivo → Importar.',
     '  guion.html             Tu guion con miniaturas, notas y tiempos. Ábrelo e imprímelo.',
     '  figuras/               Las imágenes sueltas, por si las necesitas en el artículo.',
     ...(textoCreditosCatalogo(S.deck) ? ['  creditos-figuras.txt   Autoría y licencias para compartir las figuras.'] : []),
@@ -121,7 +121,7 @@ function leemeKit(pgs, extra) {
     ...(extra || []).filter(a => a.desc).map(a => '  ' + (a.rotulo || a.nombre).padEnd(22) + ' ' + a.desc),
     '',
     'LO QUE FALTA Y TIENES QUE PONER TÚ',
-    '  presentacion.pdf       Expórtalo desde Tabula con Exportar → PDF (imprimir) y',
+    '  presentacion.pdf       Expórtalo desde Lámina con Exportar → PDF (imprimir) y',
     '                         guárdalo en esta misma carpeta. Es el archivo que vas a proyectar.',
     '',
     'ANTES DE SALIR DE CASA',
@@ -155,10 +155,10 @@ async function archivosKit(extra) {
     figuras.push({ id: b.id || null, slide: i + 1, type: b.type, caption: b.caption || null,
       source: b.fuente || null, catalog: esFuenteCatalogo(b.catalogo) ? deepCopy(b.catalogo) : null, dataSha256: b.data ? await huellaDe(b.data) : null });
   }
-  const provenance = { schema: 'erlen-provenance-v1', application: 'Tabula',
-    version: window.ERLEN?.version || 'desconocida', generatedAt: new Date().toISOString(),
+  const provenance = { schema: 'tabula-provenance-v1', application: 'Tabula',
+    version: window.TABULA?.version || 'desconocida', generatedAt: new Date().toISOString(),
     deck: { title: S.deck.meta.title || '', authors: S.deck.meta.authors || '',
-      sourceFormat: 'erlen-json-v1' }, figures: figuras };
+      sourceFormat: 'json-v1' }, figures: figuras };
 
   const otro = deepCopy(S.deck);
   otro.meta.aspect = S.deck.meta.aspect === '43' ? '169' : '43';

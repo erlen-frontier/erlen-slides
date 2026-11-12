@@ -271,17 +271,17 @@ function figuraConMarcasTex(b, p, imagen) {
   const th = temaDe(TEX_DECK || S.deck);
   const L = [];
   L.push(p + '\\begin{tikzpicture}');
-  L.push(p + `  \\node[inner sep=0] (tpfig) {${imagen || `\\erlenfig{${w}}{${figName(b)}}`}};`);
+  L.push(p + `  \\node[inner sep=0] (tpfig) {${imagen || `\\tabulafig{${w}}{${figName(b)}}`}};`);
   L.push(p + '  \\begin{scope}[shift={(tpfig.south west)},');
   L.push(p + '      x={($(tpfig.south east)-(tpfig.south west)$)},');
   L.push(p + '      y={($(tpfig.north west)-(tpfig.south west)$)}]');
   const Y = v => (1 - v).toFixed(4);          /* en la imagen y crece hacia abajo */
   tapasDe(b).forEach(t => L.push(p +
-    `    \\fill[erlenfondo] (${t.x.toFixed(4)},${Y(t.y + t.h)}) rectangle (${(t.x + t.w).toFixed(4)},${Y(t.y)});`));
+    `    \\fill[tabulafondo] (${t.x.toFixed(4)},${Y(t.y + t.h)}) rectangle (${(t.x + t.w).toFixed(4)},${Y(t.y)});`));
   marcasDe(b).forEach(m => {
-    if (m.t === 'rect') L.push(p + `    \\draw[erlenliq, line width=1pt, rounded corners=2pt] (${m.x.toFixed(4)},${Y(m.y + m.h)}) rectangle (${(m.x + m.w).toFixed(4)},${Y(m.y)});`);
-    else if (m.t === 'circulo') L.push(p + `    \\draw[erlenliq, line width=1pt] (${(m.x + m.w / 2).toFixed(4)},${Y(m.y + m.h / 2)}) ellipse[x radius=${(Math.abs(m.w) / 2).toFixed(4)}, y radius=${(Math.abs(m.h) / 2).toFixed(4)}];`);
-    else L.push(p + `    \\draw[erlenliq, line width=1pt, -{Stealth[length=2.4mm]}] (${m.x.toFixed(4)},${Y(m.y)}) -- (${(m.x + m.w).toFixed(4)},${Y(m.y + m.h)});`);
+    if (m.t === 'rect') L.push(p + `    \\draw[tabulaliq, line width=1pt, rounded corners=2pt] (${m.x.toFixed(4)},${Y(m.y + m.h)}) rectangle (${(m.x + m.w).toFixed(4)},${Y(m.y)});`);
+    else if (m.t === 'circulo') L.push(p + `    \\draw[tabulaliq, line width=1pt] (${(m.x + m.w / 2).toFixed(4)},${Y(m.y + m.h / 2)}) ellipse[x radius=${(Math.abs(m.w) / 2).toFixed(4)}, y radius=${(Math.abs(m.h) / 2).toFixed(4)}];`);
+    else L.push(p + `    \\draw[tabulaliq, line width=1pt, -{Stealth[length=2.4mm]}] (${m.x.toFixed(4)},${Y(m.y)}) -- (${(m.x + m.w).toFixed(4)},${Y(m.y + m.h)});`);
   });
   L.push(p + '  \\end{scope}');
   L.push(p + '\\end{tikzpicture}');

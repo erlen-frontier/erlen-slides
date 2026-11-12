@@ -8,9 +8,9 @@
 
    Todo entra y sale como texto JSON: los objetos no cruzan de un ámbito a
    otro, y así el proyecto que se guarda es exactamente el que se validó.
-   Sin 'use strict' arriba: un eval estricto guardaría ERLEN_MCP en su propio
+   Sin 'use strict' arriba: un eval estricto guardaría TABULA_MCP en su propio
    ámbito y la página no lo vería. El modo estricto va dentro de la función. */
-var ERLEN_MCP = (function () {
+var TABULA_MCP = (function () {
   'use strict';
   const ES_ENCABEZADO_FICTICIO = { dato: true, cita: true };
   const TIPOS_GUIADOS = ['text', 'bullets', 'math', 'chem', 'table', 'bblock', 'quote', 'code', 'spacer', 'chart', 'func', 'smart', 'teorema', 'refs', 'image', 'estruct'];
@@ -137,7 +137,7 @@ var ERLEN_MCP = (function () {
       b.tecnica = tec.id; b.kind = tec.kind; b.xlabel = tec.x; b.ylabel = tec.y;
       if (tec.invertirX) b.invertirX = true; else delete b.invertirX;
     }
-    b.fuente = { nombre: datos.nombre, cuando: new Date().toISOString().slice(0, 10), n: rows.length, huella: ERLEN_MCP_HUELLA(texto), instrumento: tec && tec.id !== 'generico' ? tec.n : undefined };
+    b.fuente = { nombre: datos.nombre, cuando: new Date().toISOString().slice(0, 10), n: rows.length, huella: TABULA_MCP_HUELLA(texto), instrumento: tec && tec.id !== 'generico' ? tec.n : undefined };
     return { archivo: datos.nombre, tecnica: tec ? tec.n : 'sin identificar', filas_archivo: total, filas_guardadas: rows.length, columnas: cols.map(c => t.headers[c]), x: [rows[0][0], rows[rows.length - 1][0]] };
   }
 
@@ -607,7 +607,7 @@ var ERLEN_MCP = (function () {
       loadDeck(d, null);
       const figuras = allImageBlocks().map(b => ({ nombre: b._nom || figName(b), src: b.src,
         estilo: !!(b.est && ((b.est.forma && b.est.forma !== 'recta') || (b.est.marco && b.est.marco !== 'none') || b.est.sombra || (b.est.filtro && b.est.filtro !== 'none'))) }));
-      if (d.meta.logo) figuras.unshift({ nombre: 'logo-erlen', src: d.meta.logo, estilo: false });
+      if (d.meta.logo) figuras.unshift({ nombre: 'logo-tabula', src: d.meta.logo, estilo: false });
       return { tex: toBeamer(d), motor: /metropolis|XeLaTeX/.test(tema.tex) ? 'xelatex' : 'pdflatex', figuras };
     },
     html: a => { const v = valida(a.deck).deck; loadDeck(v, null); return { html: buildPrintableHTML(false) }; }

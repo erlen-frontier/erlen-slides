@@ -16,7 +16,7 @@ async function eligeArchivo() {
   try {
     S.archivo = await window.showSaveFilePicker({
       suggestedName: deckSlug() + '.json',
-      types: [{ description: 'Proyecto de Tabula', accept: { 'application/json': ['.json'] } }]
+      types: [{ description: 'Proyecto de Lámina', accept: { 'application/json': ['.json'] } }]
     });
     S.archivoNombre = S.archivo.name;
     await escribeArchivo();
@@ -116,7 +116,7 @@ function actualizaEstadoArchivoEscritorio(localOk) {
   if (!ultimoGuardadoLocal) { el.textContent = 'Error de guardado local'; el.title = 'La copia local no se pudo guardar. Guarda el proyecto en un archivo.'; el.classList.remove('on'); return; }
   const pendiente = archivoEscritorioPendiente();
   el.textContent = archivoEscritorioActual ? (pendiente ? 'Cambios sin guardar' : 'Archivo guardado ✓') : 'Guardado aquí · sin archivo';
-  el.title = archivoEscritorioActual ? (pendiente ? 'Hay cambios pendientes en «' : 'Guardado en «') + archivoEscritorioActual.nombre + '»' : 'La copia local se guarda en Tabula. Usa Guardar para crear un archivo.';
+  el.title = archivoEscritorioActual ? (pendiente ? 'Hay cambios pendientes en «' : 'Guardado en «') + archivoEscritorioActual.nombre + '»' : 'La copia local se guarda en Lámina. Usa Guardar para crear un archivo.';
   el.classList.toggle('on', !pendiente);
 }
 function confirmaCambioArchivo() {
@@ -214,7 +214,6 @@ async function guardarProyectoEscritorio(como = false) {
     if (archivoEscritorioPendiente()) toast('Se guardó una versión anterior; hay cambios posteriores sin incluir.', 'warn');
     else toast('Proyecto guardado en «' + ref.nombre + '»');
   } catch (e) {
-    window.ErlenDiagnostico?.reportar('guardar-proyecto');
     toast('No se pudo guardar el proyecto. ' + String(e?.message || e), 'warn');
     actualizaEstadoArchivoEscritorio();
   } finally { operacionArchivoEscritorio = false; }

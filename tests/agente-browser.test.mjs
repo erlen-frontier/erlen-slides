@@ -10,7 +10,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
 test('the cloud chat creates a presentation and can undo it in Chromium', {timeout:120000}, async t => {
-  const bin = process.env.ERLEN_CHROMIUM || '/usr/bin/chromium';
+  const bin = process.env.TABULA_CHROMIUM || '/usr/bin/chromium';
   if (!existsSync(bin) || spawnSync('openssl',['version']).status !== 0) {t.skip('Chromium and openssl are needed for this test.'); return;}
   const dir = mkdtempSync(join(tmpdir(), 'tabula-agente-'));
   t.after(() => rmSync(dir,{recursive:true,force:true}));
@@ -37,7 +37,7 @@ test('the cloud chat creates a presentation and can undo it in Chromium', {timeo
   });
   await new Promise((resolve,reject)=>{provider.once('error',reject);provider.listen(0,'127.0.0.1',resolve);});
   t.after(()=>new Promise(resolve=>provider.close(resolve)));
-  const port=Number(process.env.ERLEN_AGENT_TEST_PORT||4220);
+  const port=Number(process.env.TABULA_AGENT_TEST_PORT||4220);
   const server=spawn(process.execPath,[fileURLToPath(new URL('../herramientas/serve.mjs',import.meta.url))],{env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
   t.after(()=>server.kill());
   await new Promise((resolve,reject)=>{server.stdout.once('data',resolve);server.once('error',reject);server.once('exit',c=>reject(new Error('Server exited: '+c)));});

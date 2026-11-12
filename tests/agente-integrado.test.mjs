@@ -14,9 +14,9 @@ async function entorno() {
   e.dom.window.eval(readFileSync(new URL('../mcp/operaciones.js', import.meta.url), 'utf8'));
   if (existsSync(archivoAgente)) e.dom.window.eval(readFileSync(archivoAgente, 'utf8'));
   if (existsSync(archivoInterfaz)) e.dom.window.eval(readFileSync(archivoInterfaz, 'utf8'));
-  e.run("extensionSlides = async nombre => { if (nombre !== 'operaciones') throw Error('extensión inesperada'); return window.ERLEN_MCP; }");
+  e.run("extensionTabla = async nombre => { if (nombre !== 'operaciones') throw Error('extensión inesperada'); return window.TABULA_MCP; }");
   e.run("wsNueva(); addSlide('content');");
-  if (!e.dom.window.ERLEN_AGENTE) {
+  if (!e.dom.window.TABULA_AGENTE) {
     e.dom.window.close();
     assert.fail('el agente integrado debe estar disponible');
   }
@@ -33,7 +33,7 @@ test('real tool-calling changes the open deck once and undo restores it', async 
     dom.window.transporteAgente = async () => ++n === 1
       ? respuesta('', [llamada('a', 'editar_diapositiva', {diapositiva: id, cambios: {titulo: 'Resultado'}}), llamada('b', 'agregar_bloque', {diapositiva: id, zona: 1, bloque: {tipo: 'text', text: 'Texto nuevo'}})])
       : respuesta('He actualizado la diapositiva.');
-    const resultado = await dom.window.ERLEN_AGENTE.conversa(parametros('Actualiza esta diapositiva'));
+    const resultado = await dom.window.TABULA_AGENTE.conversa(parametros('Actualiza esta diapositiva'));
     assert.equal(run('curSlide().title'), 'Resultado');
     assert.equal(run('curSlide().blocks[0].text'), 'Texto nuevo');
     assert.equal(run('S.undo.length'), antes + 1);
@@ -62,7 +62,7 @@ test('agent keeps partial text formatting coherent, atomic and citation-safe', a
         llamada('a', 'editar_diapositiva', {diapositiva: slide, cambios: {titulo: 'No guardar'}}),
         llamada('b', 'editar_bloque', {bloque: id, cambios: cambio})
       ]); };
-      await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Reescribe')), /formatoTexto|cita/i);
+      await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Reescribe')), /formatoTexto|cita/i);
       assert.equal(e.run('JSON.stringify(S.deck)'), antes);
       assert.equal(e.run('S.undo.length'), undo);
     }
@@ -75,7 +75,7 @@ test('agent keeps partial text formatting coherent, atomic and citation-safe', a
     let n = 0; e.dom.window.transporteAgente = async () => ++n === 1 ? respuesta('', [
       llamada('a', 'editar_bloque', {bloque: id, cambios: {formatoTexto: [{inicio: 0, fin: 2, cursiva: true}], text: 'Sí [@A]'}})
     ]) : respuesta('Revisado.');
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Reescribe conservando la cita'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Reescribe conservando la cita'));
     let b = JSON.parse(e.run('JSON.stringify(findBlock(__formato).block)'));
     assert.equal(b.text, 'Sí [@A]');
     assert.deepEqual(b.formatoTexto, [{inicio: 0, fin: 2, cursiva: true}]);
@@ -88,7 +88,7 @@ test('agent keeps partial text formatting coherent, atomic and citation-safe', a
     n = 0; e.dom.window.transporteAgente = async () => ++n === 1 ? respuesta('', [
       llamada('a', 'editar_bloque', {bloque: id, cambios: {text: 'Final [@A]', formatoTexto: null}})
     ]) : respuesta('Actualizado.');
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Quita el formato y reescribe'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Quita el formato y reescribe'));
     b = JSON.parse(e.run('JSON.stringify(findBlock(__formato).block)'));
     assert.equal(b.text, 'Final [@A]');
     assert.equal(b.formatoTexto, undefined);
@@ -105,13 +105,13 @@ test('agent creates text with explicit ranges and rejects invalid batches', asyn
     e.dom.window.transporteAgente = async () => respuesta('', [llamada('a', 'agregar_diapositivas', {diapositivas: [
       {titulo: 'Primera'}, {zonas: [[{tipo: 'text', text: '😀', formatoTexto: [{inicio: 0, fin: 1, negrita: true}]}]]}
     ]})]);
-    await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Añade')), /formatoTexto/i);
+    await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Añade')), /formatoTexto/i);
     assert.equal(e.run('JSON.stringify(S.deck)'), antes);
     assert.equal(e.run('S.undo.length'), undo);
     let n = 0; e.dom.window.transporteAgente = async () => ++n === 1 ? respuesta('', [
       llamada('a', 'agregar_bloque', {diapositiva: id, bloque: {tipo: 'text', formatoTexto: [{inicio: 0, fin: 2, negrita: true}], text: '😀'}})
     ]) : respuesta('Añadido.');
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Añade el texto'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Añade el texto'));
     assert.deepEqual(JSON.parse(e.run('JSON.stringify(curSlide().blocks[0].formatoTexto)')), [{inicio: 0, fin: 2, negrita: true}]);
     e.run('doUndo()'); assert.equal(e.run('JSON.stringify(S.deck)'), antes);
   } finally { e.dom.window.close(); }
@@ -128,7 +128,7 @@ test('one request can set presentation metadata and add a complete slide batch a
         {diseno: 'twocol', titulo: 'Conclusión', zonas: [[{tipo: 'bullets', items: [{t: 'Dato ilustrativo', lvl: 0}]}], [{tipo: 'math', tex: 'a=b'}]]}
       ]})
     ]) : respuesta('He preparado la presentación.');
-    const r = await e.dom.window.ERLEN_AGENTE.conversa(parametros('Crea la presentación'));
+    const r = await e.dom.window.TABULA_AGENTE.conversa(parametros('Crea la presentación'));
     assert.equal(e.run('S.deck.meta.title'), 'Informe ilustrativo');
     assert.equal(e.run('S.deck.meta.authors'), 'Equipo');
     assert.equal(e.run('S.deck.slides.length'), 4);
@@ -149,8 +149,8 @@ test('the assistant exposes model chat without replacing local help or storing i
     let llamadas = 0;
     dom.window.transporteAgente = async () => { llamadas++; return respuesta('Respuesta simulada.'); };
     const panel = run('asisPanel()');
-    assert.ok(dom.window.ERLEN_AGENTE_UI, 'la interfaz del agente debe estar disponible');
-    dom.window.ERLEN_AGENTE_UI.monta(panel);
+    assert.ok(dom.window.TABULA_AGENTE_UI, 'la interfaz del agente debe estar disponible');
+    dom.window.TABULA_AGENTE_UI.monta(panel);
     assert.equal(llamadas, 0);
     const boton = [...panel.querySelectorAll('button')].find(b => b.textContent === 'Conversar con IA');
     assert.ok(boton); boton.click();
@@ -172,7 +172,7 @@ test('visual chat starts a new thread for document or provider changes but keeps
   const e = await entorno();
   try {
     const {dom, run} = e, panel = run('asisPanel()');
-    dom.window.ERLEN_AGENTE_UI.monta(panel);
+    dom.window.TABULA_AGENTE_UI.monta(panel);
     [...panel.querySelectorAll('button')].find(b => b.textContent === 'Conversar con IA').click();
     const url = panel.querySelector('[aria-label="Endpoint de Chat Completions"]');
     const modelo = panel.querySelector('[aria-label="Modelo de IA"]');
@@ -210,7 +210,7 @@ test('undo and redo keep the chat for the same document while another document s
   const e = await entorno();
   try {
     const {dom, run} = e, panel = run('asisPanel()');
-    dom.window.ERLEN_AGENTE_UI.monta(panel);
+    dom.window.TABULA_AGENTE_UI.monta(panel);
     [...panel.querySelectorAll('button')].find(b => b.textContent === 'Conversar con IA').click();
     const url = panel.querySelector('[aria-label="Endpoint de Chat Completions"]'), modelo = panel.querySelector('[aria-label="Modelo de IA"]');
     const input = panel.querySelector('[aria-label="Mensaje para la IA"]'), boton = [...panel.querySelectorAll('button')].find(b => b.textContent === 'Enviar a la IA');
@@ -239,7 +239,7 @@ test('saving the current presentation under different names preserves its chat, 
   const e = await entorno();
   try {
     const {dom, run} = e, panel = run('asisPanel()');
-    dom.window.ERLEN_AGENTE_UI.monta(panel);
+    dom.window.TABULA_AGENTE_UI.monta(panel);
     [...panel.querySelectorAll('button')].find(b => b.textContent === 'Conversar con IA').click();
     panel.querySelector('[aria-label="Endpoint de Chat Completions"]').value = 'https://proveedor.example/chat';
     panel.querySelector('[aria-label="Modelo de IA"]').value = 'modelo-prueba';
@@ -279,7 +279,7 @@ test('deleting the saved copy keeps the open document chat and a new identical d
   const e = await entorno();
   try {
     const {dom, run} = e, panel = run('asisPanel()');
-    dom.window.ERLEN_AGENTE_UI.monta(panel);
+    dom.window.TABULA_AGENTE_UI.monta(panel);
     [...panel.querySelectorAll('button')].find(b => b.textContent === 'Conversar con IA').click();
     panel.querySelector('[aria-label="Endpoint de Chat Completions"]').value = 'https://proveedor.example/chat';
     panel.querySelector('[aria-label="Modelo de IA"]').value = 'modelo-prueba';
@@ -319,7 +319,7 @@ test('an identical presentation opened during a request still invalidates the pe
   try {
     let termina; e.dom.window.transporteAgente = () => new Promise(ok => { termina = ok; });
     const id = e.run('curSlide().id');
-    const p = e.dom.window.ERLEN_AGENTE.conversa(parametros('Cambia el título'));
+    const p = e.dom.window.TABULA_AGENTE.conversa(parametros('Cambia el título'));
     await Promise.resolve();
     e.run("loadDeck(deepCopy(S.deck),'Copia abierta')");
     const antes = e.run('JSON.stringify(S.deck)');
@@ -334,7 +334,7 @@ test('the agent rejects non-HTTPS endpoints before contacting a provider', async
   try {
     let llamadas = 0; e.dom.window.transporteAgente = async () => { llamadas++; return respuesta('no esperado'); };
     for (const url of ['http://proveedor.example/v1/chat/completions', 'ftp://proveedor.example/v1/chat/completions']) {
-      await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa({...parametros('Hola'), url}), /HTTPS|nube|p[uú]blic/i);
+      await assert.rejects(e.dom.window.TABULA_AGENTE.conversa({...parametros('Hola'), url}), /HTTPS|nube|p[uú]blic/i);
     }
     assert.equal(llamadas, 0);
   } finally { e.dom.window.close(); }
@@ -345,7 +345,7 @@ test('a failure in a later tool leaves the deck and undo stack untouched', async
   try {
     const id = e.run('curSlide().id'), previo = e.run('JSON.stringify(S.deck)'), undo = e.run('S.undo.length');
     e.dom.window.transporteAgente = async () => respuesta('', [llamada('a', 'editar_diapositiva', {diapositiva: id, cambios: {titulo: 'No guardar'}}), llamada('b', 'editar_bloque', {bloque: 'ausente', cambios: {text: 'fallo'}})]);
-    await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Edita')), /bloque/i);
+    await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Edita')), /bloque/i);
     assert.equal(e.run('JSON.stringify(S.deck)'), previo);
     assert.equal(e.run('S.undo.length'), undo);
   } finally { e.dom.window.close(); }
@@ -356,7 +356,7 @@ test('cancellation ignores an eventual response even when the provider does not 
   try {
     let termina; e.dom.window.transporteAgente = () => new Promise(ok => { termina = ok; });
     const previo = e.run('JSON.stringify(S.deck)'), controller = new e.dom.window.AbortController();
-    const p = e.dom.window.ERLEN_AGENTE.conversa({...parametros('Haz cambios'), signal: controller.signal});
+    const p = e.dom.window.TABULA_AGENTE.conversa({...parametros('Haz cambios'), signal: controller.signal});
     await Promise.resolve(); controller.abort();
     termina(respuesta('', [llamada('a', 'editar_diapositiva', {diapositiva: e.run('curSlide().id'), cambios: {titulo: 'Tarde'}})]));
     await assert.rejects(p, /cancel/i);
@@ -375,12 +375,12 @@ test('cancellation keeps the agent busy until the transport finishes cancelling'
         abortoRecibido = true; libera = () => rechaza(new Error('Transporte cancelado'));
       }, {once: true}));
     };
-    const p = e.dom.window.ERLEN_AGENTE.conversa({...parametros('Cambia algo'), signal: ctrl.signal});
+    const p = e.dom.window.TABULA_AGENTE.conversa({...parametros('Cambia algo'), signal: ctrl.signal});
     let completada = false; p.then(() => { completada = true; }, () => { completada = true; });
     await Promise.resolve(); ctrl.abort(); await new Promise(ok => setTimeout(ok, 10));
     assert.equal(abortoRecibido, true);
     assert.equal(completada, false, 'debe esperar a que termine la cancelación del transporte');
-    await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Otra petición')), /en curso/i);
+    await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Otra petición')), /en curso/i);
     assert.equal(llamadas, 1);
     libera();
     await assert.rejects(p, /cancel/i);
@@ -393,7 +393,7 @@ test('a response cannot overwrite an in-place edit made while the model is worki
   try {
     let termina; e.dom.window.transporteAgente = () => new Promise(ok => { termina = ok; });
     const id = e.run('curSlide().id');
-    const p = e.dom.window.ERLEN_AGENTE.conversa(parametros('Cambia el título'));
+    const p = e.dom.window.TABULA_AGENTE.conversa(parametros('Cambia el título'));
     await Promise.resolve();
     e.run("curSlide().title = 'Edición humana'; commit()");
     termina(respuesta('', [llamada('a', 'editar_diapositiva', {diapositiva: id, cambios: {titulo: 'Respuesta tardía'}})]));
@@ -415,7 +415,7 @@ test('locked blocks and scientific source data cannot be changed or deleted', as
       llamada('d', 'eliminar_diapositiva', {diapositiva: e.run('curSlide().id')})
     ]) {
       e.dom.window.transporteAgente = async () => respuesta('', [c]);
-      await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Edita')));
+      await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Edita')));
       assert.equal(e.run('JSON.stringify(S.deck)'), previo);
     }
   } finally { e.dom.window.close(); }
@@ -431,7 +431,7 @@ test('bibliography synchronization cannot remove protected content from an impor
     e.dom.window.transporteAgente=async()=>++n===1
       ? respuesta('',[llamada('a','editar_metadatos',{cambios:{titulo:'Título nuevo'}})])
       : respuesta('Actualizado.');
-    await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Cambia el título')), /protegid/i);
+    await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Cambia el título')), /protegid/i);
     assert.equal(e.run('JSON.stringify(S.deck)'), before);
   } finally { e.dom.window.close(); }
 });
@@ -442,8 +442,8 @@ test('provider context excludes keys, embedded media and paths while retaining p
     e.run(`(()=>{const b=newBlock('image');b.src='data:image/png;base64,ZmFrZQ==';b.caption='/home/persona/imagen.png';curSlide().blocks.push(b);commit()})()`);
     const enviados = [];
     e.dom.window.transporteAgente = async x => { enviados.push(JSON.stringify(x.cuerpo)); return respuesta('Respuesta del modelo'); };
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Primera pregunta'));
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Pregunta siguiente'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Primera pregunta'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Pregunta siguiente'));
     assert.match(enviados[1], /Primera pregunta/);
     assert.match(enviados[1], /Respuesta del modelo/);
     for (const s of enviados) {
@@ -458,7 +458,7 @@ test('the context is bounded even for a slide with many blocks and unusual posit
     e.run(`(()=>{for(let i=0;i<70;i++){const b=newBlock('text');b.text='x'.repeat(2000);b.posLibre={x:0,y:0,w:20,h:20,oculto:'data:image/png;base64,c2VjcmV0'};curSlide().blocks.push(b)}commit()})()`);
     let enviado;
     e.dom.window.transporteAgente = async x => { enviado = x.cuerpo; return respuesta('Respuesta.'); };
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Resume'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Resume'));
     const contexto = enviado.messages.find(m => m.content?.startsWith('Contenido de la presentación'))?.content;
     assert.ok(contexto.length <= 18100, 'el contexto debe tener un límite efectivo');
     assert.doesNotMatch(contexto, /c2VjcmV0|oculto/);
@@ -474,10 +474,10 @@ test('notes are opt-in, including when the model asks to inspect a slide', async
       enviados.push(JSON.stringify(x.cuerpo));
       return ++n === 1 ? respuesta('', [llamada('a', 'ver_diapositiva', {diapositiva: id})]) : respuesta('Entendido.');
     };
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Revisa la diapositiva'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Revisa la diapositiva'));
     assert.ok(enviados.every(x => !x.includes('Nota privada para el orador')));
     enviados.length = 0;
-    await e.dom.window.ERLEN_AGENTE.conversa({...parametros('Puedes leer las notas'), incluirNotas: true});
+    await e.dom.window.TABULA_AGENTE.conversa({...parametros('Puedes leer las notas'), incluirNotas: true});
     assert.ok(enviados.some(x => x.includes('Nota privada para el orador')));
   } finally { e.dom.window.close(); }
 });
@@ -493,13 +493,13 @@ test('unshared existing notes cannot be overwritten or deleted with their slide'
       llamada('c', 'eliminar_diapositiva', {diapositiva: id})
     ]) {
       e.dom.window.transporteAgente = async () => respuesta('', [c]);
-      await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Edita')), /notas/i);
+      await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Edita')), /notas/i);
       assert.equal(e.run('JSON.stringify(S.deck)'), antes);
       assert.equal(e.run('S.undo.length'), undo);
     }
     let n = 0; e.dom.window.transporteAgente = async () => ++n === 1
       ? respuesta('', [llamada('a', 'editar_diapositiva', {diapositiva: id, cambios: {notas: 'Nota revisada'}})]) : respuesta('Actualizada.');
-    await e.dom.window.ERLEN_AGENTE.conversa({...parametros('Revisa las notas'), incluirNotas: true});
+    await e.dom.window.TABULA_AGENTE.conversa({...parametros('Revisa las notas'), incluirNotas: true});
     assert.equal(e.run('curSlide().notes'), 'Nota revisada');
   } finally { e.dom.window.close(); }
 });
@@ -522,13 +522,13 @@ test('existing citation marks and reference blocks survive edits and deletions',
       llamada('f', 'eliminar_diapositiva', {diapositiva: slide})
     ]) {
       e.dom.window.transporteAgente = async () => respuesta('', [c]);
-      await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Edita')), /cita|referencia/i);
+      await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Edita')), /cita|referencia/i);
       assert.equal(e.run('JSON.stringify(S.deck)'), antes);
       assert.equal(e.run('S.undo.length'), undo);
     }
     let n = 0; e.dom.window.transporteAgente = async () => ++n === 1
       ? respuesta('', [llamada('a', 'editar_bloque', {bloque, cambios: {text: 'Revisado [@A; @B] y otro [@A]'}})]) : respuesta('Revisado.');
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Reescribe conservando las citas'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Reescribe conservando las citas'));
     assert.equal(e.run('findBlock(__citado).block.text'), 'Revisado [@A; @B] y otro [@A]');
   } finally { e.dom.window.close(); }
 });
@@ -543,7 +543,7 @@ test('slide and block citation links cannot be removed by deleting their contain
       llamada('b', 'eliminar_diapositiva', {diapositiva: slide})
     ]) {
       e.dom.window.transporteAgente = async () => respuesta('', [c]);
-      await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Elimina')), /cita|referencia/i);
+      await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Elimina')), /cita|referencia/i);
       assert.equal(e.run('JSON.stringify(S.deck)'), antes);
     }
   } finally { e.dom.window.close(); }
@@ -556,7 +556,7 @@ test('an unrelated edit cannot indirectly delete an automatic reference slide', 
     const antes = e.run('JSON.stringify(S.deck)'), slide = e.run('curSlide().id'), undo = e.run('S.undo.length');
     let n = 0; e.dom.window.transporteAgente = async () => ++n === 1
       ? respuesta('', [llamada('a', 'editar_diapositiva', {diapositiva: slide, cambios: {titulo: 'Otro título'}})]) : respuesta('Editado.');
-    await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Cambia el título')), /referencia|notas/i);
+    await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Cambia el título')), /referencia|notas/i);
     assert.equal(e.run('JSON.stringify(S.deck)'), antes);
     assert.equal(e.run('S.undo.length'), undo);
   } finally { e.dom.window.close(); }
@@ -570,7 +570,7 @@ test('the session key in a model tool argument never reaches the deck or autosav
       llamada('a', 'editar_diapositiva', {diapositiva: id, cambios: {titulo: 'No guardar'}}),
       llamada('b', 'agregar_bloque', {diapositiva: id, bloque: {tipo: 'text', text: 'La clave es clave-de-sesion'}})
     ]);
-    await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Agrega texto')), /clave/i);
+    await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Agrega texto')), /clave/i);
     assert.equal(e.run('JSON.stringify(S.deck)'), antes);
     assert.doesNotMatch(JSON.stringify({...e.dom.window.localStorage}), /clave-de-sesion/);
   } finally { e.dom.window.close(); }
@@ -584,7 +584,7 @@ test('truncated and filtered model responses never commit a staged edit', async 
       let n = 0; e.dom.window.transporteAgente = async () => ++n === 1
         ? respuesta('', [llamada('a', 'editar_diapositiva', {diapositiva: id, cambios: {titulo: 'No guardar'}})])
         : {choices: [{finish_reason, message: {role: 'assistant', content: 'Respuesta incompleta'}}]};
-      await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Edita')), /incompleta|truncad|filtrad/i);
+      await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Edita')), /incompleta|truncad|filtrad/i);
       assert.equal(e.run('JSON.stringify(S.deck)'), antes);
       assert.equal(e.run('S.undo.length'), undo);
     }
@@ -602,7 +602,7 @@ test('tool results sent to the model remove paths, embedded media and the sessio
       enviados.push(JSON.stringify(x.cuerpo));
       return ++n === 1 ? respuesta('', [llamada('a', 'eliminar_diapositiva', {diapositiva: id})]) : respuesta('Eliminada.');
     };
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Elimina la diapositiva'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Elimina la diapositiva'));
     assert.equal(enviados.length, 2);
     for (const cuerpo of enviados) assert.doesNotMatch(cuerpo, /\/home\/persona\/privado\.csv|privado\.example\.com|c2VjcmV0|clave-de-sesion/);
     const tool = JSON.parse(enviados[1]).messages.find(m => m.role === 'tool');
@@ -619,7 +619,7 @@ test('cleaning tool messages keeps legitimate IDs that resemble hostnames', asyn
       enviados.push(JSON.stringify(x.cuerpo));
       return ++n === 1 ? respuesta('', [llamada('a', 'editar_diapositiva', {diapositiva: 'slide.ejemplo', cambios: {titulo: 'Actualizada'}})]) : respuesta('Hecho.');
     };
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Cambia el título'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Cambia el título'));
     const assistant = JSON.parse(enviados[1]).messages.find(m => m.role === 'assistant' && m.tool_calls);
     assert.equal(JSON.parse(assistant.tool_calls[0].function.arguments).diapositiva, 'slide.ejemplo');
   } finally { e.dom.window.close(); }
@@ -630,11 +630,11 @@ test('chat history is isolated by document and provider configuration', async ()
   try {
     const enviados = [];
     e.dom.window.transporteAgente = async x => { enviados.push(JSON.stringify(x.cuerpo)); return respuesta('Respuesta anterior'); };
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Mensaje de la primera conversación'));
-    await e.dom.window.ERLEN_AGENTE.conversa({...parametros('Nuevo proveedor'), url: 'https://ejemplo.test/chat/completions'});
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Mensaje de la primera conversación'));
+    await e.dom.window.TABULA_AGENTE.conversa({...parametros('Nuevo proveedor'), url: 'https://ejemplo.test/chat/completions'});
     assert.doesNotMatch(enviados[1], /Mensaje de la primera conversación/);
     e.run("wsNueva(); addSlide('content')");
-    await e.dom.window.ERLEN_AGENTE.conversa({...parametros('Otro documento'), url: 'https://ejemplo.test/chat/completions'});
+    await e.dom.window.TABULA_AGENTE.conversa({...parametros('Otro documento'), url: 'https://ejemplo.test/chat/completions'});
     assert.doesNotMatch(enviados[2], /Nuevo proveedor|Respuesta anterior/);
   } finally { e.dom.window.close(); }
 });
@@ -645,10 +645,10 @@ test('free canvas positioning accepts only valid numeric contained geometry and 
     e.run("curSlide().lienzoLibre=true; addBlockToSlide('text',1)");
     const id = e.run('S.selBlock'), previo = e.run('JSON.stringify(S.deck)');
     e.dom.window.transporteAgente = async () => respuesta('', [llamada('a', 'posicionar_bloque', {bloque: id, posicion: {x: '2', y: 2, w: 20, h: 20}})]);
-    await assert.rejects(e.dom.window.ERLEN_AGENTE.conversa(parametros('Mueve el bloque')), /posici[oó]n|n[uú]mero/i);
+    await assert.rejects(e.dom.window.TABULA_AGENTE.conversa(parametros('Mueve el bloque')), /posici[oó]n|n[uú]mero/i);
     assert.equal(e.run('JSON.stringify(S.deck)'), previo);
     let n = 0; e.dom.window.transporteAgente = async () => ++n === 1 ? respuesta('', [llamada('a', 'posicionar_bloque', {bloque: id, posicion: {x: 2.345, y: 3, w: 30, h: 20}})]) : respuesta('Movido.');
-    await e.dom.window.ERLEN_AGENTE.conversa(parametros('Mueve el bloque'));
+    await e.dom.window.TABULA_AGENTE.conversa(parametros('Mueve el bloque'));
     assert.equal(e.run('findBlock(S.selBlock).block.posLibre.x'), 2.35);
     e.run('doUndo()');
     assert.equal(e.run('JSON.stringify(S.deck)'), previo);

@@ -1,5 +1,5 @@
 % ===================================================================
-%  Generado por Tabula
+%  Generado por Lámina
 %  Compílalo en Overleaf, o localmente con dos pasadas de pdflatex.
 % ===================================================================
 \documentclass[aspectratio=169,11pt]{beamer}
@@ -13,8 +13,8 @@
 \IfFileExists{spanish.ldf}{\usepackage[spanish,es-nodecimaldot]{babel}}{}
 \usepackage{amsmath,amssymb}
 \usepackage[version=4]{mhchem}
-\definecolor{erlenfondo}{HTML}{FFFFFF}
-\definecolor{erlenacento}{HTML}{235E8C}
+\definecolor{tabulafondo}{HTML}{FFFFFF}
+\definecolor{tabulaacento}{HTML}{235E8C}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, calc}
 \usepackage{pgfplots}
@@ -31,7 +31,7 @@
 \sisetup{per-mode=symbol, range-units=single}
 \setbeamertemplate{navigation symbols}{}
 % Algunos temas (Metropolis entre ellos) insertan solos una diapositiva al
-% empezar cada sección. Tabula ya emite la suya, así que se desactiva la
+% empezar cada sección. Lámina ya emite la suya, así que se desactiva la
 % automática: de otro modo cada sección saldría dos veces y la numeración
 % del PDF dejaría de coincidir con la de la app.
 \AtBeginSection{}
@@ -119,7 +119,7 @@
         (0,0.01) (1,0.13) (2,0.25) (3,0.37) (4,0.49) 
         };
         \addplot[serieA, line width=.9pt, mark=none, forget plot] coordinates {(0,0.01) (4,0.49)};
-        \node[anchor=north west, align=left, font=\footnotesize, fill=erlenfondo, fill opacity=0.72, text opacity=1, inner sep=2pt] at (rel axis cs:0.03,0.97) {$y = 0.12\,x + 0.01$ \quad $R^{2} = 1.0000$};
+        \node[anchor=north west, align=left, font=\footnotesize, fill=tabulafondo, fill opacity=0.72, text opacity=1, inner sep=2pt] at (rel axis cs:0.03,0.97) {$y = 0.12\,x + 0.01$ \quad $R^{2} = 1.0000$};
       \end{axis}
     \end{tikzpicture}
     \caption{Datos ilustrativos para explicar el método; sustituir por mediciones propias.}
