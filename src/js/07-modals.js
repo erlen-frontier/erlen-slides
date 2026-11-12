@@ -482,6 +482,7 @@ function newDeckFlow(demo) {
   return true;
 }
 function loadDeck(deck, name, confirmado = false) {
+  quitaGuiaEjemplo();
   if (S.deck) { if (typeof hayEscritorio === 'function' && hayEscritorio()) terminaEdicionArchivo(); else flushEdicion(); recActual(true); }
   if (!confirmado && typeof confirmaCambioArchivo === 'function' && !confirmaCambioArchivo()) return false;
   if (typeof hayEscritorio === 'function' && hayEscritorio() && archivoEscritorioPendiente() && !wsConservar()) return false;

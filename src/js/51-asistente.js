@@ -194,6 +194,18 @@ accion({ id: 'datos-instrumento', grp: 'Insertar', n: 'Traer datos de un instrum
   clave: 'datos instrumento drx ftir tga raman uv',
   frases: 'datos instrumento drx dxr difraccion ftir infrarrojo uv vis tga raman voltamperometria csv importar medicion',
   corre: () => { const b = nuevoBloqueEn('chart', {}); if (!b) return null; commit(); openChartEditor(b); return 'Pega los datos o suelta el archivo: reconozco la técnica y pongo los ejes.'; } });
+/* Gráfica seleccionada en esta diapositiva; null si la selección no es una gráfica. */
+function asisGraficaSeleccionada() {
+  const f = S.selBlock && findBlock(S.selBlock);
+  return f && f.slide === curSlide() && f.block.type === 'chart' ? f.block : null;
+}
+accion({ id: 'analizar-serie', grp: 'Datos', n: 'Analizar la serie de una gráfica',
+  d: 'Ajuste lineal con su error, pico y anchura, Scherrer o banda prohibida por Tauc, sobre la gráfica seleccionada.',
+  donde: 'Selecciona la gráfica y pulsa σ Analizar la serie en la barra contextual',
+  clave: 'analizar serie grafica tauc scherrer banda prohibida cristalita pico anchura ajuste lineal error',
+  frases: 'analizar serie grafica tauc scherrer banda prohibida tamaño cristalita pico anchura fwhm ajuste lineal pendiente error',
+  req: () => { const b = asisGraficaSeleccionada(); return !!b && !b.locked; },
+  corre: () => { const b = asisGraficaSeleccionada(); if (!b) return null; openAnalisis(b); return 'Abro el análisis de la serie. Elige el método y revisa el tramo antes de dar un valor.'; } });
 accion({ id: 'escala', grp: 'Insertar', n: 'Poner barra de escala a una micrografía',
   d: 'Añade la barra de escala calibrada sobre una imagen de microscopía.',
   clave: 'escala micrografia',

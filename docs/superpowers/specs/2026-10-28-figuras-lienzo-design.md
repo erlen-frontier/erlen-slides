@@ -1,5 +1,7 @@
 # Catálogo científico de Figures en el lienzo de Tabula
 
+> Especificación histórica del 28 de octubre de 2026. Sus decisiones, cifras, referencias a Suite y criterios de verificación describen el diseño original, no una lista vigente de pendientes ni una garantía de implementación o validación actual. Contrasta cualquier trabajo con el código, las decisiones posteriores, la documentación vigente y [AGENTS.md](../../../AGENTS.md), cuyas reglas prevalecen. Las comprobaciones son locales cuando el entorno lo permite y se declaran resultados y omisiones, sin presuponer CI ni revisión garantizada. Esta edición conserva los requisitos originales; no ejecuta tareas, aprueba decisiones nuevas ni certifica resultados.
+
 ## Objetivo
 
 Poner las 1000 piezas del catálogo de Erlen Figures 0.21.0 a disposición de cada diapositiva de Tabula, para buscarlas e insertarlas como objetos independientes del lienzo libre. La presentación continúa siendo local, funciona sin conexión y conserva JSON v1.

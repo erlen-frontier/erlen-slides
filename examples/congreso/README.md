@@ -8,7 +8,7 @@ Una charla breve con un mensaje, una figura y una limitación.
 
 ¿Qué resultado concreto debe recordar la audiencia?
 
-1. Inicia Tabula y abre «Ejemplos editables → Comunicación de congreso», o importa [proyecto.json](proyecto.json).
+1. Inicia Lámina y abre «Ejemplos editables → Comunicación de congreso», o importa [proyecto.json](proyecto.json).
 2. Recorre las seis diapositivas: pregunta, estrategia, evidencia, límites y comprobaciones.
 3. Sustituye mediciones y metadatos por los de tu investigación; revisa unidades, controles e incertidumbre.
 4. Edita los bloques desde el panel derecho. Las tablas, ecuaciones y datos de las gráficas siguen siendo editables.
@@ -22,7 +22,7 @@ Una charla breve con un mensaje, una figura y una limitación.
 
 ## Archivos
 
-- [Proyecto editable](proyecto.json): proyecto JSON v1 de Tabula.
+- [Proyecto editable](proyecto.json): proyecto JSON v1 de Lámina.
 - [Fuente Beamer](presentacion.tex): generado por el exportador; requiere una instalación de LaTeX. Su compilación no forma parte de la validación de esta versión.
 
 Licencia de los ejemplos: AGPL-3.0-only. No hay referencias bibliográficas inventadas.

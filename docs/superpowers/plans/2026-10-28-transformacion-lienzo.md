@@ -1,5 +1,7 @@
 # Precise slide canvas transformations
 
+> Historical plan dated 28 October 2026. Preserved as design and implementation background, not as a current backlog or evidence of implementation or validation of the current code. Before resuming a task, check it against the code, subsequent decisions and [AGENTS.md](../../../AGENTS.md); its current rules take precedence over this plan's original instructions. Run checks locally when the environment permits and report results and omissions; do not assume CI or guaranteed code review. This documentation edit performs no implementation tasks, approves no product decisions and certifies no new results.
+
 **Goal:** Rotate and flip figures and preserve aspect ratios while retaining the existing precise free-canvas controls and JSON v1 data.
 
 **Architecture:** Keep layout boxes in `posLibre`; add validated optional aspect-lock and image-orientation metadata. Transform the image wrapper and its annotations, leaving captions and editor controls upright. PowerPoint uses real image transforms where possible and a faithful rasterized wrapper for complex figures; Beamer carries the same orientation. Existing selection, undo and provenance remain authoritative.

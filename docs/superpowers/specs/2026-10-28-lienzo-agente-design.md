@@ -1,5 +1,7 @@
 # Tabula: lienzo libre y agente integrado
 
+> Especificación histórica del 28 de octubre de 2026. Sus decisiones, cifras, referencias a Suite y criterios de verificación describen el diseño original, no una lista vigente de pendientes ni una garantía de implementación o validación actual. Contrasta cualquier trabajo con el código, las decisiones posteriores, la documentación vigente y [AGENTS.md](../../../AGENTS.md), cuyas reglas prevalecen. Las comprobaciones son locales cuando el entorno lo permite y se declaran resultados y omisiones, sin presuponer CI ni revisión garantizada. Esta edición conserva los requisitos originales; no ejecuta tareas, aprueba decisiones nuevas ni certifica resultados.
+
 ## Objetivo
 
 Permitir componer diapositivas colocando sus bloques libremente y conversar con un modelo de IA que pueda proponer y realizar cambios en la presentación abierta. Linux/Tauri es prioritario; conservar las capacidades y archivos anteriores.

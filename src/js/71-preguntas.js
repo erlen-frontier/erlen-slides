@@ -10,9 +10,10 @@
    ve en tus diapositivas, y por eso se dicen como sugerencias. */
 
 const PREG_TECNICA = {
-  drx: ['¿Con qué patrón se calibró el difractómetro y cuál es la incertidumbre en 2θ?', '¿Cómo descartó orientación preferencial o textura en la muestra?', '¿Refinó por Rietveld? ¿Qué valores de χ² y R_wp obtuvo?'],
+  xrd: ['¿Con qué patrón se calibró el difractómetro y cuál es la incertidumbre en 2θ?', '¿Cómo descartó orientación preferencial o textura en la muestra?', '¿Refinó por Rietveld? ¿Qué valores de χ² y R_wp obtuvo?'],
   ftir: ['¿Se midió en ATR o en pastilla de KBr, y cómo afecta eso a las bandas?', '¿Cómo asignó cada banda: por literatura o por cálculo?'],
   uvvis: ['¿Cómo determinó la banda prohibida: por Tauc directo o indirecto, y por qué?', '¿Corrigió la dispersión (Kubelka-Munk) si midió reflectancia?'],
+  'uvvis-dr': ['¿Cómo pasó la reflectancia a absorción para la banda prohibida: con Kubelka–Munk? ¿Qué tramo ajustó?'],
   tga: ['¿En qué atmósfera y con qué rampa de calentamiento midió?', '¿La pérdida de masa corresponde a qué especie, y cómo lo confirmó?'],
   raman: ['¿Qué láser y qué potencia usó, y descartó calentamiento local?', '¿Cómo distingue los modos de la muestra de los del sustrato?'],
   cv: ['¿Qué electrodo de referencia y qué velocidad de barrido usó?', '¿El proceso es reversible? ¿Qué separación de picos obtuvo?']

@@ -3,7 +3,7 @@
 Mucha gente escribe la charla primero como texto: un esquema en sus notas, un README, lo que le devuelve un asistente. Esta extensión lo convierte en una presentación de una vez y hace también el camino inverso.
 
 - `importar_markdown` crea un proyecto desde un guion en Markdown con los bloques reales del editor: viñetas, texto, ecuaciones, reacciones, código, tablas, imágenes, citas, notas del orador y minutos. Todo entra en una sola operación (si algo falla, no se escribe nada) y lo que no tiene equivalente en la app se avisa, con su número de línea, en vez de desaparecer.
-- `exportar_presentacion` con `formato: "markdown"` escribe el proyecto como Markdown. Sirve de borrador del guion del orador y se puede editar como texto y volver a importar: los bloques que admite el formato vuelven iguales.
+- `exportar_presentacion` con `formato: "markdown"` escribe el proyecto como Markdown. Sirve de borrador del guion del orador y se puede editar como texto y volver a importar, dentro de los límites descritos abajo. Conserva el proyecto JSON para las propiedades que Markdown no representa.
 
 El código está en `mcp/extensiones/markdown.mjs` y las pruebas en `tests/mcp-markdown.test.mjs`. El analizador es propio y pequeño: no añade dependencias.
 
@@ -47,7 +47,7 @@ La respuesta trae el esquema resultante (diseño, título, número de bloques, m
 
 Cualquier otro comentario HTML se ignora: es del autor, no contenido. Una directiva `<!-- clave: … -->` con una clave desconocida sí se avisa.
 
-La app no tiene negrita, cursiva, tachado, código en línea ni enlaces en el texto: se quitan las marcas y se avisa (un enlace queda como «texto (url)»). Para escribir esos caracteres tal cual, fuera de `$…$`, se escapan: `\*`, `\_`, `` \` ``, `\[`, `\~` y `\\`. El HTML, las notas al pie `[^1]`, las imágenes dentro de un párrafo y los bloques `::: otro` también se avisan. `Notas:` y `Nota:` al principio de una línea siempre abren notas del orador; si un párrafo tiene que empezar así, escríbelo con `\` delante.
+El importador Markdown de esta extensión elimina las marcas de negrita, cursiva, tachado y código en línea con aviso; los enlaces quedan como «texto (url)». Esta limitación del importador no significa que el editor carezca de negrita o cursiva. Para escribir esos caracteres tal cual, fuera de `$…$`, se escapan: `\*`, `\_`, `` \` ``, `\[`, `\~` y `\\`. El HTML, las notas al pie `[^1]`, las imágenes dentro de un párrafo y los bloques `::: otro` también se avisan. `Notas:` y `Nota:` al principio de una línea siempre abren notas del orador; si un párrafo tiene que empezar así, escríbelo con `\` delante.
 
 Los errores dicen la línea del Markdown: una imagen que no existe, una ruta fuera de la carpeta de trabajo (`../`), un diseño o un tema desconocidos. En ese caso no se escribe nada.
 
@@ -63,7 +63,7 @@ La segunda línea tras la cabecera es un comentario que marca el archivo como ex
 
 Lo que no tiene equivalente se dice en `avisos` y no se pierde del proyecto: las gráficas, estructuras, SmartArt, montajes y demás bloques quedan como un comentario `<!-- bloque «chart» (pie: …) sin equivalente en Markdown -->`; las referencias, las citas por diapositiva, la alineación centrada y el tamaño pequeño del texto, los espaciadores y la aparición paso a paso de las viñetas no se exportan. Una tabla sin fila de encabezado sale con la primera fila como encabezado. En Markdown el nivel de una viñeta depende de la anterior: una lista que empieza sangrada o salta un nivel se avisa, porque al volver a importarla cada viñeta queda como mucho un nivel por debajo de la anterior.
 
-La ida y vuelta está probada: un proyecto con texto, viñetas, ecuaciones, reacciones, código, tablas, imágenes, citas, notas, minutos, secciones, columnas y diseños con encabezados, exportado a Markdown e importado de nuevo, da el mismo proyecto (salvo los id internos) y vuelve a exportarse al mismo Markdown.
+La comprobación de ida y vuelta descrita para `tests/mcp-markdown.test.mjs` usa un proyecto con texto, viñetas, ecuaciones, reacciones, código, tablas, imágenes, citas, notas, minutos, secciones, columnas y diseños con encabezados: compara el proyecto reimportado (salvo los id internos) y el Markdown reexportado. Su alcance es ese caso y los elementos admitidos, no todas las propiedades de cualquier proyecto actual. Esta corrección documental no ejecuta la prueba ni certifica su resultado actual; conserva el JSON como copia de trabajo completa.
 
 ## Ejemplo completo
 

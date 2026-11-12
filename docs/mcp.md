@@ -2,7 +2,11 @@
 
 Lámina incluye un servidor [MCP](https://modelcontextprotocol.io) (Model Context Protocol). Con él, un asistente de IA —Claude Desktop, Claude Code u otro cliente MCP— puede crear, editar, revisar y exportar presentaciones con **el mismo motor que el editor**: los bloques se construyen con `newBlock`, los proyectos se validan con `saneaDeck`, la revisión es la del panel de calidad científica y el `.tex` sale de `toBeamer`. El resultado es un proyecto JSON v1 normal, que después se abre en el editor para seguir a mano.
 
-El servidor corre en tu máquina, por stdio. No abre puertos a la red (la vista previa y `abrir_en_editor` escuchan solo en `127.0.0.1`), no envía nada a Internet y solo lee y escribe dentro de su carpeta de trabajo.
+El servidor corre en tu máquina, por stdio. La vista previa y `abrir_en_editor` escuchan solo en `127.0.0.1`, sin exponerse a otras máquinas; los archivos de proyecto, datos y exportaciones se leen y escriben dentro de su carpeta de trabajo.
+
+El funcionamiento es local por defecto. La consulta `completar_por_doi` de la [extensión bibliográfica](mcp-extensiones/bibliografia.md) puede enviar un DOI a Crossref para recuperar metadatos, pero está desactivada salvo que habilites `ERLEN_SLIDES_RED=1` en el servidor. Si configuras `ERLEN_SLIDES_CORREO`, ese correo también se incluye en la identificación de la petición.
+
+La ejecución local del servidor MCP no garantiza que el cliente de IA funcione sin conexión ni que mantenga los datos en tu equipo. El cliente puede enviar al proveedor de IA los mensajes y los resultados de las herramientas que use; revisa su configuración y política de privacidad antes de trabajar con información sensible.
 
 ## Instalar
 
@@ -78,7 +82,7 @@ La ruta completa de Node la da `node -p process.execPath`. En Windows usa rutas 
 | Herramienta | Para qué |
 |---|---|
 | `guia_formato` | Diseños de diapositiva, temas, tipos de bloque con sus propiedades y convenciones (TeX, mhchem, datos). |
-| `listar_presentaciones`, `listar_ejemplos` | Los proyectos de la carpeta, del más reciente al más antiguo, y los doce ejemplos editables. |
+| `listar_presentaciones`, `listar_ejemplos` | Los proyectos de la carpeta, del más reciente al más antiguo, y los trece ejemplos editables. |
 | `crear_presentacion` | Proyecto nuevo con portada y, si se quiere, todas sus diapositivas en una sola llamada; o copia de un ejemplo. |
 | `ver_presentacion` | Esquema con el id de cada bloque; una diapositiva completa; o el proyecto entero. Las imágenes incrustadas se resumen en su tipo y tamaño. |
 | `editar_metadatos` | Título, autores, institución, fecha, tema, aspecto, acento, tipografía. |
@@ -124,7 +128,7 @@ Un bloque de gráfica puede leer directamente el archivo que exporta el equipo:
 ```
 
 - Se usa la misma lectura que al soltar un archivo en el editor: detecta separador (tabulador, `;`, `,` o espacios), coma decimal y encabezados.
-- Reconoce la técnica por el nombre y el intervalo de los datos (XRD, FTIR, UV-Vis, TGA, Raman, voltamperometría, fotoluminiscencia) y rotula los ejes con sus unidades; el FTIR sale con el eje invertido. `tecnica` la fuerza si se equivoca.
+- Reconoce la técnica por el nombre y el intervalo de los datos (XRD, FTIR, UV-Vis, UV-Vis de reflectancia difusa si el nombre dice «reflectancia» o «DRS», TGA, Raman, voltamperometría, fotoluminiscencia) y rotula los ejes con sus unidades; el FTIR sale con el eje invertido. `tecnica` la fuerza si se equivoca.
 - `columnas` elige cuáles usar (`[1, 3]`: x y la tercera columna, contando desde 1).
 - Por encima de 1500 puntos (`max_puntos`) se submuestrea con el mínimo y el máximo de cada intervalo: **cada pico conserva su posición y su intensidad exactas**. La respuesta dice cuántas filas tenía el archivo y cuántas se guardaron.
 - La gráfica registra su procedencia (archivo, fecha, filas y huella SHA-256), igual que en el editor. Si después alguien cambia los datos a mano, la procedencia se retira y se avisa: no se atribuye al archivo lo que ya no viene de él.

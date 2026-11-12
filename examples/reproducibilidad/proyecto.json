@@ -4,7 +4,7 @@
     "title": "Análisis reproducible",
     "short": "Análisis reproducible",
     "subtitle": "Ejemplo didáctico · datos ilustrativos",
-    "authors": "",
+    "authors": "Autoría del ejemplo",
     "institute": "",
     "date": "",
     "theme": "metropolis",
@@ -54,7 +54,7 @@
           "type": "smart",
           "kind": "proceso",
           "w": 95,
-          "caption": "",
+          "caption": "Orden del método: cada paso prepara el siguiente.",
           "anim": "fade",
           "items": [
             {
@@ -89,7 +89,7 @@
         {
           "id": "example-reproducibilidad-9",
           "type": "text",
-          "text": "El bloque muestra código; Tabula no lo ejecuta.",
+          "text": "El bloque muestra código; Lámina no lo ejecuta.",
           "size": "s",
           "align": "left"
         }

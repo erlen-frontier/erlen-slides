@@ -108,7 +108,38 @@ function wsDuplicar(n) {
   if (!lsSet(LS_DECKS, store)) throw new Error('no hay espacio en este navegador. Descarga un respaldo antes de continuar.');
   toast('Copia creada: «' + nombre + '».');
 }
-/* Los doce ejemplos (87-ejemplos.js), con su disciplina y una fórmula o idea como arte. */
+/* Guía de un ejemplo recién abierto: una franja descartable con tres salidas.
+   Cerrarla con ✕ recuerda la decisión en este navegador (lsGet/lsSet ya protegen el acceso). */
+const GUIA_EJEMPLO_CLAVE = 'erlen-slides.guia-ejemplo';
+function quitaGuiaEjemplo() { document.querySelectorAll('.guia-ejemplo').forEach(el => el.remove()); }
+function primeraGrafica() {
+  for (let i = 0; i < S.deck.slides.length; i++) {
+    const b = zonas(S.deck.slides[i]).flat().find(x => x && x.type === 'chart');
+    if (b) return { b, i };
+  }
+  return null;
+}
+function muestraGuiaEjemplo() {
+  quitaGuiaEjemplo();
+  if (lsGet(GUIA_EJEMPLO_CLAVE, {}).cerrada) return;
+  const cerrar = () => { lsSet(GUIA_EJEMPLO_CLAVE, { cerrada: true }); quitaGuiaEjemplo(); };
+  const cambiarDatos = () => {
+    const g = primeraGrafica();
+    if (!g) { toast('Esta presentación no tiene gráficas que cambiar.'); return; }
+    S.cur = g.i; S.selBlock = g.b.id; renderAll(); openChartEditor(g.b);
+  };
+  const guia = h('div', { class: 'guia-ejemplo', role: 'region', 'aria-label': 'Guía del ejemplo' },
+    h('span', { class: 'guia-texto' }, 'Ejemplo didáctico: los datos son ilustrativos. Sustitúyelos por los de tu trabajo.'),
+    h('span', { class: 'guia-acciones' },
+      h('button', { class: 'btn btn-sm', onclick: cambiarDatos }, 'Cambiar datos'),
+      h('button', { class: 'btn btn-sm', onclick: () => openRevision() }, 'Ver revisión'),
+      h('button', { class: 'btn btn-sm btn-pri', onclick: () => startPresent(false) }, 'Presentar')),
+    h('button', { class: 'icon-btn guia-cerrar', 'aria-label': 'Cerrar la guía y no volver a mostrarla', title: 'Cerrar la guía', onclick: cerrar }, '✕'));
+  const lienzo = document.querySelector('.canvas-wrap');
+  if (lienzo) lienzo.prepend(guia);
+}
+
+/* Los trece ejemplos (87-ejemplos.js), con su disciplina y una fórmula o idea como arte. */
 const WS_ARTE = {
   calibracion: ['Química analítica', 'A = εlc'],
   cinetica: ['Cinética', 'c(t) = c₀e⁻ᵏᵗ'],
@@ -321,8 +352,9 @@ function wsInit() {
   const abrir=params.get('abrir');
   if(params.has('plantilla')||params.has('abrir')){const url=new URL(location.href);url.searchParams.delete('plantilla');url.searchParams.delete('abrir');history.replaceState(null,'',url.pathname+url.search+url.hash);}
   if(plantilla){
-    if(wsConservar() && loadDeck(plantilla.build(),null)){toast('Ejemplo didáctico: sustituye los datos por los de tu trabajo.');}
+    const cargada = wsConservar() && loadDeck(plantilla.build(),null);
     wsCerrar();
+    if(cargada && EJEMPLOS.some(e=>e.id===plantilla.id)) muestraGuiaEjemplo();
   } else {
     wsDesdeUrl();
     if(solicitado&&wsAbierto())INICIO.avisar('No existe el ejemplo «'+solicitado.slice(0,60)+'». Elige un punto de partida en la colección de inicio.',{error:true});

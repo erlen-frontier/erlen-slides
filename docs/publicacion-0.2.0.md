@@ -1,4 +1,6 @@
-# Notas de la versión 0.2.0
+# Notas históricas de Erlen Slides 0.2.0
+
+> Documento histórico, no guía de la versión actual de Tabula ni confirmación del estado de las releases disponibles. El contenido siguiente describe la distribución de entonces; sus cifras, resultados y limitaciones no validan el código actual. Se conserva como antecedente técnico, sin nuevas ejecuciones de pruebas. Para el funcionamiento actual consulta el [README](../README.md) y el [manual](uso.md); para publicar, sigue el [proceso vigente](publicacion.md).
 
 Segunda publicación de **Erlen Slides**, bajo AGPL-3.0-only. Sigue siendo local:
 sin cuentas, sin servidor y sin telemetría.
@@ -48,13 +50,15 @@ el archivo con un lector OOXML independiente y con LibreOffice Impress:
   motor y editor, con **una sola tabla de decisiones que leen la pantalla y el
   PDF**: donde había dos copias, ya habían divergido.
 
-## Comprobado
+## Comprobaciones registradas entonces
 
 73 pruebas automáticas (eran 37 en 0.1.0), build reproducible, los 12 ejemplos se
 regeneran idénticos y el ZIP publicado tiene el mismo sha256 en dos compilaciones.
 Los paquetes de PowerPoint se abrieron con python-pptx y se convirtieron a PDF con
 LibreOffice Impress sin ninguna diapositiva en blanco.
 
-`docs/validacion.md` detalla el alcance y los límites. Los que siguen en pie: el
-`.tex` no se ha compilado con una distribución LaTeX, el `.pptx` no se ha abierto
-en Microsoft PowerPoint, y todos los datos de los ejemplos son ilustrativos.
+El [registro histórico de validaciones](validacion.md) detalla el alcance y los límites.
+En aquella comprobación, el `.tex` no se había compilado con una distribución LaTeX
+y el `.pptx` no se había abierto en Microsoft PowerPoint. Todos los datos de los
+ejemplos eran ilustrativos. Estas notas no certifican que las comprobaciones se
+hayan repetido ni que aquellos límites describan por completo la versión actual.

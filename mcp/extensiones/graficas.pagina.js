@@ -70,7 +70,7 @@
   const lista = xs => xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' y ' + xs[xs.length - 1];
 
   /* ---------- comparar espectros ---------- */
-  const SUSTANTIVO = { xrd: 'Difractogramas de rayos X', ftir: 'Espectros FTIR', raman: 'Espectros Raman', uvvis: 'Espectros UV-Vis',
+  const SUSTANTIVO = { xrd: 'Difractogramas de rayos X', ftir: 'Espectros FTIR', raman: 'Espectros Raman', uvvis: 'Espectros UV-Vis', 'uvvis-dr': 'Espectros UV-Vis de reflectancia difusa',
     pl: 'Espectros de fotoluminiscencia', tga: 'Termogramas (TGA)', cv: 'Voltamperogramas' };
 
   TABULA_MCP.registra('graficasCompara', a => {

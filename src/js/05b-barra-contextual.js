@@ -134,6 +134,11 @@ function actualizaBarraContextual(bar, ctx) {
   }
   const dup = bar.querySelector('[data-barra-accion="duplicar"]');
   if (dup) dup.setAttribute('aria-label', 'Duplicar ' + (idsSeleccionados().size > 1 ? 'selección' : 'bloque'));
+  const analizar = bar.querySelector('[data-barra-accion="analizar"]');
+  if (analizar) {
+    analizar.hidden = ctx.ids.length !== 1;
+    analizar.disabled = ctx.bloqueos.some(Boolean);
+  }
   for (const input of bar.querySelectorAll('input[type="color"]')) {
     const valor = b.figura?.objects?.[0]?.[input.dataset.color];
     if (/^#[\da-f]{6}$/i.test(valor || '') && document.activeElement !== input) input.value = valor;
@@ -217,7 +222,15 @@ function pintaBarraContextual() {
     btn(g, icono('ArrowRightToLine', '⇥'), 'Mover a otra diapositiva o zona…', 'mover', () => openMoverBloque(b));
     btn(g, icono('Settings2', '⚙'), 'Efectos, pasos y velocidad en Propiedades', 'propiedades', () => abrePanelLateral('bloque'));
   }
-  const g = grupo(), sufijo = idsSeleccionados().size > 1 ? 'selección' : 'bloque';
+  /* El análisis sigue la selección vigente aunque se reutilice la barra. */
+  if (b.type === 'chart') {
+    const gc = grupo();
+    btn(gc,icono('Sigma','σ'),'Analizar la serie','analizar',() => {
+      const actual = contextoBarra();
+      if (actual && actual.ids.length === 1 && actual.b.type === 'chart' && !actual.b.locked) openAnalisis(actual.b);
+    },{disabled:bloqueada});
+  }
+  const g = grupo(), sufijo = varias ? 'selección' : 'bloque';
   btn(g,icono('CopyPlus','⧉'),'Duplicar '+sufijo,'duplicar',duplicarSeleccionActiva,{disabled:bloqueada});
   if (ctx.slide.lienzoLibre) {
     btn(g,icono('ArrowUp','↑'),varias ? 'Adelantar selección' : 'Adelantar capa','adelantar',() => mueveCapasSeleccionadas('adelante'),{disabled:bloqueada});

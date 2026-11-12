@@ -1,0 +1,183 @@
+{
+  "v": 1,
+  "meta": {
+    "title": "Caracterización de un sólido",
+    "short": "Caracterización de un sólido",
+    "subtitle": "Ejemplo didáctico · datos ilustrativos",
+    "authors": "Autoría del ejemplo",
+    "institute": "",
+    "date": "",
+    "theme": "marino",
+    "aspect": "169",
+    "numbers": true,
+    "footline": true
+  },
+  "slides": [
+    {
+      "id": "example-caracterizacion-solido-1",
+      "layout": "title",
+      "title": "",
+      "blocks": [],
+      "notes": "Ejemplo didáctico. Sustituye contenido y datos por los de tu trabajo. No atribuir estas cifras a un experimento.",
+      "min": 0.5
+    },
+    {
+      "id": "example-caracterizacion-solido-2",
+      "layout": "content",
+      "title": "La pregunta que guía el trabajo",
+      "blocks": [
+        {
+          "id": "example-caracterizacion-solido-3",
+          "type": "text",
+          "text": "¿Qué tamaño de cristalita y qué banda prohibida tiene la muestra, y con qué incertidumbre?",
+          "size": "l",
+          "align": "left"
+        },
+        {
+          "id": "example-caracterizacion-solido-4",
+          "type": "text",
+          "text": "Caso de uso ilustrativo. Define aquí el sistema, la comparación y el alcance.",
+          "size": "s",
+          "align": "left"
+        }
+      ],
+      "notes": "",
+      "min": 1.5
+    },
+    {
+      "id": "example-caracterizacion-solido-5",
+      "layout": "content",
+      "title": "Una estrategia explícita",
+      "blocks": [
+        {
+          "id": "example-caracterizacion-solido-6",
+          "type": "smart",
+          "kind": "proceso",
+          "w": 95,
+          "caption": "Orden del método: cada paso prepara el siguiente.",
+          "anim": "fade",
+          "items": [
+            {
+              "t": "Medir un patrón de calibración"
+            },
+            {
+              "t": "Ajustar el pico y medir su anchura"
+            },
+            {
+              "t": "Aplicar Scherrer con K y λ declarados"
+            },
+            {
+              "t": "Transformar la reflectancia y ajustar Tauc"
+            }
+          ]
+        }
+      ],
+      "notes": "Explica las decisiones y los controles, no solo los nombres de las técnicas.",
+      "min": 1.5
+    },
+    {
+      "id": "example-caracterizacion-solido-7",
+      "layout": "content",
+      "title": "Mostrar la evidencia",
+      "blocks": [
+        {
+          "id": "example-caracterizacion-solido-8",
+          "type": "chart",
+          "kind": "linea",
+          "data": "2θ\tIntensidad\n20.0\t0.000\n20.2\t0.000\n20.4\t0.000\n20.6\t0.000\n20.8\t0.000\n21.0\t0.000\n21.2\t0.000\n21.4\t0.000\n21.6\t0.000\n21.8\t0.000\n22.0\t0.000\n22.2\t0.000\n22.4\t0.000\n22.6\t0.000\n22.8\t0.000\n23.0\t0.000\n23.2\t0.000\n23.4\t0.000\n23.6\t0.000\n23.8\t0.000\n24.0\t0.000\n24.2\t0.000\n24.4\t0.000\n24.6\t0.000\n24.8\t0.000\n25.0\t0.000\n25.2\t0.000\n25.4\t0.000\n25.6\t0.000\n25.8\t0.000\n26.0\t0.000\n26.2\t0.000\n26.4\t0.000\n26.6\t0.000\n26.8\t0.000\n27.0\t0.000\n27.2\t0.000\n27.4\t0.000\n27.6\t0.000\n27.8\t0.000\n28.0\t0.000\n28.2\t0.000\n28.4\t0.000\n28.6\t0.000\n28.8\t0.000\n29.0\t0.000\n29.2\t0.000\n29.4\t0.000\n29.6\t0.000\n29.8\t0.000\n30.0\t0.000\n30.2\t0.000\n30.4\t0.000\n30.6\t0.000\n30.8\t0.000\n31.0\t0.000\n31.2\t0.000\n31.4\t0.000\n31.6\t0.000\n31.8\t0.000\n32.0\t0.000\n32.2\t0.000\n32.4\t0.000\n32.6\t0.000\n32.8\t0.000\n33.0\t0.000\n33.2\t0.000\n33.4\t0.000\n33.6\t0.000\n33.8\t0.002\n34.0\t0.013\n34.2\t0.063\n34.4\t0.210\n34.6\t0.500\n34.8\t0.841\n35.0\t1.000\n35.2\t0.841\n35.4\t0.500\n35.6\t0.210\n35.8\t0.063\n36.0\t0.013\n36.2\t0.002\n36.4\t0.000\n36.6\t0.000\n36.8\t0.000\n37.0\t0.000\n37.2\t0.000\n37.4\t0.000\n37.6\t0.000\n37.8\t0.000\n38.0\t0.000\n38.2\t0.000\n38.4\t0.000\n38.6\t0.000\n38.8\t0.000\n39.0\t0.000\n39.2\t0.000\n39.4\t0.000\n39.6\t0.000\n39.8\t0.000\n40.0\t0.000\n40.2\t0.000\n40.4\t0.000\n40.6\t0.000\n40.8\t0.000\n41.0\t0.000\n41.2\t0.000\n41.4\t0.000\n41.6\t0.000\n41.8\t0.000\n42.0\t0.000\n42.2\t0.000\n42.4\t0.000\n42.6\t0.000\n42.8\t0.000\n43.0\t0.000\n43.2\t0.000\n43.4\t0.000\n43.6\t0.000\n43.8\t0.000\n44.0\t0.000\n44.2\t0.000\n44.4\t0.000\n44.6\t0.000\n44.8\t0.000\n45.0\t0.000\n45.2\t0.000\n45.4\t0.000\n45.6\t0.000\n45.8\t0.000\n46.0\t0.000\n46.2\t0.000\n46.4\t0.000\n46.6\t0.000\n46.8\t0.000\n47.0\t0.000\n47.2\t0.000\n47.4\t0.000\n47.6\t0.000\n47.8\t0.000\n48.0\t0.000\n48.2\t0.000\n48.4\t0.000\n48.6\t0.000\n48.8\t0.000\n49.0\t0.000\n49.2\t0.000\n49.4\t0.000\n49.6\t0.000\n49.8\t0.000\n50.0\t0.000",
+          "xlabel": "2θ (°)",
+          "ylabel": "Intensidad (u. a.)",
+          "title": "",
+          "w": 90,
+          "ar": 0.4,
+          "grid": true,
+          "legend": false,
+          "offset": false,
+          "offsetPct": 55,
+          "logX": false,
+          "logY": false,
+          "showFit": true,
+          "anim": "fade",
+          "caption": "Datos ilustrativos para explicar el método; sustituir por mediciones propias.",
+          "fuente": {
+            "nombre": "Datos ilustrativos del ejemplo",
+            "cuando": "sin fecha",
+            "n": 151,
+            "huella": "no aplica"
+          }
+        },
+        {
+          "id": "example-caracterizacion-solido-9",
+          "type": "math",
+          "tex": "D=\\dfrac{K\\lambda}{\\beta\\cos\\theta}",
+          "size": "n"
+        }
+      ],
+      "notes": "Datos o modelos didácticos: reemplazar antes de presentar resultados propios.",
+      "min": 1.5
+    },
+    {
+      "id": "example-caracterizacion-solido-10",
+      "layout": "content",
+      "title": "Interpretación y límites",
+      "blocks": [
+        {
+          "id": "example-caracterizacion-solido-11",
+          "type": "bullets",
+          "items": [
+            {
+              "t": "Pico gaussiano sintético de anchura a media altura (FWHM) de 0.8°: con Cu Kα, Scherrer da unos 10 nm. Es un ejemplo de cálculo, no una medida.",
+              "lvl": 0
+            },
+            {
+              "t": "Scherrer da un límite inferior si no se descuenta la anchura instrumental; con un patrón de referencia, el valor mejora.",
+              "lvl": 0
+            },
+            {
+              "t": "El Eg de Tauc depende del tramo elegido: los tramos vecinos muestran esa sensibilidad.",
+              "lvl": 0
+            }
+          ],
+          "step": false
+        }
+      ],
+      "notes": "",
+      "min": 1.5
+    },
+    {
+      "id": "example-caracterizacion-solido-12",
+      "layout": "content",
+      "title": "Antes de compartir",
+      "blocks": [
+        {
+          "id": "example-caracterizacion-solido-13",
+          "type": "bullets",
+          "items": [
+            {
+              "t": "Anchura instrumental medida con un patrón de referencia",
+              "lvl": 0
+            },
+            {
+              "t": "Reflectancia en porcentaje y blanco de referencia declarados",
+              "lvl": 0
+            },
+            {
+              "t": "Tramo de Tauc justificado y comparado con los tramos vecinos",
+              "lvl": 0
+            }
+          ],
+          "step": false
+        },
+        {
+          "id": "example-caracterizacion-solido-14",
+          "type": "text",
+          "text": "Conserva el proyecto JSON y revisa la exportación final.",
+          "size": "s",
+          "align": "left"
+        }
+      ],
+      "notes": "",
+      "min": 1.5
+    }
+  ]
+}

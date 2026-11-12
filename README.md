@@ -45,7 +45,7 @@ El build también genera `public/lamina-offline.html` para la edición básica. 
 
 En [Releases](https://github.com/erlen-frontier/erlen-slides/releases) está disponible la versión histórica 0.1.0; no contiene necesariamente las funciones descritas para el código actual. Todavía no hay un paquete 0.3.0 publicado allí.
 
-## Doce ejemplos completos
+## Trece ejemplos completos
 
 Cada ejemplo contiene **seis diapositivas**, notas, archivo JSON editable, fuente Beamer y una guía de adaptación. Son casos de trabajo científico con **datos explícitamente ilustrativos**, no experimentos realizados ni publicaciones inventadas.
 
@@ -63,6 +63,7 @@ Cada ejemplo contiene **seis diapositivas**, notas, archivo JSON editable, fuent
 | [Congreso](examples/congreso/) | Una figura y un mensaje central |
 | [Derivación](examples/derivacion/) | Pasos matemáticos e hipótesis |
 | [Datos abiertos](examples/datos-abiertos/) | Archivos, diccionario y cita |
+| [Caracterización de un sólido](examples/caracterizacion-solido/) | Tamaño de cristalita y banda prohibida, con su incertidumbre |
 
 ![Ecuaciones y reacciones en el editor](docs/images/quimica.png)
 
@@ -74,7 +75,9 @@ Lámina arranca con su biblioteca propia, sin leer las claves de almacenamiento 
 
 ## Desarrollo y validación
 
-Lee [Arquitectura](docs/desarrollo.md), [Validación](docs/validacion.md) y [Contribuciones](CONTRIBUTING.md). Las capturas proceden de Chromium; las pruebas de integración con JSDOM simulan geometría y no sustituyen la inspección visual. Las exportaciones deben revisarse antes de enviar un trabajo científico.
+Lee [Arquitectura](docs/desarrollo.md), [Registro histórico de validación](docs/validacion.md), [Contribuciones](CONTRIBUTING.md) y las [reglas locales para agentes](AGENTS.md). Este repositorio trabaja sin CI y sin revisión de código garantizada. Las comprobaciones se realizan localmente cuando el entorno lo permite; cada cambio debe indicar qué se ejecutó, con qué resultado y qué quedó sin verificar. Los resultados históricos no validan automáticamente el código actual.
+
+Las capturas documentadas proceden de Chromium; las pruebas de integración con JSDOM simulan geometría y no sustituyen la inspección visual. Las exportaciones deben revisarse antes de enviar un trabajo científico.
 
 ## Escritorio en Linux
 
@@ -92,4 +95,4 @@ La interfaz contiene un enlace visible al código fuente. Si modificas y desplie
 
 ## Código y verificación
 
-Lámina parte de la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`. Es una distribución independiente: la compilación y las pruebas se ejecutan localmente. Este repositorio no tiene workflows de GitHub Actions; las etiquetas y las releases se gestionan a mano, tras la revisión del propietario.
+Lámina parte de la versión de Slides de Erlen Suite correspondiente al commit `c8e743be0c0b88433cdf7a2807e6757c03e873af`. Es una distribución independiente, sin sincronización automática con Erlen Suite. No utiliza CI ni publicación automática mediante GitHub Actions; la compilación, las pruebas disponibles y la preparación de versiones se realizan localmente, y la publicación es manual. La ausencia de CI forma parte del flujo de trabajo y no implica añadirlo como requisito.

@@ -1,6 +1,8 @@
 # Desarrollo
 
-Node.js >= 22.12.0. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci`, `npm run build`, `npm test` y `npm start`.
+Node.js >= 22.12.0. Dependencias fijadas en `package-lock.json`. Para instalar, construir, comprobar y ejecutar localmente, usa `npm ci`, `npm run build`, `npm test` y `npm start` según el entorno disponible.
+
+Este repositorio trabaja sin CI ni revisión de código garantizada. Sigue las [reglas locales](../AGENTS.md): documenta las comprobaciones realmente realizadas y sus limitaciones; no presupongas validación automática ni revisión posterior. Lámina no depende de sincronización automática con Erlen Suite.
 
 ## Estructura
 
@@ -23,7 +25,7 @@ Node.js >= 22.12.0. Dependencias fijadas en `package-lock.json`. Ejecuta `npm ci
 - `src/js/85-flujos.js`: cargador local y entradas de las herramientas opcionales. `web/flujos-editor.js` contiene sus interfaces y `web/exportaciones-avanzadas.js`, los adaptadores PptxGenJS/Reveal.js. El build copia bibliotecas, chunks Mermaid y licencias a `public/`, con versiones y SHA-256 en `libre/manifest.json`. El runtime de funciones del HTML se ensambla desde el mismo motor del editor. Terser compacta módulos propios del lienzo, editor, barra contextual, diálogos, revisión, cinta, accesibilidad y flujos sin renombrar los símbolos que usa MCP.
 - `src/js/45-estructura.js`, `src/js/45b-estructura-dibujo.js` y `src/js/46-estructura-edit.js`: las estructuras químicas, partidas en modelo, motor y lienzo (ver «Editores de figura»).
 - `src/js/47-lab-catalogo.js`, `src/js/47b-lab.js` y `src/js/48-lab-edit.js`: el montaje de laboratorio, partido en catálogo, motor y editor (ver «Editores de figura»).
-- `src/js/87-ejemplos.js`: doce ejemplos científicos construidos con los bloques reales.
+- `src/js/87-ejemplos.js`: trece ejemplos científicos construidos con los bloques reales.
 - `src/diseno/inicio.mjs`, `src/diseno/marco.mjs` y `src/diseno/cinta.js`: componentes locales de inicio, marco y cinta. `src/js/56-cinta.js` configura las acciones del editor.
 - `src/js/88-workspace.js`: monta el inicio con la biblioteca, los ejemplos, las plantillas personales y los recursos locales. Sus rutas visibles son `#inicio`, `#inicio/biblioteca`, `#inicio/plantillas`, `#inicio/herramientas` y `#inicio/servicio`; `#presentaciones` abre el editor y `?plantilla=<id>` permite abrir un ejemplo.
 - `src/js/88b-recuperacion.js`: historial en IndexedDB, separado del autoguardado.
@@ -49,15 +51,25 @@ El cromo usa los tokens semánticos de `src/diseno/tokens.css` (`--tabula-papel`
 
 ## Comprobar un cambio
 
-1. Ejecuta build y los tests afectados.
-2. Si cambias ejemplos, ejecuta `npm run examples` y revisa los archivos generados.
-3. Comprueba visualmente escritorio y móvil cuando cambie el diseño.
-4. Accesibilidad: `npx playwright-core install chromium` una vez y `npm run accesibilidad` (axe en inicio, editor y ayuda, claro y oscuro; falla con violaciones serias o críticas). Ejecútala localmente cuando esté disponible Chromium.
-4. Si modificas un exportador, inspecciona el archivo exportado, no solo su nombre o extensión.
+Las siguientes comprobaciones son locales y se realizan cuando el entorno lo permite. No son checks de CI ni una promesa de revisión independiente. En el registro del cambio indica los comandos ejecutados, resultados, entorno, omisiones y motivos; una comprobación omitida no cuenta como aprobada.
 
-Para el PowerPoint, «inspeccionar» significa abrirlo con algo que no sea la propia rutina que lo escribió: un paquete puede tener el ZIP intacto, el XML bien formado y las partes declaradas, y aun así llegar con una diapositiva en blanco. Un lector OOXML independiente (`python-pptx`) dice si las formas están; convertirlo a PDF con LibreOffice Impress (`soffice --headless --convert-to pdf`) dice si además se ven. Así se encontraron las dos averías que documenta `docs/validacion.md`: el SmartArt sin cajas y la diapositiva que se vaciaba en dos de cada cinco exportaciones.
+1. Ejecuta `npm run build` y las pruebas afectadas cuando estén disponibles. Incluye las pruebas MCP pertinentes si cambias bloques, diseños o exportaciones; usa `npm test` para la suite completa cuando sea posible.
+2. Si cambias ejemplos, ejecuta `npm run examples` y revisa los archivos generados cuando dispongas del entorno.
+3. Comprueba visualmente escritorio y ventanas estrechas cuando cambie el diseño. Distingue la emulación de una prueba en un dispositivo móvil real.
+4. Accesibilidad: puedes instalar Chromium con `npx playwright-core install chromium` y ejecutar `npm run accesibilidad` localmente cuando esté disponible (axe en inicio, editor y ayuda, claro y oscuro; falla con violaciones serias o críticas). Si necesitas un ejecutable concreto, indica su ruta con `ERLEN_CHROMIUM`.
+5. Si modificas un exportador, inspecciona el archivo exportado, no solo su nombre o extensión. Si falta una aplicación lectora, declara qué formatos y aspectos quedaron sin verificar.
+
+Para el PowerPoint, «inspeccionar» significa abrirlo con algo que no sea la propia rutina que lo escribió: un paquete puede tener el ZIP intacto, el XML bien formado y las partes declaradas, y aun así llegar con una diapositiva en blanco. Un lector OOXML independiente (`python-pptx`) permite comprobar si las formas están; convertirlo a PDF con LibreOffice Impress (`soffice --headless --convert-to pdf`) permite inspeccionar el renderizado, pero no certifica que Microsoft PowerPoint lo muestre igual. Así se encontraron las dos averías históricas que documenta el [registro de validación](validacion.md): el SmartArt sin cajas y la diapositiva que se vaciaba en dos de cada cinco exportaciones.
 
 Los tests JSDOM no verifican medidas reales ni rasterización. La estructura actual concatena módulos: es una base funcional heredada, no una promesa de arquitectura modular aislada.
+
+## Avisos de dependencias
+
+### Antecedente histórico, no auditoría actual
+
+El [plan de uso y pulido del 6 de noviembre de 2026](superpowers/plans/2026-11-06-uso-y-pulido.md) y la nota previa de esta guía registraron una auditoría sin vulnerabilidades críticas y dos avisos altos de `image-size` (bucles infinitos al analizar imágenes JXL, HEIF e ICNS), dentro de `pptxgenjs` 4.0.1. La nota documentó el riesgo como aceptado: pptxgenjs declaraba `"browser": {"image-size": false}`, ese código no aparecía en el bundle servido por la app (`public/libre/`) y el MCP no cargaba pptxgenjs en Node. También registró que `npm audit fix --force` proponía pptxgenjs 4.0.0, un retroceso que no se aplicó.
+
+Ese resultado y su evaluación se refieren al estado documentado entonces; no certifican las dependencias, los avisos ni el bundle actuales. Cuando sea posible repetir `npm audit`, registra fecha, revisión o lockfile, versiones y salida real; vuelve a comprobar la exposición del código afectado y no apliques cambios forzados sin evaluar sus efectos. Si no ejecutas la auditoría, declara que el estado actual no se ha verificado.
 
 ## Editores de figura
 

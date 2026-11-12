@@ -45,7 +45,7 @@ export default {
       normalizar: {type: 'string', enum: ['ninguno', 'max', 'area'], description: 'max: cada serie entre su máximo; area: entre su área (trapecios). Cambia lo que se lee en la figura: dilo en el pie.'},
       desplazar: {anyOf: [{type: 'string', enum: ['auto']}, {type: 'number', minimum: 0, maximum: 150}], description: 'Separación vertical entre series como % del intervalo de y; 0 superpone con leyenda.'},
       intervalo_x: intervalo,
-      tecnica: {type: 'string', description: 'Fuerza la técnica: xrd, ftir, uvvis, tga, raman, cv, pl.'},
+      tecnica: {type: 'string', description: 'Fuerza la técnica: xrd, ftir, uvvis, uvvis-dr (reflectancia difusa), tga, raman, cv, pl.'},
       caption: {type: 'string', description: 'Pie de figura. Sin él se usa el propuesto, que dice la normalización y el desplazamiento.'},
       max_puntos: {type: 'integer', minimum: 50, description: 'Puntos por serie como máximo (por omisión 1500); se submuestrea conservando cada pico.'},
       propiedades: {type: 'object', additionalProperties: true, description: 'Otras propiedades del bloque chart (w, xlabel, ylabel, title…).'}}},

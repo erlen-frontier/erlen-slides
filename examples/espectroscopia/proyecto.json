@@ -4,7 +4,7 @@
     "title": "Perfil espectral",
     "short": "Perfil espectral",
     "subtitle": "Ejemplo didáctico · datos ilustrativos",
-    "authors": "",
+    "authors": "Autoría del ejemplo",
     "institute": "",
     "date": "",
     "theme": "acuarela",
@@ -54,7 +54,7 @@
           "type": "smart",
           "kind": "proceso",
           "w": 95,
-          "caption": "",
+          "caption": "Orden del método: cada paso prepara el siguiente.",
           "anim": "fade",
           "items": [
             {
@@ -86,10 +86,10 @@
           "kind": "linea",
           "data": "Número de onda\tIntensidad\n0\t0.001\n1\t0.044\n2\t0.458\n3\t1.000\n4\t0.458\n5\t0.044\n6\t0.001",
           "xlabel": "Coordenada espectral (u.a.)",
-          "ylabel": "Intensidad normalizada",
+          "ylabel": "Intensidad normalizada (u. a.)",
           "title": "",
           "w": 90,
-          "ar": 0.48,
+          "ar": 0.44,
           "grid": true,
           "legend": false,
           "offset": false,
@@ -98,7 +98,13 @@
           "logY": false,
           "showFit": true,
           "anim": "fade",
-          "caption": "Datos ilustrativos para explicar el método; sustituir por mediciones propias."
+          "caption": "Datos ilustrativos para explicar el método; sustituir por mediciones propias.",
+          "fuente": {
+            "nombre": "Datos ilustrativos del ejemplo",
+            "cuando": "sin fecha",
+            "n": 7,
+            "huella": "no aplica"
+          }
         },
         {
           "id": "example-espectroscopia-9",

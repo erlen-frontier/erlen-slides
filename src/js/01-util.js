@@ -55,6 +55,19 @@ function conFocoConservado(pinta,root){
  return resultado;
 }
 
+/* Los avisos se apoyan justo encima de los controles de la parte baja (chips de
+   estado, zoom y la barra de acción del teléfono): así no tapan ninguno. Si no hay
+   controles abajo, vuelve a la posición fija por omisión. */
+function colocaAvisos() {
+  const cont = $('#toasts');
+  if (!cont) return;
+  const arriba = ['.canvas-foot', '.zoombox', '.erlen-marco-barra-accion']
+    .map(s => document.querySelector(s))
+    .filter(el => el && el.getBoundingClientRect().height > 0)
+    .map(el => el.getBoundingClientRect().top)
+    .filter(y => y > innerHeight / 2);
+  cont.style.bottom = arriba.length ? Math.round(innerHeight - Math.min(...arriba) + 8) + 'px' : '';
+}
 /* Aviso breve. Con `accion` aparece un botón dentro del aviso —«Deshacer»—
    para que nada destructivo ocurra sin salida a la vista. */
 function toast(msg, kind, accion) {
@@ -66,6 +79,7 @@ function toast(msg, kind, accion) {
     t.append(h('button', { class: 'toast-btn', onclick: () => { cerrar(); accion.fn(); } }, accion.t || 'Deshacer'));
   }
   $('#toasts').append(t);
+  colocaAvisos();
   setTimeout(cerrar, accion ? 6500 : 2600);
   return t;
 }

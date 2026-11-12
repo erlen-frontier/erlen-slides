@@ -1,5 +1,7 @@
 # Herramientas del lienzo libre — plan
 
+> Plan histórico del 28 de octubre de 2026. Se conserva como antecedente de diseño e implementación, no como lista vigente de tareas pendientes ni como prueba de implementación o validación del código actual. Antes de retomar una tarea, contrástala con el código, las decisiones posteriores y [AGENTS.md](../../../AGENTS.md), cuyas reglas actuales prevalecen sobre las instrucciones originales de este plan. Las comprobaciones se realizan localmente cuando el entorno lo permite, declarando resultados y omisiones; no se presupone CI ni revisión de código garantizada. Esta edición documental no ejecuta tareas, no aprueba decisiones de producto ni certifica resultados nuevos.
+
 **Objetivo:** añadir guías, capas y movimiento de selección múltiple al lienzo libre existente.
 
 **Base:** JSON v1 y el estado de selección por bloques existentes; sin cambios en las funciones de IA. Véase [diseño](../specs/2026-10-28-herramientas-lienzo-design.md).

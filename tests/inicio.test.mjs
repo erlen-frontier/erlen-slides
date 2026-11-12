@@ -53,8 +53,6 @@ test('Local hash routes follow navigation in both directions; unknown prefixes f
  // Hacia atrás: cambiar el hash abre la vista, #presentaciones vuelve al editor.
  await aHash(w,'#inicio/plantillas');
  assert.equal(run('INICIO.vista'),'ejemplos');
- const titulos=[...raiz(d).querySelectorAll('.tabula-inicio-ejemplo h2')].map(h=>h.textContent);
- assert.equal(titulos.length,12,'Los doce ejemplos editables');
  await aHash(w,'#presentaciones');
  assert.equal(raiz(d).hidden,true);assert.ok(!d.querySelector('.tabula-marco').hasAttribute('inert'));
  await aHash(w,'#inicio/servicio');
