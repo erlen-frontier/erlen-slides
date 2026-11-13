@@ -467,7 +467,7 @@ function moveBlockToSlide(id, idxDest, zonaDest, posDest) {
   const arr = zona(dest, clamp(zonaDest || 0, 0, nz - 1));
   if (arr === f.arr) {
     const desde = f.i;
-    let hasta = posDest == null ? arr.length - 1 : clamp(posDest, 0, arr.length);
+    let hasta = posDest == null ? arr.length : clamp(posDest, 0, arr.length);
     if (hasta > desde) hasta--;
     if (hasta === desde) return false;
     arr.splice(desde, 1); arr.splice(hasta, 0, f.block);
