@@ -4,7 +4,7 @@
    El caso que todo el mundo vive: tienes la charla de 45 y te dan 12. La regla
    2 del artículo de PLOS dice un minuto por diapositiva, así que la aritmética
    es sencilla; lo difícil es decidir qué se cae. Aquí no se borra nada: lo que
-   sobra se manda al respaldo, donde sigue disponible si preguntan.
+   sobra se excluye de la rama activa o, sin rama, se manda al respaldo.
 
    Se ordena por lo que cuesta menos perder, y tú puedes marcar como
    imprescindible lo que no se toca. */
@@ -49,15 +49,14 @@ function valorDiapositiva(sl, i, deck) {
   return v;
 }
 
-/* Devuelve el plan: qué se queda y qué se va al respaldo, para llegar al
-   tiempo pedido sin tocar lo intocable. */
+/* Devuelve el plan de la rama activa, o de toda la charla si no hay rama. */
 function planTiempo(deck, objetivoMin) {
-  const d = deck || S.deck;
+  const d = deck || S.deck, rama = ramaActiva(d);
   const charla = [];
-  d.slides.forEach((sl, i) => { if (!esRespaldo(sl)) charla.push({ sl, i, min: minEstimado(sl), val: valorDiapositiva(sl, i, d) }); });
+  d.slides.forEach((sl, i) => { if (!esRespaldo(sl) && enRama(sl, d)) charla.push({ sl, i, min: minEstimado(sl), val: valorDiapositiva(sl, i, d) }); });
   const actual = charla.reduce((a, x) => a + x.min, 0);
   const objetivo = Math.max(1, +objetivoMin || 0);
-  const plan = { actual, objetivo, quitar: [], quedan: [], sobra: actual - objetivo, fijas: 0, resultado: actual, imposible: false };
+  const plan = { deck: d, rama, actual, objetivo, quitar: [], quedan: [], sobra: actual - objetivo, fijas: 0, resultado: actual, imposible: false };
   charla.forEach(x => { if (intocable(x.sl)) plan.fijas += x.min; });
   if (actual <= objetivo) { plan.quedan = charla; return plan; }
   /* se van las de menor valor hasta cuadrar, conservando al menos una */
@@ -85,30 +84,59 @@ function planTiempo(deck, objetivoMin) {
   return plan;
 }
 
-function aplicaPlanTiempo(plan) {
+function aplicaPlanTiempo(plan, crearRama = false) {
   const d = S.deck;
+  if (plan.deck !== d || plan.rama !== ramaActiva(d)) {
+    toast('El documento o la rama cambió. Abre de nuevo el ajuste de tiempo.', 'warn');
+    return false;
+  }
   const ids = new Set(plan.quitar.map(x => x.sl.id));
-  if (!d.slides.some(sl => !esRespaldo(sl) && !ids.has(sl.id))) {
+  const charla = d.slides.filter(sl => !esRespaldo(sl) && enRama(sl, d));
+  if (plan.quitar.some(x => !charla.includes(x.sl) || intocable(x.sl))) {
+    toast('El contenido cambió. Calcula de nuevo el ajuste de tiempo.', 'warn');
+    return false;
+  }
+  if (!charla.some(sl => !ids.has(sl.id))) {
     toast('Tiene que quedar al menos una diapositiva en la charla', 'warn');
     return false;
   }
-  const mover = d.slides.filter(sl => ids.has(sl.id));
-  d.slides = d.slides.filter(sl => !ids.has(sl.id));
-  mover.forEach(sl => { sl.respaldo = true; d.slides.push(sl); });
-  S.cur = clamp(S.cur, 0, finCharla(d));
+  if (crearRama === true) {
+    const base = plan.rama;
+    const rama = { id: uid(), n: 'Rama de ' + plan.objetivo + ' min',
+      fuera: [...new Set([...(base?.fuera || []), ...ids])],
+      nivel: base?.nivel || null, titulo: base?.titulo || '' };
+    ramasDe(d).push(rama);
+    d.meta.rama = rama.id;
+  } else if (plan.rama) {
+    plan.rama.fuera = [...new Set([...(plan.rama.fuera || []), ...ids])];
+  } else {
+    const mover = d.slides.filter(sl => ids.has(sl.id));
+    d.slides = d.slides.filter(sl => !ids.has(sl.id));
+    mover.forEach(sl => { sl.respaldo = true; d.slides.push(sl); });
+    S.cur = clamp(S.cur, 0, finCharla(d));
+  }
   S.selBlock = null;
   commit();
   return true;
 }
 
 /* ---------- la ventana ---------- */
-function openAjustarTiempo() {
-  const d = S.deck;
-  const actual = slidesCharla(d).reduce((a, sl) => a + minEstimado(sl), 0);
+function openAjustarTiempo(crearRama = false) {
+  crearRama = crearRama === true;
+  flushEdicion();
+  const d = S.deck, rama = ramaActiva(d), porRama = crearRama || !!rama;
+  const vigente = () => S.deck === d && ramaActiva(d) === rama;
+  const compruebaContexto = () => {
+    if (vigente()) return true;
+    toast('El documento o la rama cambió. Abre de nuevo el ajuste de tiempo.', 'warn');
+    return false;
+  };
+  const actual = planTiempo(d, 1).actual;
   let objetivo = Math.max(5, Math.round(actual * 0.4 / 5) * 5);
   const vista = h('div');
 
   const pinta = () => {
+    if (!compruebaContexto()) return;
     const plan = planTiempo(d, objetivo);
     vista.innerHTML = '';
     const cabe = plan.actual <= plan.objetivo;
@@ -120,7 +148,7 @@ function openAjustarTiempo() {
         ? 'Ya cabe: no hace falta quitar nada.'
         : plan.imposible
           ? 'No se alcanza el objetivo respetando las diapositivas imprescindibles y conservando al menos una en la charla. El plan deja ' + mmss(plan.resultado) + '.'
-          : 'Al respaldo irían ' + plan.quitar.length + (plan.quitar.length === 1 ? ' diapositiva' : ' diapositivas') +
+          : (porRama ? 'Se excluirían de la rama ' : 'Al respaldo irían ') + plan.quitar.length + (plan.quitar.length === 1 ? ' diapositiva' : ' diapositivas') +
             ', y la charla quedaría en ' + mmss(plan.resultado) + '.')));
     if (!plan.quitar.length) return;
     const lista = h('div', { class: 'at-lista' });
@@ -135,11 +163,11 @@ function openAjustarTiempo() {
         h('div', { class: 'at-txt' },
           h('b', null, (x.i + 1) + ' · ' + ((x.sl.title || '').trim() || (LAY[x.sl.layout] || {}).name || 'Sin título')),
           h('em', null, mmss(x.min) + ' · ' + motivo(x))),
-        h('button', { class: 'btn btn-sm', title: 'Marcarla como imprescindible para que no se toque',
-          onclick: () => { x.sl.clave = true; commit({ skipInsp: true }); pinta(); } }, '★ No la quites')));
+        porRama ? null : h('button', { class: 'btn btn-sm', title: 'Marcarla como imprescindible para que no se toque',
+          onclick: () => { if (!compruebaContexto() || !d.slides.includes(x.sl)) return; x.sl.clave = true; commit({ skipInsp: true }); pinta(); } }, '★ No la quites')));
     });
     vista.append(lista);
-    const conClave = d.slides.filter(sl => sl.clave).length;
+    const conClave = d.slides.filter(sl => enRama(sl, d) && !esRespaldo(sl) && sl.clave).length;
     if (conClave) vista.append(h('p', { class: 'hint' },
       conClave + (conClave === 1 ? ' diapositiva marcada como imprescindible' : ' diapositivas marcadas como imprescindibles') +
       ' · se quedan pase lo que pase.'));
@@ -160,24 +188,31 @@ function openAjustarTiempo() {
     rapidos.append(h('button', { class: 'btn btn-sm', onclick: () => { objetivo = v; rango.value = v; etq.textContent = v + ' min'; pinta(); } }, v + ' min')));
 
   pinta();
+  const alcance = crearRama
+    ? 'Se creará una rama nueva al confirmar, basada en ' + (rama ? '«' + rama.n + '»' : 'la charla completa') + '. La rama de origen y el respaldo no se modifican.'
+    : rama ? 'Solo se ajusta la rama «' + rama.n + '»: los recortes son exclusiones de esta rama, sin cambiar otras ramas ni el respaldo.'
+      : 'Se ajusta la charla completa: lo que sobra pasa al respaldo y sigue disponible para preguntas.';
   const cuerpo = h('div', null,
     h('p', { class: 'hint', style: 'margin-top:0' },
-      'Los minutos salen de los que asignaste por diapositiva; a las que no tienen se les cuenta uno, que es lo que recomienda la regla del minuto por diapositiva. Nada se borra: lo que sobra pasa al respaldo y sigue ahí para las preguntas.'),
+      'Los minutos salen de los que asignaste por diapositiva; a las que no tienen se les cuenta uno. Nada se borra. ' + alcance),
     h('div', { class: 'at-ctrl' }, h('span', { class: 'an-et' }, 'Tiempo que te dan'), etq, rango),
     rapidos, vista);
   openModal({
-    title: 'Ajustar la charla a un tiempo', size: 'modal-lg', body: cuerpo,
+    title: crearRama ? 'Crear una rama ajustada a un tiempo' : 'Ajustar la charla a un tiempo', size: 'modal-lg', body: cuerpo,
     foot: [
       h('button', { class: 'btn', onclick: () => closeModal() }, 'Cancelar'),
       h('button', { class: 'btn btn-pri', onclick: () => {
-        const plan = planTiempo(S.deck, objetivo);
-        if (plan.actual <= plan.objetivo) { toast('Ya cabía en ese tiempo'); closeModal(); return; }
-        if (!plan.quitar.length) { toast('No se puede reducir más sin quitar diapositivas imprescindibles o vaciar la charla.', 'warn'); return; }
-        if (!aplicaPlanTiempo(plan)) return;
+        if (!compruebaContexto()) return;
+        const plan = planTiempo(d, objetivo);
+        if (!crearRama && plan.actual <= plan.objetivo) { toast('Ya cabía en ese tiempo'); closeModal(); return; }
+        if (!crearRama && !plan.quitar.length) { toast('No se puede reducir más sin quitar diapositivas imprescindibles o vaciar la charla.', 'warn'); return; }
+        if (!aplicaPlanTiempo(plan, crearRama)) return;
         closeModal();
-        toast(plan.quitar.length + ' al respaldo · la charla queda en ' + mmss(plan.resultado) +
+        const resumen = crearRama ? 'Rama creada · ' + plan.quitar.length + ' excluidas'
+          : plan.quitar.length + (porRama ? ' excluidas de la rama' : ' al respaldo');
+        toast(resumen + ' · la charla queda en ' + mmss(plan.resultado) +
           (plan.imposible ? ' · no se alcanzó el objetivo' : ''), plan.imposible ? 'warn' : null, { t: 'Deshacer', fn: doUndo });
-      } }, 'Ajustar')]
+      } }, crearRama ? 'Crear rama' : porRama ? 'Ajustar rama' : 'Ajustar')]
   });
 }
 
