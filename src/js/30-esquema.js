@@ -94,6 +94,7 @@ function openEsquema() {
     title: 'Diapositivas desde un esquema', size: 'modal-lg', body: cuerpo,
     foot: [resumen,
       h('button', { class: 'btn', onclick: () => {
+        hechas = leeEsquema(ta.value);
         if (!hechas.length) { toast('Escribe primero el esquema'); return; }
         S.deck.slides.splice(S.cur + 1, 0, ...hechas);
         S.cur = S.cur + 1; S.selBlock = null;
@@ -101,6 +102,7 @@ function openEsquema() {
         toast(hechas.length + ' diapositivas añadidas', null, { t: 'Deshacer', fn: doUndo });
       } }, 'Añadir tras la actual'),
       h('button', { class: 'btn btn-pri', onclick: () => {
+        hechas = leeEsquema(ta.value);
         if (!hechas.length) { toast('Escribe primero el esquema'); return; }
         const d = deckDe({ title: S.deck.meta.title || '', theme: S.deck.meta.theme }, [slidePlantilla('title', '')].concat(hechas));
         const est = estiloPorOmision(); if (est) Object.assign(d.meta, est);
