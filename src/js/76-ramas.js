@@ -73,7 +73,7 @@ function openRamas() {
     });
     cuerpo.append(h('div', { style: 'display:flex;gap:6px;margin-top:10px;flex-wrap:wrap' },
       h('button', { class: 'btn btn-sm btn-pri', onclick: () => { const r = nuevaRama('Rama ' + (ramas.length + 1)); editaRama(r); } }, '+ Rama'),
-      h('button', { class: 'btn btn-sm', title: 'Una rama con lo que «Ajustar la charla a un tiempo» dejaría', onclick: () => { closeModal(); openAjustarTiempo(); } }, '◷ Rama de N minutos…')));
+      h('button', { class: 'btn btn-sm', title: 'Crear una rama nueva ajustada al tiempo, sin cambiar la de origen ni el respaldo', onclick: () => { closeModal(); openAjustarTiempo(true); } }, '◷ Rama de N minutos…')));
   };
   const editaRama = r => {
     const nom = h('input', { class: 'field', value: r.n, oninput: e => { r.n = e.target.value; } });
