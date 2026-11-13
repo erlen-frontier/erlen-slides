@@ -57,33 +57,38 @@ function planTiempo(deck, objetivoMin) {
   d.slides.forEach((sl, i) => { if (!esRespaldo(sl)) charla.push({ sl, i, min: minEstimado(sl), val: valorDiapositiva(sl, i, d) }); });
   const actual = charla.reduce((a, x) => a + x.min, 0);
   const objetivo = Math.max(1, +objetivoMin || 0);
-  const plan = { actual, objetivo, quitar: [], quedan: [], sobra: actual - objetivo, fijas: 0 };
+  const plan = { actual, objetivo, quitar: [], quedan: [], sobra: actual - objetivo, fijas: 0, resultado: actual, imposible: false };
   charla.forEach(x => { if (intocable(x.sl)) plan.fijas += x.min; });
   if (actual <= objetivo) { plan.quedan = charla; return plan; }
-  /* se van las de menor valor hasta cuadrar */
+  /* se van las de menor valor hasta cuadrar, conservando al menos una */
   const orden = charla.filter(x => !intocable(x.sl)).sort((a, b) => a.val - b.val || b.min - a.min);
   let resta = actual - objetivo;
   const fuera = new Set();
   for (const x of orden) {
-    if (resta <= 0) break;
+    if (resta <= 0 || fuera.size >= charla.length - 1) break;
     fuera.add(x.i); resta -= x.min;
   }
   plan.quitar = charla.filter(x => fuera.has(x.i));
   plan.quedan = charla.filter(x => !fuera.has(x.i));
   plan.resultado = plan.quedan.reduce((a, x) => a + x.min, 0);
-  plan.imposible = resta > 0;              /* ni quitándolo todo se llega */
+  plan.imposible = resta > 0;              /* no se llega respetando las restricciones */
   return plan;
 }
 
 function aplicaPlanTiempo(plan) {
   const d = S.deck;
   const ids = new Set(plan.quitar.map(x => x.sl.id));
+  if (!d.slides.some(sl => !esRespaldo(sl) && !ids.has(sl.id))) {
+    toast('Tiene que quedar al menos una diapositiva en la charla', 'warn');
+    return false;
+  }
   const mover = d.slides.filter(sl => ids.has(sl.id));
   d.slides = d.slides.filter(sl => !ids.has(sl.id));
   mover.forEach(sl => { sl.respaldo = true; d.slides.push(sl); });
   S.cur = clamp(S.cur, 0, finCharla(d));
   S.selBlock = null;
   commit();
+  return true;
 }
 
 /* ---------- la ventana ---------- */
@@ -96,7 +101,7 @@ function openAjustarTiempo() {
   const pinta = () => {
     const plan = planTiempo(d, objetivo);
     vista.innerHTML = '';
-    const cabe = plan.quitar.length === 0;
+    const cabe = plan.actual <= plan.objetivo;
     vista.append(h('div', { class: 'at-res' },
       h('div', null, h('b', null, mmss(plan.actual)), h('span', null, 'ahora')),
       h('div', { class: 'at-flecha' }, '→'),
@@ -104,7 +109,7 @@ function openAjustarTiempo() {
       h('div', { class: 'at-cuenta' }, cabe
         ? 'Ya cabe: no hace falta quitar nada.'
         : plan.imposible
-          ? 'Ni quitando todo lo prescindible se llega: quedan ' + mmss(plan.fijas) + ' de portada, índice y secciones.'
+          ? 'No se alcanza el objetivo respetando las diapositivas imprescindibles y conservando al menos una en la charla. El plan deja ' + mmss(plan.resultado) + '.'
           : 'Al respaldo irían ' + plan.quitar.length + (plan.quitar.length === 1 ? ' diapositiva' : ' diapositivas') +
             ', y la charla quedaría en ' + mmss(plan.resultado) + '.')));
     if (!plan.quitar.length) return;
@@ -156,10 +161,12 @@ function openAjustarTiempo() {
       h('button', { class: 'btn', onclick: () => closeModal() }, 'Cancelar'),
       h('button', { class: 'btn btn-pri', onclick: () => {
         const plan = planTiempo(S.deck, objetivo);
-        if (!plan.quitar.length) { toast('Ya cabía en ese tiempo'); closeModal(); return; }
-        aplicaPlanTiempo(plan);
+        if (plan.actual <= plan.objetivo) { toast('Ya cabía en ese tiempo'); closeModal(); return; }
+        if (!plan.quitar.length) { toast('No se puede reducir más sin quitar diapositivas imprescindibles o vaciar la charla.', 'warn'); return; }
+        if (!aplicaPlanTiempo(plan)) return;
         closeModal();
-        toast(plan.quitar.length + ' al respaldo · la charla queda en ' + mmss(plan.resultado), null, { t: 'Deshacer', fn: doUndo });
+        toast(plan.quitar.length + ' al respaldo · la charla queda en ' + mmss(plan.resultado) +
+          (plan.imposible ? ' · no se alcanzó el objetivo' : ''), plan.imposible ? 'warn' : null, { t: 'Deshacer', fn: doUndo });
       } }, 'Ajustar')]
   });
 }
