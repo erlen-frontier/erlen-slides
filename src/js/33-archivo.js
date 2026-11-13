@@ -7,22 +7,36 @@
    Con permiso del navegador, el proyecto se escribe también en un .json de
    verdad y se mantiene al día solo. */
 const hayArchivoAPI = () => typeof window.showSaveFilePicker === 'function';
+let solicitudArchivoNavegador = 0, revisionAsociacionArchivo = 0;
 
 async function eligeArchivo() {
   if (!hayArchivoAPI()) {
     toast('Este navegador no deja escribir archivos directamente; usa Exportar → Proyecto (.json)', 'warn');
     return;
   }
+  const solicitud = ++solicitudArchivoNavegador;
+  const generacion = generacionArchivoEscritorio;
+  const vigente = () => solicitud === solicitudArchivoNavegador && generacion === generacionArchivoEscritorio;
   try {
-    S.archivo = await window.showSaveFilePicker({
+    const archivo = await window.showSaveFilePicker({
       suggestedName: deckSlug() + '.json',
       types: [{ description: 'Proyecto de Lámina', accept: { 'application/json': ['.json'] } }]
     });
-    S.archivoNombre = S.archivo.name;
-    await escribeArchivo();
+    if (!vigente()) {
+      if (solicitud === solicitudArchivoNavegador) toast('La presentación cambió mientras se elegía el archivo. Vuelve a elegirlo.', 'warn');
+      return;
+    }
+    terminaEdicionArchivo();
+    if (!vigente()) return;
+    S.archivo = archivo;
+    S.archivoNombre = archivo.name;
+    const asociacion = ++revisionAsociacionArchivo;
+    const guardado = await escribeArchivo();
+    if (!vigente() || revisionAsociacionArchivo !== asociacion || S.archivo !== archivo) return;
     actualizaIndicadorArchivo();
-    toast('Se guardará también en «' + S.archivoNombre + '»');
+    if (guardado) toast('Se guardará también en «' + archivo.name + '»');
   } catch (e) {
+    if (!vigente()) return;
     if (e && e.name === 'AbortError') return;
     toast('No se pudo abrir el archivo', 'warn');
   }
@@ -30,22 +44,34 @@ async function eligeArchivo() {
 async function escribeArchivo() {
   if (!S.archivo) return false;
   const archivo = S.archivo;
-  const datos = JSON.stringify(S.deck, null, 2);
+  const asociacion = revisionAsociacionArchivo;
+  const generacion = generacionArchivoEscritorio;
+  const vigente = () => S.archivo === archivo && revisionAsociacionArchivo === asociacion && generacionArchivoEscritorio === generacion;
   try {
+    const datos = JSON.stringify(S.deck, null, 2);
     const w = await archivo.createWritable();
     await w.write(datos);
     await w.close();
-    return true;
+    return vigente();
   } catch (e) {
-    if (S.archivo !== archivo) return false;
+    if (!vigente()) return false;
+    revisionAsociacionArchivo++;
     S.archivo = null;
+    S.archivoNombre = null;
     actualizaIndicadorArchivo();
-    toast('Se perdió el permiso sobre el archivo; vuelve a elegirlo', 'warn');
+    toast('No se pudo guardar en el archivo. Vuelve a elegirlo o descarga el proyecto como .json.', 'warn');
     return false;
   }
 }
 const guardaArchivo = deb(() => { escribeArchivo(); }, 1200);
-function sueltaArchivo() { S.archivo = null; S.archivoNombre = null; actualizaIndicadorArchivo(); toast('Se dejó de escribir en el archivo'); }
+function sueltaArchivo() {
+  solicitudArchivoNavegador++;
+  revisionAsociacionArchivo++;
+  S.archivo = null;
+  S.archivoNombre = null;
+  actualizaIndicadorArchivo();
+  toast('Se dejó de escribir en el archivo');
+}
 function actualizaIndicadorArchivo() {
   const el = $('#saveInd');
   if (!el) return;
@@ -66,6 +92,7 @@ function olvidaArchivoEscritorio() {
   const anterior = archivoEscritorioActual;
   archivoEscritorioActual = null;
   archivoNuevoInicial = null;
+  revisionAsociacionArchivo++;
   generacionArchivoEscritorio++;
   liberaArchivoEscritorio(anterior);
 }
