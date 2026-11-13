@@ -68,6 +68,16 @@ function planTiempo(deck, objetivoMin) {
     if (resta <= 0 || fuera.size >= charla.length - 1) break;
     fuera.add(x.i); resta -= x.min;
   }
+  /* Sin imprescindibles, la última por valor puede ser demasiado larga aunque
+     otra candidata sí quepa. Conserva la de mayor valor entre las que caben. */
+  if (resta > 0 && orden.length === charla.length) {
+    const conservar = [...orden].reverse().find(x => x.min <= objetivo);
+    if (conservar) {
+      fuera.clear();
+      charla.forEach(x => { if (x.i !== conservar.i) fuera.add(x.i); });
+      resta = conservar.min - objetivo;
+    }
+  }
   plan.quitar = charla.filter(x => fuera.has(x.i));
   plan.quedan = charla.filter(x => !fuera.has(x.i));
   plan.resultado = plan.quedan.reduce((a, x) => a + x.min, 0);
